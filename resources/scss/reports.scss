@@ -1,0 +1,18 @@
+.report-card {
+    background: $surface;
+
+    border-radius: $radius;
+
+    padding: 2rem;
+
+    border: 1px solid $border;
+
+    box-shadow: $shadow;
+    color: $text;
+}
+
+.report-header {
+    border-bottom: 1px solid $border;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}

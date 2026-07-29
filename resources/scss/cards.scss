@@ -1,0 +1,78 @@
+.stat-card {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.03),
+        rgba(255, 255, 255, 0.01)
+    );
+    background-color: $surface;
+    border: 1px solid $border;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    backdrop-filter: blur(12px);
+    transition: $transition;
+    padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        min-height: auto;
+    }
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    border-color: $primary;
+    box-shadow: 0 0 25px rgba(0, 208, 132, 0.25);
+}
+
+.stat-title {
+    color: $muted;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $primary;
+}
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+
+    border-radius: 50px;
+
+    font-size: 0.85rem;
+
+    font-weight: 600;
+}
+
+.status-rendah {
+    background: #dcfce7;
+
+    color: #15803d;
+}
+
+.status-sederhana {
+    background: #fef3c7;
+
+    color: #b45309;
+}
+
+.status-tinggi {
+    background: #fee2e2;
+
+    color: #b91c1c;
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.15);
+
+    border: 1px solid rgba(34, 197, 94, 0.3);
+
+    color: #22c55e;
+
+    border-radius: 12px;
+
+    margin-bottom: 1rem;
+}

@@ -1,0 +1,25 @@
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(280px,1fr));
+}
+
+@media (max-width: 768px) {
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+.dashboard-section {
+    margin-top: 2rem;
+}
+
+.section-title {
+    color: $text;
+    font-size: 1.25rem;
+    font-weight: 600;
+}

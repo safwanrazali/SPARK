@@ -1,0 +1,102 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 280px;
+    height: 100vh;
+
+    background: $surface;
+
+    border-right: 1px solid $border;
+
+    padding: 1.5rem;
+
+    transition: $transition;
+
+    overflow: hidden;
+
+    z-index: 999;
+}
+
+.sidebar.collapsed {
+    width: 90px;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 3rem;
+
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: $primary;
+}
+
+.sidebar.collapsed .menu-text {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-title {
+    display: none;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.75rem;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    text-decoration: none;
+
+    color: $text;
+
+    padding: 0.9rem 1rem;
+
+    border-radius: 12px;
+
+    transition: $transition;
+}
+
+.sidebar-menu a:hover {
+    background: rgba(0, 208, 132, 0.12);
+
+    color: $primary;
+
+    transform: translateX(4px);
+
+    box-shadow: 0 0 15px rgba(0, 208, 132, 0.15);
+}
+
+.sidebar-menu a.active {
+    background: rgba(0, 208, 132, 0.15);
+
+    color: $primary;
+
+    border-left: 3px solid $primary;
+}
+
+.sidebar-menu i {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 80px;
+    }
+
+    .sidebar .menu-text,
+    .sidebar .sidebar-title {
+        display: none;
+    }
+}

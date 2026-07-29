@@ -1,0 +1,28 @@
+@import "variables";
+@import "layout";
+@import "sidebar";
+@import "dashboard";
+@import "cards";
+@import "tables";
+@import "reports";
+@import "forms";
+@import "buttons";
+
+body {
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(255, 79, 216, 0.08),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at bottom left,
+            rgba(0, 208, 132, 0.08),
+            transparent 30%
+        ),
+        $bg;
+
+    color: $text;
+
+    font-family: "Inter", sans-serif;
+}

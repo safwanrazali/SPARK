@@ -1,0 +1,17 @@
+.btn-primary {
+    background: #ff4fd8 !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    transition: $transition !important;
+}
+
+.btn-primary:hover {
+    background: #ff38d0 !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 0 12px rgba(255, 79, 216, 0.35) !important;
+}
