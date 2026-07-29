@@ -6,10 +6,17 @@
         </h2>
     </div>
 
-    <div class="header-right">
+    <div class="header-right d-flex align-items-center gap-3">
         <span>
-            Sistem Penilaian Risiko Aset
+            {{ auth()->user()->name }}
         </span>
+
+        <form method="POST" action="{{ route('logout') }}" class="m-0">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-box-arrow-right"></i> Log Keluar
+            </button>
+        </form>
     </div>
 
 </div>
