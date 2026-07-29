@@ -25,57 +25,41 @@ class MuatNaikController extends Controller
         );
     }
 
-    public function store(
-        Request $request,
-        ExcelValidationService $excelValidationService
-    ) {
+    public function store(Request $request)
+    {
         $request->validate([
-            'fail_excel' => [
-                'required',
-                'file',
-                'mimes:xlsx,xls',
-            ],
+            'lokasi' => ['required', 'string'],
+            'nama_fail' => ['required', 'string'],
+            'sector_code' => ['required', 'string'],
+            'sector_name' => ['required', 'string'],
+            'agency_code' => ['required', 'string'],
+            'agency_name' => ['required', 'string'],
         ]);
 
-        $fail = $request->file('fail_excel');
+        $lokasi = $request->input('lokasi');
 
-        $namaFail = time().'_'.
-                    $fail->getClientOriginalName();
+        $fullPath = storage_path('app/private/'.$lokasi);
 
-        $lokasi = $fail->storeAs(
-            'uploads',
-            $namaFail
-        );
-
-        $fullPath = storage_path(
-            'app/private/'.$lokasi
-        );
-
-        if (
-            ! $excelValidationService
-                ->validateSheetNames($fullPath)
-        ) {
-
-            Storage::delete($lokasi);
-
+        if (! Storage::exists($lokasi)) {
             return back()->withErrors([
-                'fail_excel' => 'Helaian MasterTable atau MasterTable_Risk tidak ditemui.',
+                'fail_excel' => 'Fail muat naik sementara tidak dijumpai. Sila cuba semula.',
             ]);
         }
 
         MuatNaik::create([
-            'nama_fail' => $namaFail,
+            'nama_fail' => $request->input('nama_fail'),
             'lokasi_fail' => $lokasi,
             'status' => 'Berjaya',
             'tarikh_import' => now(),
+            'sector_code' => $request->input('sector_code'),
+            'sector_name' => $request->input('sector_name'),
+            'agency_code' => $request->input('agency_code'),
+            'agency_name' => $request->input('agency_name'),
         ]);
 
         return redirect()
             ->route('muat-naik.history')
-            ->with(
-                'success',
-                'Fail berjaya dimuat naik.'
-            );
+            ->with('success', 'Fail berjaya disimpan bersama metadata sektor dan agensi.');
     }
 
     public function preview(
@@ -84,31 +68,36 @@ class MuatNaikController extends Controller
         ExcelPreviewService $excelPreviewService
     ) {
         $request->validate([
-            'fail_excel' => [
-                'required',
-                'file',
-                'mimes:xlsx,xls',
-            ],
+            'fail_excel' => ['required', 'file', 'mimes:xlsx,xls'],
+            'sector_code' => ['required', 'string'],
+            'agency_code' => ['required', 'string'],
         ]);
 
+        $sectorCode = $request->input('sector_code');
+        $agencyCode = $request->input('agency_code');
+        $sectorConfig = config('sektor');
+
+        if (! isset($sectorConfig[$sectorCode])) {
+            return back()->withErrors([
+                'sector_code' => 'Sektor tidak sah. Sila pilih semula.',
+            ]);
+        }
+
+        $sector = $sectorConfig[$sectorCode];
+        $agency = collect($sector['agencies'])->firstWhere('code', $agencyCode);
+
+        if (! $agency) {
+            return back()->withErrors([
+                'agency_code' => 'Agensi tidak sah untuk sektor yang dipilih.',
+            ]);
+        }
+
         $fail = $request->file('fail_excel');
+        $namaFail = time().'_'.$fail->getClientOriginalName();
+        $lokasi = $fail->storeAs('uploads', $namaFail);
+        $fullPath = storage_path('app/private/'.$lokasi);
 
-        $namaFail =
-            time().'_'.$fail->getClientOriginalName();
-
-        $lokasi = $fail->storeAs(
-            'uploads',
-            $namaFail
-        );
-
-        $fullPath =
-            storage_path('app/private/'.$lokasi);
-
-        if (
-            ! $excelValidationService
-                ->validateSheetNames($fullPath)
-        ) {
-
+        if (! $excelValidationService->validateSheetNames($fullPath)) {
             Storage::delete($lokasi);
 
             return back()->withErrors([
@@ -116,17 +105,15 @@ class MuatNaikController extends Controller
             ]);
         }
 
-        $preview =
-            $excelPreviewService
-                ->getPreview($fullPath);
+        $preview = $excelPreviewService->getPreview($fullPath);
 
-        return view(
-            'uploads.preview',
-            compact(
-                'preview',
-                'namaFail',
-                'lokasi'
-            )
-        );
+        return view('uploads.preview', compact(
+            'preview',
+            'namaFail',
+            'lokasi',
+            'sectorCode',
+            'sector',
+            'agency'
+        ));
     }
 }

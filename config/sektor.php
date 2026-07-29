@@ -1,27 +1,123 @@
 <?php
 
 return [
-
-    'Kerajaan',
-
-    'Perbankan dan kewangan',
-
-    'Pengangkutan',
-
-    'Pertahanan dan keselamatan negara',
-
-    'Maklumat, komunikasi dan digital',
-
-    'Perkhidmatan jagaan kesihatan',
-
-    'Air, pembentungan dan pengurusan sisa',
-
-    'Tenaga',
-
-    'Pertanian dan perladangan',
-
-    'Perdagangan, industri dan ekonomi',
-
-    'Sains, teknologi dan inovasi',
-
+    '001' => [
+        'name' => 'Kerajaan',
+        'agencies' => [
+            ['code' => 'K010100', 'name' => 'Jabatan Perdana Menteri (JPM)'],
+            ['code' => 'A010101', 'name' => 'Suruhanjaya Pilihan Raya (SPR)'],
+            ['code' => 'A010102', 'name' => 'Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)'],
+            ['code' => 'A010103', 'name' => 'Jabatan Kemajuan Islam Malaysia (JAKIM)'],
+            ['code' => 'A010104', 'name' => 'Perbadanan Putrajaya (PPj)'],
+            ['code' => 'A010105', 'name' => 'Parlimen Malaysia'],
+            ['code' => 'A010106', 'name' => 'Suruhanjaya Perkhidmatan Pendidikan (SPP)'],
+            ['code' => 'A010107', 'name' => 'Jabatan Perkhidmatan Awam (JPA)'],
+            ['code' => 'A010108', 'name' => 'Pejabat Ketua Pendaftar Mahkamah Persekutuan Malaysia'],
+            ['code' => 'A010109', 'name' => 'Bahagian Kabinet, Perlembagaan dan Perhubungan Antara Kerajaan'],
+            ['code' => 'A010110', 'name' => 'Pejabat Perdana Menteri (PMO)'],
+            ['code' => 'A010111', 'name' => 'Jabatan Peguam Negara (AGC)'],
+            ['code' => 'A010217', 'name' => 'Jabatan Ukur Dan Pemetaan Malaysia (JUPEM)'],
+            ['code' => 'A010218', 'name' => 'Jabatan Kesihatan Dan Keselamatan Pekerja (JKJP)'],
+        ],
+    ],
+    '002' => [
+        'name' => 'Perbankan dan kewangan',
+        'agencies' => [
+            ['code' => 'K020100', 'name' => 'Kementerian Kewangan Malaysia (MOF)'],
+            ['code' => 'A020101', 'name' => 'Jabatan Kastam DiRaja Malaysia (JKDM)'],
+            ['code' => 'A020102', 'name' => 'Jabatan Akauntan Negara Malaysia'],
+            ['code' => 'A020103', 'name' => 'Jabatan Penilaian dan Perkhidmatan Harta'],
+            ['code' => 'A020104', 'name' => 'Lembaga Hasil Dalam Negeri (LHDN)'],
+            ['code' => 'A020105', 'name' => 'Kumpulan Wang Simpanan Pekerja'],
+            ['code' => 'A020106', 'name' => 'Kumpulan Wang Persaraan (Diperbadankan)'],
+            ['code' => 'A020107', 'name' => 'Lembaga Pembiayaan Perumahan Sektor Awam (LPPSA)'],
+            ['code' => 'A020108', 'name' => 'Lembaga Perkhidmatan Kewangan Labuan'],
+            ['code' => 'K020200', 'name' => 'Bank Negara Malaysia (BNM)'],
+            ['code' => 'A020201', 'name' => 'Malayan Banking Berhad'],
+            ['code' => 'A020202', 'name' => 'CIMB Bank Berhad'],
+            ['code' => 'A020203', 'name' => 'Public Bank Berhad'],
+            ['code' => 'A020204', 'name' => 'PayNet - Malaysian Electronic Payment System'],
+            ['code' => 'A020205', 'name' => 'BSN Malaysia'],
+            ['code' => 'A020206', 'name' => 'Touch n\' Go'],
+            ['code' => 'A020207', 'name' => 'TNG Digital Sdn. Bhd.'],
+            ['code' => 'K020300', 'name' => 'Suruhanjaya Sekuriti Malaysia'],
+            ['code' => 'A020301', 'name' => 'Bursa Malaysia'],
+        ],
+    ],
+    '003' => [
+        'name' => 'Pengangkutan',
+        'agencies' => [
+            ['code' => 'K030100', 'name' => 'Kementerian Pengangkutan Malaysia (MOT)'],
+            ['code' => 'A030101', 'name' => 'Jabatan Pengangkutan Jalan (JPJ) Malaysia'],
+            ['code' => 'A030102', 'name' => 'Jabatan Laut Malaysia (JLM)'],
+            ['code' => 'A030103', 'name' => 'Lembaga Pelabuhan Kelang (LPK)'],
+            ['code' => 'A030104', 'name' => 'Lembaga Pelabuhan Johor (LPJ)'],
+            ['code' => 'A030105', 'name' => 'Lembaga Pelabuhan Kuantan (LPKtn)'],
+            ['code' => 'A030106', 'name' => 'Lembaga Pelabuhan Kemaman (LPKmn)'],
+            ['code' => 'A030107', 'name' => 'Lembaga Pelabuhan Bintulu (LPB)'],
+            ['code' => 'K030200', 'name' => 'Pihak Berkuasa Penerbangan Awam Malaysia (CAAM)'],
+            ['code' => 'A030201', 'name' => 'Malindo Airways Sdn Bhd (Batik Air Malaysia)'],
+            ['code' => 'A030202', 'name' => 'Malaysia Airports Holdings Berhad'],
+            ['code' => 'A030203', 'name' => 'Pos Aviation Sdn. Bhd.'],
+            ['code' => 'A030204', 'name' => 'Malaysia Aviation Group (MAG)'],
+            ['code' => 'A030205', 'name' => 'Capital A Berhad'],
+            ['code' => 'A030206', 'name' => 'Ground Team Red Sdn.Bhd'],
+            ['code' => 'A030207', 'name' => 'AirAsia X Berhad'],
+            ['code' => 'A030208', 'name' => 'AirAsia Berhad'],
+            ['code' => 'A030209', 'name' => 'Senai Airport Terminal Services Sdn.Bhd.'],
+            ['code' => 'K030300', 'name' => 'Agensi Pengangkutan Awam Darat (APAD)'],
+            ['code' => 'A030301', 'name' => 'Rapid Rail'],
+            ['code' => 'A030302', 'name' => 'Keretapi Tanah Melayu Berhad (KTMB)'],
+            ['code' => 'A030303', 'name' => 'Express Rail Link (ERL)'],
+            ['code' => 'A030304', 'name' => 'Rapid Bus'],
+            ['code' => 'A030305', 'name' => 'Prasarana Malaysia Berhad'],
+            ['code' => 'K030400', 'name' => 'Lembaga Lebuhraya Malaysia (LLM)'],
+            ['code' => 'A030401', 'name' => 'Projek Lebuhraya Usahasama Berhad (PLUS)'],
+            ['code' => 'A030402', 'name' => 'Amanat Lebuhraya Rakyat Berhad (LITRAK)'],
+            ['code' => 'A030403', 'name' => 'BESRAYA (M) Sdn. Bhd'],
+            ['code' => 'A030404', 'name' => 'Grand Saga Sdn Bhd'],
+            ['code' => 'A030405', 'name' => 'Jambatan Kedua Sdn Bhd'],
+            ['code' => 'A030406', 'name' => 'Konsortium Lebuhraya Utara - Timur (KL) Sdn Bhd (DUKE)'],
+            ['code' => 'A030407', 'name' => 'KL-Kuala Selangor Expressway Berhad (LATAR)'],
+            ['code' => 'A030408', 'name' => 'Lebuhraya Kajang - Seremban Sdn Bhd (LEKAS)'],
+            ['code' => 'A030409', 'name' => 'Lingkaran Laut Butterworth (Penang) Sdn Bhd'],
+            ['code' => 'A030410', 'name' => 'Lebuhraya Pantai Timur 2 Sdn Bhd (LPT2)'],
+            ['code' => 'A030411', 'name' => 'Maju Expressway Sdn Bhd (MEX)'],
+            ['code' => 'A030412', 'name' => 'New Pantai Expressway Sdn. Bhd. (NPE)'],
+            ['code' => 'A030413', 'name' => 'Senai Desaru Expressway Berhad'],
+            ['code' => 'A030414', 'name' => 'Projek Lintasan Kota Holding Sdn. Bhd.'],
+        ],
+    ],
+    '004' => [
+        'name' => 'Pertahanan dan keselamatan negara',
+        'agencies' => [],
+    ],
+    '005' => [
+        'name' => 'Maklumat, komunikasi dan digital',
+        'agencies' => [],
+    ],
+    '006' => [
+        'name' => 'Perkhidmatan jagaan kesihatan',
+        'agencies' => [],
+    ],
+    '007' => [
+        'name' => 'Air, pembentungan dan pengurusan sisa',
+        'agencies' => [],
+    ],
+    '008' => [
+        'name' => 'Tenaga',
+        'agencies' => [],
+    ],
+    '009' => [
+        'name' => 'Pertanian dan perladangan',
+        'agencies' => [],
+    ],
+    '010' => [
+        'name' => 'Perdagangan, industri dan ekonomi',
+        'agencies' => [],
+    ],
+    '011' => [
+        'name' => 'Sains, teknologi dan inovasi',
+        'agencies' => [],
+    ],
 ];

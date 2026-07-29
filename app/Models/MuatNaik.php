@@ -17,5 +17,9 @@ class MuatNaik extends Model
         'status',
         'jumlah_rekod',
         'tarikh_import',
+        'sector_code',
+        'sector_name',
+        'agency_code',
+        'agency_name',
     ];
 }

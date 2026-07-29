@@ -6,75 +6,75 @@
 
 @section('content')
 
-<div class="report-card">
+    <div class="report-card">
 
-    <h4 class="section-title">
-        Rekod Muat Naik Fail
-    </h4>
-<div class="table-responsive-custom">
-    <table class="table-modern">
+        <h4 class="section-title">
+            Rekod Muat Naik Fail
+        </h4>
+        <div class="table-responsive-custom">
+            <table class="table-modern">
 
-        <thead>
+                <thead>
 
-        <tr>
-            <th>Nama Fail</th>
-            <th>Status</th>
-            <th>Jumlah Rekod</th>
-            <th>Tarikh</th>
-        </tr>
+                    <tr>
+                        <th>Nama Fail</th>
+                        <th>Sektor</th>
+                        <th>Agensi</th>
+                        <th>Status</th>
+                        <th>Jumlah Rekod</th>
+                        <th>Tarikh</th>
+                    </tr>
 
-        </thead>
+                </thead>
 
-        <tbody>
+                <tbody>
 
-        @forelse($rekod as $item)
+                    @forelse($rekod as $item)
+                        <tr>
 
-            <tr>
+                            <td>{{ $item->nama_fail }}</td>
+                            <td>{{ $item->sector_code }} - {{ $item->sector_name }}</td>
+                            <td>{{ $item->agency_code }} - {{ $item->agency_name }}</td>
 
-                <td>{{ $item->nama_fail }}</td>
+                            <td>
+                                <span class="status-badge status-rendah">
+                                    {{ $item->status }}
+                                </span>
+                            </td>
 
-                <td>
+                            <td>
+                                {{ $item->jumlah_rekod ?? '-' }}
+                            </td>
 
-                    <span class="status-badge status-rendah">
-                        {{ $item->status }}
-                    </span>
+                            <td>
+                                {{ $item->created_at?->format('d/m/Y H:i') }}
+                            </td>
 
-                </td>
+                        </tr>
 
-                <td>
-                    {{ $item->jumlah_rekod ?? '-' }}
-                </td>
+                    @empty
 
-                <td>
-                    {{ $item->created_at?->format('d/m/Y H:i') }}
-                </td>
+                        <tr>
 
-            </tr>
+                            <td colspan="4" class="text-center">
 
-        @empty
+                                Tiada rekod ditemui
 
-            <tr>
+                            </td>
 
-                <td colspan="4" class="text-center">
+                        </tr>
+                    @endforelse
 
-                    Tiada rekod ditemui
+                </tbody>
 
-                </td>
+            </table>
+        </div>
+        <div class="mt-3">
 
-            </tr>
+            {{ $rekod->links() }}
 
-        @endforelse
-
-        </tbody>
-
-    </table>
-</div>
-    <div class="mt-3">
-
-        {{ $rekod->links() }}
+        </div>
 
     </div>
-
-</div>
 
 @endsection
