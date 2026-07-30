@@ -23,6 +23,7 @@
                         <th>Status</th>
                         <th>Jumlah Rekod</th>
                         <th>Tarikh</th>
+                        <th>Tindakan</th>
                     </tr>
 
                 </thead>
@@ -50,13 +51,24 @@
                                 {{ $item->created_at?->format('d/m/Y H:i') }}
                             </td>
 
+                            <td>
+                                <form action="{{ route('muat-naik.destroy', $item) }}" method="POST"
+                                    onsubmit="return confirm('Anda pasti mahu memadam rekod ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Padam
+                                    </button>
+                                </form>
+                            </td>
+
                         </tr>
 
                     @empty
 
                         <tr>
 
-                            <td colspan="4" class="text-center">
+                            <td colspan="7" class="text-center">
 
                                 Tiada rekod ditemui
 

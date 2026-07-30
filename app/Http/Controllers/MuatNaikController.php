@@ -25,6 +25,19 @@ class MuatNaikController extends Controller
         );
     }
 
+    public function destroy(MuatNaik $muatNaik)
+    {
+        if ($muatNaik->lokasi_fail && Storage::exists($muatNaik->lokasi_fail)) {
+            Storage::delete($muatNaik->lokasi_fail);
+        }
+
+        $muatNaik->delete();
+
+        return redirect()
+            ->route('muat-naik.history')
+            ->with('success', 'Rekod muat naik dan fail telah dipadamkan.');
+    }
+
     public function store(Request $request)
     {
         $request->validate([

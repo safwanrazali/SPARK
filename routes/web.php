@@ -34,6 +34,10 @@ Route::middleware('auth')->group(function () {
         [MuatNaikController::class, 'preview'])
         ->name('muat-naik.preview');
 
+    Route::delete('/muat-naik/{muatNaik}',
+        [MuatNaikController::class, 'destroy'])
+        ->name('muat-naik.destroy');
+
     Route::get('/sejarah-muat-naik',
         [MuatNaikController::class, 'history'])
         ->name('muat-naik.history');
