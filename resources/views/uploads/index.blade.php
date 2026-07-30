@@ -124,7 +124,7 @@
                     option.value = agency.code;
                     option.textContent = agency.name;
                     if (agency.code.startsWith('K')) {
-                        option.style.color = 'blue';
+                        option.style.color = 'purple';
                     }
                     agencySelect.appendChild(option);
                 });
