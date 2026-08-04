@@ -3,12 +3,10 @@
     <div class="sidebar-logo">
 
         <span class="sidebar-title">
-            SPRA
+            <img src="{{ asset('image/main_logo.png') }}" alt="Logo" class="logo" style="width: 100px; height: auto;">
         </span>
 
-        <button
-            class="btn btn-sm btn-outline-light"
-            id="toggleSidebar">
+        <button class="btn btn-sm btn-outline-light" id="toggleSidebar">
 
             <i class="bi bi-list"></i>
 
@@ -37,13 +35,13 @@
         </li>
 
         <li>
-    <a href="{{ route('muat-naik.history') }}">
-        <i class="bi bi-clock-history"></i>
-        <span class="menu-text">
-            Sejarah Muat Naik
-        </span>
-    </a>
-</li>
+            <a href="{{ route('muat-naik.history') }}">
+                <i class="bi bi-clock-history"></i>
+                <span class="menu-text">
+                    Sejarah Muat Naik
+                </span>
+            </a>
+        </li>
 
         <li>
             <a href="#">
