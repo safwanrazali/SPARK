@@ -14,9 +14,10 @@ class AdminUserSeeder extends Seeder
             ['username' => 'AdminMpq'],
             [
                 'name' => 'Admin',
-                'email' => 'admin@spra.local',
+                'email' => 'admin@spark.local',
                 'password' => Hash::make('mPq@P+pKm!@!@'),
                 'email_verified_at' => now(),
+                'role' => User::ROLE_ADMINISTRATOR,
             ]
         );
     }

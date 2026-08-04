@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\MuatNaikController;
 use App\Models\MuatNaik;
@@ -22,24 +23,39 @@ Route::middleware('auth')->group(function () {
 
     });
 
+    // Viewing upload UI/history stays open to all authenticated roles
+    // (Analyst can view inventory-related history per spec; only the
+    // actual write actions are gated below).
     Route::get('/muat-naik',
         [MuatNaikController::class, 'index'])
         ->name('muat-naik.index');
 
-    Route::post('/muat-naik',
-        [MuatNaikController::class, 'store'])
-        ->name('muat-naik.store');
-
-    Route::post('/muat-naik/preview',
-        [MuatNaikController::class, 'preview'])
-        ->name('muat-naik.preview');
-
-    Route::delete('/muat-naik/{muatNaik}',
-        [MuatNaikController::class, 'destroy'])
-        ->name('muat-naik.destroy');
-
     Route::get('/sejarah-muat-naik',
         [MuatNaikController::class, 'history'])
         ->name('muat-naik.history');
+
+    Route::middleware('can:manage-upload')->group(function () {
+
+        Route::post('/muat-naik',
+            [MuatNaikController::class, 'store'])
+            ->name('muat-naik.store');
+
+        Route::post('/muat-naik/preview',
+            [MuatNaikController::class, 'preview'])
+            ->name('muat-naik.preview');
+
+        Route::delete('/muat-naik/{muatNaik}',
+            [MuatNaikController::class, 'destroy'])
+            ->name('muat-naik.destroy');
+
+    });
+
+    Route::middleware('can:access-administration')
+        ->prefix('administration')
+        ->name('administration.')
+        ->group(function () {
+            Route::resource('users', UserController::class)
+                ->except(['show']);
+        });
 
 });

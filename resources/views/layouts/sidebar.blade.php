@@ -105,6 +105,13 @@
             </li>
         @endcan
 
+        <li>
+            <a href="{{ route('administration.users.index') }}">
+                <i class="bi bi-people"></i>
+                <span class="menu-text">Pengguna</span>
+            </a>
+        </li>
+
     </ul>
 
 </div>
