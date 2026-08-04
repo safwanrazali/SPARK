@@ -47,10 +47,9 @@
 }
 
 .logo {
-    height: 120px;
-    width: auto;
+    width: 170px;
+    height: auto;
     object-fit: contain;
-    flex-shrink: 0;
 }
 
 .sidebar-toggle {
@@ -124,6 +123,39 @@
 
 .sidebar.collapsed .menu-text {
     display: none;
+}
+
+.sidebar-section-title {
+    display: flex;
+    align-items: center;
+
+    gap: 0.75rem;
+
+    margin: 2rem 0 1rem;
+
+    padding: 0 1rem;
+
+    color: #8fd8a9;
+
+    font-size: 0.72rem;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1.2px;
+
+    opacity: 0.8;
+}
+
+.sidebar-section-title::after {
+    content: "";
+
+    flex: 1;
+
+    height: 1px;
+
+    background: rgba(143, 216, 169, 0.25);
 }
 
 @media (max-width: 768px) {
