@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Masuk - Sistem Penilaian Risiko Aset</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
     <style>
         .login-wrapper {

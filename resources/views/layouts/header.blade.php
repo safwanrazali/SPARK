@@ -2,8 +2,12 @@
 
     <div>
         <h2 class="page-title">
-            @yield('page-title')
+            Sistem Pengurusan Aset & Risiko Kriptografi
+
         </h2>
+        <p class="page-subtitle">
+            @yield('page-title')
+        </p>
     </div>
 
     <div class="header-right d-flex align-items-center gap-3">

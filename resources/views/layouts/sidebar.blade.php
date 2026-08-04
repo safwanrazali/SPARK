@@ -2,14 +2,12 @@
 
     <div class="sidebar-logo">
 
-        <a href="/" class="sidebar-title">
-            <img src="{{ asset('image/main_logo.png') }}" alt="Logo" class="logo" style="width: 100px; height: auto;">
+        <a href="/" class="sidebar-brand">
+            <img src="{{ asset('image/main_logo.png') }}" alt="Logo" class="logo">
         </a>
 
-        <button class="btn btn-sm btn-outline-light" id="toggleSidebar">
-
+        <button class="sidebar-toggle" id="toggleSidebar" aria-label="Toggle sidebar">
             <i class="bi bi-list"></i>
-
         </button>
 
     </div>
