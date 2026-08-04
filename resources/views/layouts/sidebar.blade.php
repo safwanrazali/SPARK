@@ -2,9 +2,9 @@
 
     <div class="sidebar-logo">
 
-        <span class="sidebar-title">
+        <a href="/" class="sidebar-title">
             <img src="{{ asset('image/main_logo.png') }}" alt="Logo" class="logo" style="width: 100px; height: auto;">
-        </span>
+        </a>
 
         <button class="btn btn-sm btn-outline-light" id="toggleSidebar">
 
