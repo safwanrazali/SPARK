@@ -26,7 +26,7 @@
     <label class="form-label">Peranan</label>
     <select name="role" class="form-select" required>
         <option value="">-- Sila Pilih --</option>
-        @foreach (['administrator' => 'Administrator', 'coordinator' => 'Coordinator', 'analyst' => 'Analyst'] as $value => $label)
+        @foreach (\App\Models\User::roleLabels() as $value => $label)
             <option value="{{ $value }}" @selected(old('role', $user?->role) === $value)>
                 {{ $label }}
             </option>

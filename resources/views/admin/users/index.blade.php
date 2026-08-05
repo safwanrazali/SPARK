@@ -40,7 +40,7 @@
                             <td>{{ $user->email }}</td>
                             <td>
                                 <span class="status-badge status-rendah">
-                                    {{ ucfirst($user->role) }}
+                                    {{ $user->roleLabel() }}
                                 </span>
                             </td>
                             <td>

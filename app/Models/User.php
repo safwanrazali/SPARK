@@ -22,6 +22,25 @@ class User extends Authenticatable
 
     public const ROLE_ANALYST = 'analyst';
 
+    /**
+     * Malay display labels for each role.
+     *
+     * @return array<string, string>
+     */
+    public static function roleLabels(): array
+    {
+        return [
+            self::ROLE_ADMINISTRATOR => 'Pentadbir Sistem',
+            self::ROLE_COORDINATOR => 'Pegawai Penyelaras Analisis',
+            self::ROLE_ANALYST => 'Pegawai Analisis',
+        ];
+    }
+
+    public function roleLabel(): string
+    {
+        return self::roleLabels()[$this->role] ?? $this->role;
+    }
+
     protected function casts(): array
     {
         return [
