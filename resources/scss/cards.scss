@@ -22,7 +22,7 @@
 .stat-card:hover {
     transform: translateY(-5px);
     border-color: $primary;
-    box-shadow: 0 0 25px rgba(0, 208, 132, 0.25);
+    box-shadow: 0 0 25px rgba($primary, 0.25);
 }
 
 .stat-title {

@@ -1,7 +1,7 @@
 .btn-primary {
-    background: #ff4fd8 !important;
+    background: linear-gradient(135deg, $primary, $secondary) !important;
     border: none !important;
-    color: white !important;
+    color: #04121f !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
     letter-spacing: 0.5px !important;
@@ -10,8 +10,8 @@
 }
 
 .btn-primary:hover {
-    background: #ff38d0 !important;
-    color: white !important;
+    filter: brightness(1.1);
+    color: #04121f !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 12px rgba(255, 79, 216, 0.35) !important;
+    box-shadow: 0 0 16px rgba($primary, 0.45) !important;
 }

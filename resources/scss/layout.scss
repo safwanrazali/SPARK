@@ -27,7 +27,7 @@
     align-items: center;
     margin-bottom: 2rem;
     padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, #10261f, #17362d);
+    background: linear-gradient(135deg, $surface, lighten($surface, 3%));
     border: 1px solid $border;
     border-radius: $radius;
     box-shadow: $shadow;

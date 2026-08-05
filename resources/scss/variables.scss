@@ -1,21 +1,21 @@
 // COLORS
-$bg: #08120f;
-$surface: #0f1f1b;
-$primary: #00d084;
-$secondary: #db2777;
+$bg: #0a0e17;
+$surface: #111a2b;
+$primary: #10b981; // emerald — matches the shield green in the logo
+$secondary: #f59e0b; // amber — matches the flash/spark in the logo
 
-$success: #00d084;
+$success: #10b981;
 $warning: #f59e0b;
 $danger: #ef4444;
 
-$text: #f8fafc;
-$muted: #b8c4c2;
-$border: #1e4037;
+$text: #e5e9f0;
+$muted: #8996ab;
+$border: #1e293f;
 $highlight: #ffffff;
 
 // UI
 $radius: 18px;
 
-$shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+$shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
 
 $transition: all 0.3s ease;
