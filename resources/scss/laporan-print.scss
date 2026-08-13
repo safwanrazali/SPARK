@@ -1,0 +1,120 @@
+/* ==========================================================================
+   Laporan Analisis Inventori Kriptografi — cetakan/PDF
+   Repeating page header (NACSA + RAHSIA + PTPKM) and footer
+   (kod rujukan + nombor muka surat) via CSS Paged Media, polyfilled by Paged.js
+   ========================================================================== */
+
+@page {
+    size: A4;
+    margin: 120px 48px 80px 48px;
+
+    @top-center {
+        content: element(pageHeader);
+    }
+
+    @bottom-left {
+        content: element(pageFooter);
+    }
+
+    @bottom-right {
+        content: "Muka Surat " counter(page) " / " counter(pages);
+        font-size: 9px;
+        color: #555;
+        font-family: Arial, sans-serif;
+    }
+}
+
+/* running elements: these are pulled out of the flow and repeated on every
+   page by the @page rules above. They must exist once in the source HTML. */
+#page-header-tpl {
+    position: running(pageHeader);
+}
+
+#page-footer-tpl {
+    position: running(pageFooter);
+}
+
+.page-header-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border-bottom: 2px solid #333;
+    padding-bottom: 8px;
+}
+
+.page-header-strip img {
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.page-header-strip img {
+    height: 34px;
+    object-fit: contain;
+}
+
+.page-header-strip .klasifikasi {
+    letter-spacing: 0.35em;
+    color: #b3403a;
+    font-weight: 700;
+    font-size: 11px;
+    font-family: Arial, sans-serif;
+}
+
+.page-footer-strip {
+    font-size: 9px;
+    color: #555;
+    font-family: Arial, sans-serif;
+    border-top: 1px solid #ccc;
+    padding-top: 4px;
+    white-space: nowrap;
+}
+
+/* base report typography, mirrors the existing .laporan-rasmi look */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #111;
+}
+
+h1 {
+    font-size: 15px;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 800;
+}
+
+h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-bottom: 2px solid #111;
+    padding-bottom: 4px;
+    margin: 20px 0 8px;
+}
+
+p {
+    text-align: justify;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+th,
+td {
+    border: 1px solid #333;
+    padding: 5px 8px;
+    vertical-align: top;
+    font-size: 11px;
+}
+
+th {
+    background: #eff1f5;
+    text-align: left;
+}

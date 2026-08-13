@@ -79,6 +79,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan/inventori/{analisis}', [LaporanController::class, 'inventori'])
         ->name('laporan.inventori');
 
+    Route::get('/laporan/inventori/{analisis}/unduh', [LaporanController::class, 'unduh'])
+        ->name('laporan.unduh');
+
     /*
     |----------------------------------------------------------------------
     | Pentadbiran (sedia ada, dikekalkan)

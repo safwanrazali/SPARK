@@ -19,9 +19,9 @@
                         <i class="bi bi-pencil"></i> Betulkan Input
                     </a>
                 @endcan
-                <button class="btn btn-primary" onclick="window.print()">
-                    <i class="bi bi-printer"></i> Cetak / Simpan PDF
-                </button>
+                <a class="btn btn-primary" href="{{ route('laporan.unduh', $analisis) }}">
+                    <i class="bi bi-file-earmark-pdf"></i> Muat Turun PDF
+                </a>
             </div>
         </div>
     </div>
@@ -82,25 +82,6 @@
             color: #b3403a;
             font-weight: 700;
             font-size: .8rem;
-        }
-
-        @media print {
-
-            .sidebar,
-            .page-header,
-            .d-print-none {
-                display: none !important;
-            }
-
-            .main-content,
-            .content-wrapper {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .laporan-rasmi {
-                padding: 0;
-            }
         }
     </style>
 
