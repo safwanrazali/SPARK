@@ -12,7 +12,7 @@
     <ul class="sidebar-menu">
 
         <li>
-            <a href="/">
+            <a href="{{ route('dashboard') }}">
                 <i class="bi bi-grid"></i>
                 <span class="menu-text">Papan Pemuka</span>
             </a>
@@ -35,48 +35,50 @@
         </li>
 
         <li>
-            <a href="#" class="disabled-link" title="Akan datang">
+            <a href="{{ route('analisis.index') }}">
                 <i class="bi bi-hdd-stack"></i>
-                <span class="menu-text">Inventori Kriptografi</span>
+                <span class="menu-text">Analisis Inventori Kriptografi</span>
+            </a>
+        </li>
+
+        <li class="sidebar-section-title"><span class="menu-text">Pemantauan</span></li>
+
+        <li>
+            <a href="{{ route('status.index') }}">
+                <i class="bi bi-list-check"></i>
+                <span class="menu-text">Status Tiga Laporan</span>
             </a>
         </li>
 
         <li class="sidebar-section-title"><span class="menu-text">Penilaian Risiko</span></li>
 
         <li>
-            <a href="#" class="disabled-link" title="Akan datang">
+            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)">
                 <i class="bi bi-shield-exclamation"></i>
-                <span class="menu-text">Penilaian Risiko</span>
-            </a>
-        </li>
-
-        <li>
-            <a href="#" class="disabled-link" title="Akan datang">
-                <i class="bi bi-journal-text"></i>
-                <span class="menu-text">Sejarah Penilaian</span>
+                <span class="menu-text">Penilaian Risiko PQC</span>
             </a>
         </li>
 
         <li class="sidebar-section-title"><span class="menu-text">Laporan</span></li>
 
         <li>
-            <a href="#" class="disabled-link" title="Akan datang">
+            <a href="{{ route('laporan.index') }}">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span class="menu-text">Laporan Inventori</span>
             </a>
         </li>
 
         <li>
-            <a href="#" class="disabled-link" title="Akan datang">
+            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)">
                 <i class="bi bi-file-earmark-medical"></i>
                 <span class="menu-text">Laporan Risiko</span>
             </a>
         </li>
 
         <li>
-            <a href="#" class="disabled-link" title="Akan datang">
+            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Nov–Dis)">
                 <i class="bi bi-file-earmark-richtext"></i>
-                <span class="menu-text">Laporan Menyeluruh</span>
+                <span class="menu-text">Laporan Kesiapsiagaan</span>
             </a>
         </li>
 
@@ -84,33 +86,12 @@
             <li class="sidebar-section-title"><span class="menu-text">Pentadbiran</span></li>
 
             <li>
-                <a href="#" class="disabled-link" title="Akan datang">
+                <a href="{{ route('administration.users.index') }}">
                     <i class="bi bi-people"></i>
                     <span class="menu-text">Pengguna</span>
                 </a>
             </li>
-
-            <li>
-                <a href="#" class="disabled-link" title="Akan datang">
-                    <i class="bi bi-key"></i>
-                    <span class="menu-text">Peranan</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="#" class="disabled-link" title="Akan datang">
-                    <i class="bi bi-gear"></i>
-                    <span class="menu-text">Tetapan</span>
-                </a>
-            </li>
         @endcan
-
-        <li>
-            <a href="{{ route('administration.users.index') }}">
-                <i class="bi bi-people"></i>
-                <span class="menu-text">Pengguna</span>
-            </a>
-        </li>
 
     </ul>
 

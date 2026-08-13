@@ -19,10 +19,18 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-upload', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
 
-        Gate::define('access-inventory', fn (User $user) => true); // all 3 roles per your spec
+        // Fasa 1 — kawalan akses mengikut slaid 14 (PPTX):
+        // Pegawai Analisis  : input dapatan + jana laporan
+        // Pegawai Penyelaras: tetapkan / kemas kini status 3 laporan
+        // Pentadbir         : semua fungsi
+        Gate::define('manage-analysis', fn (User $user) => $user->isAdministrator() || $user->isAnalyst());
 
-        Gate::define('access-risk-assessment', fn (User $user) => true); // all 3 roles
+        Gate::define('manage-status', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
 
-        Gate::define('access-reports', fn (User $user) => true); // all 3 roles
+        Gate::define('access-inventory', fn (User $user) => true);
+
+        Gate::define('access-risk-assessment', fn (User $user) => true);
+
+        Gate::define('access-reports', fn (User $user) => true);
     }
 }
