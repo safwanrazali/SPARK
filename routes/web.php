@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AnalisisInventoriController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EntitiAssignmentController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MuatNaikController;
 use App\Http\Controllers\StatusLaporanController;
@@ -88,6 +89,21 @@ Route::middleware('auth')->group(function () {
         Route::post('/workflow/{agencyCode}/status', [WorkflowController::class, 'status'])
             ->name('workflow.status');
     });
+
+    /*
+    |----------------------------------------------------------------------
+    | Penugasan Entiti — Penyelaras tugaskan entiti kepada Analisis (Fasa 3)
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('can:manage-assignment')
+        ->prefix('penugasan')
+        ->name('penugasan.')
+        ->group(function () {
+            Route::get('/', [EntitiAssignmentController::class, 'index'])->name('index');
+            Route::get('/{agencyCode}', [EntitiAssignmentController::class, 'show'])->name('show');
+            Route::post('/{agencyCode}', [EntitiAssignmentController::class, 'simpan'])->name('simpan');
+            Route::post('/{agencyCode}/tarik', [EntitiAssignmentController::class, 'tarik'])->name('tarik');
+        });
 
     /*
     |----------------------------------------------------------------------

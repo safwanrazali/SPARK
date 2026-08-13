@@ -14,12 +14,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * - assigned_to_user_id (Pegawai Analisis)
  * - assigned_by_user_id (Koordinator yang membuat penugasan)
  * - assigned_at (tarikh penugasan)
+ *
+ * FASA 3 — satu entiti hanya boleh mempunyai SATU penugasan aktif pada satu
+ * masa. Penugasan lama tidak dibuang; ia ditandakan 'reassigned' atau
+ * 'unassigned' supaya sejarah penugasan kekal. Perubahan sebenar dilakukan
+ * melalui App\Services\EntityAssignmentService.
  */
 class EntitasAssignment extends Model
 {
     use HasFactory;
 
     protected $table = 'entiti_assignment';
+
+    /**
+     * Penugasan semasa bagi entiti.
+     */
+    public const STATUS_ACTIVE = 'active';
+
+    /**
+     * Penugasan lama yang telah digantikan oleh penugasan baharu.
+     */
+    public const STATUS_REASSIGNED = 'reassigned';
+
+    /**
+     * Penugasan yang ditarik balik tanpa gantian.
+     */
+    public const STATUS_UNASSIGNED = 'unassigned';
+
+    /**
+     * Label paparan bagi setiap status penugasan.
+     *
+     * @var array<string, string>
+     */
+    public const STATUSES = [
+        self::STATUS_ACTIVE => 'Aktif',
+        self::STATUS_REASSIGNED => 'Ditukar Ganti',
+        self::STATUS_UNASSIGNED => 'Ditarik Balik',
+    ];
 
     protected $fillable = [
         'agency_code',
@@ -38,6 +69,19 @@ class EntitasAssignment extends Model
     ];
 
     /**
+     * `active_flag` ialah penanda teknikal untuk kekangan unik
+     * (agency_code, active_flag) — 1 apabila aktif, NULL apabila tidak.
+     * Ia diselenggara di sini supaya setiap laluan simpan kekal konsisten
+     * dan tidak boleh terpesong daripada nilai `status`.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $assignment) {
+            $assignment->active_flag = $assignment->status === self::STATUS_ACTIVE ? 1 : null;
+        });
+    }
+
+    /**
      * Pegawai yang ditugaskan untuk entiti ini.
      */
     public function assignedTo(): BelongsTo
@@ -54,11 +98,38 @@ class EntitasAssignment extends Model
     }
 
     /**
+     * Adakah penugasan ini yang sedang berkuat kuasa?
+     */
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    /**
+     * Label paparan bagi status penugasan.
+     */
+    public function statusLabel(): string
+    {
+        return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    /**
+     * Kelas badge selaras dengan modul pemantauan yang lain.
+     */
+    public function statusBadgeClass(): string
+    {
+        return [
+            self::STATUS_ACTIVE => 'status-rendah',
+            self::STATUS_REASSIGNED => 'status-sederhana',
+        ][$this->status] ?? 'status-tinggi';
+    }
+
+    /**
      * Scope untuk penugasan yang aktif.
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
     /**
@@ -75,5 +146,13 @@ class EntitasAssignment extends Model
     public function scopeForAgency($query, $agencyCode)
     {
         return $query->where('agency_code', $agencyCode);
+    }
+
+    /**
+     * Scope untuk sejarah penugasan — terbaharu di atas.
+     */
+    public function scopeTerkini($query)
+    {
+        return $query->orderByDesc('assigned_at')->orderByDesc('id');
     }
 }

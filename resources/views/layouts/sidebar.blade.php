@@ -43,6 +43,15 @@
 
         <li class="sidebar-section-title"><span class="menu-text">Pemantauan</span></li>
 
+        @can('manage-assignment')
+            <li>
+                <a href="{{ route('penugasan.index') }}">
+                    <i class="bi bi-person-check"></i>
+                    <span class="menu-text">Penugasan Entiti</span>
+                </a>
+            </li>
+        @endcan
+
         <li>
             <a href="{{ route('workflow.index') }}">
                 <i class="bi bi-diagram-3"></i>

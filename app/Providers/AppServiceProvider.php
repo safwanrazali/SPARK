@@ -35,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
         // Ubah pemetaan di sini sahaja apabila business rule disahkan.
         Gate::define('manage-workflow', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
 
+        // Fasa 3 — penugasan entiti kepada Pegawai Analisis.
+        // Matriks kebenaran (spesifikasi bahagian 26) menyatakan "Assign entity"
+        // dibenarkan untuk Pentadbir dan Pegawai Penyelaras Analisis sahaja.
+        Gate::define('manage-assignment', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+
         Gate::define('access-inventory', fn (User $user) => true);
 
         Gate::define('access-risk-assessment', fn (User $user) => true);
