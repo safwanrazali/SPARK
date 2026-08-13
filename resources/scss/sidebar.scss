@@ -6,7 +6,7 @@
     width: 280px;
     height: 100vh;
 
-    background: linear-gradient(180deg, $primary, $secondary);
+    background: linear-gradient(180deg, $sidebar-bg-end, $sidebar-bg);
     border-right: 1px solid $sidebar-border;
 
     padding: 1.5rem;
@@ -86,8 +86,8 @@
 }
 
 .sidebar-toggle:hover {
-    border-color: $primary;
-    color: $primary;
+    border-color: $accent-cyan;
+    color: $accent-cyan;
 }
 
 .sidebar-menu {
@@ -114,16 +114,16 @@
 }
 
 .sidebar-menu a:hover {
-    background: $bg;
-    color: $primary;
+    background: rgba($primary, 0.25);
+    color: $accent-cyan;
     transform: translateX(4px);
-    box-shadow: 0 0 15px rgba($primary, 0.2);
+    box-shadow: 0 0 15px rgba($primary, 0.35);
 }
 
 .sidebar-menu a.active {
-    background: $bg;
-    color: $primary;
-    border-left: 3px solid $primary;
+    background: rgba($primary, 0.3);
+    color: $accent-cyan;
+    border-left: 3px solid $accent-cyan;
 }
 
 .sidebar-menu i {
@@ -142,7 +142,7 @@
     margin: 2rem 0 1rem;
     padding: 0 1rem;
 
-    color: #56b5d8;
+    color: $accent-cyan;
 
     font-size: 0.9rem;
     font-weight: 700;
@@ -155,7 +155,7 @@
     content: "";
     flex: 1;
     height: 1px;
-    background: rgba(94, 234, 212, 0.25);
+    background: rgba($accent-cyan, 0.25);
 }
 
 @media (max-width: 768px) {

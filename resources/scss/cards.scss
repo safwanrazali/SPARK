@@ -43,24 +43,98 @@
 }
 
 .status-rendah {
-    background: #dcfce7;
-    color: #15803d;
+    background: rgba($success, 0.14);
+    color: $success;
 }
 
 .status-sederhana {
-    background: #fef3c7;
-    color: #b45309;
+    background: rgba($warning, 0.16);
+    color: $warning;
 }
 
 .status-tinggi {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: rgba($danger, 0.14);
+    color: $danger;
 }
 
 .alert-success {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #047857;
+    background: rgba($success, 0.1);
+    border: 1px solid rgba($success, 0.3);
+    color: $success;
     border-radius: 12px;
     margin-bottom: 1rem;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard — compact metric cards (top row)
+|--------------------------------------------------------------------------
+*/
+
+.metric-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: $radius;
+    box-shadow: $shadow;
+    padding: 1.5rem 1.75rem;
+    transition: $transition;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba($primary, 0.14);
+}
+
+.metric-card__label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    color: $muted;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.metric-card__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.metric-card__value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: $text;
+    line-height: 1;
+}
+
+.metric-card__bar {
+    width: 44px;
+    height: 5px;
+    border-radius: 99px;
+    opacity: 0.85;
+}
+
+// Dot / bar accent colour variants
+.is-primary {
+    background: $primary;
+}
+
+.is-cyan {
+    background: $accent-cyan-dark;
+}
+
+.is-success {
+    background: $success;
+}
+
+.is-warning {
+    background: $warning;
 }

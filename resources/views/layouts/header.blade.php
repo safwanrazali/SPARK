@@ -2,7 +2,7 @@
 
     <div>
         <h2 class="page-title">
-            Sistem Pengurusan Aset & Risiko Kriptografi
+            Sistem Pemantauan & Pelaporan Analisis Migrasi PQC
 
         </h2>
         <p class="page-subtitle">

@@ -30,7 +30,7 @@
     background: linear-gradient(180deg, $primary, $secondary);
     border: none;
     border-radius: $radius;
-    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.25);
+    box-shadow: 0 10px 30px rgba($primary, 0.25);
 }
 
 @media (max-width: 768px) {

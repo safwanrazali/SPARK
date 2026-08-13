@@ -1,23 +1,29 @@
-$bg: #f3f5fb;
+// Palette derived from the PQC Migration platform brand deck
+// (Platform_Analisis_Pelaporan_Migrasi_PQC_v2_animated.pptx)
+$bg: #f7f6fc;
 $surface: #ffffff;
-$primary: #392a48;
-$secondary: #6f4685;
+$primary: #7c3aed;
+$secondary: #5b21b6;
 
-$success: #10b981;
-$warning: #f59e0b;
-$danger: #ef4444;
+$accent-cyan: #22d3ee;
+$accent-cyan-dark: #0891b2;
 
-$text: #1e293b;
-$muted: #64748b;
-$border: #e5e9f4;
+$success: #059669;
+$warning: #d97706;
+$danger: #dc2626;
+
+$text: #201a3a;
+$muted: #6e6889;
+$border: #e3dff0;
 $highlight: #ffffff;
 
-$sidebar-bg: #10162a;
-$sidebar-border: #1f2a44;
-$sidebar-text: #e5e9f4;
-$sidebar-muted: #8996b3;
+$sidebar-bg: #171130;
+$sidebar-bg-end: #2a1f52;
+$sidebar-border: #3a3170;
+$sidebar-text: #efedf6;
+$sidebar-muted: #9e92cf;
 
 // UI
 $radius: 18px;
-$shadow: 0 10px 30px rgba(99, 102, 241, 0.08);
+$shadow: 0 10px 30px rgba($primary, 0.08);
 $transition: all 0.3s ease;

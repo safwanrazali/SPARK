@@ -6,77 +6,114 @@
 
 @section('content')
 
-    <div class="dashboard-grid">
+    {{-- Baris metrik ringkas --}}
+    <div class="metric-row">
 
-        <div class="stat-card">
-            <div class="stat-title">Jumlah Sektor</div>
-            <div class="stat-value">{{ $jumlahSektor }}</div>
+        <div class="metric-card">
+            <div class="metric-card__label">
+                <span class="metric-card__dot is-primary"></span>
+                Jumlah Sektor
+            </div>
+            <div class="metric-card__value">{{ $jumlahSektor }}</div>
+            <div class="metric-card__bar is-primary"></div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-title">Jumlah Entiti Dipantau</div>
-            <div class="stat-value">{{ $jumlahEntiti }}</div>
+        <div class="metric-card">
+            <div class="metric-card__label">
+                <span class="metric-card__dot is-cyan"></span>
+                Jumlah Entiti
+            </div>
+            <div class="metric-card__value">{{ $jumlahEntiti }}</div>
+            <div class="metric-card__bar is-cyan"></div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-title">Analisis Selesai</div>
-            <div class="stat-value">{{ $analisisSelesai }}</div>
+        <div class="metric-card">
+            <div class="metric-card__label">
+                <span class="metric-card__dot is-success"></span>
+                Analisis Selesai
+            </div>
+            <div class="metric-card__value">{{ $analisisSelesai }}</div>
+            <div class="metric-card__bar is-success"></div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-title">Laporan Siap</div>
-            <div class="stat-value">{{ $laporanSiap }}</div>
+        <div class="metric-card">
+            <div class="metric-card__label">
+                <span class="metric-card__dot is-warning"></span>
+                Laporan Siap
+            </div>
+            <div class="metric-card__value">{{ $laporanSiap }}</div>
+            <div class="metric-card__bar is-warning"></div>
         </div>
 
     </div>
 
-    <div class="dashboard-section">
-        <div class="report-card">
-            <h4 class="section-title">Kemajuan Analisis Mengikut Sektor</h4>
+    {{-- Baris carta: kemajuan sektor / status 3 laporan / kemajuan keseluruhan --}}
+    <div class="dashboard-section chart-row">
 
-            @forelse ($mengikutSektor as $sektor)
-                @php $peratus = $sektor['jumlah'] ? round($sektor['selesai'] / $sektor['jumlah'] * 100) : 0; @endphp
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>{{ $sektor['nama'] }}</span>
-                        <span class="text-secondary">{{ $sektor['selesai'] }}/{{ $sektor['jumlah'] }} entiti</span>
-                    </div>
-                    <div style="height:8px;background:#e9ecf1;border-radius:99px;overflow:hidden">
-                        <div style="height:8px;width:{{ $peratus }}%;background:#1f4e8c;border-radius:99px"></div>
-                    </div>
+        <div class="chart-card">
+            <div class="chart-card__title">Kemajuan Analisis Mengikut Sektor</div>
+
+            @if (count($mengikutSektor))
+                @php
+                    $maxPeratus = max(
+                        1,
+                        ...array_map(
+                            fn($s) => $s['jumlah'] ? round(($s['selesai'] / $s['jumlah']) * 100) : 0,
+                            $mengikutSektor,
+                        ),
+                    );
+                @endphp
+                <div class="bar-chart">
+                    @foreach ($mengikutSektor as $sektor)
+                        @php $peratus = $sektor['jumlah'] ? round($sektor['selesai'] / $sektor['jumlah'] * 100) : 0; @endphp
+                        <div class="bar-chart__col"
+                            title="{{ $sektor['nama'] }}: {{ $sektor['selesai'] }}/{{ $sektor['jumlah'] }} entiti ({{ $peratus }}%)">
+                            <div class="bar-chart__bar" style="height: {{ max(6, round(($peratus / $maxPeratus) * 100)) }}%">
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-            @empty
+                <div class="bar-chart__labels">
+                    @foreach ($mengikutSektor as $i => $sektor)
+                        <div class="bar-chart__label" title="{{ $sektor['nama'] }}">{{ $i + 1 }}</div>
+                    @endforeach
+                </div>
+            @else
                 <p class="text-secondary">
                     Belum ada entiti terlibat dalam proses analisis. Entiti dikira dipantau
                     setelah mempunyai rekod muat naik, dapatan analisis atau status laporan.
                 </p>
-            @endforelse
+            @endif
         </div>
-    </div>
 
-    <div class="dashboard-section">
-        <div class="report-card">
-            <h4 class="section-title">Status Tiga Laporan ({{ $jumlahRekodLaporan }} rekod laporan)</h4>
+        <div class="chart-card">
+            <div class="chart-card__title">Status 3 Laporan</div>
 
-            @foreach ([['Siap', $siap, '#1b7f4d'], ['Dalam Proses', $dalamProses, '#a16207'], ['Belum Bermula', $belum, '#5b6472']] as [$nama, $nilai, $warna])
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <span style="width:130px">{{ $nama }}</span>
-                    <div style="flex:1;height:10px;background:#e9ecf1;border-radius:99px;overflow:hidden">
-                        <div
-                            style="height:10px;width:{{ $jumlahRekodLaporan ? ($nilai / $jumlahRekodLaporan) * 100 : 0 }}%;background:{{ $warna }};border-radius:99px">
-                        </div>
+            <div class="status-pills">
+                @foreach ([['label' => 'Siap', 'nilai' => $siap, 'kelas' => 'siap'], ['label' => 'Dalam Proses', 'nilai' => $dalamProses, 'kelas' => 'proses'], ['label' => 'Belum', 'nilai' => $belum, 'kelas' => 'belum']] as $baris)
+                    @php $lebar = $jumlahRekodLaporan ? round($baris['nilai'] / $jumlahRekodLaporan * 100) : 0; @endphp
+                    <div class="status-pill-row">
+                        <span class="status-pill status-pill--{{ $baris['kelas'] }}">{{ $baris['label'] }}</span>
+                        <span class="status-pill-track">
+                            <span class="status-pill-fill status-pill-fill--{{ $baris['kelas'] }}"
+                                style="width: {{ max(6, $lebar) }}%"></span>
+                        </span>
                     </div>
-                    <span style="width:36px;text-align:right">{{ $nilai }}</span>
-                </div>
-            @endforeach
-
-            <hr>
-
-            <div class="d-flex align-items-baseline gap-3">
-                <span style="font-size:2.4rem;font-weight:700;color:#1f4e8c">{{ $kemajuan }}%</span>
-                <span class="text-secondary">kemajuan keseluruhan analisis &amp; pelaporan</span>
+                @endforeach
             </div>
         </div>
+
+        <div class="chart-card">
+            <div class="chart-card__title">Kemajuan Keseluruhan</div>
+
+            <div class="donut-wrap">
+                <div class="donut" style="--pct: {{ $kemajuan }}">
+                    <span class="donut__label">{{ $kemajuan }}%</span>
+                </div>
+                <div class="donut-caption">Peratus analisis &amp; pelaporan</div>
+            </div>
+        </div>
+
     </div>
 
     <div class="dashboard-section">
