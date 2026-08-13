@@ -8,12 +8,12 @@
 .page-title {
     font-size: 1.8rem;
     font-weight: 600;
-    color: $text;
+    color: #ffffff;
 }
 
 .page-subtitle {
     font-size: 1rem;
-    color: $text;
+    color: rgba(255, 255, 255, 0.85);
     margin-top: 0.2rem;
 }
 
@@ -27,10 +27,10 @@
     align-items: center;
     margin-bottom: 2rem;
     padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, $surface, lighten($surface, 3%));
-    border: 1px solid $border;
+    background: linear-gradient(180deg, $primary, $secondary);
+    border: none;
     border-radius: $radius;
-    box-shadow: $shadow;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -42,15 +42,7 @@
 }
 
 .header-right {
-    color: $muted;
-}
-
-.main-content {
-    margin-left: 280px;
-    min-height: 100vh;
-    padding: 2rem;
-
-    transition: $transition;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .main-content.expanded {

@@ -6,8 +6,8 @@
     width: 280px;
     height: 100vh;
 
-    background: $surface;
-    border-right: 1px solid $border;
+    background: linear-gradient(180deg, $primary, $secondary);
+    border-right: 1px solid $sidebar-border;
 
     padding: 1.5rem;
     padding-bottom: 3rem;
@@ -20,7 +20,7 @@
     z-index: 999;
 
     scrollbar-width: thin;
-    scrollbar-color: $border transparent;
+    scrollbar-color: $sidebar-border transparent;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -28,7 +28,7 @@
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background: $border;
+    background: $sidebar-border;
     border-radius: 6px;
 }
 
@@ -77,10 +77,10 @@
     height: 40px;
     flex-shrink: 0;
 
-    border: 1px solid $border;
+    border: 1px solid $sidebar-border;
     border-radius: 10px;
     background: transparent;
-    color: $text;
+    color: $sidebar-text;
 
     transition: $transition;
 }
@@ -105,7 +105,7 @@
     gap: 0.75rem;
 
     text-decoration: none;
-    color: $text;
+    color: $sidebar-text;
 
     padding: 0.9rem 1rem;
     border-radius: 12px;
@@ -114,14 +114,14 @@
 }
 
 .sidebar-menu a:hover {
-    background: rgba($primary, 0.12);
+    background: $bg;
     color: $primary;
     transform: translateX(4px);
-    box-shadow: 0 0 15px rgba($primary, 0.15);
+    box-shadow: 0 0 15px rgba($primary, 0.2);
 }
 
 .sidebar-menu a.active {
-    background: rgba($primary, 0.15);
+    background: $bg;
     color: $primary;
     border-left: 3px solid $primary;
 }
@@ -142,20 +142,20 @@
     margin: 2rem 0 1rem;
     padding: 0 1rem;
 
-    color: #7dd3fc;
+    color: #56b5d8;
 
-    font-size: 0.72rem;
+    font-size: 0.9rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
 .sidebar-section-title::after {
     content: "";
     flex: 1;
     height: 1px;
-    background: rgba(125, 211, 252, 0.25);
+    background: rgba(94, 234, 212, 0.25);
 }
 
 @media (max-width: 768px) {
