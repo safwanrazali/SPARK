@@ -27,6 +27,14 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-status', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
 
+        // Fasa 2 — kawalan peringkat workflow 7 langkah.
+        // NEEDS CONFIRMATION: matriks kebenaran (spesifikasi bahagian 26) tidak
+        // menyatakan peranan mana yang boleh menukar peringkat. Pemetaan awal
+        // mengikut konvensyen sedia ada untuk kawalan pemantauan
+        // (`manage-status`): Pentadbir + Pegawai Penyelaras Analisis.
+        // Ubah pemetaan di sini sahaja apabila business rule disahkan.
+        Gate::define('manage-workflow', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+
         Gate::define('access-inventory', fn (User $user) => true);
 
         Gate::define('access-risk-assessment', fn (User $user) => true);

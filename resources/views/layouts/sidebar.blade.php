@@ -44,6 +44,13 @@
         <li class="sidebar-section-title"><span class="menu-text">Pemantauan</span></li>
 
         <li>
+            <a href="{{ route('workflow.index') }}">
+                <i class="bi bi-diagram-3"></i>
+                <span class="menu-text">Kemajuan Workflow</span>
+            </a>
+        </li>
+
+        <li>
             <a href="{{ route('status.index') }}">
                 <i class="bi bi-list-check"></i>
                 <span class="menu-text">Status Tiga Laporan</span>

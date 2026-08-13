@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MuatNaikController;
 use App\Http\Controllers\StatusLaporanController;
+use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -67,6 +68,26 @@ Route::middleware('auth')->group(function () {
     Route::post('/status-laporan/kitar', [StatusLaporanController::class, 'kitar'])
         ->middleware('can:manage-status')
         ->name('status.kitar');
+
+    /*
+    |----------------------------------------------------------------------
+    | Workflow 7 Peringkat — kedudukan semasa setiap entiti (Fasa 2)
+    |----------------------------------------------------------------------
+    */
+    Route::get('/workflow', [WorkflowController::class, 'index'])
+        ->name('workflow.index');
+
+    Route::get('/workflow/{agencyCode}', [WorkflowController::class, 'show'])
+        ->name('workflow.show');
+
+    Route::middleware('can:manage-workflow')->group(function () {
+        Route::post('/workflow/{agencyCode}/mula', [WorkflowController::class, 'mula'])
+            ->name('workflow.mula');
+        Route::post('/workflow/{agencyCode}/peringkat', [WorkflowController::class, 'peringkat'])
+            ->name('workflow.peringkat');
+        Route::post('/workflow/{agencyCode}/status', [WorkflowController::class, 'status'])
+            ->name('workflow.status');
+    });
 
     /*
     |----------------------------------------------------------------------

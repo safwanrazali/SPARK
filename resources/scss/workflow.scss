@@ -1,0 +1,166 @@
+/*
+|--------------------------------------------------------------------------
+| Fasa 2 — visualisasi workflow 7 peringkat
+|--------------------------------------------------------------------------
+*/
+
+.workflow-stepper {
+    display: flex;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding: 0.5rem 0 0.25rem;
+}
+
+.workflow-step {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 120px;
+    padding: 0 0.35rem;
+    text-align: center;
+}
+
+.workflow-step__track {
+    position: absolute;
+    top: 17px;
+    left: -50%;
+    width: 100%;
+    height: 3px;
+    background: $border;
+    border-radius: 3px;
+}
+
+.workflow-step:first-child .workflow-step__track {
+    display: none;
+}
+
+.workflow-step__node {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid $border;
+    background: $surface;
+    color: $muted;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: $transition;
+}
+
+.workflow-step__label {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.25;
+    color: $muted;
+}
+
+.workflow-step .status-badge {
+    display: inline-block;
+    margin-top: 0.45rem;
+    font-size: 0.72rem;
+}
+
+// Peringkat yang telah dilalui
+.workflow-step--selesai {
+    .workflow-step__track {
+        background: $success;
+    }
+
+    .workflow-step__node {
+        border-color: $success;
+        background: rgba($success, 0.12);
+        color: $success;
+    }
+
+    .workflow-step__label {
+        color: $text;
+    }
+}
+
+// Peringkat semasa
+.workflow-step--semasa {
+    .workflow-step__track {
+        background: $primary;
+    }
+
+    .workflow-step__node {
+        border-color: $primary;
+        background: linear-gradient(180deg, $primary, $secondary);
+        color: $highlight;
+        box-shadow: 0 0 0 5px rgba($primary, 0.15);
+    }
+
+    .workflow-step__label {
+        color: $text;
+        font-weight: 600;
+    }
+}
+
+// Varian ringkas — untuk senarai / kad kecil
+.workflow-stepper--compact {
+    .workflow-step {
+        min-width: 34px;
+    }
+
+    .workflow-step__node {
+        width: 22px;
+        height: 22px;
+        font-size: 0.65rem;
+        border-width: 1px;
+    }
+
+    .workflow-step__track {
+        top: 11px;
+        height: 2px;
+    }
+}
+
+.workflow-stage-tag {
+    display: inline-block;
+    min-width: 28px;
+    margin-right: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 8px;
+    background: rgba($primary, 0.12);
+    color: $secondary;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.workflow-progress {
+    display: block;
+    width: 100px;
+    height: 8px;
+    border-radius: 50px;
+    background: rgba($primary, 0.12);
+    overflow: hidden;
+
+    span {
+        display: block;
+        height: 100%;
+        border-radius: 50px;
+        background: linear-gradient(90deg, $primary, $accent-cyan);
+    }
+}
+
+.workflow-progress-cell {
+    white-space: nowrap;
+}
+
+.workflow-meta__value {
+    margin-top: 0.2rem;
+    font-weight: 600;
+    color: $text;
+}
+
+.workflow-action__title {
+    margin-bottom: 0.5rem;
+    color: $secondary;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}

@@ -42,7 +42,9 @@ class ActivityLog extends Model
      * Jenis-jenis tindakan yang boleh dicatat.
      */
     public const ACTIONS = [
+        'workflow_initialized' => 'Entiti Didaftarkan Dalam Workflow',
         'workflow_stage_changed' => 'Peringkat Workflow Berubah',
+        'workflow_status_updated' => 'Status Peringkat Diemas kini',
         'assignment_created' => 'Penugasan Dibuat',
         'assignment_updated' => 'Penugasan Diemas kini',
         'analysis_saved' => 'Analisis Disimpan',
