@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,12 +9,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('muat_naik', function (Blueprint $table) {
-            $table->string('sector_code')->nullable()->after('tarikh_import');
-            $table->string('sector_name')->nullable()->after('sector_code');
-            $table->string('agency_code')->nullable()->after('sector_name');
-            $table->string('agency_name')->nullable()->after('agency_code');
-        });
+        // Legacy migration retained as no-op because these columns already exist
+        // in the base muat_naik table created in 2026_07_20_000000_create_muat_naiks_table.
     }
 
     /**
@@ -24,13 +18,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('muat_naik', function (Blueprint $table) {
-            $table->dropColumn([
-                'sector_code',
-                'sector_name',
-                'agency_code',
-                'agency_name',
-            ]);
-        });
+        // No-op to maintain safe migration history.
     }
 };

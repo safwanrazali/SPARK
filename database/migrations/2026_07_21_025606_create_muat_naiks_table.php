@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,30 +9,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('muat_naik', function (Blueprint $table) {
-
-            $table->string('nama_helaian')
-                ->nullable();
-
-            $table->integer('jumlah_helaian')
-                ->nullable();
-
-            $table->integer('jumlah_baris')
-                ->nullable();
-
-        });
+        // This migration is skipped - actual muat_naik table created in 2026_07_20_000000
+        // This migration historically tried to add columns that are now part of creation
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::table('muat_naik', function (Blueprint $table) {
-
-            $table->dropColumn([
-                'nama_helaian',
-                'jumlah_helaian',
-                'jumlah_baris',
-            ]);
-
-        });
+        // No-op: table creation handled separately
     }
 };

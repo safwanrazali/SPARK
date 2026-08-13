@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,9 +9,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('muat_naik', function (Blueprint $table) {
-            $table->softDeletes();
-        });
+        // Legacy migration retained as no-op: soft deletes already exist in the canonical muat_naik table.
     }
 
     /**
@@ -21,8 +17,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('muat_naik', function (Blueprint $table) {
-            $table->dropSoftDeletes();
-        });
+        // No-op.
     }
 };
