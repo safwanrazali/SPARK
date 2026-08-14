@@ -57,6 +57,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:manage-analysis')->group(function () {
         Route::get('/analisis/borang', [AnalisisInventoriController::class, 'borang'])
             ->name('analisis.borang');
+        // Fasa 6 — simpan draf tanpa pengesahan penuh (save / resume).
+        Route::post('/analisis/draf', [AnalisisInventoriController::class, 'draf'])
+            ->name('analisis.draf');
         Route::post('/analisis', [AnalisisInventoriController::class, 'simpan'])
             ->name('analisis.simpan');
     });

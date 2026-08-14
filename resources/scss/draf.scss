@@ -1,0 +1,55 @@
+/*
+|--------------------------------------------------------------------------
+| Fasa 6 — draf, simpan dan sambung semula
+|--------------------------------------------------------------------------
+*/
+
+.draft-bar {
+    border-left: 3px solid $primary;
+}
+
+.draft-bar__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.draft-sections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.draft-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid $border;
+    border-radius: 50px;
+    background: $surface;
+    color: $muted;
+    font-size: 0.78rem;
+    font-weight: 500;
+
+    i {
+        font-size: 0.8rem;
+    }
+
+    &.is-draf {
+        border-color: rgba($warning, 0.45);
+        background: rgba($warning, 0.1);
+        color: $warning;
+    }
+
+    &.is-selesai {
+        border-color: rgba($success, 0.45);
+        background: rgba($success, 0.1);
+        color: $success;
+    }
+}
+
+.draft-hint {
+    font-size: 0.85rem;
+}

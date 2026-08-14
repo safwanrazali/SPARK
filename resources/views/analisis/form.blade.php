@@ -18,30 +18,81 @@
         </div>
     </div>
 
-    <form action="{{ route('analisis.simpan') }}" method="POST">
+    {{-- FASA 6 — keadaan draf: sambung semula, versi dan masa simpanan terakhir. --}}
+    <div class="report-card mb-4 draft-bar" id="draft-bar">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <h4 class="section-title mb-1">Draf Laporan</h4>
+                <p class="text-secondary mb-0" id="draft-status">
+                    @if ($draf['ada_draf'])
+                        Draf versi {{ $draf['versi'] }} disambung semula — disimpan
+                        {{ $draf['disimpan_pada']?->format('d/m/Y H:i') }}
+                        @if ($draf['disimpan_oleh'])
+                            oleh {{ $draf['disimpan_oleh'] }}
+                        @endif
+                    @else
+                        Belum ada draf disimpan. Kerja anda boleh disimpan pada bila-bila masa
+                        dan disambung semula kemudian.
+                    @endif
+                </p>
+            </div>
+
+            <div class="draft-bar__meta">
+                <span class="status-badge {{ $draf['ada_draf'] ? 'status-sederhana' : 'status-tinggi' }}">
+                    {{ $draf['seksyen_selesai'] }} / {{ $draf['jumlah_seksyen'] }} seksyen diisi
+                </span>
+                <button type="submit" form="borang-analisis" formaction="{{ route('analisis.draf') }}"
+                    class="btn btn-sm btn-outline-light" id="btn-simpan-draf">
+                    <i class="bi bi-journal-arrow-down"></i> Simpan Draf
+                </button>
+            </div>
+
+        </div>
+
+        <div class="draft-sections mt-3">
+            @foreach ($draf['seksyen'] as $kunci => $seksyen)
+                <span class="draft-chip {{ $seksyen['selesai'] ? 'is-selesai' : ($seksyen['ada_draf'] ? 'is-draf' : '') }}"
+                    title="{{ $seksyen['disimpan_pada'] ? 'Draf v' . $seksyen['versi'] . ' — ' . $seksyen['disimpan_pada']->format('d/m/Y H:i') : 'Belum disimpan' }}">
+                    @if ($seksyen['selesai'])
+                        <i class="bi bi-check-circle-fill"></i>
+                    @elseif ($seksyen['ada_draf'])
+                        <i class="bi bi-pencil"></i>
+                    @else
+                        <i class="bi bi-circle"></i>
+                    @endif
+                    {{ $seksyen['label'] }}
+                </span>
+            @endforeach
+        </div>
+
+    </div>
+
+    <form action="{{ route('analisis.simpan') }}" method="POST" id="borang-analisis">
         @csrf
         <input type="hidden" name="sector_code" value="{{ $sectorCode }}">
         <input type="hidden" name="agency_code" value="{{ $agensi['code'] }}">
+        <input type="hidden" name="seksyen" id="seksyen-semasa" value="">
 
         {{-- 1 · Maklumat laporan --}}
-        <div class="report-card mb-4">
+        <div class="report-card mb-4" data-seksyen="maklumat">
             <h4 class="section-title">1 · Maklumat Laporan</h4>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Tarikh Laporan</label>
                     <input type="date" name="tarikh_laporan" class="form-control"
-                        value="{{ old('tarikh_laporan', $analisis?->tarikh_laporan?->format('Y-m-d')) }}">
+                        value="{{ old('tarikh_laporan', $borang['tarikh_laporan'] ?? null) }}">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Kod Rujukan Laporan</label>
                     <input type="text" name="kod_rujukan" class="form-control" placeholder="cth. PTPKM/INV/2026/001"
-                        value="{{ old('kod_rujukan', $analisis?->kod_rujukan) }}">
+                        value="{{ old('kod_rujukan', $borang['kod_rujukan'] ?? null) }}">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Status Laporan</label>
                     <select name="status_laporan" class="form-select">
                         @foreach (['Muktamad', 'Muktamad dengan Catatan', 'Memerlukan Tindakan Susulan'] as $status)
-                            <option value="{{ $status }}" @selected(old('status_laporan', $analisis?->status_laporan) === $status)>
+                            <option value="{{ $status }}" @selected(old('status_laporan', $borang['status_laporan'] ?? null) === $status)>
                                 {{ $status }}
                             </option>
                         @endforeach
@@ -51,7 +102,7 @@
         </div>
 
         {{-- 2 · Status data diterima --}}
-        <div class="report-card mb-4">
+        <div class="report-card mb-4" data-seksyen="data_status">
             <h4 class="section-title">2 · Status Data Diterima (Jadual 0–2)</h4>
 
             @foreach (['j0' => 'Jadual 0 : Inventori', 'j1' => 'Jadual 1 : SBOM', 'j2' => 'Jadual 2 : CBOM'] as $kunci => $nama)
@@ -95,7 +146,7 @@
         </div>
 
         {{-- 3 · Profil sistem dan aset --}}
-        <div class="report-card mb-4">
+        <div class="report-card mb-4" data-seksyen="profil">
             <h4 class="section-title">3 · Profil Sistem dan Aset (Jadual 0)</h4>
             @foreach (config('kriptografi.kategori_profil') as $kategori)
                 @php
@@ -117,7 +168,7 @@
         </div>
 
         {{-- 4 · Algoritma kriptografi --}}
-        <div class="report-card mb-4">
+        <div class="report-card mb-4" data-seksyen="algoritma">
             <h4 class="section-title">4 · Algoritma Kriptografi Dikenal Pasti Digunakan</h4>
             <p class="text-secondary">
                 Rujukan kategori: AKSA MySEAL. Tanda <span class="text-danger">▲</span> — tidak lagi disyorkan;
@@ -179,7 +230,7 @@
             'pustaka' => ['6 · Pustaka dan Modul Kriptografi', ['nama' => 'Nama pustaka/modul', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
             'vendor' => ['7 · Maklumat Vendor', ['nama' => 'Nama vendor', 'produk' => 'Produk/Komponen', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
         ] as $medan => [$tajuk, $kolum])
-            <div class="report-card mb-4" data-senarai="{{ $medan }}">
+            <div class="report-card mb-4" data-senarai="{{ $medan }}" data-seksyen="{{ $medan }}">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="section-title mb-0">{{ $tajuk }}</h4>
                     <button type="button" class="btn btn-sm btn-outline-light tambah-baris"
@@ -227,7 +278,7 @@
         @endforeach
 
         {{-- 8 · Tindakan susulan --}}
-        <div class="report-card mb-4">
+        <div class="report-card mb-4" data-seksyen="tindakan">
             <h4 class="section-title">8 · Cadangan Tindakan Susulan</h4>
             @foreach (config('kriptografi.tindakan_susulan') as $i => $tindakan)
                 <div class="form-check mb-2">
@@ -245,7 +296,7 @@
         </div>
 
         {{-- 9 · Kesimpulan --}}
-        <div class="report-card mb-4">
+        <div class="report-card mb-4" data-seksyen="kesimpulan">
             <h4 class="section-title">9 · Kesimpulan (pilih yang berkaitan dengan dapatan sebenar)</h4>
             @foreach (config('kriptografi.kesimpulan') as $id => $kesimpulan)
                 <div class="form-check mb-2">
@@ -265,6 +316,9 @@
         </div>
 
         <div class="report-card mb-4 d-flex align-items-center gap-3 flex-wrap">
+            <button type="submit" formaction="{{ route('analisis.draf') }}" class="btn btn-outline-light">
+                <i class="bi bi-journal-arrow-down"></i> Simpan Draf
+            </button>
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-save"></i> Simpan Dapatan
             </button>
@@ -275,6 +329,11 @@
                     Tanda analisis selesai (dikira dalam kemajuan dashboard)
                 </label>
             </div>
+            <span class="text-secondary draft-hint">
+                <i class="bi bi-info-circle"></i>
+                Simpan Draf menyimpan kerja separa siap tanpa pengesahan penuh.
+                Simpan Dapatan memuktamadkan laporan.
+            </span>
         </div>
 
     </form>
@@ -311,6 +370,71 @@
                 e.target.closest('.baris-item').remove();
             }
         });
+
+        // ── FASA 6 — draf: jejak seksyen, elak kehilangan data, autosimpan ──
+        (function() {
+            const borang = document.getElementById('borang-analisis');
+            const status = document.getElementById('draft-status');
+            const medanSeksyen = document.getElementById('seksyen-semasa');
+
+            if (!borang) return;
+
+            let kotor = false;      // ada perubahan belum disimpan
+            let menghantar = false; // borang sedang dihantar
+
+            // Seksyen terakhir yang disentuh pengguna disimpan bersama draf.
+            borang.addEventListener('focusin', function(e) {
+                const kad = e.target.closest('[data-seksyen]');
+                if (kad) medanSeksyen.value = kad.dataset.seksyen;
+            });
+
+            borang.addEventListener('input', () => kotor = true);
+            borang.addEventListener('change', () => kotor = true);
+            borang.addEventListener('submit', () => menghantar = true);
+
+            // Amaran sebelum meninggalkan halaman dengan kerja belum disimpan.
+            window.addEventListener('beforeunload', function(e) {
+                if (!kotor || menghantar) return;
+                e.preventDefault();
+                e.returnValue = '';
+            });
+
+            // Autosimpan draf secara senyap. Tidak mengganggu paparan dan
+            // hanya berjalan apabila ada perubahan sebenar.
+            const SELANG = 180000; // 3 minit
+
+            async function autosimpan() {
+                if (!kotor || menghantar) return;
+
+                try {
+                    const jawapan = await fetch('{{ route('analisis.draf') }}', {
+                        method: 'POST',
+                        body: new FormData(borang),
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!jawapan.ok) return;
+
+                    const hasil = await jawapan.json();
+                    kotor = false;
+
+                    if (status) {
+                        status.textContent = 'Draf disimpan automatik pada ' + hasil.disimpan_pada + '.';
+                    }
+                } catch (e) {
+                    // Kegagalan rangkaian dibiarkan senyap; amaran beforeunload
+                    // kekal melindungi kerja pengguna.
+                }
+            }
+
+            setInterval(autosimpan, SELANG);
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') autosimpan();
+            });
+        })();
     </script>
 
 @endsection

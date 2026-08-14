@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
+use App\Services\AnalisisDraftService;
 use App\Services\EntityAccessService;
+use App\Support\BorangAnalisis;
+use App\Support\SeksyenAnalisis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class AnalisisInventoriController extends Controller
 {
-    public function __construct(private readonly EntityAccessService $access) {}
+    public function __construct(
+        private readonly EntityAccessService $access,
+        private readonly AnalisisDraftService $draf,
+    ) {}
 
     /**
      * Senarai analisis + pemilihan entiti (sektor -> agensi dari config/sektor.php).
@@ -53,13 +59,82 @@ class AnalisisInventoriController extends Controller
 
         $analisis = AnalisisInventori::where('agency_code', $agensi['code'])->first();
 
+        // FASA 6 — sambung semula: rekod tersimpan ditindih oleh draf semasa.
+        $borang = $this->draf->borangDipulihkan($analisis);
+
         return view('analisis.form', [
             'sectorCode' => $request->input('sector_code'),
             'sektor' => $sektor,
             'agensi' => $agensi,
             'analisis' => $analisis,
-            'data' => $analisis?->data ?? [],
+            'borang' => $borang,
+            'data' => $borang,
+            'draf' => $this->draf->ringkasan($analisis),
         ]);
+    }
+
+    /**
+     * FASA 6 — simpan draf borang analisis.
+     *
+     * Draf sengaja TIDAK disahkan supaya kerja separa siap tidak hilang.
+     * Pengesahan penuh hanya berlaku pada simpanan muktamad (@see simpan).
+     */
+    public function draf(Request $request)
+    {
+        Gate::authorize('manage-analysis');
+
+        $request->validate([
+            'sector_code' => ['required', 'string'],
+            'agency_code' => ['required', 'string'],
+            'seksyen' => ['nullable', 'string'],
+        ]);
+
+        $this->access->authorize($request->user(), $request->input('agency_code'));
+
+        [$sektor, $agensi] = $this->sahkanEntiti(
+            $request->input('sector_code'),
+            $request->input('agency_code'),
+        );
+
+        if (! $agensi) {
+            return $this->balasDraf($request, false, 'Agensi tidak sah untuk sektor yang dipilih.');
+        }
+
+        $entiti = [
+            'sector_code' => $request->input('sector_code'),
+            'sector_name' => $sektor['name'],
+            'agency_code' => $agensi['code'],
+            'agency_name' => $agensi['name'],
+        ];
+
+        $analisis = $this->draf->mulakan($entiti, $request->user());
+
+        $this->draf->simpanDraf(
+            $analisis,
+            BorangAnalisis::daripadaRequest($request),
+            $request->user(),
+            SeksyenAnalisis::wujud($request->input('seksyen')) ? $request->input('seksyen') : null,
+        );
+
+        return $this->balasDraf($request, true, 'Draf disimpan. Anda boleh menyambung semula kemudian.');
+    }
+
+    /**
+     * Balasan simpanan draf — JSON untuk autosave, redirect untuk borang biasa.
+     */
+    private function balasDraf(Request $request, bool $berjaya, string $mesej)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'berjaya' => $berjaya,
+                'mesej' => $mesej,
+                'disimpan_pada' => now()->format('d/m/Y H:i'),
+            ], $berjaya ? 200 : 422);
+        }
+
+        return $berjaya
+            ? back()->with('success', $mesej)
+            : back()->withInput()->withErrors(['agency_code' => $mesej]);
     }
 
     /**
@@ -89,78 +164,27 @@ class AnalisisInventoriController extends Controller
             return back()->withErrors(['agency_code' => 'Agensi tidak sah untuk sektor yang dipilih.']);
         }
 
-        // ---- Susun dapatan berstruktur mengikut seksyen templat laporan ----
-
-        $dataStatus = [];
-        foreach (['j0', 'j1', 'j2'] as $j) {
-            $dataStatus[$j] = [
-                'penerimaan' => $request->input("data_status.$j.penerimaan", 'Tiada'),
-                'kebolehgunaan' => $request->input("data_status.$j.kebolehgunaan", 'Tidak Boleh Digunakan'),
-                'nota' => $request->input("data_status.$j.nota", ''),
-            ];
-        }
-
-        $profil = [];
-        foreach (config('kriptografi.kategori_profil') as $kategori) {
-            $profil[$kategori] = [
-                'jumlah' => (int) $request->input('profil.'.md5($kategori).'.jumlah', 0),
-                'nota' => $request->input('profil.'.md5($kategori).'.nota', ''),
-            ];
-        }
-
-        // Algoritma: hanya item yang ditanda (checkbox) disimpan.
-        $algoritma = [];
-        foreach ((array) $request->input('algoritma', []) as $kunci => $nilai) {
-            if (empty($nilai['dipilih'])) {
-                continue;
-            }
-            // Kunci borang menggunakan md5(kat|nama); nilai asal dihantar bersama.
-            $algoritma[$nilai['id']] = [
-                'bilangan' => $nilai['bilangan'] ?? '',
-                'nota' => $nilai['nota'] ?? '',
-            ];
-        }
-
-        $senaraiBaris = fn (string $medan, array $kolum) => collect((array) $request->input($medan, []))
-            ->map(fn ($baris) => collect($kolum)->mapWithKeys(
-                fn ($k) => [$k => trim((string) ($baris[$k] ?? ''))]
-            )->all())
-            ->filter(fn ($baris) => collect($baris)->filter()->isNotEmpty())
-            ->values()
-            ->all();
-
-        $data = [
-            'ringkasan_data' => $sah['ringkasan_data'],
-            'data_status' => $dataStatus,
-            'profil' => $profil,
-            'algoritma' => $algoritma,
-            'algoritma_lain' => trim((string) $request->input('algoritma_lain', '')),
-            'protokol' => $senaraiBaris('protokol', ['nama', 'versi', 'bilangan', 'nota']),
-            'pustaka' => $senaraiBaris('pustaka', ['nama', 'versi', 'bilangan', 'nota']),
-            'vendor' => $senaraiBaris('vendor', ['nama', 'produk', 'versi', 'bilangan', 'nota']),
-            'tindakan' => array_map('intval', (array) $request->input('tindakan', [])),
-            'tindakan_lain' => trim((string) $request->input('tindakan_lain', '')),
-            'kesimpulan' => array_values(array_intersect(
-                (array) $request->input('kesimpulan', []),
-                array_keys(config('kriptografi.kesimpulan')),
-            )),
-            'kesimpulan_lain' => trim((string) $request->input('kesimpulan_lain', '')),
-        ];
+        // Susunan dapatan berstruktur dikongsi dengan simpanan draf supaya
+        // draf yang disambung semula menghasilkan struktur yang sama (Fasa 6).
+        ['lajur' => $lajur, 'data' => $data] = BorangAnalisis::kepadaModel(
+            BorangAnalisis::daripadaRequest($request)
+        );
 
         $analisis = AnalisisInventori::updateOrCreate(
             ['agency_code' => $agensi['code']],
-            [
+            $lajur + [
                 'sector_code' => $sah['sector_code'],
                 'sector_name' => $sektor['name'],
                 'agency_name' => $agensi['name'],
-                'tarikh_laporan' => $sah['tarikh_laporan'] ?? null,
-                'kod_rujukan' => $sah['kod_rujukan'] ?? null,
-                'status_laporan' => $sah['status_laporan'],
                 'data' => $data,
                 'selesai' => (bool) $request->boolean('selesai'),
                 'user_id' => $request->user()->id,
             ],
         );
+
+        // Dapatan telah masuk ke rekod sebenar — draf tidak lagi menjadi
+        // sumber pemulihan, tetapi versinya dikekalkan sebagai sejarah.
+        $this->draf->tutupDraf($analisis);
 
         // Analisis selesai menaikkan status laporan Inventori ke Dalam Proses
         // sekurang-kurangnya (kemuktamadan status kekal di tangan Penyelaras).
