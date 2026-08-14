@@ -1,3 +1,10 @@
+// Butang asas — dikongsi oleh semua varian
+.btn {
+    border-radius: 12px;
+    font-weight: 600;
+    transition: $transition;
+}
+
 .btn-primary {
     background: linear-gradient(180deg, $primary, $secondary) !important;
     border: none !important;
@@ -14,4 +21,126 @@
     color: #ffffff !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 6px 18px rgba($primary, 0.35) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fasa 11 — butang sekunder di atas permukaan cerah
+|--------------------------------------------------------------------------
+|
+| `.btn-outline-light` Bootstrap menggunakan sempadan dan teks putih. Di atas
+| kad putih ia hampir tidak kelihatan. Varian ini dipetakan semula kepada
+| butang sekunder yang jelas, sambil mengekalkan gaya asal di dalam kepala
+| halaman yang berlatar gradien gelap.
+*/
+.btn-outline-light {
+    border: 1px solid $border !important;
+    background: $surface !important;
+    color: $secondary !important;
+    font-weight: 600 !important;
+}
+
+.btn-outline-light:hover,
+.btn-outline-light:focus {
+    border-color: $primary !important;
+    background: rgba($primary, 0.08) !important;
+    color: $secondary !important;
+    box-shadow: 0 4px 12px rgba($primary, 0.15) !important;
+}
+
+.btn-outline-light:disabled,
+.btn-outline-light.disabled {
+    background: $surface !important;
+    color: $muted !important;
+    border-color: $border !important;
+    opacity: 0.65;
+}
+
+// Di atas kepala halaman (gradien gelap) gaya asal dikekalkan.
+.page-header .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.7) !important;
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.page-header .btn-outline-light:hover,
+.page-header .btn-outline-light:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+// Butang berbahaya — digunakan untuk memadam baris borang
+.btn-danger {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fokus papan kekunci
+|--------------------------------------------------------------------------
+| Penunjuk fokus yang konsisten dan jelas untuk navigasi papan kekunci.
+*/
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid $accent-cyan-dark;
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+.sidebar a:focus-visible,
+.sidebar button:focus-visible,
+.page-header a:focus-visible,
+.page-header button:focus-visible {
+    outline-color: $accent-cyan;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Keadaan memuat — butang hantar semasa borang diproses
+|--------------------------------------------------------------------------
+*/
+.btn[aria-busy="true"] {
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.btn[aria-busy="true"]::before {
+    content: "";
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 0.5em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.1em;
+    animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn-primary,
+    .sidebar-menu a {
+        transition: none !important;
+    }
+
+    .btn-primary:hover {
+        transform: none !important;
+    }
+
+    .btn[aria-busy="true"]::before {
+        animation-duration: 2s;
+    }
 }

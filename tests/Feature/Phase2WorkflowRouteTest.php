@@ -101,7 +101,7 @@ class Phase2WorkflowRouteTest extends TestCase
             ->assertOk()
             ->assertSee('belum didaftarkan dalam workflow', false)
             ->assertSee('Daftar Dalam Workflow')
-            ->assertSee('Tiada perubahan peringkat direkodkan lagi.');
+            ->assertSee('Tiada perubahan peringkat');
 
         $this->assertDatabaseMissing('workflow_status', ['agency_code' => self::ENTITI]);
     }

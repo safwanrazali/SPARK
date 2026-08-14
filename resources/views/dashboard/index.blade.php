@@ -2,7 +2,7 @@
 
 @section('title', 'Papan Pemuka')
 
-@section('page-title', 'Dashboard Pemantauan — Analisis & Pelaporan Migrasi PQC')
+@section('page-title', 'Papan Pemuka Pemantauan')
 
 @section('content')
 
@@ -227,7 +227,9 @@
                     <span class="text-secondary">{{ $log->changed_at?->format('d/m/Y H:i') }}</span>
                 </div>
             @empty
-                <p class="text-secondary">Tiada rekod tersedia.</p>
+                <x-empty-state icon="bi-activity" title="Tiada aktiviti">
+                    Aktiviti muncul di sini apabila peringkat workflow, penugasan atau status laporan berubah.
+                </x-empty-state>
             @endforelse
         </div>
     </div>

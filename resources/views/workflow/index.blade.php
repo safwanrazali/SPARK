@@ -2,7 +2,7 @@
 
 @section('title', 'Kemajuan Workflow Entiti')
 
-@section('page-title', 'Kemajuan Workflow Entiti')
+@section('page-title', 'Kemajuan Workflow')
 
 @section('content')
 
@@ -52,13 +52,13 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Entiti</th>
-                        <th>Peringkat Semasa</th>
-                        <th>Status</th>
-                        <th>Tarikh Status</th>
-                        <th>Dikemas Kini Oleh</th>
-                        <th>Kemajuan</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Entiti</th>
+                        <th scope="col">Peringkat Semasa</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Tarikh Status</th>
+                        <th scope="col">Dikemas Kini Oleh</th>
+                        <th scope="col">Kemajuan</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,12 +105,9 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                Tiada entiti dipantau lagi. Pilih sektor di atas untuk mendaftarkan
-                                entiti ke dalam workflow.
-                            </td>
-                        </tr>
+                        <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti dipantau">
+                            Pilih sektor di atas untuk memaparkan entiti dan mendaftarkannya ke dalam workflow.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

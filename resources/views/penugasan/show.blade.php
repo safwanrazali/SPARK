@@ -28,10 +28,6 @@
 
     </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     <div class="report-card mb-4">
 
         <h4 class="section-title">Penugasan Semasa</h4>
@@ -137,11 +133,11 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Tarikh</th>
-                        <th>Pegawai Analisis</th>
-                        <th>Ditugaskan Oleh</th>
-                        <th>Status</th>
-                        <th>Catatan</th>
+                        <th scope="col">Tarikh</th>
+                        <th scope="col">Pegawai Analisis</th>
+                        <th scope="col">Ditugaskan Oleh</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Catatan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -158,9 +154,9 @@
                             <td>{{ $rekod->notes ?? '-' }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="5" class="text-center">Tiada sejarah penugasan direkodkan lagi.</td>
-                        </tr>
+                        <x-empty-state colspan="5" icon="bi-clock-history" title="Tiada sejarah penugasan">
+                            Rekod muncul apabila entiti ditugaskan, ditukar ganti atau ditarik balik.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

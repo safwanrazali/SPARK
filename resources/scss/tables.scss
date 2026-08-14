@@ -46,5 +46,33 @@
 
 .table-responsive-custom {
     overflow-x: auto;
+    // Elakkan jadual lebar menolak lebar halaman keseluruhan.
+    max-width: 100%;
     border-radius: $radius;
+    // Petunjuk bahawa jadual boleh ditatal secara mendatar.
+    scrollbar-width: thin;
+}
+
+// Fasa 11 — tajuk lajur lebih mudah dibaca
+.table-modern th {
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.table-modern caption {
+    padding: 0 0 0.75rem;
+    color: $muted;
+    font-size: 0.88rem;
+    text-align: left;
+    caption-side: top;
+}
+
+@media (max-width: 768px) {
+    .table-modern th,
+    .table-modern td {
+        padding: 0.7rem 0.75rem;
+        font-size: 0.9rem;
+    }
 }

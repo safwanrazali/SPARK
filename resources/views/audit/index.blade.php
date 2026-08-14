@@ -2,7 +2,7 @@
 
 @section('title', 'Jejak Audit')
 
-@section('page-title', 'Jejak Audit — Rekod Perubahan Sistem')
+@section('page-title', 'Jejak Audit')
 
 @section('content')
 
@@ -16,7 +16,7 @@
 
         <form action="{{ route('audit.index') }}" method="GET" class="row g-2 align-items-end">
 
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <label class="form-label" for="agency_code">Entiti</label>
                 <select id="agency_code" name="agency_code" class="form-select">
                     <option value="">Semua entiti</option>
@@ -28,7 +28,7 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-6 col-lg-3">
                 <label class="form-label" for="action">Tindakan</label>
                 <select id="action" name="action" class="form-select">
                     <option value="">Semua tindakan</option>
@@ -38,7 +38,7 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-6 col-lg-2">
                 <label class="form-label" for="user_id">Pengguna</label>
                 <select id="user_id" name="user_id" class="form-select">
                     <option value="">Semua</option>
@@ -50,15 +50,14 @@
                 </select>
             </div>
 
-            <div class="col-md-3 d-flex gap-2">
-                <div class="flex-fill">
-                    <label class="form-label" for="dari">Dari</label>
-                    <input type="date" id="dari" name="dari" class="form-control" value="{{ $penapis['dari'] }}">
-                </div>
-                <div class="flex-fill">
-                    <label class="form-label" for="hingga">Hingga</label>
-                    <input type="date" id="hingga" name="hingga" class="form-control" value="{{ $penapis['hingga'] }}">
-                </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label" for="dari">Dari</label>
+                <input type="date" id="dari" name="dari" class="form-control" value="{{ $penapis['dari'] }}">
+            </div>
+
+            <div class="col-6 col-md-3 col-lg-2">
+                <label class="form-label" for="hingga">Hingga</label>
+                <input type="date" id="hingga" name="hingga" class="form-control" value="{{ $penapis['hingga'] }}">
             </div>
 
             <div class="col-12 mt-3">
@@ -81,13 +80,13 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Tarikh &amp; Masa</th>
-                        <th>Entiti</th>
-                        <th>Tindakan</th>
-                        <th>Nilai Lama</th>
-                        <th>Nilai Baharu</th>
-                        <th>Oleh</th>
-                        <th>Maklumat Tambahan</th>
+                        <th scope="col">Tarikh &amp; Masa</th>
+                        <th scope="col">Entiti</th>
+                        <th scope="col">Tindakan</th>
+                        <th scope="col">Nilai Lama</th>
+                        <th scope="col">Nilai Baharu</th>
+                        <th scope="col">Oleh</th>
+                        <th scope="col">Maklumat Tambahan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -122,11 +121,9 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                Tiada rekod jejak audit bagi penapis semasa.
-                            </td>
-                        </tr>
+                        <x-empty-state colspan="7" icon="bi-shield-check" title="Tiada rekod jejak audit">
+                            Tiada perubahan sepadan dengan penapis semasa. Longgarkan penapis untuk melihat lebih banyak rekod.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

@@ -1,0 +1,153 @@
+/*
+|--------------------------------------------------------------------------
+| Fasa 11 — keadaan kosong, memuat, berjaya dan ralat
+|--------------------------------------------------------------------------
+*/
+
+// ── Amaran / notis ──────────────────────────────────────────────────────
+.app-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    font-size: 0.95rem;
+}
+
+.app-alert__icon {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1.35;
+}
+
+.app-alert__body {
+    min-width: 0;
+}
+
+.app-alert__title {
+    margin: 0 0 0.15rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.app-alert__list {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.app-alert--success {
+    background: rgba($success, 0.1);
+    border-color: rgba($success, 0.35);
+    color: darken($success, 8%);
+}
+
+.app-alert--danger {
+    background: rgba($danger, 0.09);
+    border-color: rgba($danger, 0.35);
+    color: darken($danger, 6%);
+}
+
+.app-alert--warning {
+    background: rgba($warning, 0.11);
+    border-color: rgba($warning, 0.38);
+    color: darken($warning, 8%);
+}
+
+.app-alert--info {
+    background: rgba($primary, 0.08);
+    border-color: rgba($primary, 0.3);
+    color: $secondary;
+}
+
+// ── Keadaan kosong ──────────────────────────────────────────────────────
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1.25rem;
+    text-align: center;
+}
+
+.empty-state__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 0.25rem;
+    border-radius: 50%;
+    background: rgba($primary, 0.09);
+    color: $primary;
+    font-size: 1.5rem;
+}
+
+.empty-state__title {
+    margin: 0;
+    color: $text;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.empty-state__text {
+    max-width: 46ch;
+    margin: 0;
+    color: $muted;
+    font-size: 0.92rem;
+}
+
+.empty-state__action {
+    margin-top: 0.75rem;
+}
+
+// Keadaan kosong di dalam jadual
+.table-modern .empty-state {
+    padding: 2rem 1rem;
+}
+
+.table-modern tbody tr.is-empty:hover,
+.table-modern tbody tr.is-empty {
+    background: transparent;
+}
+
+// ── Keadaan memuat ──────────────────────────────────────────────────────
+.is-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.is-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba($surface, 0.6);
+    border-radius: inherit;
+}
+
+// Jalur memuat halus di bahagian atas halaman
+.route-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1200;
+    height: 3px;
+    width: 0;
+    background: linear-gradient(90deg, $primary, $accent-cyan);
+    transition: width 0.25s ease;
+}
+
+.route-progress.is-active {
+    width: 85%;
+}
+
+// ── Kelas bantuan pembaca skrin ─────────────────────────────────────────
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+}

@@ -2,7 +2,7 @@
 
 @section('title', 'Analisis Inventori Kriptografi')
 
-@section('page-title', 'Analisis Inventori Kriptografi')
+@section('page-title', 'Analisis Inventori')
 
 @section('content')
 
@@ -34,10 +34,6 @@
                         </select>
                     </div>
                 </div>
-
-                @if ($errors->any())
-                    <div class="text-danger mb-3">{{ $errors->first() }}</div>
-                @endif
 
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-pencil-square"></i> Buka Borang Analisis
@@ -74,12 +70,12 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Sektor</th>
-                        <th>Entiti</th>
-                        <th>Kod Rujukan</th>
-                        <th>Status Analisis</th>
-                        <th>Kemas Kini</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Sektor</th>
+                        <th scope="col">Entiti</th>
+                        <th scope="col">Kod Rujukan</th>
+                        <th scope="col">Status Analisis</th>
+                        <th scope="col">Kemas Kini</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -96,13 +92,17 @@
                             <td>{{ $item->updated_at?->format('d/m/Y H:i') }}</td>
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-outline-light"
-                                    href="{{ route('entiti.show', $item->agency_code) }}" title="Maklumat entiti">
-                                    <i class="bi bi-building"></i>
+                                    href="{{ route('entiti.show', $item->agency_code) }}"
+                                    title="Maklumat entiti {{ $item->agency_name }}"
+                                    aria-label="Maklumat entiti {{ $item->agency_name }}">
+                                    <i class="bi bi-building" aria-hidden="true"></i>
                                 </a>
                                 @can('manage-analysis')
                                     <a class="btn btn-sm btn-outline-light"
-                                        href="{{ route('analisis.borang', ['sector_code' => $item->sector_code, 'agency_code' => $item->agency_code]) }}">
-                                        <i class="bi bi-pencil"></i>
+                                        href="{{ route('analisis.borang', ['sector_code' => $item->sector_code, 'agency_code' => $item->agency_code]) }}"
+                                        title="Sunting dapatan {{ $item->agency_name }}"
+                                        aria-label="Sunting dapatan {{ $item->agency_name }}">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>
                                     </a>
                                 @endcan
                                 <a class="btn btn-sm btn-primary" href="{{ route('laporan.inventori', $item) }}">
@@ -111,9 +111,9 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center">Tiada rekod analisis ditemui</td>
-                        </tr>
+                        <x-empty-state colspan="6" icon="bi-clipboard-data" title="Tiada rekod analisis">
+                            Rekod muncul di sini setelah dapatan analisis dimasukkan bagi entiti yang ditugaskan.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

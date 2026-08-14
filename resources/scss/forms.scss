@@ -1,4 +1,7 @@
-.form-control {
+// Fasa 11 — input dan select dikongsi gaya yang sama supaya borang
+// kelihatan konsisten (sebelum ini hanya .form-control bergaya).
+.form-control,
+.form-select {
     background: $surface;
     border: 1px solid $border;
     color: $text;
@@ -6,19 +9,77 @@
     padding: 0.75rem 1rem;
 }
 
-.form-control:focus {
+.form-select {
+    // Ruang untuk anak panah Bootstrap.
+    padding-right: 2.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
     background: $surface;
     color: $text;
     border-color: $primary;
     box-shadow: 0 0 0 3px rgba($primary, 0.15);
 }
 
+.form-control:disabled,
+.form-select:disabled {
+    background: rgba($border, 0.35);
+    color: $muted;
+}
+
+.form-control::placeholder {
+    color: rgba($muted, 0.75);
+}
+
+.form-control-sm,
+.form-select-sm {
+    padding: 0.45rem 0.7rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+}
+
+.form-select-sm {
+    padding-right: 2rem;
+}
+
 .form-label {
     color: $text;
     margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+// Teks bantuan di bawah medan
+.form-hint {
+    display: block;
+    margin-top: 0.35rem;
+    color: $muted;
+    font-size: 0.82rem;
+}
+
+// Keadaan ralat pada medan
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: $danger;
+    box-shadow: 0 0 0 3px rgba($danger, 0.12);
 }
 
 .text-danger {
-    color: #ef4444;
+    color: $danger;
     font-size: 0.9rem;
+}
+
+.form-check-input:checked {
+    background-color: $primary;
+    border-color: $primary;
+}
+
+.form-check-label {
+    color: $text;
+}
+
+// Medan wajib
+.form-label .wajib {
+    color: $danger;
+    font-weight: 700;
 }

@@ -17,13 +17,13 @@
                 <thead>
 
                     <tr>
-                        <th>Nama Fail</th>
-                        <th>Sektor</th>
-                        <th>Agensi</th>
-                        <th>Status</th>
-                        <th>Jumlah Rekod</th>
-                        <th>Tarikh</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Nama Fail</th>
+                        <th scope="col">Sektor</th>
+                        <th scope="col">Agensi</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Jumlah Rekod</th>
+                        <th scope="col">Tarikh</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
 
                 </thead>

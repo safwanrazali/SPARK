@@ -199,10 +199,10 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Jenis Laporan</th>
-                        <th>Status</th>
-                        <th>Kemas Kini</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Jenis Laporan</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Kemas Kini</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -256,11 +256,11 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Tarikh &amp; Masa</th>
-                        <th>Tindakan</th>
-                        <th>Dari</th>
-                        <th>Kepada</th>
-                        <th>Oleh</th>
+                        <th scope="col">Tarikh &amp; Masa</th>
+                        <th scope="col">Tindakan</th>
+                        <th scope="col">Dari</th>
+                        <th scope="col">Kepada</th>
+                        <th scope="col">Oleh</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -273,9 +273,9 @@
                             <td>{{ $log->changedBy?->name ?? '-' }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="5" class="text-center">Tiada sejarah direkodkan lagi.</td>
-                        </tr>
+                        <x-empty-state colspan="5" icon="bi-clock-history" title="Tiada sejarah">
+                            Perubahan peringkat workflow dan penugasan akan dipaparkan di sini.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

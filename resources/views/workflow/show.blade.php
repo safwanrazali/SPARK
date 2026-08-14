@@ -27,10 +27,6 @@
 
     </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     <div class="report-card mb-4">
 
         <h4 class="section-title">Kemajuan Workflow</h4>
@@ -195,12 +191,12 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Tarikh &amp; Masa</th>
-                        <th>Tindakan</th>
-                        <th>Dari</th>
-                        <th>Kepada</th>
-                        <th>Oleh</th>
-                        <th>Catatan</th>
+                        <th scope="col">Tarikh &amp; Masa</th>
+                        <th scope="col">Tindakan</th>
+                        <th scope="col">Dari</th>
+                        <th scope="col">Kepada</th>
+                        <th scope="col">Oleh</th>
+                        <th scope="col">Catatan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -228,9 +224,9 @@
                             <td>{{ $log->metadata['reason'] ?? '-' }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center">Tiada perubahan peringkat direkodkan lagi.</td>
-                        </tr>
+                        <x-empty-state colspan="6" icon="bi-clock-history" title="Tiada perubahan peringkat">
+                            Sejarah muncul apabila entiti didaftarkan atau peringkatnya dikemas kini.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

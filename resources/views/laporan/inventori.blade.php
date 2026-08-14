@@ -2,7 +2,7 @@
 
 @section('title', 'Laporan Analisis Inventori Kriptografi — ' . $analisis->agency_name)
 
-@section('page-title', 'Laporan Analisis Inventori Kriptografi')
+@section('page-title', 'Laporan Inventori Kriptografi')
 
 @section('content')
 
@@ -149,7 +149,7 @@
                         <td>{{ $nama }}</td>
                         <td>{{ $baris['penerimaan'] ?? '—' }}</td>
                         <td>{{ $baris['kebolehgunaan'] ?? '—' }}</td>
-                        <td>{{ $baris['nota'] ?: '—' }}</td>
+                        <td>{{ ($baris['nota'] ?? '') ?: '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -173,8 +173,8 @@
                     <tr>
                         <td>{{ $loop->iteration }}.</td>
                         <td>{{ $kategori }}</td>
-                        <td>{{ $baris['jumlah'] ?: '—' }}</td>
-                        <td>{{ $baris['nota'] ?: '—' }}</td>
+                        <td>{{ ($baris['jumlah'] ?? '') ?: '—' }}</td>
+                        <td>{{ ($baris['nota'] ?? '') ?: '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -250,7 +250,7 @@
                             <tr>
                                 <td>{{ $loop->iteration }}.</td>
                                 @foreach ($kolum as $k => $label)
-                                    <td>{{ $baris[$k] ?: '—' }}</td>
+                                    <td>{{ ($baris[$k] ?? '') ?: '—' }}</td>
                                 @endforeach
                             </tr>
                         @endforeach

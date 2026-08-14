@@ -2,7 +2,7 @@
 
 @section('title', 'Status Tiga Laporan')
 
-@section('page-title', 'Status Tiga Laporan Bagi Setiap Entiti')
+@section('page-title', 'Status Tiga Laporan')
 
 @section('content')
 
@@ -23,9 +23,9 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Entiti</th>
+                        <th scope="col">Entiti</th>
                         @foreach (\App\Models\StatusLaporan::JENIS as $nama)
-                            <th>{{ $nama }}</th>
+                            <th scope="col">{{ $nama }}</th>
                         @endforeach
                     </tr>
                 </thead>
@@ -65,12 +65,9 @@
                             @endforeach
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="4" class="text-center">
-                                Tiada entiti dipantau lagi. Entiti muncul di sini setelah mempunyai
-                                rekod muat naik atau dapatan analisis.
-                            </td>
-                        </tr>
+                        <x-empty-state colspan="4" icon="bi-list-check" title="Tiada entiti dipantau">
+                            Entiti muncul di sini setelah mempunyai rekod muat naik atau dapatan analisis.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

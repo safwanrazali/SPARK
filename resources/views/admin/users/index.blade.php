@@ -25,11 +25,11 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Nama</th>
-                        <th>Nama Pengguna</th>
-                        <th>Emel</th>
-                        <th>Peranan</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Nama</th>
+                        <th scope="col">Nama Pengguna</th>
+                        <th scope="col">Emel</th>
+                        <th scope="col">Peranan</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,9 +63,9 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="5" class="text-center">Tiada pengguna ditemui</td>
-                        </tr>
+                        <x-empty-state colspan="5" icon="bi-people" title="Tiada pengguna">
+                            Tambah pengguna baharu untuk memberikan akses kepada sistem.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

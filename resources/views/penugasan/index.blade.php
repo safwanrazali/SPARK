@@ -2,7 +2,7 @@
 
 @section('title', 'Penugasan Entiti')
 
-@section('page-title', 'Penugasan Entiti Kepada Pegawai Analisis')
+@section('page-title', 'Penugasan Entiti')
 
 @section('content')
 
@@ -37,15 +37,11 @@
 
     </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
-    @endif
-
     @if ($analysts->isEmpty())
-        <div class="alert alert-danger">
-            Tiada Pegawai Analisis berdaftar dalam sistem. Tambah pengguna dengan peranan
-            Pegawai Analisis melalui modul Pentadbiran sebelum membuat penugasan.
-        </div>
+        <x-alert type="warning" title="Tiada Pegawai Analisis berdaftar">
+            Tambah pengguna dengan peranan Pegawai Analisis melalui modul Pentadbiran
+            sebelum membuat penugasan.
+        </x-alert>
     @endif
 
     <div class="report-card">
@@ -57,12 +53,12 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Entiti</th>
-                        <th>Pegawai Analisis</th>
-                        <th>Ditugaskan Oleh</th>
-                        <th>Tarikh Penugasan</th>
-                        <th>Tugaskan / Tukar Ganti</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Entiti</th>
+                        <th scope="col">Pegawai Analisis</th>
+                        <th scope="col">Ditugaskan Oleh</th>
+                        <th scope="col">Tarikh Penugasan</th>
+                        <th scope="col">Tugaskan / Tukar Ganti</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,8 +101,10 @@
                             </td>
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-outline-light"
-                                    href="{{ route('entiti.show', $e['agency_code']) }}" title="Maklumat entiti">
-                                    <i class="bi bi-building"></i>
+                                    href="{{ route('entiti.show', $e['agency_code']) }}"
+                                    title="Maklumat entiti {{ $e['agency_name'] }}"
+                                    aria-label="Maklumat entiti {{ $e['agency_name'] }}">
+                                    <i class="bi bi-building" aria-hidden="true"></i>
                                 </a>
                                 <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('penugasan.show', $e['agency_code']) }}">
@@ -117,20 +115,18 @@
                                         class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-light"
-                                            title="Tarik balik penugasan">
-                                            <i class="bi bi-person-dash"></i>
+                                            title="Tarik balik penugasan {{ $e['agency_name'] }}"
+                                            aria-label="Tarik balik penugasan {{ $e['agency_name'] }}">
+                                            <i class="bi bi-person-dash" aria-hidden="true"></i>
                                         </button>
                                     </form>
                                 @endif
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center">
-                                Tiada entiti ditugaskan lagi. Pilih sektor di atas untuk memaparkan
-                                entiti dan membuat penugasan.
-                            </td>
-                        </tr>
+                        <x-empty-state colspan="6" icon="bi-person-check" title="Tiada entiti ditugaskan">
+                            Pilih sektor di atas untuk memaparkan entiti dan menugaskannya kepada Pegawai Analisis.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>

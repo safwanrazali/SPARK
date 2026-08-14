@@ -293,6 +293,6 @@ class Phase3AssignmentRouteTest extends TestCase
             ->assertOk()
             ->assertSee('belum ditugaskan kepada mana-mana Pegawai Analisis', false)
             ->assertSee('Tugaskan Pegawai')
-            ->assertSee('Tiada sejarah penugasan direkodkan lagi.');
+            ->assertSee('Tiada sejarah penugasan');
     }
 }

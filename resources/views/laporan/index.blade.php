@@ -2,7 +2,7 @@
 
 @section('title', 'Laporan Inventori')
 
-@section('page-title', 'Jana Laporan Analisis Inventori Kriptografi')
+@section('page-title', 'Penjanaan Laporan')
 
 @section('content')
 
@@ -19,12 +19,12 @@
             <table class="table-modern">
                 <thead>
                     <tr>
-                        <th>Sektor</th>
-                        <th>Entiti</th>
-                        <th>Kod Rujukan</th>
-                        <th>Status Laporan</th>
-                        <th>Kemas Kini</th>
-                        <th>Tindakan</th>
+                        <th scope="col">Sektor</th>
+                        <th scope="col">Entiti</th>
+                        <th scope="col">Kod Rujukan</th>
+                        <th scope="col">Status Laporan</th>
+                        <th scope="col">Kemas Kini</th>
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,12 +42,9 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center">
-                                Tiada dapatan analisis direkodkan. Masukkan dapatan melalui
-                                Analisis Inventori Kriptografi terlebih dahulu.
-                            </td>
-                        </tr>
+                        <x-empty-state colspan="6" icon="bi-file-earmark-bar-graph" title="Tiada laporan tersedia">
+                            Laporan boleh dijana selepas dapatan analisis dimasukkan bagi entiti berkenaan.
+                        </x-empty-state>
                     @endforelse
                 </tbody>
             </table>
