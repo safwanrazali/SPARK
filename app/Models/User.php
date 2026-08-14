@@ -24,6 +24,15 @@ class User extends Authenticatable
     public const ROLE_ANALYST = 'analyst';
 
     /**
+     * FASA 9 — peranan tambahan mengikut spesifikasi bahagian 25.
+     */
+    public const ROLE_KETUA_BAHAGIAN = 'head_of_division';
+
+    public const ROLE_DOCUMENT_CONTROLLER = 'document_controller';
+
+    public const ROLE_REKOD_ANALISIS = 'analysis_records_officer';
+
+    /**
      * Malay display labels for each role.
      *
      * @return array<string, string>
@@ -34,12 +43,33 @@ class User extends Authenticatable
             self::ROLE_ADMINISTRATOR => 'Pentadbir Sistem',
             self::ROLE_COORDINATOR => 'Pegawai Penyelaras Analisis',
             self::ROLE_ANALYST => 'Pegawai Analisis',
+            self::ROLE_KETUA_BAHAGIAN => 'Ketua Bahagian',
+            self::ROLE_DOCUMENT_CONTROLLER => 'Document Controller',
+            self::ROLE_REKOD_ANALISIS => 'Pegawai Rekod Analisis',
         ];
+    }
+
+    /**
+     * Senarai kunci peranan yang sah.
+     *
+     * @return array<int, string>
+     */
+    public static function roles(): array
+    {
+        return array_keys(self::roleLabels());
     }
 
     public function roleLabel(): string
     {
         return self::roleLabels()[$this->role] ?? $this->role;
+    }
+
+    /**
+     * @param  array<int, string>  $roles
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        return in_array($this->role, $roles, true);
     }
 
     protected function casts(): array
@@ -63,6 +93,37 @@ class User extends Authenticatable
     public function isAnalyst(): bool
     {
         return $this->role === self::ROLE_ANALYST;
+    }
+
+    public function isKetuaBahagian(): bool
+    {
+        return $this->role === self::ROLE_KETUA_BAHAGIAN;
+    }
+
+    public function isDocumentController(): bool
+    {
+        return $this->role === self::ROLE_DOCUMENT_CONTROLLER;
+    }
+
+    public function isPegawaiRekodAnalisis(): bool
+    {
+        return $this->role === self::ROLE_REKOD_ANALISIS;
+    }
+
+    /**
+     * Peranan yang boleh melihat SEMUA entiti tanpa penapisan penugasan.
+     *
+     * Spesifikasi bahagian 26, baris "Lihat semua entiti":
+     * Pentadbir ✓, Pegawai Penyelaras Analisis ✓, Ketua Bahagian ✓,
+     * Pegawai Analisis ✗.
+     */
+    public function hasFullEntityVisibility(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_ADMINISTRATOR,
+            self::ROLE_COORDINATOR,
+            self::ROLE_KETUA_BAHAGIAN,
+        ]);
     }
 
     /**
@@ -120,13 +181,13 @@ class User extends Authenticatable
     /**
      * Dapatkan entiti yang boleh dilihat oleh pengguna ini berdasarkan role.
      *
-     * - Admin: lihat semua
-     * - Coordinator: lihat semua
-     * - Analyst: lihat hanya yang ditugaskan
+     * - Pentadbir / Penyelaras / Ketua Bahagian : semua entiti (null = tiada penapis)
+     * - Pegawai Analisis                        : hanya entiti yang ditugaskan
+     * - Peranan lain                            : tiada akses sehingga kebenaran disahkan
      */
     public function getAccessibleEntities()
     {
-        if ($this->isAdministrator() || $this->isCoordinator()) {
+        if ($this->hasFullEntityVisibility()) {
             // Boleh melihat semua entiti
             return null; // Signal to caller: no filter needed
         }
@@ -139,6 +200,9 @@ class User extends Authenticatable
                 ->toArray();
         }
 
+        // Document Controller dan Pegawai Rekod Analisis: kebenaran belum
+        // ditetapkan dalam matriks (spesifikasi bahagian 26), jadi lalai
+        // adalah tiada akses — bukan akses penuh.
         return []; // No access
     }
 }

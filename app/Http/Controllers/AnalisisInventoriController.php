@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
 use App\Services\AnalisisDraftService;
+use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
 use App\Support\BorangAnalisis;
 use App\Support\SeksyenAnalisis;
@@ -16,6 +17,7 @@ class AnalisisInventoriController extends Controller
     public function __construct(
         private readonly EntityAccessService $access,
         private readonly AnalisisDraftService $draf,
+        private readonly AuditTrailService $audit,
     ) {}
 
     /**
@@ -170,6 +172,10 @@ class AnalisisInventoriController extends Controller
             BorangAnalisis::daripadaRequest($request)
         );
 
+        $sedia = AnalisisInventori::where('agency_code', $agensi['code'])->first();
+        $wujudSebelum = $sedia !== null;
+        $selesaiSebelum = (bool) $sedia?->selesai;
+
         $analisis = AnalisisInventori::updateOrCreate(
             ['agency_code' => $agensi['code']],
             $lajur + [
@@ -185,6 +191,21 @@ class AnalisisInventoriController extends Controller
         // Dapatan telah masuk ke rekod sebenar — draf tidak lagi menjadi
         // sumber pemulihan, tetapi versinya dikekalkan sebagai sejarah.
         $this->draf->tutupDraf($analisis);
+
+        // FASA 8 — simpanan muktamad direkodkan. Kandungan dapatan TIDAK
+        // dicatat; hanya perubahan status penyiapan dan kod rujukan.
+        $this->audit->rekod(
+            ['agency_code' => $agensi['code'], 'agency_name' => $agensi['name']],
+            'analysis_saved',
+            $wujudSebelum ? ($selesaiSebelum ? 'Selesai' : 'Dalam Proses') : null,
+            $analisis->selesai ? 'Selesai' : 'Dalam Proses',
+            $request->user(),
+            [
+                'analisis_inventori_id' => $analisis->id,
+                'kod_rujukan' => $analisis->kod_rujukan,
+                'status_laporan' => $analisis->status_laporan,
+            ],
+        );
 
         // Analisis selesai menaikkan status laporan Inventori ke Dalam Proses
         // sekurang-kurangnya (kemuktamadan status kekal di tangan Penyelaras).

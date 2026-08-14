@@ -10,6 +10,25 @@
     gap: 0.5rem;
 }
 
+// Fasa 8 — metadata jejak audit dalam jadual
+.audit-meta {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    font-size: 0.82rem;
+    color: $muted;
+
+    li + li {
+        margin-top: 0.15rem;
+    }
+}
+
+.audit-meta__kunci {
+    color: $text;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
 .entity-facts {
     display: grid;
     grid-template-columns: minmax(140px, auto) 1fr;

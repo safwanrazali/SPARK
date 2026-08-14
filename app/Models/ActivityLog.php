@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\ImmutableAuditLogException;
 use App\Models\Concerns\FiltersByEntityAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -52,12 +53,35 @@ class ActivityLog extends Model
         'analysis_saved' => 'Analisis Disimpan',
         'draft_created' => 'Draf Dimulakan',
         'draft_updated' => 'Draf Disimpan',
+        'report_status_changed' => 'Status Laporan Berubah',
         'report_generated' => 'Laporan Dijana',
         'report_submitted' => 'Laporan Diserahkan untuk Semakan',
         'report_approved' => 'Laporan Diluluskan',
         'report_rejected' => 'Laporan Ditolak',
         'approval_added' => 'Kelulusan Ditambah',
     ];
+
+    /**
+     * FASA 8 — rekod jejak audit hanya boleh ditambah.
+     *
+     * Tiada antara muka pengguna yang mengubah atau memadam rekod ini, dan
+     * percubaan berbuat demikian melalui kod dihalang di sini supaya jejak
+     * audit kekal boleh dipercayai.
+     */
+    protected static function booted(): void
+    {
+        static::updating(function (self $log) {
+            throw new ImmutableAuditLogException(
+                'Rekod jejak audit tidak boleh diubah selepas dicipta.'
+            );
+        });
+
+        static::deleting(function (self $log) {
+            throw new ImmutableAuditLogException(
+                'Rekod jejak audit tidak boleh dipadam.'
+            );
+        });
+    }
 
     /**
      * Pengguna yang membuat perubahan.

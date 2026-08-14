@@ -19,11 +19,9 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'in:'.implode(',', [
-                User::ROLE_ADMINISTRATOR,
-                User::ROLE_COORDINATOR,
-                User::ROLE_ANALYST,
-            ])],
+            // Senarai peranan diambil daripada model supaya peranan baharu
+            // (Fasa 9) tidak perlu didaftarkan di banyak tempat.
+            'role' => ['required', 'in:'.implode(',', User::roles())],
             'password' => [
                 'required',
                 'confirmed',

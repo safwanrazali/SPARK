@@ -70,6 +70,15 @@
             </a>
         </li>
 
+        @can('view-audit-trail')
+            <li>
+                <a href="{{ route('audit.index') }}">
+                    <i class="bi bi-shield-check"></i>
+                    <span class="menu-text">Jejak Audit</span>
+                </a>
+            </li>
+        @endcan
+
         <li class="sidebar-section-title"><span class="menu-text">Penilaian Risiko</span></li>
 
         <li>

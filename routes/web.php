@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AnalisisInventoriController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntitiAssignmentController;
 use App\Http\Controllers\EntitiController;
@@ -75,6 +76,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/status-laporan/kitar', [StatusLaporanController::class, 'kitar'])
         ->middleware('can:manage-status')
         ->name('status.kitar');
+
+    /*
+    |----------------------------------------------------------------------
+    | Jejak Audit — paparan sahaja, rekod tidak boleh diubah (Fasa 8)
+    |----------------------------------------------------------------------
+    */
+    Route::get('/jejak-audit', [AuditTrailController::class, 'index'])
+        ->middleware('can:view-audit-trail')
+        ->name('audit.index');
 
     /*
     |----------------------------------------------------------------------

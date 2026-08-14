@@ -18,42 +18,85 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Gate::define('access-administration', fn (User $user) => $user->isAdministrator());
+        /*
+        |------------------------------------------------------------------
+        | FASA 9 — pemetaan kebenaran mengikut peranan
+        |------------------------------------------------------------------
+        |
+        | Sumber tunggal: matriks kebenaran asas (spesifikasi bahagian 26).
+        | Sel bertanda "ikut permission" bermakna kebenaran sebenar BELUM
+        | ditetapkan; ia dilayan sebagai TIDAK dibenarkan supaya tiada
+        | kuasa direka sendiri. Tandakan NEEDS CONFIRMATION.
+        |
+        | Fungsi                | Admin | Penyelaras | Analisis | Ketua
+        | ----------------------|-------|------------|----------|------
+        | Dashboard keseluruhan |   ✓   |     ✓      |    ✗     |  ✓
+        | Lihat semua entiti    |   ✓   |     ✓      |    ✗     |  ✓
+        | Lihat assigned entity |   ✓   |     ✓      |    ✓     |  ✓
+        | Assign entity         |   ✓   |     ✓      |    ✗     |  ✗
+        | Input analysis        |   ✓   |  ikut izin |    ✓     |  ✗
+        | Save / resume draft   |   ✓   |  ikut izin |    ✓     |  ✗
+        | Generate report       |   ✓   |  ikut izin |    ✓     |  ✗
+        | Review                |   ✓   |     ✓      | ikut izin|  ✓
+        | Approve               |   ✓   |  ikut izin |    ✗     |  ✓
+        | Audit trail           |   ✓   |     ✓      | ikut izin|  ✓
+        |
+        | Document Controller dan Pegawai Rekod Analisis (bahagian 25)
+        | TIADA baris dalam matriks. Peranan tersebut didaftarkan supaya
+        | boleh diberikan kepada pengguna, tetapi tidak diberi sebarang
+        | kebenaran sehingga business rule disahkan — lalai ialah tolak.
+        */
 
-        Gate::define('manage-upload', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+        $admin = [User::ROLE_ADMINISTRATOR];
+        $penyelaras = [User::ROLE_COORDINATOR];
+        $analisis = [User::ROLE_ANALYST];
+        $ketua = [User::ROLE_KETUA_BAHAGIAN];
 
-        // Fasa 1 — kawalan akses mengikut slaid 14 (PPTX):
-        // Pegawai Analisis  : input dapatan + jana laporan
-        // Pegawai Penyelaras: tetapkan / kemas kini status 3 laporan
-        // Pentadbir         : semua fungsi
-        Gate::define('manage-analysis', fn (User $user) => $user->isAdministrator() || $user->isAnalyst());
+        // Pentadbiran sistem — Pentadbir sahaja. Tiada peranan lain boleh
+        // mewarisi akses ini secara tidak sengaja.
+        Gate::define('access-administration', fn (User $user) => $user->hasAnyRole($admin));
 
-        Gate::define('manage-status', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+        // Modul muat naik sedia ada (bukan sebahagian workflow baharu).
+        Gate::define('manage-upload', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras]));
+
+        // Input dapatan analisis, draf dan penjanaan laporan.
+        // Penyelaras "ikut permission" → tidak diberikan. Ketua ✗.
+        Gate::define('manage-analysis', fn (User $user) => $user->hasAnyRole([...$admin, ...$analisis]));
+
+        // Status tiga laporan (modul pemantauan sedia ada).
+        Gate::define('manage-status', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras]));
 
         // Fasa 2 — kawalan peringkat workflow 7 langkah.
-        // NEEDS CONFIRMATION: matriks kebenaran (spesifikasi bahagian 26) tidak
-        // menyatakan peranan mana yang boleh menukar peringkat. Pemetaan awal
-        // mengikut konvensyen sedia ada untuk kawalan pemantauan
-        // (`manage-status`): Pentadbir + Pegawai Penyelaras Analisis.
-        // Ubah pemetaan di sini sahaja apabila business rule disahkan.
-        Gate::define('manage-workflow', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+        // NEEDS CONFIRMATION: matriks tidak menyatakan peranan mana yang
+        // boleh menukar peringkat. Pemetaan mengikut konvensyen kawalan
+        // pemantauan sedia ada (`manage-status`).
+        Gate::define('manage-workflow', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras]));
 
-        // Fasa 3 — penugasan entiti kepada Pegawai Analisis.
-        // Matriks kebenaran (spesifikasi bahagian 26) menyatakan "Assign entity"
-        // dibenarkan untuk Pentadbir dan Pegawai Penyelaras Analisis sahaja.
-        Gate::define('manage-assignment', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+        // "Assign entity" — Pentadbir ✓, Penyelaras ✓, Analisis ✗, Ketua ✗.
+        Gate::define('manage-assignment', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras]));
 
-        // Fasa 7 — papan pemuka pemantauan keseluruhan.
-        // Matriks kebenaran (spesifikasi bahagian 26): Pentadbir ✓,
-        // Pegawai Penyelaras Analisis ✓, Pegawai Analisis ✗, Ketua Bahagian ✓.
-        // Peranan Ketua Bahagian belum wujud dalam sistem — ia ditambah dalam
-        // Fasa 9 (Complete Roles & Permissions) dan hanya perlu didaftarkan
-        // pada gate ini.
-        Gate::define('view-dashboard', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+        // "Dashboard keseluruhan" — termasuk Ketua Bahagian.
+        Gate::define('view-dashboard', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras, ...$ketua]));
+
+        // "Audit trail" — Analisis "ikut permission" → tidak diberikan akses
+        // kepada jejak audit berpusat; mereka tetap melihat sejarah entiti
+        // yang ditugaskan melalui halaman entiti (Fasa 5).
+        Gate::define('view-audit-trail', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras, ...$ketua]));
+
+        // "Review" — Analisis "ikut permission" → tidak diberikan.
+        // "Approve" — Penyelaras "ikut permission" → tidak diberikan.
+        //
+        // Pemetaan kebenaran sahaja. Aliran semakan dan kelulusan sebenar
+        // ialah skop Fasa 10 dan belum dilaksanakan; tiada kuasa kelulusan
+        // direka di luar matriks yang telah disahkan.
+        Gate::define('review-report', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras, ...$ketua]));
+
+        Gate::define('approve-report', fn (User $user) => $user->hasAnyRole([...$admin, ...$ketua]));
 
         // Fasa 4 — kawalan akses entiti (spesifikasi bahagian 9).
         // Pegawai Analisis hanya boleh mengakses entiti yang ditugaskan
-        // kepadanya; Pentadbir dan Penyelaras mengakses semua entiti.
+        // kepadanya; Pentadbir, Penyelaras dan Ketua Bahagian mengakses
+        // semua entiti (lihat User::hasFullEntityVisibility()).
         Gate::define(
             'access-entity',
             fn (User $user, ?string $agencyCode) => $this->app->make(EntityAccessService::class)

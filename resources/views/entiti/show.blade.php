@@ -237,10 +237,20 @@
     {{-- ── Sejarah ─────────────────────────────────────────────────────── --}}
     <div class="report-card">
 
-        <h4 class="section-title">Sejarah</h4>
-        <p class="text-secondary">
-            Perubahan peringkat workflow dan penugasan bagi entiti ini, terbaharu di atas.
-        </p>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h4 class="section-title">Sejarah</h4>
+                <p class="text-secondary">
+                    Perubahan penting bagi entiti ini, terbaharu di atas.
+                </p>
+            </div>
+            @can('view-audit-trail')
+                <a href="{{ route('audit.index', ['agency_code' => $entiti['agency_code']]) }}"
+                    class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-shield-check"></i> Jejak Audit Penuh
+                </a>
+            @endcan
+        </div>
 
         <div class="table-responsive-custom">
             <table class="table-modern">

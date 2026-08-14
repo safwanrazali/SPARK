@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
  */
 class WorkflowTransitionService
 {
+    public function __construct(private readonly AuditTrailService $audit) {}
+
     public const ACTION_INITIALIZED = 'workflow_initialized';
 
     public const ACTION_STAGE_CHANGED = 'workflow_stage_changed';
@@ -237,15 +239,16 @@ class WorkflowTransitionService
         ?User $user,
         array $metadata = [],
     ): ActivityLog {
-        return ActivityLog::create([
-            'agency_code' => $workflow->agency_code,
-            'agency_name' => $workflow->agency_name,
-            'action' => $action,
-            'old_value' => $lama,
-            'new_value' => $baharu,
-            'changed_by_user_id' => $user?->id,
-            'changed_at' => now(),
-            'metadata' => $metadata,
-        ]);
+        return $this->audit->rekod(
+            [
+                'agency_code' => $workflow->agency_code,
+                'agency_name' => $workflow->agency_name,
+            ],
+            $action,
+            $lama,
+            $baharu,
+            $user,
+            $metadata,
+        );
     }
 }

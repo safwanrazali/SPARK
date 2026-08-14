@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\DB;
  */
 class EntityAssignmentService
 {
+    public function __construct(private readonly AuditTrailService $audit) {}
+
     public const ACTION_CREATED = 'assignment_created';
 
     public const ACTION_UPDATED = 'assignment_updated';
@@ -239,15 +241,16 @@ class EntityAssignmentService
         ?User $actor,
         array $metadata = [],
     ): ActivityLog {
-        return ActivityLog::create([
-            'agency_code' => $penugasan->agency_code,
-            'agency_name' => $penugasan->agency_name,
-            'action' => $action,
-            'old_value' => $lama,
-            'new_value' => $baharu,
-            'changed_by_user_id' => $actor?->id,
-            'changed_at' => now(),
-            'metadata' => $metadata,
-        ]);
+        return $this->audit->rekod(
+            [
+                'agency_code' => $penugasan->agency_code,
+                'agency_name' => $penugasan->agency_name,
+            ],
+            $action,
+            $lama,
+            $baharu,
+            $actor,
+            $metadata,
+        );
     }
 }

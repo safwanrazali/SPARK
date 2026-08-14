@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\ActivityLog;
 use App\Models\AnalisDraftHistory;
 use App\Models\AnalisisInventori;
 use App\Models\User;
@@ -31,6 +30,8 @@ use Illuminate\Support\Facades\DB;
  */
 class AnalisisDraftService
 {
+    public function __construct(private readonly AuditTrailService $audit) {}
+
     public const ACTION_DRAFT_CREATED = 'draft_created';
 
     public const ACTION_DRAFT_UPDATED = 'draft_updated';
@@ -230,20 +231,23 @@ class AnalisisDraftService
         ?string $seksyenSemasa,
         int $bilanganSeksyen,
     ): void {
-        ActivityLog::create([
-            'agency_code' => $analisis->agency_code,
-            'agency_name' => $analisis->agency_name,
-            'action' => $pertama ? self::ACTION_DRAFT_CREATED : self::ACTION_DRAFT_UPDATED,
-            'old_value' => $pertama ? null : (string) ($versi - 1),
-            'new_value' => (string) $versi,
-            'changed_by_user_id' => $user->id,
-            'changed_at' => now(),
-            'metadata' => [
+        // Hanya metadata versi dicatat — kandungan dapatan analisis tidak
+        // pernah dimasukkan ke dalam jejak audit.
+        $this->audit->rekod(
+            [
+                'agency_code' => $analisis->agency_code,
+                'agency_name' => $analisis->agency_name,
+            ],
+            $pertama ? self::ACTION_DRAFT_CREATED : self::ACTION_DRAFT_UPDATED,
+            $pertama ? null : (string) ($versi - 1),
+            (string) $versi,
+            $user,
+            [
                 'analisis_inventori_id' => $analisis->id,
                 'version' => $versi,
                 'seksyen_semasa' => $seksyenSemasa,
                 'seksyen_disimpan' => $bilanganSeksyen,
             ],
-        ]);
+        );
     }
 }

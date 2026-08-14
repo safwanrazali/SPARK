@@ -23,12 +23,12 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
-        // Pegawai Analisis tiada papan pemuka keseluruhan. Mereka dialihkan
-        // ke senarai kerja mereka dan bukan diberi versi papan pemuka lain.
+        // Peranan bukan pemantauan tiada papan pemuka keseluruhan. Mereka
+        // dialihkan ke senarai kerja dan bukan diberi versi papan pemuka lain.
         if (! Gate::allows('view-dashboard')) {
             return redirect()
                 ->route('analisis.index')
-                ->with('success', 'Papan pemuka pemantauan disediakan untuk peranan pengurusan. Berikut ialah senarai entiti yang ditugaskan kepada anda.');
+                ->with('success', 'Papan pemuka pemantauan disediakan untuk peranan pengurusan sahaja.');
         }
 
         $pengguna = $request->user();

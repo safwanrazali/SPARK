@@ -22,11 +22,9 @@ class UpdateUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'role' => ['required', 'in:'.implode(',', [
-                User::ROLE_ADMINISTRATOR,
-                User::ROLE_COORDINATOR,
-                User::ROLE_ANALYST,
-            ])],
+            // Senarai peranan diambil daripada model supaya peranan baharu
+            // (Fasa 9) tidak perlu didaftarkan di banyak tempat.
+            'role' => ['required', 'in:'.implode(',', User::roles())],
             'password' => [
                 'nullable',
                 'confirmed',
