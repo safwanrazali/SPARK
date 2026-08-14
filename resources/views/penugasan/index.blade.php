@@ -105,6 +105,10 @@
                             </td>
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-outline-light"
+                                    href="{{ route('entiti.show', $e['agency_code']) }}" title="Maklumat entiti">
+                                    <i class="bi bi-building"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('penugasan.show', $e['agency_code']) }}">
                                     <i class="bi bi-clock-history"></i> Sejarah
                                 </a>

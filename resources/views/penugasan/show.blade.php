@@ -15,10 +15,15 @@
                     {{ $entiti['sector_name'] }} · Kod Entiti: {{ $entiti['agency_code'] }}
                 </p>
             </div>
-            <a href="{{ route('penugasan.index', ['sector_code' => $entiti['sector_code']]) }}"
-                class="btn btn-sm btn-outline-light">
-                <i class="bi bi-arrow-left"></i> Senarai Entiti
-            </a>
+            <div class="entity-actions">
+                <a href="{{ route('entiti.show', $entiti['agency_code']) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-building"></i> Maklumat Entiti
+                </a>
+                <a href="{{ route('penugasan.index', ['sector_code' => $entiti['sector_code']]) }}"
+                    class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Senarai Entiti
+                </a>
+            </div>
         </div>
 
     </div>

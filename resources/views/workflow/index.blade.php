@@ -93,8 +93,12 @@
                                 </div>
                                 <small class="text-secondary">{{ $w?->current_stage ?? 0 }}/7</small>
                             </td>
-                            <td>
+                            <td class="text-nowrap">
                                 <a class="btn btn-sm btn-primary"
+                                    href="{{ route('entiti.show', $e['agency_code']) }}">
+                                    <i class="bi bi-building"></i> Entiti
+                                </a>
+                                <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('workflow.show', $e['agency_code']) }}">
                                     <i class="bi bi-diagram-3"></i> Workflow
                                 </a>

@@ -1,0 +1,41 @@
+/*
+|--------------------------------------------------------------------------
+| Fasa 5 — pusat maklumat entiti
+|--------------------------------------------------------------------------
+*/
+
+.entity-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.entity-facts {
+    display: grid;
+    grid-template-columns: minmax(140px, auto) 1fr;
+    gap: 0.6rem 1rem;
+    margin: 0;
+
+    dt {
+        color: $muted;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    dd {
+        margin: 0;
+        color: $text;
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 576px) {
+    .entity-facts {
+        grid-template-columns: 1fr;
+        gap: 0.15rem 0;
+
+        dd {
+            margin-bottom: 0.5rem;
+        }
+    }
+}

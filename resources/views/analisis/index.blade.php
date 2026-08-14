@@ -94,7 +94,11 @@
                                 </span>
                             </td>
                             <td>{{ $item->updated_at?->format('d/m/Y H:i') }}</td>
-                            <td>
+                            <td class="text-nowrap">
+                                <a class="btn btn-sm btn-outline-light"
+                                    href="{{ route('entiti.show', $item->agency_code) }}" title="Maklumat entiti">
+                                    <i class="bi bi-building"></i>
+                                </a>
                                 @can('manage-analysis')
                                     <a class="btn btn-sm btn-outline-light"
                                         href="{{ route('analisis.borang', ['sector_code' => $item->sector_code, 'agency_code' => $item->agency_code]) }}">

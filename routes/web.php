@@ -5,6 +5,7 @@ use App\Http\Controllers\AnalisisInventoriController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntitiAssignmentController;
+use App\Http\Controllers\EntitiController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MuatNaikController;
 use App\Http\Controllers\StatusLaporanController;
@@ -71,6 +72,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/status-laporan/kitar', [StatusLaporanController::class, 'kitar'])
         ->middleware('can:manage-status')
         ->name('status.kitar');
+
+    /*
+    |----------------------------------------------------------------------
+    | Pusat Maklumat Entiti — himpunan maklumat setiap entiti (Fasa 5)
+    |----------------------------------------------------------------------
+    */
+    Route::get('/entiti/{agencyCode}', [EntitiController::class, 'show'])
+        ->middleware('entity.access')
+        ->name('entiti.show');
 
     /*
     |----------------------------------------------------------------------

@@ -11,6 +11,7 @@ use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -427,26 +428,52 @@ class Phase4AccessControlTest extends TestCase
         $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::BETA]);
     }
 
-    public function test_tiada_route_api_yang_terdedah_tanpa_pengesahan(): void
+    public function test_setiap_route_aplikasi_dilindungi_middleware_auth(): void
     {
-        // Aplikasi ini tidak mendedahkan routes/api.php. Semua route yang
-        // mengendalikan data entiti mesti berada di belakang middleware auth.
+        // Aplikasi ini tidak mendedahkan routes/api.php.
         $this->assertFalse(file_exists(base_path('routes/api.php')));
 
         foreach (app('router')->getRoutes() as $route) {
-            $middleware = $route->gatherMiddleware();
-            $uri = $route->uri();
+            $tindakan = $route->getActionName();
 
-            if (in_array($uri, ['login', 'logout', 'up', '/'], true) || str_starts_with($uri, '_')) {
+            // Hanya route aplikasi disemak; route rangka kerja diuji berasingan.
+            if (! str_starts_with($tindakan, 'App\\Http\\Controllers\\')) {
                 continue;
             }
+
+            $middleware = $route->gatherMiddleware();
 
             if (in_array('guest', $middleware, true)) {
                 continue;
             }
 
-            $this->assertContains('auth', $middleware, "Route [{$uri}] tidak dilindungi middleware auth.");
+            $this->assertContains(
+                'auth',
+                $middleware,
+                "Route [{$route->uri()}] tidak dilindungi middleware auth.",
+            );
         }
+    }
+
+    public function test_fail_muat_naik_persendirian_tidak_boleh_dicapai_tanpa_tandatangan(): void
+    {
+        // Route storage/{path} rangka kerja menyajikan disk 'local'
+        // (storage/app/private) tempat fail muat naik disimpan. Ia mesti
+        // menolak capaian tanpa URL bertandatangan, bagi bacaan dan penulisan.
+        Storage::disk('local')
+            ->put('uploads/rahsia-entiti.xlsx', 'DATA RAHSIA');
+
+        $this->get('/storage/uploads/rahsia-entiti.xlsx')->assertForbidden();
+
+        $this->actingAs($this->analystA)
+            ->get('/storage/uploads/rahsia-entiti.xlsx')
+            ->assertForbidden();
+
+        $this->put('/storage/uploads/disuntik.txt', ['x' => 1])->assertForbidden();
+
+        $this->assertFalse(
+            Storage::disk('local')->exists('uploads/disuntik.txt')
+        );
     }
 
     public function test_tetamu_tidak_boleh_mengakses_mana_mana_route_entiti(): void
