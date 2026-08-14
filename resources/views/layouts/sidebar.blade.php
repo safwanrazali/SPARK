@@ -11,12 +11,14 @@
 
     <ul class="sidebar-menu">
 
-        <li>
-            <a href="{{ route('dashboard') }}">
-                <i class="bi bi-grid"></i>
-                <span class="menu-text">Papan Pemuka</span>
-            </a>
-        </li>
+        @can('view-dashboard')
+            <li>
+                <a href="{{ route('dashboard') }}">
+                    <i class="bi bi-grid"></i>
+                    <span class="menu-text">Papan Pemuka</span>
+                </a>
+            </li>
+        @endcan
 
         <li class="sidebar-section-title"><span class="menu-text">Inventori</span></li>
 

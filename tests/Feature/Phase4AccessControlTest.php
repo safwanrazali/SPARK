@@ -262,22 +262,27 @@ class Phase4AccessControlTest extends TestCase
             ->assertDontSee('A010102');
     }
 
+    /**
+     * Sejak Fasa 7, Pegawai Analisis tidak menerima papan pemuka langsung
+     * (spesifikasi bahagian 10 dan 26) — bukan sekadar versi yang ditapis.
+     */
     public function test_dashboard_pegawai_analisis_tidak_memaparkan_angka_keseluruhan(): void
     {
         $this->buatData(self::ALPHA);
         $this->buatData(self::BETA);
 
-        // Penyelaras melihat kedua-dua entiti; Pegawai A hanya satu.
+        // Penyelaras melihat ketiga-tiga entiti dipantau: Alpha dan Beta
+        // (mempunyai rekod) serta Gamma (mempunyai penugasan aktif sahaja —
+        // penugasan turut menjadikan entiti dipantau sejak Fasa 7).
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('jumlahEntiti', 2);
+            ->assertViewHas('jumlahEntiti', 3);
 
+        // Pegawai Analisis dialihkan ke senarai kerjanya.
         $this->actingAs($this->analystA)
             ->get(route('dashboard'))
-            ->assertOk()
-            ->assertViewHas('jumlahEntiti', 1)
-            ->assertViewHas('dashboardKeseluruhan', false);
+            ->assertRedirect(route('analisis.index'));
     }
 
     /*

@@ -43,6 +43,14 @@ class AppServiceProvider extends ServiceProvider
         // dibenarkan untuk Pentadbir dan Pegawai Penyelaras Analisis sahaja.
         Gate::define('manage-assignment', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
 
+        // Fasa 7 — papan pemuka pemantauan keseluruhan.
+        // Matriks kebenaran (spesifikasi bahagian 26): Pentadbir ✓,
+        // Pegawai Penyelaras Analisis ✓, Pegawai Analisis ✗, Ketua Bahagian ✓.
+        // Peranan Ketua Bahagian belum wujud dalam sistem — ia ditambah dalam
+        // Fasa 9 (Complete Roles & Permissions) dan hanya perlu didaftarkan
+        // pada gate ini.
+        Gate::define('view-dashboard', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
+
         // Fasa 4 — kawalan akses entiti (spesifikasi bahagian 9).
         // Pegawai Analisis hanya boleh mengakses entiti yang ditugaskan
         // kepadanya; Pentadbir dan Penyelaras mengakses semua entiti.
