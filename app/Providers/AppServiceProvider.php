@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\AnalisisInventori;
 use App\Models\User;
+use App\Policies\AnalisisInventoriPolicy;
+use App\Services\EntityAccessService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -40,10 +43,27 @@ class AppServiceProvider extends ServiceProvider
         // dibenarkan untuk Pentadbir dan Pegawai Penyelaras Analisis sahaja.
         Gate::define('manage-assignment', fn (User $user) => $user->isAdministrator() || $user->isCoordinator());
 
+        // Fasa 4 — kawalan akses entiti (spesifikasi bahagian 9).
+        // Pegawai Analisis hanya boleh mengakses entiti yang ditugaskan
+        // kepadanya; Pentadbir dan Penyelaras mengakses semua entiti.
+        Gate::define(
+            'access-entity',
+            fn (User $user, ?string $agencyCode) => $this->app->make(EntityAccessService::class)
+                ->canAccess($user, $agencyCode),
+        );
+
+        // Melihat senarai penuh entiti tanpa penapisan.
+        Gate::define(
+            'view-all-entities',
+            fn (User $user) => ! $this->app->make(EntityAccessService::class)->isRestricted($user),
+        );
+
         Gate::define('access-inventory', fn (User $user) => true);
 
         Gate::define('access-risk-assessment', fn (User $user) => true);
 
         Gate::define('access-reports', fn (User $user) => true);
+
+        Gate::policy(AnalisisInventori::class, AnalisisInventoriPolicy::class);
     }
 }

@@ -20,12 +20,14 @@
 
         <li class="sidebar-section-title"><span class="menu-text">Inventori</span></li>
 
-        <li>
-            <a href="{{ route('muat-naik.index') }}">
-                <i class="bi bi-upload"></i>
-                <span class="menu-text">Muat Naik MasterTable</span>
-            </a>
-        </li>
+        @can('manage-upload')
+            <li>
+                <a href="{{ route('muat-naik.index') }}">
+                    <i class="bi bi-upload"></i>
+                    <span class="menu-text">Muat Naik MasterTable</span>
+                </a>
+            </li>
+        @endcan
 
         <li>
             <a href="{{ route('muat-naik.history') }}">

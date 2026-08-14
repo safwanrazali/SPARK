@@ -15,9 +15,15 @@ class MuatNaikController extends Controller
         return view('uploads.index');
     }
 
-    public function history()
+    /**
+     * Sejarah muat naik — ditapis mengikut entiti yang boleh diakses (Fasa 4).
+     */
+    public function history(Request $request)
     {
-        $rekod = MuatNaik::latest()->paginate(10);
+        $rekod = MuatNaik::query()
+            ->accessibleBy($request->user())
+            ->latest()
+            ->paginate(10);
 
         return view(
             'uploads.history',

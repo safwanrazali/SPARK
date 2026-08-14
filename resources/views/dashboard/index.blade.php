@@ -6,6 +6,13 @@
 
 @section('content')
 
+    @unless ($dashboardKeseluruhan)
+        {{-- Fasa 4: peranan tertakluk penapisan tidak melihat angka keseluruhan sistem. --}}
+        <div class="alert alert-success">
+            Papan pemuka ini memaparkan kiraan bagi entiti yang ditugaskan kepada anda sahaja.
+        </div>
+    @endunless
+
     {{-- Baris metrik ringkas --}}
     <div class="metric-row">
 

@@ -28,13 +28,15 @@ Route::middleware('auth')->group(function () {
     | Inventori — Muat Naik (modul sedia ada, dikekalkan)
     |----------------------------------------------------------------------
     */
-    Route::get('/muat-naik', [MuatNaikController::class, 'index'])
-        ->name('muat-naik.index');
-
+    // Sejarah muat naik ditapis mengikut entiti yang boleh diakses pengguna.
     Route::get('/sejarah-muat-naik', [MuatNaikController::class, 'history'])
         ->name('muat-naik.history');
 
     Route::middleware('can:manage-upload')->group(function () {
+        // Borang muat naik diselaraskan dengan kebenaran tindakan yang
+        // dihoskannya (store/preview/destroy) — Fasa 4.
+        Route::get('/muat-naik', [MuatNaikController::class, 'index'])
+            ->name('muat-naik.index');
         Route::post('/muat-naik', [MuatNaikController::class, 'store'])
             ->name('muat-naik.store');
         Route::post('/muat-naik/preview', [MuatNaikController::class, 'preview'])
@@ -79,9 +81,10 @@ Route::middleware('auth')->group(function () {
         ->name('workflow.index');
 
     Route::get('/workflow/{agencyCode}', [WorkflowController::class, 'show'])
+        ->middleware('entity.access')
         ->name('workflow.show');
 
-    Route::middleware('can:manage-workflow')->group(function () {
+    Route::middleware(['can:manage-workflow', 'entity.access'])->group(function () {
         Route::post('/workflow/{agencyCode}/mula', [WorkflowController::class, 'mula'])
             ->name('workflow.mula');
         Route::post('/workflow/{agencyCode}/peringkat', [WorkflowController::class, 'peringkat'])
@@ -100,9 +103,12 @@ Route::middleware('auth')->group(function () {
         ->name('penugasan.')
         ->group(function () {
             Route::get('/', [EntitiAssignmentController::class, 'index'])->name('index');
-            Route::get('/{agencyCode}', [EntitiAssignmentController::class, 'show'])->name('show');
-            Route::post('/{agencyCode}', [EntitiAssignmentController::class, 'simpan'])->name('simpan');
-            Route::post('/{agencyCode}/tarik', [EntitiAssignmentController::class, 'tarik'])->name('tarik');
+
+            Route::middleware('entity.access')->group(function () {
+                Route::get('/{agencyCode}', [EntitiAssignmentController::class, 'show'])->name('show');
+                Route::post('/{agencyCode}', [EntitiAssignmentController::class, 'simpan'])->name('simpan');
+                Route::post('/{agencyCode}/tarik', [EntitiAssignmentController::class, 'tarik'])->name('tarik');
+            });
         });
 
     /*
@@ -113,10 +119,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan', [LaporanController::class, 'index'])
         ->name('laporan.index');
 
+    // Akses laporan dikawal oleh AnalisisInventoriPolicy — Pegawai Analisis
+    // hanya boleh membuka laporan bagi entiti yang ditugaskan kepadanya.
     Route::get('/laporan/inventori/{analisis}', [LaporanController::class, 'inventori'])
+        ->middleware('can:view,analisis')
         ->name('laporan.inventori');
 
     Route::get('/laporan/inventori/{analisis}/unduh', [LaporanController::class, 'unduh'])
+        ->middleware('can:generateReport,analisis')
         ->name('laporan.unduh');
 
     /*

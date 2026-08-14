@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\WorkflowStatus;
+use App\Services\EntityAssignmentService;
 use App\Services\WorkflowTransitionService;
+use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -131,11 +133,24 @@ class Phase2WorkflowRouteTest extends TestCase
         ]);
     }
 
+    /**
+     * Sejak Fasa 4, Pegawai Analisis hanya boleh membuka entiti yang
+     * ditugaskan kepadanya. Entiti ditugaskan dahulu supaya ujian ini kekal
+     * menguji perkara asalnya: borang kemas kini peringkat tidak dipaparkan
+     * kepada peranan tanpa gate `manage-workflow`.
+     */
     public function test_pegawai_analisis_tidak_melihat_borang_kemas_kini(): void
     {
         $this->workflowPada(1);
+        $analyst = $this->analyst();
 
-        $this->actingAs($this->analyst())
+        app(EntityAssignmentService::class)->assign(
+            SektorDirectory::cariEntiti(self::ENTITI),
+            $analyst,
+            $this->coordinator(),
+        );
+
+        $this->actingAs($analyst)
             ->get(route('workflow.show', self::ENTITI))
             ->assertOk()
             ->assertDontSee('Majukan Peringkat');

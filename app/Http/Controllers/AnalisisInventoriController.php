@@ -4,19 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
+use App\Services\EntityAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class AnalisisInventoriController extends Controller
 {
+    public function __construct(private readonly EntityAccessService $access) {}
+
     /**
      * Senarai analisis + pemilihan entiti (sektor -> agensi dari config/sektor.php).
+     * Senarai dan pemilih entiti ditapis mengikut akses pengguna (Fasa 4).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rekod = AnalisisInventori::latest('updated_at')->paginate(10);
+        $rekod = AnalisisInventori::query()
+            ->accessibleBy($request->user())
+            ->latest('updated_at')
+            ->paginate(10);
 
-        return view('analisis.index', compact('rekod'));
+        return view('analisis.index', [
+            'rekod' => $rekod,
+            'sektor' => $this->access->sektorFor($request->user()),
+        ]);
     }
 
     /**
@@ -28,6 +38,9 @@ class AnalisisInventoriController extends Controller
             'sector_code' => ['required', 'string'],
             'agency_code' => ['required', 'string'],
         ]);
+
+        // Kawalan akses entiti sebelum sebarang data entiti didedahkan.
+        $this->access->authorize($request->user(), $request->input('agency_code'));
 
         [$sektor, $agensi] = $this->sahkanEntiti(
             $request->input('sector_code'),
@@ -55,6 +68,10 @@ class AnalisisInventoriController extends Controller
     public function simpan(Request $request)
     {
         Gate::authorize('manage-analysis');
+
+        // Menulis dapatan analisis bagi entiti yang tidak ditugaskan adalah
+        // dilarang, walaupun permintaan dihantar terus tanpa melalui borang.
+        $this->access->authorize($request->user(), $request->input('agency_code'));
 
         $sah = $request->validate([
             'sector_code' => ['required', 'string'],

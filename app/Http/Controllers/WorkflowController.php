@@ -6,7 +6,9 @@ use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\AnalisisInventori;
 use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
+use App\Models\User;
 use App\Models\WorkflowStatus;
+use App\Services\EntityAccessService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
@@ -17,13 +19,16 @@ use Illuminate\Support\Facades\Gate;
 /**
  * FASA 2 — pemantauan kedudukan setiap entiti dalam 7 peringkat workflow.
  *
- * Paparan terbuka kepada semua peranan yang telah log masuk (selaras dengan
- * modul pemantauan sedia ada). Penapisan "assigned-only" bagi Pegawai Analisis
- * ialah skop Fasa 4 dan tidak dilaksanakan di sini.
+ * FASA 4 — setiap senarai ditapis melalui accessibleBy() dan setiap route
+ * bagi satu entiti dilindungi middleware `entity.access`. Pegawai Analisis
+ * hanya melihat entiti yang ditugaskan kepadanya.
  */
 class WorkflowController extends Controller
 {
-    public function __construct(private readonly WorkflowTransitionService $workflow) {}
+    public function __construct(
+        private readonly WorkflowTransitionService $workflow,
+        private readonly EntityAccessService $access,
+    ) {}
 
     /**
      * Senarai entiti dan kedudukan workflow masing-masing.
@@ -31,17 +36,21 @@ class WorkflowController extends Controller
      */
     public function index(Request $request)
     {
+        $pengguna = $request->user();
         $sectorCode = $request->query('sector_code');
 
         if (! SektorDirectory::sektorWujud($sectorCode)) {
             $sectorCode = null;
         }
 
-        $rekod = WorkflowStatus::query()->get()->keyBy('agency_code');
+        $rekod = WorkflowStatus::query()
+            ->accessibleBy($pengguna)
+            ->get()
+            ->keyBy('agency_code');
 
         $entiti = $sectorCode !== null
-            ? SektorDirectory::entitiDalamSektor($sectorCode)
-            : $this->entitiDipantau($rekod->keys()->all());
+            ? $this->access->entitiDalamSektorFor($pengguna, $sectorCode)
+            : $this->entitiDipantau($rekod->keys()->all(), $pengguna);
 
         $senarai = $entiti
             ->map(fn (array $e) => $e + ['workflow' => $rekod->get($e['agency_code'])])
@@ -63,15 +72,16 @@ class WorkflowController extends Controller
             'entiti' => $paginator,
             'sectorCode' => $sectorCode,
             'jumlahDidaftar' => $rekod->count(),
+            'sektor' => $this->access->sektorFor($pengguna),
         ]);
     }
 
     /**
      * Kedudukan workflow bagi satu entiti — stepper, status semasa dan sejarah.
      */
-    public function show(string $agencyCode)
+    public function show(Request $request, string $agencyCode)
     {
-        $entiti = $this->entitiAtauGagal($agencyCode);
+        $entiti = $this->entitiAtauGagal($agencyCode, $request);
         $workflow = WorkflowStatus::where('agency_code', $agencyCode)->first();
 
         return view('workflow.show', [
@@ -88,7 +98,7 @@ class WorkflowController extends Controller
     {
         Gate::authorize('manage-workflow');
 
-        $entiti = $this->entitiAtauGagal($agencyCode);
+        $entiti = $this->entitiAtauGagal($agencyCode, $request);
 
         $this->workflow->initialize($entiti, $request->user());
 
@@ -107,6 +117,7 @@ class WorkflowController extends Controller
     public function peringkat(Request $request, string $agencyCode)
     {
         Gate::authorize('manage-workflow');
+        $this->access->authorize($request->user(), $agencyCode);
 
         $data = $request->validate([
             'to_stage' => ['required', 'integer', 'between:'.WorkflowStatus::FIRST_STAGE.','.WorkflowStatus::LAST_STAGE],
@@ -145,6 +156,7 @@ class WorkflowController extends Controller
     public function status(Request $request, string $agencyCode)
     {
         Gate::authorize('manage-workflow');
+        $this->access->authorize($request->user(), $agencyCode);
 
         $data = $request->validate([
             'status' => ['required', 'in:'.implode(',', WorkflowStatus::STATUSES)],
@@ -168,19 +180,21 @@ class WorkflowController extends Controller
 
     /**
      * Entiti yang telah terlibat dalam mana-mana proses sedia ada, digabungkan
-     * dengan entiti yang telah mempunyai rekod workflow.
+     * dengan entiti yang telah mempunyai rekod workflow. Setiap sumber ditapis
+     * mengikut akses pengguna.
      *
      * @param  array<int, string>  $kodBerekod
      * @return Collection<int, array<string, string>>
      */
-    private function entitiDipantau(array $kodBerekod)
+    private function entitiDipantau(array $kodBerekod, User $pengguna)
     {
         $kod = collect($kodBerekod)
-            ->merge(MuatNaik::query()->pluck('agency_code'))
-            ->merge(AnalisisInventori::query()->pluck('agency_code'))
-            ->merge(StatusLaporan::query()->pluck('agency_code'))
+            ->merge(MuatNaik::query()->accessibleBy($pengguna)->pluck('agency_code'))
+            ->merge(AnalisisInventori::query()->accessibleBy($pengguna)->pluck('agency_code'))
+            ->merge(StatusLaporan::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->filter()
-            ->unique();
+            ->unique()
+            ->filter(fn (string $agencyCode) => $this->access->canAccess($pengguna, $agencyCode));
 
         return $kod
             ->map(fn (string $agencyCode) => SektorDirectory::cariEntiti($agencyCode))
@@ -189,10 +203,16 @@ class WorkflowController extends Controller
     }
 
     /**
+     * Lapisan kawalan akses kedua di dalam controller — middleware
+     * `entity.access` telah menapis route, semakan ini memastikan tiada
+     * laluan kod yang terlepas pandang.
+     *
      * @return array<string, string>
      */
-    private function entitiAtauGagal(string $agencyCode): array
+    private function entitiAtauGagal(string $agencyCode, Request $request): array
     {
+        $this->access->authorize($request->user(), $agencyCode);
+
         $entiti = SektorDirectory::cariEntiti($agencyCode);
 
         abort_if($entiti === null, 404, 'Entiti tidak ditemui dalam senarai induk sektor.');

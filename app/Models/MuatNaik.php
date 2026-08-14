@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FiltersByEntityAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MuatNaik extends Model
 {
-    use HasFactory;
+    use FiltersByEntityAccess, HasFactory;
 
     protected $table = 'muat_naik';
 

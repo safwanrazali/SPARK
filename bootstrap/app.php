@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureEntityAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Fasa 4 — kawalan akses entiti pada peringkat route.
+        $middleware->alias([
+            'entity.access' => EnsureEntityAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

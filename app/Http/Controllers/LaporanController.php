@@ -3,16 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
+use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
 
 class LaporanController extends Controller
 {
     /**
      * Senarai entiti yang mempunyai dapatan analisis untuk dijana laporan.
+     * Ditapis mengikut entiti yang boleh diakses pengguna (Fasa 4).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rekod = AnalisisInventori::latest('updated_at')->paginate(15);
+        $rekod = AnalisisInventori::query()
+            ->accessibleBy($request->user())
+            ->latest('updated_at')
+            ->paginate(15);
 
         return view('laporan.index', compact('rekod'));
     }
@@ -23,6 +28,8 @@ class LaporanController extends Controller
      */
     public function inventori(AnalisisInventori $analisis)
     {
+        $this->authorize('view', $analisis);
+
         return view('laporan.inventori', $this->siapkanData($analisis));
     }
 
@@ -33,6 +40,8 @@ class LaporanController extends Controller
      */
     public function unduh(AnalisisInventori $analisis)
     {
+        $this->authorize('generateReport', $analisis);
+
         $viewData = $this->siapkanData($analisis);
 
         $bodyHtml = view('laporan.pdf.body', $viewData)->render();

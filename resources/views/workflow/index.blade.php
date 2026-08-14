@@ -21,8 +21,8 @@
                 <label class="form-label" for="sector_code">Pilih Sektor</label>
                 <select id="sector_code" name="sector_code" class="form-select">
                     <option value="">-- Entiti dipantau sahaja --</option>
-                    @foreach (config('sektor') as $kod => $sektor)
-                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $sektor['name'] }}</option>
+                    @foreach ($sektor as $kod => $s)
+                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $s['name'] }}</option>
                     @endforeach
                 </select>
             </div>

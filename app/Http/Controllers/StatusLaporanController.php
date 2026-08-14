@@ -5,26 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\AnalisisInventori;
 use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
+use App\Services\EntityAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class StatusLaporanController extends Controller
 {
+    public function __construct(private readonly EntityAccessService $access) {}
+
     /**
      * Papar status tiga laporan bagi setiap entiti yang dipantau.
      * Semua peranan boleh melihat; kemas kini dikawal oleh gate manage-status.
+     * Senarai ditapis mengikut entiti yang boleh diakses pengguna (Fasa 4).
      */
-    public function index()
+    public function index(Request $request)
     {
+        $lajur = ['sector_code', 'sector_name', 'agency_code', 'agency_name'];
+        $pengguna = $request->user();
+
         $entiti = collect()
-            ->merge(MuatNaik::query()->get(['sector_code', 'sector_name', 'agency_code', 'agency_name']))
-            ->merge(AnalisisInventori::query()->get(['sector_code', 'sector_name', 'agency_code', 'agency_name']))
-            ->merge(StatusLaporan::query()->get(['sector_code', 'sector_name', 'agency_code', 'agency_name']))
+            ->merge(MuatNaik::query()->accessibleBy($pengguna)->get($lajur))
+            ->merge(AnalisisInventori::query()->accessibleBy($pengguna)->get($lajur))
+            ->merge(StatusLaporan::query()->accessibleBy($pengguna)->get($lajur))
             ->unique('agency_code')
             ->sortBy([['sector_code', 'asc'], ['agency_name', 'asc']])
             ->values();
 
-        $status = StatusLaporan::all()->groupBy('agency_code');
+        $status = StatusLaporan::query()
+            ->accessibleBy($pengguna)
+            ->get()
+            ->groupBy('agency_code');
 
         return view('status.index', compact('entiti', 'status'));
     }
@@ -35,6 +45,8 @@ class StatusLaporanController extends Controller
     public function kitar(Request $request)
     {
         Gate::authorize('manage-status');
+
+        $this->access->authorize($request->user(), $request->input('agency_code'));
 
         $data = $request->validate([
             'sector_code' => ['required', 'string'],

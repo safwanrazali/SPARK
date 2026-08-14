@@ -22,7 +22,7 @@
                         <label class="form-label">Pilih Sektor</label>
                         <select id="sector-select" name="sector_code" class="form-select" required>
                             <option value="">-- Sila Pilih --</option>
-                            @foreach (config('sektor') as $sectorCode => $sector)
+                            @foreach ($sektor as $sectorCode => $sector)
                                 <option value="{{ $sectorCode }}">{{ $sector['name'] }}</option>
                             @endforeach
                         </select>
@@ -48,7 +48,7 @@
         </div>
 
         <script>
-            const agensiIkutSektor = @json(collect(config('sektor'))->map(fn($s) => $s['agencies']));
+            const agensiIkutSektor = @json(collect($sektor)->map(fn($s) => $s['agencies']));
 
             document.getElementById('sector-select').addEventListener('change', function() {
                 const agencySelect = document.getElementById('agency-select');

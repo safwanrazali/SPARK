@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FiltersByEntityAccess;
 use Illuminate\Database\Eloquent\Model;
 
 class StatusLaporan extends Model
 {
+    use FiltersByEntityAccess;
+
     protected $table = 'status_laporan';
 
     public const JENIS = [
