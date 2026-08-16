@@ -5,9 +5,24 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
+    /**
+     * FASA 13 — hadkan percubaan log masuk.
+     *
+     * Kawalan keselamatan asas terhadap percubaan meneka kata laluan.
+     * Kiraan dibuat mengikut gabungan nama pengguna + alamat IP supaya
+     * seorang penyerang tidak boleh mengunci akaun pegawai lain hanya
+     * dengan menyerang nama pengguna mereka dari IP yang berbeza.
+     */
+    private const PERCUBAAN_MAKSIMUM = 5;
+
+    /** Tempoh sekatan selepas percubaan maksimum dicapai (saat). */
+    private const TEMPOH_SEKATAN = 60;
+
     public function showLoginForm()
     {
         return view('auth.login');
@@ -20,11 +35,26 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        $kunci = $this->kunciKadar($request);
+
+        if (RateLimiter::tooManyAttempts($kunci, self::PERCUBAAN_MAKSIMUM)) {
+            return back()
+                ->withErrors(['username' => sprintf(
+                    'Terlalu banyak percubaan log masuk. Sila cuba lagi dalam %d saat.',
+                    RateLimiter::availableIn($kunci),
+                )])
+                ->onlyInput('username');
+        }
+
         if (Auth::attempt($credentials)) {
+            RateLimiter::clear($kunci);
+
             $request->session()->regenerate();
 
             return redirect()->intended('/');
         }
+
+        RateLimiter::hit($kunci, self::TEMPOH_SEKATAN);
 
         return back()
             ->withErrors(['username' => 'Nama pengguna atau kata laluan tidak sah.'])
@@ -39,5 +69,12 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function kunciKadar(Request $request): string
+    {
+        return 'log-masuk|'
+            .Str::lower((string) $request->input('username'))
+            .'|'.$request->ip();
     }
 }

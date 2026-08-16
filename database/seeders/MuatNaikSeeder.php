@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\MuatNaik;
 use Illuminate\Database\Seeder;
 
 class MuatNaikSeeder extends Seeder
