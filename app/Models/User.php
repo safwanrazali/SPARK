@@ -179,6 +179,20 @@ class User extends Authenticatable
     }
 
     /**
+     * Senarai entiti yang telah dikira bagi instance ini.
+     *
+     * Kawalan akses disemak berkali-kali dalam satu permintaan (middleware,
+     * gate, policy dan setiap scope accessibleBy). Tanpa ingatan singkat ini,
+     * setiap semakan mengeluarkan satu query penugasan — kos yang meningkat
+     * seiring bilangan entiti yang dipapar.
+     *
+     * @var array<int, string>|null
+     */
+    private ?array $entitiBolehDiakses = null;
+
+    private bool $entitiBolehDiaksesDikira = false;
+
+    /**
      * Dapatkan entiti yang boleh dilihat oleh pengguna ini berdasarkan role.
      *
      * - Pentadbir / Penyelaras / Ketua Bahagian : semua entiti (null = tiada penapis)
@@ -186,6 +200,32 @@ class User extends Authenticatable
      * - Peranan lain                            : tiada akses sehingga kebenaran disahkan
      */
     public function getAccessibleEntities()
+    {
+        if ($this->entitiBolehDiaksesDikira) {
+            return $this->entitiBolehDiakses;
+        }
+
+        $this->entitiBolehDiaksesDikira = true;
+
+        return $this->entitiBolehDiakses = $this->kiraEntitiBolehDiakses();
+    }
+
+    /**
+     * Muat semula rekod pengguna turut membatalkan ingatan kawalan akses,
+     * supaya perubahan penugasan tidak dilihat melalui nilai lama.
+     */
+    public function refresh()
+    {
+        $this->entitiBolehDiaksesDikira = false;
+        $this->entitiBolehDiakses = null;
+
+        return parent::refresh();
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function kiraEntitiBolehDiakses(): ?array
     {
         if ($this->hasFullEntityVisibility()) {
             // Boleh melihat semua entiti

@@ -43,8 +43,12 @@ class WorkflowController extends Controller
             $sectorCode = null;
         }
 
+        // Pegawai yang mengemas kini dipaparkan pada setiap baris senarai —
+        // dimuatkan sekali gus supaya senarai tidak mengeluarkan satu query
+        // bagi setiap entiti.
         $rekod = WorkflowStatus::query()
             ->accessibleBy($pengguna)
+            ->with('updatedBy')
             ->get()
             ->keyBy('agency_code');
 
