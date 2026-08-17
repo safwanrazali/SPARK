@@ -60,7 +60,12 @@ class LaporanController extends Controller
             ->showBrowserHeaderAndFooter()
             ->headerHtml($headerHtml)
             ->footerHtml($footerHtml)
-            ->margins(28, 15, 22, 15)
+            // Margin atas MESTI lebih besar daripada tinggi kotak-margin
+            // header (kini ~37mm), kerana header dilukis di dalam ruang
+            // margin ini pada SETIAP muka surat. Bakinya (47-37=10mm)
+            // ialah jarak header->kandungan yang sama rata pada semua
+            // muka surat. Jika saiz logo diubah, kira semula nilai ini.
+            ->margins(47, 15, 22, 15)
             ->waitUntilNetworkIdle()
             ->writeOptionsToFile()   // must come before ->pdf()
             ->pdf();

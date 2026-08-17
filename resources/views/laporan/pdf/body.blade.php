@@ -9,6 +9,12 @@
             font-size: 12px;
             line-height: 1.6;
             color: #111;
+            /* Jangan letak margin atas di sini: margin pada <body> hanya
+               digunakan SEKALI pada permulaan aliran kandungan, jadi ia
+               menolak muka surat pertama sahaja dan muka surat kedua ke
+               atas akan melekat pada header. Jarak header->kandungan
+               dikawal oleh margin atas halaman dalam
+               LaporanController::unduh(). */
             margin: 0;
         }
 
@@ -115,7 +121,7 @@
                     <td>{{ $nama }}</td>
                     <td>{{ $baris['penerimaan'] ?? '—' }}</td>
                     <td>{{ $baris['kebolehgunaan'] ?? '—' }}</td>
-                    <td>{{ ($baris['nota'] ?? '') ?: '—' }}</td>
+                    <td>{{ $baris['nota'] ?? '' ?: '—' }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -139,8 +145,8 @@
                 <tr>
                     <td>{{ $loop->iteration }}.</td>
                     <td>{{ $kategori }}</td>
-                    <td>{{ ($baris['jumlah'] ?? '') ?: '—' }}</td>
-                    <td>{{ ($baris['nota'] ?? '') ?: '—' }}</td>
+                    <td>{{ $baris['jumlah'] ?? '' ?: '—' }}</td>
+                    <td>{{ $baris['nota'] ?? '' ?: '—' }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -216,7 +222,7 @@
                         <tr>
                             <td>{{ $loop->iteration }}.</td>
                             @foreach ($kolum as $k => $label)
-                                <td>{{ ($baris[$k] ?? '') ?: '—' }}</td>
+                                <td>{{ $baris[$k] ?? '' ?: '—' }}</td>
                             @endforeach
                         </tr>
                     @endforeach

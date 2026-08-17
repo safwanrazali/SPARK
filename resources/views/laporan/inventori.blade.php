@@ -79,15 +79,21 @@
         .klasifikasi {
             text-align: center;
             letter-spacing: .35em;
-            color: #b3403a;
+            color: #000;
             font-weight: 700;
             font-size: .8rem;
         }
     </style>
 
     <div class="laporan-rasmi">
-
-        <div class="klasifikasi mb-3">RAHSIA</div>
+        <div
+            style="width:100%; font-size:9px; font-family: Arial, sans-serif;
+            padding: 0 15mm; box-sizing: border-box;
+            display:flex; align-items:center; justify-content:space-between; margin: 0 0 20px;">
+            <img src="{{ asset('image/logo_nacsa.png') }}" style="height:120px;">
+            <div class="klasifikasi mb-3">RAHSIA</div>
+            <img src="{{ asset('image/logo_ptpkm.png') }}" style="height:50px;">
+        </div>
 
         <h1>Laporan Analisis Inventori Kriptografi</h1>
         <p class="text-center mb-4">
@@ -149,7 +155,7 @@
                         <td>{{ $nama }}</td>
                         <td>{{ $baris['penerimaan'] ?? '—' }}</td>
                         <td>{{ $baris['kebolehgunaan'] ?? '—' }}</td>
-                        <td>{{ ($baris['nota'] ?? '') ?: '—' }}</td>
+                        <td>{{ $baris['nota'] ?? '' ?: '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -173,8 +179,8 @@
                     <tr>
                         <td>{{ $loop->iteration }}.</td>
                         <td>{{ $kategori }}</td>
-                        <td>{{ ($baris['jumlah'] ?? '') ?: '—' }}</td>
-                        <td>{{ ($baris['nota'] ?? '') ?: '—' }}</td>
+                        <td>{{ $baris['jumlah'] ?? '' ?: '—' }}</td>
+                        <td>{{ $baris['nota'] ?? '' ?: '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -250,7 +256,7 @@
                             <tr>
                                 <td>{{ $loop->iteration }}.</td>
                                 @foreach ($kolum as $k => $label)
-                                    <td>{{ ($baris[$k] ?? '') ?: '—' }}</td>
+                                    <td>{{ $baris[$k] ?? '' ?: '—' }}</td>
                                 @endforeach
                             </tr>
                         @endforeach
@@ -339,9 +345,14 @@
             hendaklah disemak bersama pemilik sistem, pegawai teknikal atau vendor yang berkaitan
             sebelum sebarang perubahan dibuat.
         </p>
-
-        <div class="klasifikasi mt-3">RAHSIA</div>
-
+        <div
+            style="color:#555;
+            width:100%;
+            padding: 4px 0; box-sizing: border-box;
+            display:flex; justify-content:space-between;">
+            <span>{{ $analisis->kod_rujukan ?? '[KOD RUJUKAN FAIL]' }}</span>
+            <span>1</span>
+        </div>
     </div>
 
 @endsection
