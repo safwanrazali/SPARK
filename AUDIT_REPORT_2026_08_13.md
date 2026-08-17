@@ -129,7 +129,7 @@ Effort: 2-3 days
 
 ### NEW RELATIONSHIPS
 
-- User → (many) EntitasAssignment
+- User → (many) EntitiAssignment
 - User → (many) ActivityLog
 - AnalisisInventori → (many) AnalisDraftHistory
 
@@ -164,7 +164,7 @@ Effort: 2-3 days
 
 ### Phase 3: Assignment System (2-3 days)
 
-- EntitasAssignment model
+- EntitiAssignment model
 - AssignmentController
 - Coordinator assignment UI
 

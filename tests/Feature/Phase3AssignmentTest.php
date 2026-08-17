@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Exceptions\InvalidAssignmentException;
 use App\Models\ActivityLog;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Services\EntityAssignmentService;
 use App\Support\SektorDirectory;
@@ -70,7 +70,7 @@ class Phase3AssignmentTest extends TestCase
             'sector_name' => 'Kerajaan',
             'assigned_to_user_id' => $this->analystA->id,
             'assigned_by_user_id' => $this->coordinator->id,
-            'status' => EntitasAssignment::STATUS_ACTIVE,
+            'status' => EntitiAssignment::STATUS_ACTIVE,
             'notes' => 'Penugasan awal',
         ]);
 
@@ -84,7 +84,7 @@ class Phase3AssignmentTest extends TestCase
     {
         $this->service->assign($this->entiti(), $this->analystA, $this->coordinator);
 
-        $penugasan = EntitasAssignment::where('agency_code', self::ENTITI)->firstOrFail();
+        $penugasan = EntitiAssignment::where('agency_code', self::ENTITI)->firstOrFail();
 
         $this->assertSame($this->analystA->id, $penugasan->assignedTo->id);
         $this->assertSame($this->coordinator->id, $penugasan->assignedBy->id);
@@ -169,7 +169,7 @@ class Phase3AssignmentTest extends TestCase
         }
 
         $this->assertDatabaseCount('entiti_assignment', 1);
-        $this->assertSame(1, EntitasAssignment::query()->forAgency(self::ENTITI)->active()->count());
+        $this->assertSame(1, EntitiAssignment::query()->forAgency(self::ENTITI)->active()->count());
     }
 
     public function test_dua_penugasan_aktif_pada_entiti_sama_dihalang_pada_peringkat_database(): void
@@ -179,14 +179,14 @@ class Phase3AssignmentTest extends TestCase
         // Memintas service — kekangan unik pangkalan data mesti tetap menghalang konflik.
         $this->expectException(QueryException::class);
 
-        EntitasAssignment::create([
+        EntitiAssignment::create([
             'agency_code' => self::ENTITI,
             'agency_name' => 'Suruhanjaya Pilihan Raya (SPR)',
             'sector_code' => '001',
             'sector_name' => 'Kerajaan',
             'assigned_to_user_id' => $this->analystB->id,
             'assigned_by_user_id' => $this->coordinator->id,
-            'status' => EntitasAssignment::STATUS_ACTIVE,
+            'status' => EntitiAssignment::STATUS_ACTIVE,
         ]);
     }
 
@@ -201,12 +201,12 @@ class Phase3AssignmentTest extends TestCase
         $asal = $this->service->assign($this->entiti(), $this->analystA, $this->coordinator);
         $baharu = $this->service->reassign($this->entiti(), $this->analystB, $this->coordinator, 'Pegawai A bercuti');
 
-        $this->assertSame(EntitasAssignment::STATUS_REASSIGNED, $asal->fresh()->status);
-        $this->assertSame(EntitasAssignment::STATUS_ACTIVE, $baharu->status);
+        $this->assertSame(EntitiAssignment::STATUS_REASSIGNED, $asal->fresh()->status);
+        $this->assertSame(EntitiAssignment::STATUS_ACTIVE, $baharu->status);
         $this->assertSame($this->analystB->id, $baharu->assigned_to_user_id);
         $this->assertSame('Pegawai A bercuti', $baharu->notes);
 
-        $this->assertSame(1, EntitasAssignment::query()->forAgency(self::ENTITI)->active()->count());
+        $this->assertSame(1, EntitiAssignment::query()->forAgency(self::ENTITI)->active()->count());
         $this->assertDatabaseCount('entiti_assignment', 2);
     }
 
@@ -218,7 +218,7 @@ class Phase3AssignmentTest extends TestCase
         $aktif = $this->service->activeFor(self::ENTITI);
 
         $this->assertSame($this->analystB->id, $aktif->assigned_to_user_id);
-        $this->assertSame(1, EntitasAssignment::query()->forAgency(self::ENTITI)->active()->count());
+        $this->assertSame(1, EntitiAssignment::query()->forAgency(self::ENTITI)->active()->count());
     }
 
     public function test_pegawai_lama_tidak_lagi_melihat_entiti_selepas_ditukar_ganti(): void
@@ -241,7 +241,7 @@ class Phase3AssignmentTest extends TestCase
         $sejarah = $this->service->history(self::ENTITI);
 
         $this->assertCount(4, $sejarah);
-        $this->assertSame(1, EntitasAssignment::query()->forAgency(self::ENTITI)->active()->count());
+        $this->assertSame(1, EntitiAssignment::query()->forAgency(self::ENTITI)->active()->count());
         $this->assertSame($this->analystB->id, $this->service->activeFor(self::ENTITI)->assigned_to_user_id);
     }
 
@@ -257,7 +257,7 @@ class Phase3AssignmentTest extends TestCase
 
         $ditarik = $this->service->unassign(self::ENTITI, $this->coordinator, 'Entiti ditangguhkan');
 
-        $this->assertSame(EntitasAssignment::STATUS_UNASSIGNED, $ditarik->fresh()->status);
+        $this->assertSame(EntitiAssignment::STATUS_UNASSIGNED, $ditarik->fresh()->status);
         $this->assertNull($this->service->activeFor(self::ENTITI));
         $this->assertDatabaseCount('entiti_assignment', 1);
         $this->assertEmpty($this->analystA->fresh()->getAccessibleEntities());
@@ -287,7 +287,7 @@ class Phase3AssignmentTest extends TestCase
 
         Carbon::setTestNow();
 
-        $dariDatabase = EntitasAssignment::query()
+        $dariDatabase = EntitiAssignment::query()
             ->forAgency(self::ENTITI)
             ->active()
             ->firstOrFail();
@@ -295,7 +295,7 @@ class Phase3AssignmentTest extends TestCase
         $this->assertSame($this->analystA->id, $dariDatabase->assigned_to_user_id);
         $this->assertSame($this->coordinator->id, $dariDatabase->assigned_by_user_id);
         $this->assertSame('2026-08-14 09:30:00', $dariDatabase->assigned_at->format('Y-m-d H:i:s'));
-        $this->assertSame(EntitasAssignment::STATUS_ACTIVE, $dariDatabase->status);
+        $this->assertSame(EntitiAssignment::STATUS_ACTIVE, $dariDatabase->status);
         $this->assertSame('Catatan penugasan', $dariDatabase->notes);
         $this->assertSame('Pegawai A', $dariDatabase->assignedTo->name);
     }

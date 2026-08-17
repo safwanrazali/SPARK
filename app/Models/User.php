@@ -135,7 +135,7 @@ class User extends Authenticatable
      */
     public function assignedEntities(): HasMany
     {
-        return $this->hasMany(EntitasAssignment::class, 'assigned_to_user_id');
+        return $this->hasMany(EntitiAssignment::class, 'assigned_to_user_id');
     }
 
     /**
@@ -143,7 +143,7 @@ class User extends Authenticatable
      */
     public function assignmentsCreated(): HasMany
     {
-        return $this->hasMany(EntitasAssignment::class, 'assigned_by_user_id');
+        return $this->hasMany(EntitiAssignment::class, 'assigned_by_user_id');
     }
 
     /**

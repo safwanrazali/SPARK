@@ -2,16 +2,16 @@
 
 namespace Database\Factories;
 
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<EntitasAssignment>
+ * @extends Factory<EntitiAssignment>
  */
-class EntitasAssignmentFactory extends Factory
+class EntitiAssignmentFactory extends Factory
 {
-    protected $model = EntitasAssignment::class;
+    protected $model = EntitiAssignment::class;
 
     public function definition(): array
     {

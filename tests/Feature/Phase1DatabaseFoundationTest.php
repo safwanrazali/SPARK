@@ -6,7 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\AnalisDraftHistory;
 use App\Models\AnalisisInventori;
 use App\Models\ApprovalLog;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,12 +19,12 @@ class Phase1DatabaseFoundationTest extends TestCase
     /**
      * Test 1: Entiti Assignment Table and Model
      */
-    public function test_entitas_assignment_can_be_created(): void
+    public function test_entiti_assignment_can_be_created(): void
     {
         $coordinator = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
         $analyst = User::factory()->create(['role' => User::ROLE_ANALYST]);
 
-        $assignment = EntitasAssignment::create([
+        $assignment = EntitiAssignment::create([
             'agency_code' => 'A010101',
             'agency_name' => 'Suruhanjaya Pilihan Raya (SPR)',
             'sector_code' => '001',
@@ -43,12 +43,12 @@ class Phase1DatabaseFoundationTest extends TestCase
         $this->assertEquals('active', $assignment->status);
     }
 
-    public function test_entitas_assignment_relationships(): void
+    public function test_entiti_assignment_relationships(): void
     {
         $coordinator = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
         $analyst = User::factory()->create(['role' => User::ROLE_ANALYST]);
 
-        $assignment = EntitasAssignment::create([
+        $assignment = EntitiAssignment::create([
             'agency_code' => 'A010101',
             'agency_name' => 'SPR',
             'sector_code' => '001',
@@ -68,7 +68,7 @@ class Phase1DatabaseFoundationTest extends TestCase
     {
         $analyst = User::factory()->create(['role' => User::ROLE_ANALYST]);
 
-        EntitasAssignment::create([
+        EntitiAssignment::create([
             'agency_code' => 'A010101',
             'agency_name' => 'SPR',
             'sector_code' => '001',
@@ -288,7 +288,7 @@ class Phase1DatabaseFoundationTest extends TestCase
         $analyst = User::factory()->create(['role' => User::ROLE_ANALYST]);
         $coordinator = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
 
-        EntitasAssignment::factory()->count(3)->create([
+        EntitiAssignment::factory()->count(3)->create([
             'assigned_to_user_id' => $analyst->id,
             'assigned_by_user_id' => $coordinator->id,
         ]);
@@ -302,7 +302,7 @@ class Phase1DatabaseFoundationTest extends TestCase
         $coordinator = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
 
         // Analyst should have accessible entities list
-        EntitasAssignment::create([
+        EntitiAssignment::create([
             'agency_code' => 'A010101',
             'agency_name' => 'SPR',
             'sector_code' => '001',
@@ -331,7 +331,7 @@ class Phase1DatabaseFoundationTest extends TestCase
         $coordinator = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
 
         // 1. Coordinator assigns entity to analyst
-        $assignment = EntitasAssignment::create([
+        $assignment = EntitiAssignment::create([
             'agency_code' => 'A010101',
             'agency_name' => 'SPR',
             'sector_code' => '001',

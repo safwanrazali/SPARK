@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Services\EntityAssignmentService;
 use App\Support\SektorDirectory;
@@ -33,7 +33,7 @@ class Phase3AssignmentRouteTest extends TestCase
         $this->analystB = User::factory()->create(['role' => User::ROLE_ANALYST, 'name' => 'Pegawai B']);
     }
 
-    private function tugaskan(User $analyst): EntitasAssignment
+    private function tugaskan(User $analyst): EntitiAssignment
     {
         return app(EntityAssignmentService::class)->assign(
             SektorDirectory::cariEntiti(self::ENTITI),
@@ -149,7 +149,7 @@ class Phase3AssignmentRouteTest extends TestCase
             'agency_code' => self::ENTITI,
             'assigned_to_user_id' => $this->analystA->id,
             'assigned_by_user_id' => $this->coordinator->id,
-            'status' => EntitasAssignment::STATUS_ACTIVE,
+            'status' => EntitiAssignment::STATUS_ACTIVE,
             'notes' => 'Penugasan pertama',
         ]);
     }
@@ -216,16 +216,16 @@ class Phase3AssignmentRouteTest extends TestCase
 
         $this->assertDatabaseHas('entiti_assignment', [
             'id' => $asal->id,
-            'status' => EntitasAssignment::STATUS_REASSIGNED,
+            'status' => EntitiAssignment::STATUS_REASSIGNED,
         ]);
 
         $this->assertDatabaseHas('entiti_assignment', [
             'agency_code' => self::ENTITI,
             'assigned_to_user_id' => $this->analystB->id,
-            'status' => EntitasAssignment::STATUS_ACTIVE,
+            'status' => EntitiAssignment::STATUS_ACTIVE,
         ]);
 
-        $this->assertSame(1, EntitasAssignment::query()->forAgency(self::ENTITI)->active()->count());
+        $this->assertSame(1, EntitiAssignment::query()->forAgency(self::ENTITI)->active()->count());
     }
 
     /*
@@ -245,11 +245,11 @@ class Phase3AssignmentRouteTest extends TestCase
 
         $this->assertDatabaseHas('entiti_assignment', [
             'agency_code' => self::ENTITI,
-            'status' => EntitasAssignment::STATUS_UNASSIGNED,
+            'status' => EntitiAssignment::STATUS_UNASSIGNED,
             'notes' => 'Entiti ditangguhkan',
         ]);
 
-        $this->assertSame(0, EntitasAssignment::query()->forAgency(self::ENTITI)->active()->count());
+        $this->assertSame(0, EntitiAssignment::query()->forAgency(self::ENTITI)->active()->count());
     }
 
     public function test_tarik_balik_tanpa_penugasan_aktif_ditolak_melalui_http(): void

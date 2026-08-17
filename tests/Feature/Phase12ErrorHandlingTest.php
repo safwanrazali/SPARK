@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Exceptions\ImmutableAuditLogException;
 use App\Models\ActivityLog;
 use App\Models\AnalisisInventori;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
@@ -279,7 +279,7 @@ class Phase12ErrorHandlingTest extends TestCase
 
         $this->assertSame(
             1,
-            EntitasAssignment::where('agency_code', self::ALPHA)->count(),
+            EntitiAssignment::where('agency_code', self::ALPHA)->count(),
         );
     }
 
@@ -309,7 +309,7 @@ class Phase12ErrorHandlingTest extends TestCase
 
         $this->assertSame(
             1,
-            EntitasAssignment::where('agency_code', self::ALPHA)->active()->count(),
+            EntitiAssignment::where('agency_code', self::ALPHA)->active()->count(),
         );
     }
 

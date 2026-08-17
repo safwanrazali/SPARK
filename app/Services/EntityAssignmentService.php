@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\InvalidAssignmentException;
 use App\Models\ActivityLog;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +47,7 @@ class EntityAssignmentService
         User $analyst,
         ?User $coordinator = null,
         ?string $notes = null,
-    ): EntitasAssignment {
+    ): EntitiAssignment {
         $this->sahkanPegawaiAnalisis($analyst);
 
         return DB::transaction(function () use ($entiti, $analyst, $coordinator, $notes) {
@@ -64,10 +64,10 @@ class EntityAssignmentService
             $pegawaiSebelum = $sediaAda?->assignedTo;
 
             if ($sediaAda !== null) {
-                $sediaAda->update(['status' => EntitasAssignment::STATUS_REASSIGNED]);
+                $sediaAda->update(['status' => EntitiAssignment::STATUS_REASSIGNED]);
             }
 
-            $penugasan = EntitasAssignment::create([
+            $penugasan = EntitiAssignment::create([
                 'agency_code' => $entiti['agency_code'],
                 'agency_name' => $entiti['agency_name'],
                 'sector_code' => $entiti['sector_code'],
@@ -75,7 +75,7 @@ class EntityAssignmentService
                 'assigned_to_user_id' => $analyst->id,
                 'assigned_by_user_id' => $coordinator?->id,
                 'assigned_at' => now(),
-                'status' => EntitasAssignment::STATUS_ACTIVE,
+                'status' => EntitiAssignment::STATUS_ACTIVE,
                 'notes' => $notes,
             ]);
 
@@ -110,7 +110,7 @@ class EntityAssignmentService
         User $analyst,
         ?User $coordinator = null,
         ?string $notes = null,
-    ): EntitasAssignment {
+    ): EntitiAssignment {
         if ($this->activeFor($entiti['agency_code']) === null) {
             throw new InvalidAssignmentException(sprintf(
                 '%s belum mempunyai penugasan aktif untuk ditukar ganti.',
@@ -126,7 +126,7 @@ class EntityAssignmentService
      *
      * @throws InvalidAssignmentException
      */
-    public function unassign(string $agencyCode, ?User $actor = null, ?string $reason = null): EntitasAssignment
+    public function unassign(string $agencyCode, ?User $actor = null, ?string $reason = null): EntitiAssignment
     {
         return DB::transaction(function () use ($agencyCode, $actor, $reason) {
             $aktif = $this->activeFor($agencyCode, lock: true);
@@ -138,7 +138,7 @@ class EntityAssignmentService
             $pegawai = $aktif->assignedTo;
 
             $aktif->update([
-                'status' => EntitasAssignment::STATUS_UNASSIGNED,
+                'status' => EntitiAssignment::STATUS_UNASSIGNED,
                 'notes' => $reason ?? $aktif->notes,
             ]);
 
@@ -154,9 +154,9 @@ class EntityAssignmentService
     /**
      * Penugasan aktif bagi satu entiti.
      */
-    public function activeFor(string $agencyCode, bool $lock = false): ?EntitasAssignment
+    public function activeFor(string $agencyCode, bool $lock = false): ?EntitiAssignment
     {
-        $query = EntitasAssignment::query()
+        $query = EntitiAssignment::query()
             ->forAgency($agencyCode)
             ->active();
 
@@ -171,7 +171,7 @@ class EntityAssignmentService
      * Penugasan aktif bagi banyak entiti sekaligus — dikunci mengikut agency_code.
      *
      * @param  array<int, string>  $agencyCodes
-     * @return Collection<string, EntitasAssignment>
+     * @return Collection<string, EntitiAssignment>
      */
     public function activeForMany(array $agencyCodes): Collection
     {
@@ -179,7 +179,7 @@ class EntityAssignmentService
             return collect();
         }
 
-        return EntitasAssignment::query()
+        return EntitiAssignment::query()
             ->whereIn('agency_code', $agencyCodes)
             ->active()
             ->with(['assignedTo', 'assignedBy'])
@@ -190,11 +190,11 @@ class EntityAssignmentService
     /**
      * Sejarah penugasan bagi satu entiti — termasuk penugasan aktif.
      *
-     * @return Collection<int, EntitasAssignment>
+     * @return Collection<int, EntitiAssignment>
      */
     public function history(string $agencyCode): Collection
     {
-        return EntitasAssignment::query()
+        return EntitiAssignment::query()
             ->forAgency($agencyCode)
             ->with(['assignedTo', 'assignedBy'])
             ->terkini()
@@ -234,7 +234,7 @@ class EntityAssignmentService
      * @param  array<string, mixed>  $metadata
      */
     protected function log(
-        EntitasAssignment $penugasan,
+        EntitiAssignment $penugasan,
         string $action,
         ?string $lama,
         ?string $baharu,

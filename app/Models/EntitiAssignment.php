@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * 'unassigned' supaya sejarah penugasan kekal. Perubahan sebenar dilakukan
  * melalui App\Services\EntityAssignmentService.
  */
-class EntitasAssignment extends Model
+class EntitiAssignment extends Model
 {
     use FiltersByEntityAccess, HasFactory;
 

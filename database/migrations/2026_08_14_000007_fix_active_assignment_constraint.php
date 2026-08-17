@@ -28,7 +28,7 @@ return new class extends Migration
      * - satu entiti hanya boleh mempunyai SATU penugasan aktif
      * - bilangan rekod sejarah bagi entiti yang sama tidak terhad
      *
-     * active_flag diselenggara secara automatik oleh model EntitasAssignment
+     * active_flag diselenggara secara automatik oleh model EntitiAssignment
      * dan bukan medan yang diisi secara manual.
      */
     public function up(): void

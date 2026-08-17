@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidAssignmentException;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Services\EntityAssignmentService;
 use App\Support\SektorDirectory;
@@ -64,7 +64,7 @@ class EntitiAssignmentController extends Controller
             ),
             'sectorCode' => $sectorCode,
             'analysts' => $this->assignments->analystsAvailable(),
-            'jumlahAktif' => EntitasAssignment::query()->active()->count(),
+            'jumlahAktif' => EntitiAssignment::query()->active()->count(),
         ]);
     }
 
@@ -153,7 +153,7 @@ class EntitiAssignmentController extends Controller
      */
     private function entitiDitugaskan(): Collection
     {
-        return EntitasAssignment::query()
+        return EntitiAssignment::query()
             ->distinct()
             ->pluck('agency_code')
             ->map(fn (string $agencyCode) => SektorDirectory::cariEntiti($agencyCode))

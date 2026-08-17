@@ -196,7 +196,7 @@ StatusLaporan
 ### Required New Models (5)
 
 ```
-EntitasAssignment (NEW)
+EntitiAssignment (NEW)
 ├─ id, entity_code, entity_name, sector_code
 ├─ assigned_to_user_id (FK)
 ├─ assigned_by_user_id (FK)

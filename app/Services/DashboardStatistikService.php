@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\AnalisisInventori;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Models\User;
@@ -96,7 +96,7 @@ class DashboardStatistikService
     {
         $kod = collect()
             ->merge(WorkflowStatus::query()->accessibleBy($pengguna)->pluck('agency_code'))
-            ->merge(EntitasAssignment::query()->accessibleBy($pengguna)->pluck('agency_code'))
+            ->merge(EntitiAssignment::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->merge(AnalisisInventori::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->merge(StatusLaporan::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->merge(MuatNaik::query()->accessibleBy($pengguna)->pluck('agency_code'))

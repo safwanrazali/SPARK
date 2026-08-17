@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\ActivityLog;
 use App\Models\AnalisDraftHistory;
 use App\Models\AnalisisInventori;
-use App\Models\EntitasAssignment;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
@@ -151,7 +151,7 @@ class Phase12IntegrationTest extends TestCase
             'agency_code' => self::ALPHA,
             'assigned_to_user_id' => $this->analystA->id,
             'assigned_by_user_id' => $this->penyelaras->id,
-            'status' => EntitasAssignment::STATUS_ACTIVE,
+            'status' => EntitiAssignment::STATUS_ACTIVE,
         ]);
 
         // 4 ── Workflow: entiti didaftarkan pada peringkat 1.
@@ -374,10 +374,10 @@ class Phase12IntegrationTest extends TestCase
             ->assertSee('DRAF-A', false);
 
         // Sejarah penugasan kekal lengkap.
-        $sejarah = EntitasAssignment::where('agency_code', self::ALPHA)->get();
+        $sejarah = EntitiAssignment::where('agency_code', self::ALPHA)->get();
         $this->assertCount(2, $sejarah);
-        $this->assertSame(1, $sejarah->where('status', EntitasAssignment::STATUS_ACTIVE)->count());
-        $this->assertSame(1, $sejarah->where('status', EntitasAssignment::STATUS_REASSIGNED)->count());
+        $this->assertSame(1, $sejarah->where('status', EntitiAssignment::STATUS_ACTIVE)->count());
+        $this->assertSame(1, $sejarah->where('status', EntitiAssignment::STATUS_REASSIGNED)->count());
     }
 
     public function test_penarikan_penugasan_menutup_akses_pegawai_analisis(): void
