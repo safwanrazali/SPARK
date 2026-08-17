@@ -204,12 +204,12 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-2 algo-medan-{{ $k }}" @style(['display:none' => $sedia === null])>
+                            <div @class(['col-md-2', 'algo-medan-'.$k, 'is-hidden' => $sedia === null])>
                                 <input type="number" min="0" name="algoritma[{{ $k }}][bilangan]"
                                     class="form-control form-control-sm" placeholder="Bil. aset"
                                     value="{{ $sedia['bilangan'] ?? '' }}">
                             </div>
-                            <div class="col-md-6 algo-medan-{{ $k }}" @style(['display:none' => $sedia === null])>
+                            <div @class(['col-md-6', 'algo-medan-'.$k, 'is-hidden' => $sedia === null])>
                                 <input type="text" name="algoritma[{{ $k }}][nota]"
                                     class="form-control form-control-sm" placeholder="Pemerhatian"
                                     value="{{ $sedia['nota'] ?? '' }}">
@@ -271,7 +271,7 @@
                     </div>
                 </template>
 
-                <p class="text-secondary mb-0 nota-kosong" @style(['display:none' => count($data[$medan] ?? []) > 0])>
+                <p @class(['text-secondary', 'mb-0', 'nota-kosong', 'is-hidden' => count($data[$medan] ?? []) > 0])>
                     Tiada rekod. Baris yang tidak digunakan tidak akan dipaparkan dalam laporan muktamad.
                 </p>
             </div>
@@ -285,8 +285,8 @@
                     <input class="form-check-input" type="checkbox" id="tindakan-{{ $i }}" name="tindakan[]"
                         value="{{ $i }}" @checked(in_array($i, $data['tindakan'] ?? []))>
                     <label class="form-check-label" for="tindakan-{{ $i }}">
-                        <span class="text-secondary text-uppercase"
-                            style="font-size:.75rem">{{ $tindakan['kategori'] }}</span><br>
+                        <span
+                            class="text-secondary text-uppercase form-check-kategori">{{ $tindakan['kategori'] }}</span><br>
                         {{ $tindakan['tindakan'] }}
                     </label>
                 </div>
@@ -340,10 +340,13 @@
 
     <script>
         // Papar / sembunyi medan bilangan & pemerhatian algoritma.
+        // Kelas .is-hidden (resources/scss/states.scss) ialah keadaan yang sama
+        // yang dipaparkan oleh Blade melalui @class, jadi togol di sini
+        // menyambung terus daripada keadaan awal pelayan.
         document.querySelectorAll('.algo-toggle').forEach(cb => {
             cb.addEventListener('change', function() {
                 document.querySelectorAll('.algo-medan-' + this.dataset.target)
-                    .forEach(el => el.style.display = this.checked ? '' : 'none');
+                    .forEach(el => el.classList.toggle('is-hidden', !this.checked));
             });
         });
 
@@ -361,7 +364,8 @@
                 });
 
                 senarai.appendChild(klon);
-                this.closest('[data-senarai]').querySelector('.nota-kosong').style.display = 'none';
+                this.closest('[data-senarai]').querySelector('.nota-kosong')
+                    .classList.add('is-hidden');
             });
         });
 

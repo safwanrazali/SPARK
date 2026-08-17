@@ -142,6 +142,15 @@
     width: 85%;
 }
 
+// ── Keadaan tersembunyi ─────────────────────────────────────────────────
+// Ditogol oleh Blade (@class) pada pemaparan awal dan oleh JavaScript
+// selepas itu, menggantikan penetapan `style="display:none"` dan
+// `element.style.display`. `!important` diperlukan untuk menyamai keutamaan
+// gaya sebaris yang digantikannya.
+.is-hidden {
+    display: none !important;
+}
+
 // ── Kelas bantuan pembaca skrin ─────────────────────────────────────────
 .visually-hidden-focusable:not(:focus):not(:focus-within) {
     position: absolute !important;

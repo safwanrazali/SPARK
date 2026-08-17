@@ -27,3 +27,14 @@ $sidebar-muted: #9e92cf;
 $radius: 18px;
 $shadow: 0 10px 30px rgba($primary, 0.08);
 $transition: all 0.3s ease;
+
+// Laporan rasmi — dokumen bercetak/PDF dan pratonton skrin berkongsi palet
+// hitam-putih rasmi yang BERASINGAN daripada palet jenama di atas. Nilai ini
+// berulang merentas laporan-print.scss dan laporan-pratonton.scss, jadi ia
+// disimpan di sini supaya kedua-duanya tidak terpesong.
+$laporan-font: Arial, sans-serif;
+$laporan-text: #111;
+$laporan-border: #333;
+$laporan-th-bg: #eff1f5;
+$laporan-meta: #555;
+$laporan-jarak-klasifikasi: 0.35em;

@@ -12,7 +12,12 @@
 @import "penugasan";
 @import "entiti";
 @import "draf";
+@import "auth";
 @import "laporan-print";
+// MESTI selepas "laporan-print": kedua-duanya mendefinisikan .laporan-rasmi
+// pada kekhususan yang sama, jadi susunan inilah yang menentukan nilai skrin
+// (rem) mengatasi nilai cetakan (px). Lihat komen dalam fail tersebut.
+@import "laporan-pratonton";
 
 body {
     background:

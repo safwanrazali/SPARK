@@ -7,19 +7,6 @@
     <title>Log Masuk - Sistem Penilaian Risiko Aset</title>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
-    <style>
-        .login-wrapper {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-        }
-    </style>
 </head>
 
 <body>

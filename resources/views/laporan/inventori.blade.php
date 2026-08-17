@@ -26,73 +26,12 @@
         </div>
     </div>
 
-    <style>
-        .laporan-rasmi {
-            background: #fff;
-            color: #111;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 48px;
-            font-size: .85rem;
-            line-height: 1.65;
-        }
-
-        .laporan-rasmi h1 {
-            font-size: 1.15rem;
-            text-transform: uppercase;
-            text-align: center;
-            font-weight: 800;
-        }
-
-        .laporan-rasmi h2 {
-            font-size: .95rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            border-bottom: 2px solid #111;
-            padding-bottom: 4px;
-            margin: 26px 0 10px;
-        }
-
-        .laporan-rasmi p {
-            text-align: justify;
-        }
-
-        .laporan-rasmi table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
-
-        .laporan-rasmi th,
-        .laporan-rasmi td {
-            border: 1px solid #333;
-            padding: 5px 8px;
-            vertical-align: top;
-            font-size: .8rem;
-        }
-
-        .laporan-rasmi th {
-            background: #eff1f5;
-            text-align: left;
-        }
-
-        .klasifikasi {
-            text-align: center;
-            letter-spacing: .35em;
-            color: #000;
-            font-weight: 700;
-            font-size: .8rem;
-        }
-    </style>
-
+    {{-- Gaya pratonton laporan: resources/scss/laporan-pratonton.scss --}}
     <div class="laporan-rasmi">
-        <div
-            style="width:100%; font-size:9px; font-family: Arial, sans-serif;
-            padding: 0 15mm; box-sizing: border-box;
-            display:flex; align-items:center; justify-content:space-between; margin: 0 0 20px;">
-            <img src="{{ asset('image/logo_nacsa.png') }}" style="height:120px;">
+        <div class="laporan-rasmi__jata">
+            <img class="laporan-rasmi__jata-nacsa" src="{{ asset('image/logo_nacsa.png') }}">
             <div class="klasifikasi mb-3">RAHSIA</div>
-            <img src="{{ asset('image/logo_ptpkm.png') }}" style="height:50px;">
+            <img class="laporan-rasmi__jata-ptpkm" src="{{ asset('image/logo_ptpkm.png') }}">
         </div>
 
         <h1>Laporan Analisis Inventori Kriptografi</h1>
@@ -103,7 +42,7 @@
 
         <table>
             <tr>
-                <td style="width:220px"><strong>KLASIFIKASI</strong></td>
+                <td class="laporan-rasmi__lajur-label"><strong>KLASIFIKASI</strong></td>
                 <td>RAHSIA</td>
             </tr>
             <tr>
@@ -325,14 +264,14 @@
                     <tr>
                         <td>{{ $baris['peranan'] }}</td>
                         <td>{{ $baris['nama'] }}</td>
-                        <td style="width:120px"></td>
-                        <td style="width:90px"></td>
+                        <td class="laporan-rasmi__lajur-tandatangan"></td>
+                        <td class="laporan-rasmi__lajur-tarikh"></td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
 
-        <p style="font-size:.75rem">
+        <p class="laporan-rasmi__penafian">
             <strong>PENAFIAN DAN HAD PENGGUNAAN LAPORAN:</strong>
             Laporan ini disediakan berdasarkan data dan maklumat yang dikemukakan oleh entiti
             melalui NACSA serta analisis yang dilaksanakan oleh Bahagian Migrasi PQC, PTPKM.
@@ -345,11 +284,7 @@
             hendaklah disemak bersama pemilik sistem, pegawai teknikal atau vendor yang berkaitan
             sebelum sebarang perubahan dibuat.
         </p>
-        <div
-            style="color:#555;
-            width:100%;
-            padding: 4px 0; box-sizing: border-box;
-            display:flex; justify-content:space-between;">
+        <div class="laporan-rasmi__footer">
             <span>{{ $analisis->kod_rujukan ?? '[KOD RUJUKAN FAIL]' }}</span>
             <span>1</span>
         </div>

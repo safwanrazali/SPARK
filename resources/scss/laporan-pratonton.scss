@@ -1,0 +1,138 @@
+/*
+|--------------------------------------------------------------------------
+| Laporan Analisis Inventori Kriptografi — pratonton pada skrin
+|--------------------------------------------------------------------------
+| Dahulunya blok <style> di dalam @section('content')
+| resources/views/laporan/inventori.blade.php.
+|
+| AMARAN SUSUNAN IMPORT — laporan-print.scss juga mendefinisikan
+| `.laporan-rasmi`, `.laporan-rasmi h1/h2/p/table/th/td` dengan KEKHUSUSAN
+| YANG SAMA (0,1,0 dan 0,1,1). Oleh itu hanya susunan import dalam app.scss
+| yang menentukan nilai mana yang menang. Fail ini MESTI diimport SELEPAS
+| laporan-print.scss supaya nilai berasaskan rem di bawah terus mengatasi
+| nilai px dokumen bercetak — persis seperti blok <style> dalam <body>
+| mengatasi helaian gaya dalam <head> sebelum ini.
+|
+| Ringkasnya: laporan-print.scss = ukuran px untuk kertas A4;
+|             fail ini          = ukuran rem untuk paparan skrin.
+*/
+
+.laporan-rasmi {
+    // Warna kertas, bukan $surface jenama: laporan rasmi kekal putih walaupun
+    // palet aplikasi berubah.
+    background: #fff;
+    color: $laporan-text;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 48px;
+    font-size: 0.85rem;
+    line-height: 1.65;
+}
+
+.laporan-rasmi h1 {
+    font-size: 1.15rem;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 800;
+}
+
+.laporan-rasmi h2 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-bottom: 2px solid $laporan-text;
+    padding-bottom: 4px;
+    margin: 26px 0 10px;
+}
+
+.laporan-rasmi p {
+    text-align: justify;
+}
+
+.laporan-rasmi table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+}
+
+.laporan-rasmi th,
+.laporan-rasmi td {
+    border: 1px solid $laporan-border;
+    padding: 5px 8px;
+    vertical-align: top;
+    font-size: 0.8rem;
+}
+
+.laporan-rasmi th {
+    background: $laporan-th-bg;
+    text-align: left;
+}
+
+.klasifikasi {
+    text-align: center;
+    letter-spacing: $laporan-jarak-klasifikasi;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+/*
+| Jata/kepala laporan pada pratonton — NACSA · RAHSIA · PTPKM.
+|
+| Berbeza daripada .page-header-strip dalam laporan-print.scss: strip cetakan
+| ialah elemen berjalan (running element) dalam kotak margin @page dan
+| mempunyai border bawah, manakala kepala pratonton ini mengalir sekali sahaja
+| di dalam dokumen dan tiada border.
+*/
+.laporan-rasmi__jata {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 0 20px;
+    padding: 0 15mm;
+    box-sizing: border-box;
+    font-family: $laporan-font;
+    font-size: 9px;
+}
+
+/*
+| Tinggi kedua-dua logo SENGAJA berbeza kerana ruang kosong dalam fail PNG
+| berbeza: logo_nacsa.png (kanvas segi empat sama 225x225) hanya diisi 32%
+| pada paksi menegak, manakala logo_ptpkm.png (1600x601) diisi 71%. Jika
+| kedua-duanya diberi height yang sama, logo NACSA kelihatan ~2.3x lebih
+| kecil daripada PTPKM. Kekalkan nisbah 120:50.
+*/
+.laporan-rasmi__jata-nacsa {
+    height: 120px;
+}
+
+.laporan-rasmi__jata-ptpkm {
+    height: 50px;
+}
+
+.laporan-rasmi__penafian {
+    font-size: 0.75rem;
+}
+
+.laporan-rasmi__footer {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 4px 0;
+    box-sizing: border-box;
+    color: $laporan-meta;
+}
+
+// Lajur berlebar tetap dalam jadual laporan.
+.laporan-rasmi__lajur-label {
+    width: 220px;
+}
+
+.laporan-rasmi__lajur-tandatangan {
+    width: 120px;
+}
+
+.laporan-rasmi__lajur-tarikh {
+    width: 90px;
+}

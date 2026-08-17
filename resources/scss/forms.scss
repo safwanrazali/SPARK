@@ -83,3 +83,14 @@
     color: $danger;
     font-weight: 700;
 }
+
+// Label kategori kecil di atas teks cadangan tindakan (borang analisis).
+.form-check-kategori {
+    font-size: 0.75rem;
+}
+
+// Entiti kementerian ditonjolkan dalam senarai pilihan entiti (borang muat
+// naik). Kelas ditambah oleh JavaScript semasa senarai dibina semula.
+option.is-kementerian {
+    color: purple;
+}

@@ -130,7 +130,7 @@
                         <span class="workflow-taburan__nama">{{ $peringkat['nama'] }}</span>
                         <span class="status-pill-track">
                             <span class="status-pill-fill status-pill-fill--proses"
-                                style="width: {{ max(2, $peringkat['peratus']) }}%"></span>
+                                style="--fill: {{ max(2, $peringkat['peratus']) }}%"></span>
                         </span>
                         <span class="workflow-taburan__nilai">
                             {{ $peringkat['bilangan'] }}
@@ -163,7 +163,8 @@
                         @php $peratus = $sektor['jumlah'] ? round($sektor['selesai'] / $sektor['jumlah'] * 100) : 0; @endphp
                         <div class="bar-chart__col"
                             title="{{ $sektor['nama'] }}: {{ $sektor['selesai'] }}/{{ $sektor['jumlah'] }} entiti ({{ $peratus }}%)">
-                            <div class="bar-chart__bar" style="height: {{ max(6, round(($peratus / $maxPeratus) * 100)) }}%">
+                            <div class="bar-chart__bar"
+                                style="--bar-height: {{ max(6, round(($peratus / $maxPeratus) * 100)) }}%">
                             </div>
                         </div>
                     @endforeach
@@ -191,7 +192,7 @@
                         <span class="status-pill status-pill--{{ $baris['kelas'] }}">{{ $baris['label'] }}</span>
                         <span class="status-pill-track">
                             <span class="status-pill-fill status-pill-fill--{{ $baris['kelas'] }}"
-                                style="width: {{ max(6, $lebar) }}%"></span>
+                                style="--fill: {{ max(6, $lebar) }}%"></span>
                         </span>
                     </div>
                 @endforeach

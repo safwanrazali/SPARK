@@ -89,7 +89,7 @@
                             <td class="workflow-progress-cell">
                                 <div class="workflow-progress" role="img"
                                     aria-label="Kemajuan {{ $w?->progressPercentage() ?? 0 }} peratus">
-                                    <span style="width: {{ $w?->progressPercentage() ?? 0 }}%"></span>
+                                    <span style="--progress: {{ $w?->progressPercentage() ?? 0 }}%"></span>
                                 </div>
                                 <small class="text-secondary">{{ $w?->current_stage ?? 0 }}/7</small>
                             </td>

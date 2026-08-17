@@ -111,6 +111,9 @@
     border-radius: 8px 8px 3px 3px;
     background: linear-gradient(180deg, $primary, $secondary);
     transition: $transition;
+
+    // Tinggi didorong data: templat menetapkan --bar-height sebagai peratusan.
+    height: var(--bar-height, 0%);
 }
 
 .bar-chart__col:hover .bar-chart__bar {
@@ -184,6 +187,9 @@
 .status-pill-fill {
     height: 100%;
     border-radius: 99px;
+
+    // Lebar didorong data: templat menetapkan --fill sebagai peratusan.
+    width: var(--fill, 0%);
 }
 
 .status-pill-fill--siap {

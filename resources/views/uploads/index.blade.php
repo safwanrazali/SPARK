@@ -124,7 +124,8 @@
                     option.value = agency.code;
                     option.textContent = agency.name;
                     if (agency.code.startsWith('K')) {
-                        option.style.color = 'purple';
+                        // Gaya dalam resources/scss/forms.scss (option.is-kementerian).
+                        option.classList.add('is-kementerian');
                     }
                     agencySelect.appendChild(option);
                 });

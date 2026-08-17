@@ -143,6 +143,9 @@
         height: 100%;
         border-radius: 50px;
         background: linear-gradient(90deg, $primary, $accent-cyan);
+
+        // Lebar didorong data: templat menetapkan --progress sebagai peratusan.
+        width: var(--progress, 0%);
     }
 }
 

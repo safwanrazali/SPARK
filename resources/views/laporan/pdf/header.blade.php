@@ -1,4 +1,14 @@
-{{-- resources/views/laporan/pdf/header.blade.php --}}
+{{-- resources/views/laporan/pdf/header.blade.php
+
+     GAYA SEBARIS SENGAJA DIKEKALKAN — JANGAN PINDAHKAN KE SCSS.
+
+     Templat ini diserahkan kepada Browsershot::headerHtml() dalam
+     LaporanController::unduh(), yang menyalurkannya ke headerTemplate Chrome.
+     Chrome memaparkan kepala/kaki cetakan di dalam kotak margin @page sebagai
+     dokumen TERASING: helaian gaya halaman utama tidak diwarisi ke dalamnya.
+     Kelas daripada resources/scss/ tidak akan terpakai di sini, jadi
+     memindahkan gaya ini ke SCSS akan meruntuhkan susun atur kepala pada
+     SETIAP muka surat PDF tanpa sebarang ralat binaan. --}}
 <div
     style="width:100%; font-size:9px; font-family: Arial, sans-serif;
             padding: 0 15mm; box-sizing: border-box;

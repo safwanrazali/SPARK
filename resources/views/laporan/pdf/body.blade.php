@@ -3,6 +3,23 @@
 
 <head>
     <meta charset="utf-8">
+    {{--
+        CSS SENGAJA DITERAP DI SINI, BUKAN DALAM SCSS.
+
+        Dokumen ini diserahkan kepada Browsershot::html() dalam
+        LaporanController::unduh() dan dipaparkan oleh Chrome tanpa tanpa
+        kehadiran pelayan HTTP. Tiada @vite, tiada manifes dan tiada helaian
+        gaya terkumpul yang boleh dicapai, jadi gaya laporan mesti dibawa
+        bersama dokumen. Memindahkannya ke resources/scss/ akan menghasilkan
+        PDF tanpa gaya sama sekali.
+
+        KEKALKAN SELARAS dengan blok .laporan-rasmi dalam
+        resources/scss/laporan-print.scss — nilainya sepadan satu-satu
+        (12px asas, h1 15px, h2 13px, th/td 11px, sempadan #333, th #eff1f5).
+        Perbezaannya hanya pemilih: fail di sini menggunakan pemilih elemen
+        kerana dokumen ini hanya mengandungi laporan, manakala SCSS mesti
+        menyaringnya di bawah .laporan-rasmi supaya tidak bocor ke aplikasi.
+    --}}
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,20 +73,41 @@
             background: #eff1f5;
             text-align: left;
         }
+
+        /* Kelas berikut menggantikan atribut gaya sebaris pada elemen di bawah. */
+        .laporan-meta {
+            text-align: center;
+        }
+
+        .penafian {
+            font-size: 10px;
+        }
+
+        .lajur-label {
+            width: 220px;
+        }
+
+        .lajur-tandatangan {
+            width: 120px;
+        }
+
+        .lajur-tarikh {
+            width: 90px;
+        }
     </style>
 </head>
 
 <body>
 
     <h1>Laporan Analisis Inventori Kriptografi</h1>
-    <p style="text-align:center;">
+    <p class="laporan-meta">
         <strong>SEKTOR:</strong> {{ $analisis->sector_name }} ·
         <strong>ENTITI:</strong> {{ $analisis->agency_name }}
     </p>
 
     <table>
         <tr>
-            <td style="width:220px"><strong>KLASIFIKASI</strong></td>
+            <td class="lajur-label"><strong>KLASIFIKASI</strong></td>
             <td>RAHSIA</td>
         </tr>
         <tr>
@@ -291,14 +329,14 @@
                 <tr>
                     <td>{{ $baris['peranan'] }}</td>
                     <td>{{ $baris['nama'] }}</td>
-                    <td style="width:120px"></td>
-                    <td style="width:90px"></td>
+                    <td class="lajur-tandatangan"></td>
+                    <td class="lajur-tarikh"></td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <p style="font-size:10px">
+    <p class="penafian">
         <strong>PENAFIAN DAN HAD PENGGUNAAN LAPORAN:</strong>
         Laporan ini disediakan berdasarkan data dan maklumat yang dikemukakan oleh entiti
         melalui NACSA serta analisis yang dilaksanakan oleh Bahagian Migrasi PQC, PTPKM.
