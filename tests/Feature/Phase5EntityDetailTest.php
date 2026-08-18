@@ -91,8 +91,8 @@ class Phase5EntityDetailTest extends TestCase
         $this->actingAs($this->coordinator)
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
-            ->assertSee('Kerajaan')
+            ->assertSee('A010101')
+            ->assertSee('Sektor 001')
             ->assertSee(self::ALPHA);
     }
 
@@ -244,7 +244,7 @@ class Phase5EntityDetailTest extends TestCase
         $this->actingAs($this->analystA)
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)');
+            ->assertSee('A010101');
     }
 
     public function test_pegawai_analisis_tidak_boleh_membuka_entiti_yang_tidak_ditugaskan(): void

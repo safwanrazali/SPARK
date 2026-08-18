@@ -452,6 +452,6 @@ class Phase12ErrorHandlingTest extends TestCase
 
         $respons->assertForbidden();
         $respons->assertDontSee('RAHSIA/BETA/001');
-        $respons->assertDontSee('Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)');
+        $respons->assertDontSee('A010102');
     }
 }

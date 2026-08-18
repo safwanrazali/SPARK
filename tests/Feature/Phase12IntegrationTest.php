@@ -32,8 +32,6 @@ class Phase12IntegrationTest extends TestCase
 
     private const ALPHA = 'A010101';
 
-    private const ALPHA_NAMA = 'Suruhanjaya Pilihan Raya (SPR)';
-
     private const BETA = 'A010102';
 
     private User $penyelaras;
@@ -139,7 +137,7 @@ class Phase12IntegrationTest extends TestCase
 
         $this->get(route('penugasan.show', self::ALPHA))
             ->assertOk()
-            ->assertSee(self::ALPHA_NAMA);
+            ->assertSee(self::ALPHA);
 
         // 3 ── Assignment: entiti ditugaskan kepada Pegawai Analisis A.
         $this->post(route('penugasan.simpan', self::ALPHA), [
@@ -177,7 +175,7 @@ class Phase12IntegrationTest extends TestCase
         $this->get(route('analisis.borang', [
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
-        ]))->assertOk()->assertSee(self::ALPHA_NAMA);
+        ]))->assertOk()->assertSee(self::ALPHA);
 
         // 7 ── Save draft (separa siap, tanpa pengesahan penuh).
         $this->post(route('analisis.draf'), [
@@ -237,7 +235,7 @@ class Phase12IntegrationTest extends TestCase
         $this->get(route('laporan.inventori', $analisis))
             ->assertOk()
             ->assertSee('Laporan Analisis Inventori Kriptografi')
-            ->assertSee(self::ALPHA_NAMA)
+            ->assertSee(self::ALPHA)
             ->assertSee('AES')
             ->assertSee('RSA');
 
@@ -322,7 +320,7 @@ class Phase12IntegrationTest extends TestCase
         if ($sektorLain !== null) {
             $this->get(route('workflow.index', ['sector_code' => $sektorLain]))
                 ->assertOk()
-                ->assertDontSee(self::ALPHA_NAMA)
+                ->assertDontSee(self::ALPHA)
                 ->assertViewHas('entiti', fn ($senarai) => $senarai->total()
                     === SektorDirectory::entitiDalamSektor($sektorLain)->count());
         }
@@ -555,7 +553,7 @@ class Phase12IntegrationTest extends TestCase
         $this->actingAs($this->penyelaras)
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk()
-            ->assertSee(self::ALPHA_NAMA)
+            ->assertSee(self::ALPHA)
             ->assertSee('Semakan Awal Data')          // workflow
             ->assertSee('Pegawai Analisis A')          // penugasan
             ->assertSee('PTPKM/INV/2026/001')          // dapatan analisis

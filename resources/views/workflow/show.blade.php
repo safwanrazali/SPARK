@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Workflow — ' . $entiti['agency_name'])
+@section('title', 'Workflow — ' . $entiti['agency_code'])
 
 @section('page-title', 'Workflow Entiti')
 
@@ -10,9 +10,9 @@
 
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
             <div>
-                <h4 class="section-title mb-1">{{ $entiti['agency_name'] }}</h4>
+                <h4 class="section-title mb-1">{{ $entiti['agency_code'] }}</h4>
                 <p class="text-secondary mb-0">
-                    {{ $entiti['sector_name'] }} · Kod Entiti: {{ $entiti['agency_code'] }}
+                    Sektor {{ $entiti['sector_code'] }}
                 </p>
             </div>
             <div class="entity-actions">

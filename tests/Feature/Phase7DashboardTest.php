@@ -354,7 +354,7 @@ class Phase7DashboardTest extends TestCase
             ->get(route('dashboard', ['sector_code' => '010']))
             ->assertOk()
             ->assertSee('Penapis aktif')
-            ->assertSee('Sains, Teknologi dan Inovasi')
+            ->assertSee('010')
             ->assertViewHas('jumlahSektor', 1);
     }
 

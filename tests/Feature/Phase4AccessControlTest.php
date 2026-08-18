@@ -191,8 +191,8 @@ class Phase4AccessControlTest extends TestCase
         $this->actingAs($this->analystA)
             ->get(route('analisis.index'))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
-            ->assertDontSee('Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)');
+            ->assertSee('A010101')
+            ->assertDontSee('A010102');
     }
 
     public function test_senarai_laporan_tidak_membocorkan_entiti_tidak_ditugaskan(): void
@@ -203,8 +203,8 @@ class Phase4AccessControlTest extends TestCase
         $this->actingAs($this->analystA)
             ->get(route('laporan.index'))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
-            ->assertDontSee('Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)');
+            ->assertSee('A010101')
+            ->assertDontSee('A010102');
     }
 
     public function test_senarai_status_laporan_tidak_membocorkan_entiti_tidak_ditugaskan(): void
@@ -215,8 +215,8 @@ class Phase4AccessControlTest extends TestCase
         $this->actingAs($this->analystA)
             ->get(route('status.index'))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
-            ->assertDontSee('Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)');
+            ->assertSee('A010101')
+            ->assertDontSee('A010102');
     }
 
     public function test_senarai_workflow_tidak_membocorkan_entiti_tidak_ditugaskan(): void
@@ -227,8 +227,8 @@ class Phase4AccessControlTest extends TestCase
         $this->actingAs($this->analystA)
             ->get(route('workflow.index'))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
-            ->assertDontSee('Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)');
+            ->assertSee('A010101')
+            ->assertDontSee('A010102');
     }
 
     public function test_sejarah_muat_naik_tidak_membocorkan_entiti_tidak_ditugaskan(): void
@@ -249,8 +249,8 @@ class Phase4AccessControlTest extends TestCase
         $this->actingAs($this->analystA)
             ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
-            ->assertDontSee('Suruhanjaya Pencegahan Rasuah Malaysia (SPRM)');
+            ->assertSee('A010101')
+            ->assertDontSee('A010102');
     }
 
     public function test_pemilih_entiti_borang_analisis_hanya_menawarkan_entiti_ditugaskan(): void

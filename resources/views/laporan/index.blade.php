@@ -30,8 +30,8 @@
                 <tbody>
                     @forelse ($rekod as $item)
                         <tr>
-                            <td>{{ $item->sector_name }}</td>
-                            <td>{{ $item->agency_name }}</td>
+                            <td>{{ $item->sector_code }}</td>
+                            <td>{{ $item->agency_code }}</td>
                             <td>{{ $item->kod_rujukan ?? '-' }}</td>
                             <td><span class="status-badge status-rendah">{{ $item->status_laporan }}</span></td>
                             <td>{{ $item->updated_at?->format('d/m/Y H:i') }}</td>

@@ -57,7 +57,7 @@ class Phase2WorkflowRouteTest extends TestCase
         $this->actingAs($this->coordinator())
             ->get(route('workflow.index'))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
+            ->assertSee('A010101')
             ->assertSee('Penyediaan &amp; Pengesahan Data', false);
     }
 
@@ -71,10 +71,10 @@ class Phase2WorkflowRouteTest extends TestCase
             ->get(route('workflow.index', ['sector_code' => '010']));
 
         $response->assertOk()
-            ->assertSee('Agensi Angkasa Malaysia')
-            ->assertSee('Jabatan Kimia Malaysia')
+            ->assertSee('A100102')
+            ->assertSee('A100101')
             ->assertSee('Belum Didaftarkan')
-            ->assertDontSee('Suruhanjaya Pilihan Raya (SPR)');
+            ->assertDontSee('A010101');
     }
 
     public function test_halaman_entiti_memaparkan_stepper_tujuh_peringkat(): void

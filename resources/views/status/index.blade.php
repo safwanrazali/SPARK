@@ -33,8 +33,8 @@
                     @forelse ($entiti as $e)
                         <tr>
                             <td>
-                                <strong>{{ $e->agency_name }}</strong><br>
-                                <span class="text-secondary">{{ $e->sector_name }}</span>
+                                <strong>{{ $e->agency_code }}</strong><br>
+                                <span class="text-secondary">Sektor {{ $e->sector_code }}</span>
                             </td>
                             @foreach (\App\Models\StatusLaporan::JENIS as $jenis => $nama)
                                 @php

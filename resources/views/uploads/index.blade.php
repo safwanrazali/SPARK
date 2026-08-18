@@ -20,10 +20,13 @@
         <form action="{{ route('muat-naik.preview') }}" method="POST" enctype="multipart/form-data">
 
             @csrf
+            {{-- Sektor dan entiti dikenali melalui kod sahaja; medan kod
+                 baca-sahaja yang dahulu berpasangan dengan nama telah dibuang
+                 kerana ia kini hanya menduakan pilihan itu sendiri. --}}
             <div class="row mb-3">
                 <div class="col">
-                    <label class="form-label">
-                        Pilih Sektor
+                    <label class="form-label" for="sector-select">
+                        Kod Sektor
                     </label>
                     <select id="sector-select" name="sector_code" class="form-select" required>
 
@@ -32,23 +35,17 @@
                         </option>
 
                         @foreach (config('sektor') as $sectorCode => $sector)
-                            <option value="{{ $sectorCode }}" data-name="{{ $sector['name'] }}">
-                                {{ $sector['name'] }}
-                            </option>
+                            <option value="{{ $sectorCode }}">{{ $sectorCode }}</option>
                         @endforeach
 
                     </select>
-                </div>
-                <div class="col-4">
-                    <label class="form-label">Kod Sektor</label>
-                    <input id="sector-display-code" type="text" class="form-control" readonly>
                 </div>
             </div>
 
             <div class="row mb-3">
                 <div class="col">
-                    <label class="form-label">
-                        Nama Agensi / Entiti
+                    <label class="form-label" for="agency-select">
+                        Kod Agensi / Entiti
                     </label>
                     <select id="agency-select" name="agency_code" class="form-select" required disabled>
                         <option value="">
@@ -56,12 +53,10 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-4">
-                    <label class="form-label">Kod Agensi</label>
-                    <input id="agency-display-code" type="text" class="form-control" readonly>
-                </div>
             </div>
 
+            {{-- Nama tidak dipapar, tetapi masih dihantar supaya rekod yang
+                 disimpan kekal lengkap. --}}
             <input type="hidden" name="sector_name" id="sector-name-input">
             <input type="hidden" name="agency_name" id="agency-name-input">
 
@@ -91,26 +86,21 @@
             const sektorConfig = @json(config('sektor'));
             const sectorSelect = document.getElementById('sector-select');
             const agencySelect = document.getElementById('agency-select');
-            const sectorCodeField = document.getElementById('sector-display-code');
-            const agencyCodeField = document.getElementById('agency-display-code');
-            const agencyNameField = document.getElementById('agency-display-name');
             const sectorNameInput = document.getElementById('sector-name-input');
             const agencyNameInput = document.getElementById('agency-name-input');
 
             function resetAgencyFields() {
                 agencySelect.innerHTML = '<option value="">-- Pilih Sektor Dahulu --</option>';
                 agencySelect.disabled = true;
-                agencyCodeField.value = '';
-                agencyNameField.value = '';
                 agencyNameInput.value = '';
             }
 
             function updateSectorFields() {
-                const selectedCode = sectorSelect.value;
-                const sector = sektorConfig[selectedCode] ?? null;
+                const sector = sektorConfig[sectorSelect.value] ?? null;
 
-                sectorCodeField.value = sector ? selectedCode : '';
+                // Nama tidak dipapar tetapi tetap dihantar bersama borang.
                 sectorNameInput.value = sector ? sector.name : '';
+                agencyNameInput.value = '';
 
                 if (!sector || !sector.agencies.length) {
                     return resetAgencyFields();
@@ -122,7 +112,7 @@
                 sector.agencies.forEach((agency) => {
                     const option = document.createElement('option');
                     option.value = agency.code;
-                    option.textContent = agency.name;
+                    option.textContent = agency.code;
                     if (agency.code.startsWith('K')) {
                         // Gaya dalam resources/scss/forms.scss (option.is-kementerian).
                         option.classList.add('is-kementerian');
@@ -133,13 +123,10 @@
 
             function updateAgencyFields() {
                 const selectedSector = sektorConfig[sectorSelect.value] ?? null;
-                const selectedAgencyCode = agencySelect.value;
                 const selectedAgency = selectedSector ?
-                    selectedSector.agencies.find((agency) => agency.code === selectedAgencyCode) :
+                    selectedSector.agencies.find((agency) => agency.code === agencySelect.value) :
                     null;
 
-                agencyCodeField.value = selectedAgency ? selectedAgency.code : '';
-                agencyNameField.value = selectedAgency ? selectedAgency.name : '';
                 agencyNameInput.value = selectedAgency ? selectedAgency.name : '';
             }
 

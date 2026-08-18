@@ -104,8 +104,8 @@ class Phase3AssignmentRouteTest extends TestCase
             ->get(route('penugasan.index', ['sector_code' => '010']));
 
         $response->assertOk()
-            ->assertSee('Agensi Angkasa Malaysia')
-            ->assertSee('Jabatan Kimia Malaysia')
+            ->assertSee('A100102')
+            ->assertSee('A100101')
             ->assertSee('Belum Ditugaskan')
             ->assertSee('Pegawai A');
     }
@@ -117,7 +117,7 @@ class Phase3AssignmentRouteTest extends TestCase
         $this->actingAs($this->coordinator)
             ->get(route('penugasan.index'))
             ->assertOk()
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
+            ->assertSee('A010101')
             ->assertSee('Pegawai A');
     }
 

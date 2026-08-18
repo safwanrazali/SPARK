@@ -324,7 +324,7 @@ class Phase8AuditTrailTest extends TestCase
             ->get(route('audit.index'))
             ->assertOk()
             ->assertSee('Peringkat Workflow Berubah')
-            ->assertSee('Suruhanjaya Pilihan Raya (SPR)')
+            ->assertSee('A010101')
             ->assertSee('Penyelaras');
     }
 

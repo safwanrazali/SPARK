@@ -22,7 +22,7 @@
                     <option value="">Semua entiti</option>
                     @foreach ($entiti as $e)
                         <option value="{{ $e['agency_code'] }}" @selected($penapis['agency_code'] === $e['agency_code'])>
-                            {{ $e['agency_name'] }}
+                            {{ $e['agency_code'] }}
                         </option>
                     @endforeach
                 </select>
@@ -94,7 +94,7 @@
                         <tr>
                             <td class="text-nowrap">{{ $log->changed_at?->format('d/m/Y H:i') }}</td>
                             <td>
-                                <strong>{{ $log->agency_name ?? '-' }}</strong><br>
+                                <strong>{{ $log->agency_code ?? '-' }}</strong><br>
                                 <span class="text-secondary">{{ $log->agency_code }}</span>
                             </td>
                             <td>{{ $log->getActionLabel() }}</td>

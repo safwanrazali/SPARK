@@ -34,8 +34,8 @@
                         <tr>
 
                             <td>{{ $item->nama_fail }}</td>
-                            <td>{{ $item->sector_code }} - {{ $item->sector_name }}</td>
-                            <td>{{ $item->agency_code }} - {{ $item->agency_name }}</td>
+                            <td>{{ $item->sector_code }}</td>
+                            <td>{{ $item->agency_code }}</td>
 
                             <td>
                                 <span class="status-badge status-rendah">

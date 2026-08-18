@@ -22,7 +22,7 @@
                 <select id="sector_code" name="sector_code" class="form-select">
                     <option value="">-- Entiti dipantau sahaja --</option>
                     @foreach ($sektor as $kod => $s)
-                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $s['name'] }}</option>
+                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $kod }}</option>
                     @endforeach
                 </select>
             </div>
@@ -66,8 +66,8 @@
                         @php $w = $e['workflow']; @endphp
                         <tr>
                             <td>
-                                <strong>{{ $e['agency_name'] }}</strong><br>
-                                <span class="text-secondary">{{ $e['sector_name'] }} · {{ $e['agency_code'] }}</span>
+                                <strong>{{ $e['agency_code'] }}</strong><br>
+                                <span class="text-secondary">Sektor {{ $e['sector_code'] }}</span>
                             </td>
                             <td>
                                 @if ($w)

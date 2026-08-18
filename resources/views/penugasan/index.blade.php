@@ -21,7 +21,7 @@
                 <select id="sector_code" name="sector_code" class="form-select">
                     <option value="">-- Entiti yang telah ditugaskan sahaja --</option>
                     @foreach (config('sektor') as $kod => $sektor)
-                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $sektor['name'] }}</option>
+                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $kod }}</option>
                     @endforeach
                 </select>
             </div>
@@ -66,8 +66,8 @@
                         @php $p = $e['penugasan']; @endphp
                         <tr>
                             <td>
-                                <strong>{{ $e['agency_name'] }}</strong><br>
-                                <span class="text-secondary">{{ $e['sector_name'] }} · {{ $e['agency_code'] }}</span>
+                                <strong>{{ $e['agency_code'] }}</strong><br>
+                                <span class="text-secondary">Sektor {{ $e['sector_code'] }}</span>
                             </td>
                             <td>
                                 @if ($p)
@@ -102,8 +102,8 @@
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('entiti.show', $e['agency_code']) }}"
-                                    title="Maklumat entiti {{ $e['agency_name'] }}"
-                                    aria-label="Maklumat entiti {{ $e['agency_name'] }}">
+                                    title="Maklumat entiti {{ $e['agency_code'] }}"
+                                    aria-label="Maklumat entiti {{ $e['agency_code'] }}">
                                     <i class="bi bi-building" aria-hidden="true"></i>
                                 </a>
                                 <a class="btn btn-sm btn-outline-light"
@@ -115,8 +115,8 @@
                                         class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-light"
-                                            title="Tarik balik penugasan {{ $e['agency_name'] }}"
-                                            aria-label="Tarik balik penugasan {{ $e['agency_name'] }}">
+                                            title="Tarik balik penugasan {{ $e['agency_code'] }}"
+                                            aria-label="Tarik balik penugasan {{ $e['agency_code'] }}">
                                             <i class="bi bi-person-dash" aria-hidden="true"></i>
                                         </button>
                                     </form>

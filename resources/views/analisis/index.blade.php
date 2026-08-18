@@ -23,7 +23,7 @@
                         <select id="sector-select" name="sector_code" class="form-select" required>
                             <option value="">-- Sila Pilih --</option>
                             @foreach ($sektor as $sectorCode => $sector)
-                                <option value="{{ $sectorCode }}">{{ $sector['name'] }}</option>
+                                <option value="{{ $sectorCode }}">{{ $sectorCode }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -54,7 +54,7 @@
                 senarai.forEach(a => {
                     const opt = document.createElement('option');
                     opt.value = a.code;
-                    opt.textContent = a.code + ' — ' + a.name;
+                    opt.textContent = a.code;
                     agencySelect.appendChild(opt);
                 });
                 agencySelect.disabled = senarai.length === 0;
@@ -81,8 +81,8 @@
                 <tbody>
                     @forelse ($rekod as $item)
                         <tr>
-                            <td>{{ $item->sector_name }}</td>
-                            <td>{{ $item->agency_name }}</td>
+                            <td>{{ $item->sector_code }}</td>
+                            <td>{{ $item->agency_code }}</td>
                             <td>{{ $item->kod_rujukan ?? '-' }}</td>
                             <td>
                                 <span class="status-badge {{ $item->selesai ? 'status-rendah' : 'status-sederhana' }}">
@@ -93,15 +93,15 @@
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('entiti.show', $item->agency_code) }}"
-                                    title="Maklumat entiti {{ $item->agency_name }}"
-                                    aria-label="Maklumat entiti {{ $item->agency_name }}">
+                                    title="Maklumat entiti {{ $item->agency_code }}"
+                                    aria-label="Maklumat entiti {{ $item->agency_code }}">
                                     <i class="bi bi-building" aria-hidden="true"></i>
                                 </a>
                                 @can('manage-analysis')
                                     <a class="btn btn-sm btn-outline-light"
                                         href="{{ route('analisis.borang', ['sector_code' => $item->sector_code, 'agency_code' => $item->agency_code]) }}"
-                                        title="Sunting dapatan {{ $item->agency_name }}"
-                                        aria-label="Sunting dapatan {{ $item->agency_name }}">
+                                        title="Sunting dapatan {{ $item->agency_code }}"
+                                        aria-label="Sunting dapatan {{ $item->agency_code }}">
                                         <i class="bi bi-pencil" aria-hidden="true"></i>
                                     </a>
                                 @endcan

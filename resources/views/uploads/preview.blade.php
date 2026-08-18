@@ -14,9 +14,7 @@
 
         <div class="mb-4">
             <p><strong>Kod Sektor:</strong> {{ $sectorCode }}</p>
-            <p><strong>Nama Sektor:</strong> {{ $sector['name'] }}</p>
             <p><strong>Kod Agensi:</strong> {{ $agency['code'] }}</p>
-            <p><strong>Nama Agensi:</strong> {{ $agency['name'] }}</p>
         </div>
 
         <div class="table-responsive-custom">

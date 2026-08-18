@@ -15,7 +15,7 @@
                 <select id="sector_code" name="sector_code" class="form-select">
                     <option value="">Semua sektor</option>
                     @foreach (config('sektor') as $kod => $sektor)
-                        <option value="{{ $kod }}" @selected($penapis['sector_code'] === $kod)>{{ $sektor['name'] }}</option>
+                        <option value="{{ $kod }}" @selected($penapis['sector_code'] === $kod)>{{ $kod }}</option>
                     @endforeach
                 </select>
             </div>
@@ -40,7 +40,7 @@
                 <div class="col-12">
                     <span class="text-secondary">
                         Penapis aktif:
-                        {{ $penapis['sector_name'] ?? 'Semua sektor' }}
+                        {{ $penapis['sector_code'] ?? 'Semua sektor' }}
                         @if ($penapis['dari'] || $penapis['hingga'])
                             · Tarikh status workflow
                             {{ $penapis['dari'] ?? 'awal' }} – {{ $penapis['hingga'] ?? 'kini' }}
@@ -220,7 +220,7 @@
                 <div class="d-flex justify-content-between border-bottom py-2">
                     <span>
                         {{ $log->getActionLabel() }} —
-                        <strong>{{ $log->agency_name ?? $log->agency_code }}</strong>
+                        <strong>{{ $log->agency_code }}</strong>
                         @if ($log->changedBy)
                             <span class="text-secondary">oleh {{ $log->changedBy->name }}</span>
                         @endif
