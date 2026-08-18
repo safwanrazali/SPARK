@@ -9,6 +9,7 @@ use App\Http\Controllers\EntitiAssignmentController;
 use App\Http\Controllers\EntitiController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MuatNaikController;
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\StatusLaporanController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,16 @@ Route::middleware('auth')->group(function () {
 
     // Dashboard Pemantauan — kiraan automatik daripada rekod sebenar.
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    /*
+    |----------------------------------------------------------------------
+    | Profil sendiri — terbuka kepada semua pengguna yang telah log masuk
+    |----------------------------------------------------------------------
+    | Tiada gate kebenaran: setiap pengguna menyunting akaunnya sendiri
+    | sahaja, dan peranan kekal dikawal oleh modul Pentadbiran.
+    */
+    Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');
+    Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
 
     /*
     |----------------------------------------------------------------------

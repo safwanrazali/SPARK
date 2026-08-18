@@ -414,6 +414,8 @@ class Phase13ReleaseReadinessTest extends TestCase
             'penugasan.show',
             'penugasan.simpan',
             'penugasan.tarik',
+            'profil.edit',
+            'profil.update',
             'status.index',
             'status.kitar',
             'workflow.index',
@@ -441,8 +443,12 @@ class Phase13ReleaseReadinessTest extends TestCase
 
             $middleware = $route->gatherMiddleware();
 
-            // Log masuk / log keluar ialah pengecualian yang dijangka.
-            if (in_array($route->getName(), ['login.attempt', 'logout'], true)) {
+            // Pengecualian yang dijangka: route ini terbuka kepada setiap
+            // pengguna yang telah log masuk, jadi tiada gate kebenaran yang
+            // munasabah. `profil.update` menulis hanya kepada rekod pengguna
+            // yang membuat permintaan — tiada parameter pengguna pada route,
+            // dan `role` tiada dalam peraturan pengesahannya.
+            if (in_array($route->getName(), ['login.attempt', 'logout', 'profil.update'], true)) {
                 continue;
             }
 

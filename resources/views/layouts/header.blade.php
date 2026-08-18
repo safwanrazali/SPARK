@@ -7,11 +7,11 @@
 
     <div class="header-right d-flex align-items-center gap-3">
 
-        <span class="header-user">
+        <a href="{{ route('profil.edit') }}" class="header-user" title="Profil Saya">
             <i class="bi bi-person-circle" aria-hidden="true"></i>
             <span>{{ auth()->user()->name }}</span>
             <span class="header-user__role">{{ auth()->user()->roleLabel() }}</span>
-        </span>
+        </a>
 
         <form method="POST" action="{{ route('logout') }}" class="m-0">
             @csrf

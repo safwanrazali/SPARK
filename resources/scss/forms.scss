@@ -49,6 +49,16 @@
     font-weight: 500;
 }
 
+// Nilai yang dipapar sebagai maklumat sahaja, sebaris dengan medan lain.
+.form-static {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: rgba($border, 0.35);
+    border: 1px solid $border;
+    border-radius: 12px;
+    color: $text;
+}
+
 // Teks bantuan di bawah medan
 .form-hint {
     display: block;
