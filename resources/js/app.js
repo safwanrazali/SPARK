@@ -10,31 +10,97 @@ document.addEventListener("DOMContentLoaded", () => {
     const backdrop = document.getElementById("sidebarBackdrop");
     const content = document.querySelector(".main-content");
 
-    // ── Navigasi sisi ───────────────────────────────────────────────────
+    // ── Navigasi sisi ────────────────────────────────────
+    // Rel ikon ialah keadaan asal. Melayang tetikus (atau fokus papan kekunci)
+    // mengembangkannya di atas kandungan; klik butang menyematnya supaya kekal
+    // terbuka dan menolak kandungan. Kunci sengaja tidak disimpan — setiap
+    // navigasi ke muka surat lain bermula semula pada rel.
+    const skrinKecil = window.matchMedia("(max-width: 768px)");
+    const bolehLayang = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+    let dikunci = false;
+
+    const setKembang = (kembang) => {
+        sidebar?.classList.toggle("is-expanded", kembang);
+    };
+
     const kemasKiniToggle = () => {
         if (!toggle || !sidebar) return;
 
-        // Pada skrin kecil, kelas `collapsed` bermaksud menu penuh dibuka.
-        const kecil = window.matchMedia("(max-width: 768px)").matches;
-        const terbuka = kecil
-            ? sidebar.classList.contains("collapsed")
-            : !sidebar.classList.contains("collapsed");
+        const ikon = toggle.querySelector("i");
+        const terbuka = sidebar.classList.contains("is-expanded");
 
-        toggle.setAttribute("aria-expanded", String(terbuka));
-    };
+        // Pada skrin kecil butang membuka/menutup menu; pada skrin besar ia
+        // mengunci menu, jadi semantik ARIA turut berbeza.
+        if (skrinKecil.matches) {
+            toggle.removeAttribute("aria-pressed");
+            toggle.setAttribute("aria-expanded", String(terbuka));
+            toggle.setAttribute(
+                "aria-label",
+                terbuka ? "Tutup menu navigasi" : "Buka menu navigasi",
+            );
+            if (ikon) ikon.className = "bi bi-list";
+            return;
+        }
 
-    const tutupMenuKecil = () => {
-        if (!sidebar) return;
-        if (window.matchMedia("(max-width: 768px)").matches) {
-            sidebar.classList.remove("collapsed");
-            kemasKiniToggle();
+        toggle.removeAttribute("aria-expanded");
+        toggle.setAttribute("aria-pressed", String(dikunci));
+        toggle.setAttribute(
+            "aria-label",
+            dikunci
+                ? "Buka kunci menu navigasi"
+                : "Kunci menu navigasi supaya kekal terbuka",
+        );
+        if (ikon) {
+            ikon.className = dikunci ? "bi bi-lock-fill" : "bi bi-unlock";
         }
     };
 
-    toggle?.addEventListener("click", () => {
-        sidebar.classList.toggle("collapsed");
-        content?.classList.toggle("expanded");
+    const setKunci = (nilai) => {
+        dikunci = nilai;
+        sidebar?.classList.toggle("is-locked", nilai);
+        content?.classList.toggle("is-locked", nilai);
+        setKembang(nilai);
         kemasKiniToggle();
+    };
+
+    const tutupMenuKecil = () => {
+        if (!sidebar || !skrinKecil.matches) return;
+        setKembang(false);
+        kemasKiniToggle();
+    };
+
+    toggle?.addEventListener("click", () => {
+        if (skrinKecil.matches) {
+            setKembang(!sidebar.classList.contains("is-expanded"));
+            kemasKiniToggle();
+            return;
+        }
+
+        setKunci(!dikunci);
+    });
+
+    // Layang hanya pada peranti berpenuding tepat; sentuhan guna butang.
+    sidebar?.addEventListener("mouseenter", () => {
+        if (dikunci || skrinKecil.matches || !bolehLayang.matches) return;
+        setKembang(true);
+    });
+
+    sidebar?.addEventListener("mouseleave", () => {
+        if (dikunci || skrinKecil.matches) return;
+        setKembang(false);
+    });
+
+    // Pengguna papan kekunci perlu melihat label semasa menyusur rel.
+    sidebar?.addEventListener("focusin", () => {
+        if (dikunci || skrinKecil.matches) return;
+        setKembang(true);
+    });
+
+    sidebar?.addEventListener("focusout", (e) => {
+        if (dikunci || skrinKecil.matches) return;
+        if (sidebar.contains(e.relatedTarget)) return;
+        setKembang(false);
     });
 
     backdrop?.addEventListener("click", tutupMenuKecil);
@@ -43,7 +109,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Escape") tutupMenuKecil();
     });
 
-    window.addEventListener("resize", kemasKiniToggle);
+    // Kunci tidak bermakna pada skrin kecil — lepaskan apabila ambang dilintasi.
+    skrinKecil.addEventListener("change", () => {
+        if (skrinKecil.matches && dikunci) {
+            setKunci(false);
+            return;
+        }
+
+        setKembang(dikunci);
+        kemasKiniToggle();
+    });
+
     kemasKiniToggle();
 
     // ── Keadaan memuat pada penghantaran borang ─────────────────────────

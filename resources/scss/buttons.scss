@@ -132,6 +132,8 @@ button:focus-visible,
 @media (prefers-reduced-motion: reduce) {
     .btn,
     .btn-primary,
+    .sidebar,
+    .main-content,
     .sidebar-menu a {
         transition: none !important;
     }

@@ -1,16 +1,24 @@
+/*
+|--------------------------------------------------------------------------
+| Navigasi sisi
+|--------------------------------------------------------------------------
+| Rel ikon ialah keadaan asal. Ia mengembang apabila tetikus melayang di
+| atasnya — sebagai lapisan di atas kandungan, supaya susun atur tidak
+| beralih — dan kekal terbuka apabila pengguna menguncinya. Kunci sengaja
+| TIDAK disimpan: setiap navigasi ke muka surat lain bermula semula pada rel.
+*/
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
 
-    width: 280px;
+    width: $sidebar-rail;
     height: 100vh;
 
     background: linear-gradient(180deg, $sidebar-bg-end, $sidebar-bg);
     border-right: 1px solid $sidebar-border;
 
-    padding: 1.5rem;
-    padding-bottom: 3rem;
+    padding: 1.5rem 0.75rem 3rem;
 
     transition: $transition;
 
@@ -36,20 +44,33 @@
     background: $primary;
 }
 
-.sidebar.collapsed {
-    width: 90px;
+.sidebar.is-expanded {
+    width: $sidebar-width;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
 }
 
+// Bayang hanya perlu semasa melayang, kerana ketika itu sahaja bar sisi
+// menutup kandungan; apabila dikunci, kandungan ditolak ke tepi.
+.sidebar.is-expanded:not(.is-locked) {
+    box-shadow: 12px 0 40px rgba($sidebar-bg, 0.45);
+}
+
+// Jata penuh tidak muat pada rel, jadi tanda jenama dan butang kunci
+// bertindan menegak; keduanya kembali sebaris apabila menu mengembang.
 .sidebar-logo {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 0.75rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
-.sidebar.collapsed .sidebar-logo {
-    justify-content: center;
+.sidebar.is-expanded .sidebar-logo {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 3rem;
 }
 
 .sidebar-brand {
@@ -58,14 +79,25 @@
     min-width: 0;
 }
 
-.sidebar.collapsed .sidebar-brand {
-    display: none;
+.logo-mark {
+    width: 38px;
+    height: auto;
+    object-fit: contain;
 }
 
 .logo {
+    display: none;
     width: 220px;
     height: auto;
     object-fit: contain;
+}
+
+.sidebar.is-expanded .logo-mark {
+    display: none;
+}
+
+.sidebar.is-expanded .logo {
+    display: block;
 }
 
 .sidebar-toggle {
@@ -85,8 +117,21 @@
     transition: $transition;
 }
 
+// Pada rel hanya tanda jenama dan ikon menu kekal; butang kunci muncul
+// apabila menu mengembang, iaitu satu-satunya masa ia bermakna.
+.sidebar:not(.is-expanded) .sidebar-toggle {
+    display: none;
+}
+
 .sidebar-toggle:hover {
     border-color: $accent-cyan;
+    color: $accent-cyan;
+}
+
+// Keadaan dikunci perlu kelihatan pada butang itu sendiri.
+.sidebar-toggle[aria-pressed="true"] {
+    border-color: $accent-cyan;
+    background: rgba($accent-cyan, 0.14);
     color: $accent-cyan;
 }
 
@@ -102,22 +147,33 @@
 .sidebar-menu a {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 0;
 
     text-decoration: none;
     color: $sidebar-text;
 
-    padding: 0.9rem 1rem;
+    padding: 0.85rem 0;
     border-radius: 12px;
 
     transition: $transition;
 }
 
+.sidebar.is-expanded .sidebar-menu a {
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+}
+
 .sidebar-menu a:hover {
     background: rgba($primary, 0.25);
     color: $accent-cyan;
-    transform: translateX(4px);
     box-shadow: 0 0 15px rgba($primary, 0.35);
+}
+
+// Anjakan mendatar hanya masuk akal apabila ada ruang untuk bergerak.
+.sidebar.is-expanded .sidebar-menu a:hover {
+    transform: translateX(4px);
 }
 
 // Fasa 11 — penunjuk halaman semasa
@@ -128,7 +184,7 @@
     font-weight: 600;
 }
 
-.sidebar-menu a.active:hover {
+.sidebar.is-expanded .sidebar-menu a.active:hover {
     transform: none;
 }
 
@@ -146,20 +202,27 @@
 }
 
 .sidebar-menu i {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
+    line-height: 1;
 }
 
-.sidebar.collapsed .menu-text {
+.sidebar .menu-text {
     display: none;
 }
 
+.sidebar.is-expanded .menu-text {
+    display: inline;
+}
+
+// Pada rel, tajuk seksyen menjadi pemisah pendek kerana teksnya tersembunyi.
 .sidebar-section-title {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
 
-    margin: 2rem 0 1rem;
-    padding: 0 1rem;
+    margin: 1.25rem 0 0.85rem;
+    padding: 0;
 
     color: $accent-cyan;
 
@@ -172,9 +235,21 @@
 
 .sidebar-section-title::after {
     content: "";
-    flex: 1;
+    flex: none;
+    width: 28px;
     height: 1px;
     background: rgba($accent-cyan, 0.25);
+}
+
+.sidebar.is-expanded .sidebar-section-title {
+    justify-content: flex-start;
+    margin: 2rem 0 1rem;
+    padding: 0 1rem;
+}
+
+.sidebar.is-expanded .sidebar-section-title::after {
+    flex: 1;
+    width: auto;
 }
 
 // Latar gelap apabila menu dibuka pada skrin kecil
@@ -188,62 +263,38 @@
     padding: 0;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Skrin kecil
+|--------------------------------------------------------------------------
+| Tiada layang pada peranti sentuh, jadi rel dibuka melalui butang sahaja dan
+| sentiasa sebagai lapisan bertindan — kunci dimatikan pada saiz ini.
+*/
 @media (max-width: 768px) {
     .sidebar {
-        width: 80px;
-        padding: 1rem 0.75rem;
-    }
-
-    .sidebar .menu-text,
-    .sidebar .sidebar-brand {
-        display: none;
+        width: $sidebar-rail-kecil;
+        padding: 1rem 0.75rem 2rem;
     }
 
     .sidebar-logo {
-        justify-content: center;
         margin-bottom: 1.5rem;
     }
 
-    // Pada skrin kecil, `collapsed` bermaksud menu penuh dibuka.
-    .sidebar.collapsed {
-        width: 260px;
-        padding: 1.5rem;
-        box-shadow: 12px 0 40px rgba($sidebar-bg, 0.45);
-    }
-
-    .sidebar.collapsed .menu-text {
-        display: inline;
-    }
-
-    .sidebar.collapsed .sidebar-brand {
+    // Tiada layang pada sentuhan — butang ini satu-satunya cara membuka menu.
+    .sidebar:not(.is-expanded) .sidebar-toggle {
         display: flex;
     }
 
-    .sidebar.collapsed .sidebar-logo {
-        justify-content: space-between;
+    .sidebar.is-expanded {
+        width: $sidebar-width-kecil;
+        padding: 1.5rem 1.5rem 3rem;
     }
 
-    .sidebar.collapsed ~ .sidebar-backdrop {
+    .sidebar.is-expanded .sidebar-logo {
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar.is-expanded ~ .sidebar-backdrop {
         display: block;
-    }
-
-    // Ikon kekal di tengah semasa hanya rel ikon dipaparkan.
-    .sidebar:not(.collapsed) .sidebar-menu a {
-        justify-content: center;
-        padding: 0.85rem 0.5rem;
-    }
-
-    .sidebar:not(.collapsed) .sidebar-menu a:hover {
-        transform: none;
-    }
-
-    .sidebar:not(.collapsed) .sidebar-section-title {
-        justify-content: center;
-        margin: 1.25rem 0 0.75rem;
-        padding: 0;
-    }
-
-    .sidebar:not(.collapsed) .sidebar-section-title .menu-text {
-        display: none;
     }
 }

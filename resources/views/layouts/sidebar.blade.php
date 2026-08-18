@@ -8,12 +8,16 @@
 <nav class="sidebar" id="sidebar" aria-label="Navigasi utama">
 
     <div class="sidebar-logo">
-        <a href="{{ route('dashboard') }}" class="sidebar-brand">
-            <img src="{{ asset('image/main_logo.png') }}" alt="Halaman utama SPARK" class="logo">
+        {{-- Tanda jenama sahaja pada rel; jata penuh apabila menu mengembang. --}}
+        <a href="{{ route('dashboard') }}" class="sidebar-brand" aria-label="Halaman utama SPARK">
+            <img src="{{ asset('image/main_icon.png') }}" alt="" aria-hidden="true" class="logo-mark">
+            <img src="{{ asset('image/main_logo.png') }}" alt="" aria-hidden="true" class="logo">
         </a>
-        <button class="sidebar-toggle" id="toggleSidebar" aria-label="Buka atau tutup menu navigasi"
-            aria-controls="sidebar" aria-expanded="true">
-            <i class="bi bi-list" aria-hidden="true"></i>
+        {{-- Mengunci menu supaya ia kekal terbuka; atribut ditetapkan semula
+             oleh app.js mengikut saiz skrin. --}}
+        <button type="button" class="sidebar-toggle" id="toggleSidebar"
+            aria-label="Kunci menu navigasi supaya kekal terbuka" aria-controls="sidebar" aria-pressed="false">
+            <i class="bi bi-unlock" aria-hidden="true"></i>
         </button>
     </div>
 
@@ -29,7 +33,7 @@
             </li>
         @endcan
 
-        <li class="sidebar-section-title"><span class="menu-text">Inventori</span></li>
+        <li class="sidebar-section-title" title="Inventori"><span class="menu-text">Inventori</span></li>
 
         @can('manage-upload')
             <li>
@@ -57,7 +61,7 @@
             </a>
         </li>
 
-        <li class="sidebar-section-title"><span class="menu-text">Pemantauan</span></li>
+        <li class="sidebar-section-title" title="Pemantauan"><span class="menu-text">Pemantauan</span></li>
 
         @can('manage-assignment')
             <li>
@@ -95,7 +99,7 @@
             </li>
         @endcan
 
-        <li class="sidebar-section-title"><span class="menu-text">Penilaian Risiko</span></li>
+        <li class="sidebar-section-title" title="Penilaian Risiko"><span class="menu-text">Penilaian Risiko</span></li>
 
         <li>
             <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)"
@@ -105,7 +109,7 @@
             </a>
         </li>
 
-        <li class="sidebar-section-title"><span class="menu-text">Laporan</span></li>
+        <li class="sidebar-section-title" title="Laporan"><span class="menu-text">Laporan</span></li>
 
         <li>
             <a href="{{ route('laporan.index') }}" class="{{ $pautan('laporan.*') }}" title="Laporan Inventori"
@@ -132,7 +136,7 @@
         </li>
 
         @can('access-administration')
-            <li class="sidebar-section-title"><span class="menu-text">Pentadbiran</span></li>
+            <li class="sidebar-section-title" title="Pentadbiran"><span class="menu-text">Pentadbiran</span></li>
 
             <li>
                 <a href="{{ route('administration.users.index') }}" class="{{ $pautan('administration.*') }}"

@@ -1,5 +1,7 @@
+// Jidar mengikut rel kerana bar sisi hanya menolak kandungan apabila dikunci;
+// pengembangan semasa melayang bertindan di atas kandungan.
 .main-content {
-    margin-left: 280px;
+    margin-left: $sidebar-rail;
     min-height: 100vh;
     padding: 2rem;
     transition: $transition;
@@ -68,8 +70,8 @@
     white-space: nowrap;
 }
 
-.main-content.expanded {
-    margin-left: 90px;
+.main-content.is-locked {
+    margin-left: $sidebar-width;
 }
 
 /*
@@ -113,12 +115,12 @@
 
 @media (max-width: 768px) {
     .main-content {
-        margin-left: 80px;
+        margin-left: $sidebar-rail-kecil;
         padding: 1rem;
     }
 
-    .main-content.expanded {
-        margin-left: 80px;
+    .main-content.is-locked {
+        margin-left: $sidebar-rail-kecil;
     }
 
     .page-header {

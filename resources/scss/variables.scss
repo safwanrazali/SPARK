@@ -23,6 +23,13 @@ $sidebar-border: #3a3170;
 $sidebar-text: #efedf6;
 $sidebar-muted: #9e92cf;
 
+// Navigasi sisi — dikongsi dengan `.main-content` supaya jidar kandungan
+// sentiasa sepadan dengan lebar bar sisi.
+$sidebar-width: 280px;
+$sidebar-rail: 90px;
+$sidebar-width-kecil: 260px;
+$sidebar-rail-kecil: 80px;
+
 // UI
 $radius: 18px;
 $shadow: 0 10px 30px rgba($primary, 0.08);
