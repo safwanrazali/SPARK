@@ -21,6 +21,30 @@
             </div>
         @endif
 
+        {{-- Dipapar sekali sahaja: kata laluan sementara tidak disimpan dalam
+             bentuk yang boleh dibaca semula. --}}
+        @if (session('kata_laluan_sementara'))
+            @php($semula = session('kata_laluan_sementara'))
+            <x-alert type="warning" title="Kata laluan sementara telah dijana" class="mb-4">
+                <p class="mb-2">
+                    Sampaikan kelayakan ini kepada pemilik akaun. Mereka akan diminta
+                    menukarnya sebaik sahaja log masuk.
+                </p>
+
+                <dl class="kelayakan-sementara">
+                    <dt>Nama pengguna</dt>
+                    <dd>{{ $semula['username'] }}</dd>
+                    <dt>Kata laluan</dt>
+                    <dd><code>{{ $semula['kata_laluan'] }}</code></dd>
+                </dl>
+
+                <p class="mb-0">
+                    <strong>Salin sekarang</strong> — ia tidak akan dipaparkan semula, dan
+                    sesi aktif pengguna tersebut telah ditamatkan.
+                </p>
+            </x-alert>
+        @endif
+
         <div class="table-responsive-custom">
             <table class="table-modern">
                 <thead>
@@ -47,9 +71,26 @@
                             </td>
                             <td>
                                 <a href="{{ route('administration.users.edit', $user) }}"
-                                    class="btn btn-sm btn-outline-light">
-                                    <i class="bi bi-pencil"></i>
+                                    class="btn btn-sm btn-outline-light" title="Kemaskini pengguna">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Kemaskini {{ $user->name }}</span>
                                 </a>
+
+                                @if ($user->id !== auth()->id())
+                                    {{-- Kata laluan sementara dijana oleh sistem; pentadbir tidak
+                                         memilihnya sendiri. --}}
+                                    <form
+                                        action="{{ route('administration.users.tetap-semula-kata-laluan', $user) }}"
+                                        method="POST" class="d-inline"
+                                        onsubmit="return confirm('Tetapkan semula kata laluan {{ $user->name }}? Sesi aktif mereka akan ditamatkan.');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-light"
+                                            title="Tetapkan semula kata laluan">
+                                            <i class="bi bi-key" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Tetapkan semula kata laluan {{ $user->name }}</span>
+                                        </button>
+                                    </form>
+                                @endif
 
                                 @if ($user->id !== auth()->id())
                                     <form action="{{ route('administration.users.destroy', $user) }}" method="POST"
@@ -57,8 +98,10 @@
                                         onsubmit="return confirm('Anda pasti mahu memadam pengguna ini?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            <i class="bi bi-trash"></i>
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                            title="Padam pengguna">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Padam {{ $user->name }}</span>
                                         </button>
                                     </form>
                                 @endif

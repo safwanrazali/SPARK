@@ -196,13 +196,41 @@ array to rename a role or change its code.
 - The username is the login credential and must be unique.
 - A user may hold **more than one role**; the permissions of every selected
   role are combined. Adding a role never removes access the user already had.
-- Issue a temporary password and require the user to change it after first login.
+- Passwords issued by an administrator are **temporary**. The account is
+  flagged and locked to the "Tukar Kata Laluan" screen until the owner
+  replaces it — see §5.2.
 - Deleting a user does **not** delete their audit-trail entries — history is
   preserved deliberately.
 - Re-running `php artisan db:seed` never resets an existing administrator's
   password — see §5.1.
 
-### 5.1 The default administrator account
+### 5.1 Resetting a user's password
+
+When a user asks for a reset, open **Pentadbiran → Pengguna** and press the
+key icon on their row. Three things happen at once:
+
+1. A 16-character temporary password is generated and shown **once** — copy it
+   before leaving the page; it is not stored in readable form.
+2. The account is flagged, so the user must replace it at next login.
+3. **Every active session for that account is terminated.** This matters when
+   the reset is prompted by a suspected compromise: without it the intruder's
+   existing session survives, and because the change-password screen does not
+   ask for the current password, they could simply set their own.
+
+Administrators cannot reset their own password this way — use **Profil Saya**,
+which avoids locking yourself onto the change screen.
+
+> Session termination requires `SESSION_DRIVER=database` (the default). On a
+> file or cache driver the reset still works, but existing sessions survive.
+
+### 5.2 Forced password change on first login
+
+Any account flagged by a reset or by user creation is redirected to
+`/tukar-kata-laluan` on every request until the temporary password is replaced.
+Only that screen and logout remain reachable. The replacement must meet the
+same strength rules and cannot be the temporary password itself.
+
+### 5.3 The default administrator account
 
 Only `administrator` can add users, so the system guarantees that at least one
 such account always exists.

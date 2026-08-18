@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AnalisisInventoriController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\TukarKataLaluanController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntitiAssignmentController;
@@ -19,9 +20,21 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.changed'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    /*
+    |----------------------------------------------------------------------
+    | Wajib tukar kata laluan sementara pada log masuk pertama
+    |----------------------------------------------------------------------
+    | Route ini dikecualikan daripada EnsurePasswordChanged; tanpa itu
+    | pengguna akan dialihkan ke sini tanpa henti.
+    */
+    Route::get('/tukar-kata-laluan', [TukarKataLaluanController::class, 'edit'])
+        ->name('kata-laluan.tukar');
+    Route::put('/tukar-kata-laluan', [TukarKataLaluanController::class, 'update'])
+        ->name('kata-laluan.simpan');
 
     // Dashboard Pemantauan — kiraan automatik daripada rekod sebenar.
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -174,6 +187,10 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
             Route::resource('users', UserController::class)
                 ->except(['show']);
+
+            // Tetapkan semula kata laluan pengguna atas permintaan mereka.
+            Route::post('users/{user}/tetap-semula-kata-laluan', [UserController::class, 'tetapSemulaKataLaluan'])
+                ->name('users.tetap-semula-kata-laluan');
         });
 
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureEntityAccess;
+use App\Http\Middleware\EnsurePasswordChanged;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Fasa 4 — kawalan akses entiti pada peringkat route.
         $middleware->alias([
             'entity.access' => EnsureEntityAccess::class,
+            // Kata laluan sementara mesti ditukar sebelum sistem digunakan.
+            'password.changed' => EnsurePasswordChanged::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

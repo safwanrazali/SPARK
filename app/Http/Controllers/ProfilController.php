@@ -29,6 +29,8 @@ class ProfilController extends Controller
         // Medan kata laluan yang dibiarkan kosong bermaksud "jangan tukar".
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->validated('password'));
+            // Kata laluan kini pilihan sendiri, bukan lagi yang sementara.
+            $data['must_change_password'] = false;
         }
 
         $user->update($data);

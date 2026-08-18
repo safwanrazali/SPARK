@@ -391,6 +391,7 @@ class Phase13ReleaseReadinessTest extends TestCase
             'administration.users.edit',
             'administration.users.index',
             'administration.users.store',
+            'administration.users.tetap-semula-kata-laluan',
             'administration.users.update',
             'analisis.borang',
             'analisis.draf',
@@ -399,6 +400,8 @@ class Phase13ReleaseReadinessTest extends TestCase
             'audit.index',
             'dashboard',
             'entiti.show',
+            'kata-laluan.simpan',
+            'kata-laluan.tukar',
             'laporan.index',
             'laporan.inventori',
             'laporan.unduh',
@@ -448,7 +451,10 @@ class Phase13ReleaseReadinessTest extends TestCase
             // munasabah. `profil.update` menulis hanya kepada rekod pengguna
             // yang membuat permintaan — tiada parameter pengguna pada route,
             // dan `role` tiada dalam peraturan pengesahannya.
-            if (in_array($route->getName(), ['login.attempt', 'logout', 'profil.update'], true)) {
+            // `kata-laluan.simpan` menulis hanya kata laluan pengguna yang
+            // membuat permintaan, dan mesti kekal boleh dicapai justeru kerana
+            // akaun itu belum boleh menggunakan sistem.
+            if (in_array($route->getName(), ['login.attempt', 'logout', 'profil.update', 'kata-laluan.simpan'], true)) {
                 continue;
             }
 

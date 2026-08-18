@@ -129,6 +129,36 @@
     color: $highlight;
 }
 
+// Kelayakan sementara selepas pentadbir menetapkan semula kata laluan.
+.kelayakan-sementara {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.35rem 1rem;
+    margin: 0 0 0.75rem;
+}
+
+.kelayakan-sementara dt {
+    color: $muted;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.kelayakan-sementara dd {
+    margin: 0;
+    // Kata laluan mesti boleh dipilih dan disalin dengan tepat.
+    user-select: all;
+    word-break: break-all;
+}
+
+.kelayakan-sementara code {
+    padding: 0.15rem 0.45rem;
+    background: rgba($primary, 0.1);
+    border-radius: 6px;
+    color: $secondary;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
 // Peranan sebagai maklumat baca-sahaja (halaman profil).
 .role-pill {
     display: inline-block;

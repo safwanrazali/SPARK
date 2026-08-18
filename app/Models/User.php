@@ -12,12 +12,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'username', 'email', 'password', 'roles', 'role'])]
+#[Fillable(['name', 'username', 'email', 'password', 'roles', 'role', 'must_change_password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * Lalai peringkat model, bukan hanya peringkat pangkalan data.
+     *
+     * `create()` tidak membaca semula lalai lajur, jadi tanpa ini instance
+     * yang baharu dicipta mempunyai `null` dan bukan `false`.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'must_change_password' => false,
+    ];
 
     public const ROLE_ADMINISTRATOR = 'administrator';
 
@@ -210,6 +222,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'roles' => 'array',
+            'must_change_password' => 'boolean',
         ];
     }
 
