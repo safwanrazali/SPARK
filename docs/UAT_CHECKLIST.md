@@ -2,12 +2,12 @@
 
 ## Sistem Pemantauan & Pelaporan Analisis Data Migrasi PQC — V1.0-RC1
 
-| Perkara | Butiran |
-| --- | --- |
-| Versi diuji | V1.0-RC1 (Fasa 1–9, 11, 12 lengkap) |
-| Tarikh disediakan | 2026-08-17 |
-| Bilangan senario | 21 (17 boleh diuji sepenuhnya, 1 diubah suai, 3 tersekat) |
-| Jangka masa dianggarkan | 3–4 jam untuk satu pusingan penuh |
+| Perkara                 | Butiran                                                   |
+| ----------------------- | --------------------------------------------------------- |
+| Versi diuji             | V1.0-RC1 (Fasa 1–9, 11, 12 lengkap)                       |
+| Tarikh disediakan       | 2026-08-17                                                |
+| Bilangan senario        | 21 (17 boleh diuji sepenuhnya, 1 diubah suai, 3 tersekat) |
+| Jangka masa dianggarkan | 3–4 jam untuk satu pusingan penuh                         |
 
 ---
 
@@ -40,32 +40,32 @@ boleh mengubahnya.
 
 ### A1. Persekitaran
 
-| # | Langkah | Selesai |
-| --- | --- | :---: |
-| A1.1 | Pasang sistem mengikut `docs/ADMIN_GUIDE.md` bahagian "Pemasangan" | ☐ |
-| A1.2 | Sahkan `APP_ENV=production` dan `APP_DEBUG=false` dalam `.env` | ☐ |
-| A1.3 | Jalankan `php artisan migrate --force` — semua migrasi DONE | ☐ |
-| A1.4 | Jalankan `npm run build` — folder `public/build` dijana | ☐ |
-| A1.5 | Buat sandaran awal: `php scripts/backup-database.php` | ☐ |
-| A1.6 | Sahkan sistem boleh dicapai melalui HTTPS | ☐ |
+| #    | Langkah                                                            | Selesai |
+| ---- | ------------------------------------------------------------------ | :-----: |
+| A1.1 | Pasang sistem mengikut `docs/ADMIN_GUIDE.md` bahagian "Pemasangan" |    ☐    |
+| A1.2 | Sahkan `APP_ENV=production` dan `APP_DEBUG=false` dalam `.env`     |    ☐    |
+| A1.3 | Jalankan `php artisan migrate --force` — semua migrasi DONE        |    ☐    |
+| A1.4 | Jalankan `npm run build` — folder `public/build` dijana            |    ☐    |
+| A1.5 | Buat sandaran awal: `php scripts/backup-database.php`              |    ☐    |
+| A1.6 | Sahkan sistem boleh dicapai melalui HTTPS                          |    ☐    |
 
 ### A2. Akaun ujian
 
 Log masuk sebagai Pentadbir, kemudian buka **Pentadbiran → Pengguna** dan cipta
 akaun berikut. Gunakan kata laluan sementara yang berbeza bagi setiap akaun.
 
-| # | Nama pengguna | Peranan | Selesai |
-| --- | --- | --- | :---: |
-| A2.1 | `uat.penyelaras` | Pegawai Penyelaras Analisis | ☐ |
-| A2.2 | `uat.analisis.a` | Pegawai Analisis | ☐ |
-| A2.3 | `uat.analisis.b` | Pegawai Analisis | ☐ |
-| A2.4 | `uat.ketua` | Ketua Bahagian | ☐ |
+| #    | Nama pengguna    | Peranan                     | Selesai |
+| ---- | ---------------- | --------------------------- | :-----: |
+| A2.1 | `uat.penyelaras` | Pegawai Penyelaras Analisis |    ☐    |
+| A2.2 | `uat.analisis.a` | Pegawai Analisis            |    ☐    |
+| A2.3 | `uat.analisis.b` | Pegawai Analisis            |    ☐    |
+| A2.4 | `uat.ketua`      | Ketua Bahagian              |    ☐    |
 
 ### A3. Entiti ujian
 
-| Rujukan | Kod | Nama | Digunakan untuk |
-| --- | --- | --- | --- |
-| ENTITI-A | `A010101` | Suruhanjaya Pilihan Raya (SPR) | Ditugaskan kepada `uat.analisis.a` |
+| Rujukan  | Kod       | Nama                                          | Digunakan untuk                    |
+| -------- | --------- | --------------------------------------------- | ---------------------------------- |
+| ENTITI-A | `A010101` | Suruhanjaya Pilihan Raya (SPR)                | Ditugaskan kepada `uat.analisis.a` |
 | ENTITI-B | `A010102` | Suruhanjaya Pencegahan Rasuah Malaysia (SPRM) | Ditugaskan kepada `uat.analisis.b` |
 
 Kedua-duanya berada dalam **Sektor 001 — Kerajaan**.
@@ -81,15 +81,15 @@ dalam Bahagian D (Log Kecacatan).
 
 ### S1 — Pegawai Penyelaras log masuk
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis (`uat.penyelaras`) |
-| **Rujukan spesifikasi** | Bahagian 25, 26 |
+|                         |                                                |
+| ----------------------- | ---------------------------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis (`uat.penyelaras`) |
+| **Rujukan spesifikasi** | Bahagian 25, 26                                |
 
 **Langkah**
 
 1. Buka URL sistem. Sistem sepatutnya mengalihkan ke halaman log masuk.
-2. Masukkan nama pengguna dan kata laluan yang salah. 
+2. Masukkan nama pengguna dan kata laluan yang salah.
 3. Masukkan kelayakan yang betul.
 
 **Jangkaan**
@@ -100,16 +100,16 @@ dalam Bahagian D (Log Kecacatan).
 - Papan pemuka memaparkan Jumlah Sektor, Jumlah Entiti, Dalam Proses, Selesai,
   Jumlah Laporan dan Kemajuan Keseluruhan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S2 — Penyelaras memilih sektor
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis |
-| **Rujukan spesifikasi** | Bahagian 7 |
+|                         |                             |
+| ----------------------- | --------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis |
+| **Rujukan spesifikasi** | Bahagian 7                  |
 
 **Langkah**
 
@@ -122,16 +122,16 @@ dalam Bahagian D (Log Kecacatan).
 - Entiti sektor lain tidak muncul.
 - Entiti yang belum mempunyai sebarang rekod turut dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S3 — Penyelaras melihat senarai entiti
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis |
-| **Rujukan spesifikasi** | Bahagian 7, 13 |
+|                         |                             |
+| ----------------------- | --------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis |
+| **Rujukan spesifikasi** | Bahagian 7, 13              |
 
 **Langkah**
 
@@ -145,16 +145,16 @@ dalam Bahagian D (Log Kecacatan).
 - Ruangan yang belum mempunyai data memaparkan keadaan kosong yang jelas
   (bukan ralat).
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S4 — Penyelaras menugaskan entiti kepada Pegawai Analisis
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis |
-| **Rujukan spesifikasi** | Bahagian 8 |
+|                         |                             |
+| ----------------------- | --------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis |
+| **Rujukan spesifikasi** | Bahagian 8                  |
 
 **Langkah**
 
@@ -171,16 +171,16 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 4: ditolak — "Entiti hanya boleh ditugaskan kepada Pegawai Analisis."
 - Sejarah penugasan kekal dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S5 — Pegawai Analisis log masuk
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 10, 26 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 10, 26                     |
 
 **Langkah**
 
@@ -193,15 +193,15 @@ dalam Bahagian D (Log Kecacatan).
   mengalihkan ke senarai kerja (Analisis Inventori) dengan mesej penjelasan.
 - Menu tidak memaparkan Penugasan Entiti, Jejak Audit atau Pentadbiran.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S6 — Pegawai Analisis hanya melihat entiti yang ditugaskan
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
+|                         |                                                 |
+| ----------------------- | ----------------------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`)             |
 | **Rujukan spesifikasi** | **Bahagian 9 — keperluan keselamatan kritikal** |
 
 **Langkah**
@@ -218,16 +218,16 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 2–4: setiap capaian ditolak dengan ralat **403** — bukan sekadar
   butang tersembunyi, dan tiada maklumat entiti dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S7 — Entiti digerakkan melalui workflow ⚠️ DIUBAH SUAI
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis (**bukan** Pegawai Analisis) |
-| **Rujukan spesifikasi** | Bahagian 6, 11, 12 |
+|                         |                                                          |
+| ----------------------- | -------------------------------------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis (**bukan** Pegawai Analisis) |
+| **Rujukan spesifikasi** | Bahagian 6, 11, 12                                       |
 
 > **Perubahan daripada skrip asal**: kawalan peringkat workflow dipegang oleh
 > Penyelaras/Pentadbir. Pegawai Analisis melihat kedudukan workflow sahaja.
@@ -253,15 +253,15 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 6: ditolak — sebab diwajibkan.
 - Langkah 7: berjaya; sebab dipaparkan dalam sejarah.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S8 — Analisis manual dijalankan di luar sistem
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis |
+|                         |                   |
+| ----------------------- | ----------------- |
+| **Peranan**             | Pegawai Analisis  |
 | **Rujukan spesifikasi** | Bahagian 2, 3, 15 |
 
 **Langkah**
@@ -277,16 +277,16 @@ dalam Bahagian D (Log Kecacatan).
 - Tiada medan "pilih fail" pada borang dapatan analisis.
 - Sistem tidak cuba membaca atau mentafsir dokumen secara automatik.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S9 — Pegawai Analisis memasukkan dapatan ke dalam borang laporan
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 16, 17, 19 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 16, 17, 19                 |
 
 **Langkah**
 
@@ -307,16 +307,16 @@ dalam Bahagian D (Log Kecacatan).
 - Senarai algoritma mengikut kategori rujukan AKSA MySEAL.
 - Baris protokol/pustaka/vendor boleh ditambah dan dibuang.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S10 — Simpan draf
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 18 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 18                         |
 
 **Langkah**
 
@@ -330,14 +330,14 @@ dalam Bahagian D (Log Kecacatan).
 - Sistem memaparkan masa simpanan terakhir, nombor versi dan seksyen yang telah
   mempunyai kandungan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S11 — Pegawai Analisis meninggalkan sistem
 
-| | |
-| --- | --- |
+|             |                                     |
+| ----------- | ----------------------------------- |
 | **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
 
 **Langkah**
@@ -351,16 +351,16 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 1: pelayar memaparkan amaran kerja belum disimpan.
 - Langkah 3: sistem meminta log masuk semula; kandungan halaman tidak dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S12 — Pegawai Analisis menyambung semula draf
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 18 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 18                         |
 
 **Langkah**
 
@@ -374,16 +374,16 @@ dalam Bahagian D (Log Kecacatan).
 - Panel draf menunjukkan versi dan masa simpanan terakhir serta nama pegawai
   yang menyimpan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S13 — Pegawai Analisis melengkapkan laporan
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 20 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 20                         |
 
 **Langkah**
 
@@ -399,16 +399,16 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 2: mesej berjaya; rekod dipaparkan dalam senarai analisis sebagai
   selesai; status laporan Inventori bagi entiti bertukar kepada **Dalam Proses**.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S14 — Pratonton laporan
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 14, 21 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 14, 21                     |
 
 **Langkah**
 
@@ -423,16 +423,16 @@ dalam Bahagian D (Log Kecacatan).
 - RSA dikenal pasti sebagai berisiko kuantum.
 - Ayat ringkasan status data mengikut pilihan yang dibuat, bukan teks lalai.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S15 — Jana laporan (PDF)
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Analisis (`uat.analisis.a`) |
-| **Rujukan spesifikasi** | Bahagian 14, 21 |
+|                         |                                     |
+| ----------------------- | ----------------------------------- |
+| **Peranan**             | Pegawai Analisis (`uat.analisis.a`) |
+| **Rujukan spesifikasi** | Bahagian 14, 21                     |
 
 **Langkah**
 
@@ -446,16 +446,16 @@ dalam Bahagian D (Log Kecacatan).
   kaki (kod rujukan + nombor muka surat).
 - Kandungan PDF sepadan dengan pratonton.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S16 — Serah untuk semakan 🚫 TERSEKAT (Fasa 10)
 
-| | |
-| --- | --- |
-| **Status** | **TIDAK BOLEH DIUJI SEPENUHNYA** |
-| **Sebab** | Tiada tindakan "Serah untuk Semakan" pada laporan. Modul Fasa 10 belum dibina. |
+|            |                                                                                |
+| ---------- | ------------------------------------------------------------------------------ |
+| **Status** | **TIDAK BOLEH DIUJI SEPENUHNYA**                                               |
+| **Sebab**  | Tiada tindakan "Serah untuk Semakan" pada laporan. Modul Fasa 10 belum dibina. |
 
 **Ujian gantian (bentuk terhad)**
 
@@ -475,10 +475,10 @@ cap masa penyerahan laporan, dan penguncian laporan semasa semakan.
 
 ### S17 — Pegawai yang diberi kuasa membuat semakan 🚫 TERSEKAT (Fasa 10)
 
-| | |
-| --- | --- |
-| **Status** | **TIDAK BOLEH DIUJI SEPENUHNYA** |
-| **Sebab** | Tiada skrin semakan laporan, tiada ruangan komen penyemak. |
+|            |                                                            |
+| ---------- | ---------------------------------------------------------- |
+| **Status** | **TIDAK BOLEH DIUJI SEPENUHNYA**                           |
+| **Sebab**  | Tiada skrin semakan laporan, tiada ruangan komen penyemak. |
 
 **Ujian gantian (bentuk terhad)**
 
@@ -500,10 +500,10 @@ cap masa penyerahan laporan, dan penguncian laporan semasa semakan.
 
 ### S18 — Penyemak memulangkan atau meluluskan 🚫 TERSEKAT (Fasa 10)
 
-| | |
-| --- | --- |
-| **Status** | **TIDAK BOLEH DIUJI SEPENUHNYA** |
-| **Sebab** | Tiada tindakan Lulus / Pulangkan pada laporan; jadual `approval_logs` tidak digunakan. |
+|            |                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------- |
+| **Status** | **TIDAK BOLEH DIUJI SEPENUHNYA**                                                       |
+| **Sebab**  | Tiada tindakan Lulus / Pulangkan pada laporan; jadual `approval_logs` tidak digunakan. |
 
 **Ujian gantian (bentuk terhad)** — dilakukan oleh Penyelaras, bukan penyemak:
 
@@ -525,10 +525,10 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 
 ### S19 — Workflow bergerak ke penyerahan dan penutupan
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis |
-| **Rujukan spesifikasi** | Bahagian 6 |
+|                         |                             |
+| ----------------------- | --------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis |
+| **Rujukan spesifikasi** | Bahagian 6                  |
 
 **Langkah**
 
@@ -543,16 +543,16 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 - Tarikh status dan nama pegawai yang mengemas kini direkodkan.
 - Status laporan Inventori = Siap.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S20 — Papan pemuka mencerminkan keadaan terkini
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis / Ketua Bahagian |
-| **Rujukan spesifikasi** | Bahagian 10 |
+|                         |                                              |
+| ----------------------- | -------------------------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis / Ketua Bahagian |
+| **Rujukan spesifikasi** | Bahagian 10                                  |
 
 **Langkah**
 
@@ -570,16 +570,16 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 - Ketua Bahagian melihat angka yang sama.
 - Penapis tidak sah (sektor tiada, tarikh salah format) tidak menyebabkan ralat.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ### S21 — Jejak audit merekod perubahan penting
 
-| | |
-| --- | --- |
-| **Peranan** | Pegawai Penyelaras Analisis / Pentadbir |
-| **Rujukan spesifikasi** | Bahagian 24 |
+|                         |                                         |
+| ----------------------- | --------------------------------------- |
+| **Peranan**             | Pegawai Penyelaras Analisis / Pentadbir |
+| **Rujukan spesifikasi** | Bahagian 24                             |
 
 **Langkah**
 
@@ -598,38 +598,38 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
   metadata perubahan).
 - Langkah 4: Pegawai Analisis ditolak dengan 403.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: ______________________
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
 
 ---
 
 ## C. SEMAKAN TAMBAHAN (bukan senario, tetapi wajib sebelum pelepasan)
 
-| # | Semakan | Cara | Keputusan |
-| --- | --- | --- | :---: |
-| C1 | Had percubaan log masuk | Masukkan kata laluan salah 5 kali; percubaan ke-6 disekat ~60 saat | ☐ |
-| C2 | Peranan tanpa kebenaran | Log masuk sebagai Document Controller — tiada akses entiti | ☐ |
-| C3 | Halaman ralat | Buka URL yang tidak wujud — 404 kemas, tiada surih tindanan | ☐ |
-| C4 | Sesi tamat tempoh | Biarkan 2 jam tanpa aktiviti, cuba simpan — dialihkan ke log masuk | ☐ |
-| C5 | Sandaran | `php scripts/backup-database.php` — SANDARAN BERJAYA | ☐ |
-| C6 | Pemulihan | Pulihkan ke pangkalan data ujian mengikut ADMIN_GUIDE | ☐ |
-| C7 | Cetakan PDF | Buka PDF dalam pembaca lain; sahkan kepala/kaki setiap muka surat | ☐ |
-| C8 | Paparan mudah alih | Semak papan pemuka dan borang pada tablet | ☐ |
-| C9 | Kebolehcapaian | Navigasi borang menggunakan papan kekunci sahaja | ☐ |
+| #   | Semakan                 | Cara                                                               | Keputusan |
+| --- | ----------------------- | ------------------------------------------------------------------ | :-------: |
+| C1  | Had percubaan log masuk | Masukkan kata laluan salah 5 kali; percubaan ke-6 disekat ~60 saat |     ☐     |
+| C2  | Peranan tanpa kebenaran | Log masuk sebagai Pegawai Kawalan Dokumen — tiada akses entiti     |     ☐     |
+| C3  | Halaman ralat           | Buka URL yang tidak wujud — 404 kemas, tiada surih tindanan        |     ☐     |
+| C4  | Sesi tamat tempoh       | Biarkan 2 jam tanpa aktiviti, cuba simpan — dialihkan ke log masuk |     ☐     |
+| C5  | Sandaran                | `php scripts/backup-database.php` — SANDARAN BERJAYA               |     ☐     |
+| C6  | Pemulihan               | Pulihkan ke pangkalan data ujian mengikut ADMIN_GUIDE              |     ☐     |
+| C7  | Cetakan PDF             | Buka PDF dalam pembaca lain; sahkan kepala/kaki setiap muka surat  |     ☐     |
+| C8  | Paparan mudah alih      | Semak papan pemuka dan borang pada tablet                          |     ☐     |
+| C9  | Kebolehcapaian          | Navigasi borang menggunakan papan kekunci sahaja                   |     ☐     |
 
 ---
 
 ## D. LOG KECACATAN
 
-| ID | Senario | Keterukan | Keterangan | Status |
-| --- | --- | --- | --- | --- |
-| D-01 | | Kritikal / Tinggi / Sederhana / Rendah | | Baharu / Diperbaiki / Diterima |
-| D-02 | | | | |
-| D-03 | | | | |
+| ID   | Senario | Keterukan                              | Keterangan | Status                         |
+| ---- | ------- | -------------------------------------- | ---------- | ------------------------------ |
+| D-01 |         | Kritikal / Tinggi / Sederhana / Rendah |            | Baharu / Diperbaiki / Diterima |
+| D-02 |         |                                        |            |                                |
+| D-03 |         |                                        |            |                                |
 
 **Panduan keterukan**
 
-- **Kritikal** — kehilangan data, pintasan kawalan akses, sistem tidak boleh digunakan. *Menghalang pelepasan.*
-- **Tinggi** — fungsi teras gagal tanpa jalan penyelesaian. *Menghalang pelepasan.*
+- **Kritikal** — kehilangan data, pintasan kawalan akses, sistem tidak boleh digunakan. _Menghalang pelepasan._
+- **Tinggi** — fungsi teras gagal tanpa jalan penyelesaian. _Menghalang pelepasan._
 - **Sederhana** — fungsi gagal tetapi ada jalan penyelesaian.
 - **Rendah** — kosmetik atau kesulitan kecil.
 
@@ -637,12 +637,12 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 
 ## E. RINGKASAN DAN PENGESAHAN
 
-| Perkara | Bilangan |
-| --- | ---: |
-| Senario LULUS | ____ / 18 |
-| Senario LULUS (bentuk terhad) | ____ / 3 |
-| Senario GAGAL | ____ |
-| Kecacatan Kritikal / Tinggi belum selesai | ____ |
+| Perkara                                   |      Bilangan |
+| ----------------------------------------- | ------------: |
+| Senario LULUS                             | \_\_\_\_ / 18 |
+| Senario LULUS (bentuk terhad)             |  \_\_\_\_ / 3 |
+| Senario GAGAL                             |      \_\_\_\_ |
+| Kecacatan Kritikal / Tinggi belum selesai |      \_\_\_\_ |
 
 ### Syarat penerimaan V1.0-RC1
 
@@ -659,9 +659,9 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 
 ### Tandatangan
 
-| Peranan | Nama | Tandatangan | Tarikh |
-| --- | --- | --- | --- |
-| Penguji UAT (Penyelaras) | | | |
-| Penguji UAT (Pegawai Analisis) | | | |
-| Ketua Bahagian | | | |
-| Pentadbir Sistem | | | |
+| Peranan                        | Nama | Tandatangan | Tarikh |
+| ------------------------------ | ---- | ----------- | ------ |
+| Penguji UAT (Penyelaras)       |      |             |        |
+| Penguji UAT (Pegawai Analisis) |      |             |        |
+| Ketua Bahagian                 |      |             |        |
+| Pentadbir Sistem               |      |             |        |

@@ -1,4 +1,5 @@
 # MASTER PROMPT — Kemas Kini Keseluruhan Sistem
+
 ## Sistem Pemantauan & Pelaporan Analisis Data Migrasi PQC
 
 > **Tujuan fail ini:** Gunakan kandungan ini sebagai arahan utama kepada GitHub Copilot / Copilot Chat dalam VS Code untuk memahami semula skop dan konsep sistem sebelum membuat perubahan kod.
@@ -514,9 +515,11 @@ Jangan gunakan sistem yang memerlukan pengguna menaip nama algoritma secara beba
 Roadmap keseluruhan 2026 merangkumi tiga modul laporan:
 
 ## Modul 1
+
 **Laporan Inventori Kriptografi**
 
 Fokus:
+
 - profil sistem / aset
 - algoritma
 - protokol
@@ -525,9 +528,11 @@ Fokus:
 - kebergantungan
 
 ## Modul 2
+
 **Laporan Analisis Risiko Migrasi PQC**
 
 Fokus:
+
 - kategori risiko
 - tahap risiko
 - faktor risiko
@@ -535,9 +540,11 @@ Fokus:
 - keutamaan tindakan
 
 ## Modul 3
+
 **Laporan Penilaian Kesiapsiagaan Migrasi PQC**
 
 Fokus:
+
 - rumusan inventori
 - risiko
 - crypto-agility / kelincahan kriptografi
@@ -557,14 +564,14 @@ Roadmap menunjukkan urutan pembangunan 2026.
 
 Cadangan urutan:
 
-| Tempoh | Pembangunan |
-|---|---|
-| Ogos | Keperluan & reka bentuk |
-| Ogos–September | Dashboard asas |
-| Ogos–September | Modul Inventori Kriptografi |
-| September–Oktober | Modul Risiko Migrasi PQC |
-| November–Disember | Modul Kesiapsiagaan |
-| Disember | Integrasi + UAT + Sistem V1.0 |
+| Tempoh            | Pembangunan                   |
+| ----------------- | ----------------------------- |
+| Ogos              | Keperluan & reka bentuk       |
+| Ogos–September    | Dashboard asas                |
+| Ogos–September    | Modul Inventori Kriptografi   |
+| September–Oktober | Modul Risiko Migrasi PQC      |
+| November–Disember | Modul Kesiapsiagaan           |
+| Disember          | Integrasi + UAT + Sistem V1.0 |
 
 Sasaran:
 
@@ -609,7 +616,7 @@ Fokus:
 - penjanaan laporan
 - kemas kini draf
 
-## Document Controller
+## Pegawai Kawalan Dokumen
 
 Fokus:
 
@@ -618,7 +625,7 @@ Fokus:
 - status dokumen
 - rekod kelulusan
 
-## Pegawai Rekod Analisis
+## Pegawai Penyelaras Rekod
 
 Fokus:
 
@@ -1233,4 +1240,3 @@ Secara keseluruhan:
 **Konsep paling penting:**
 
 > **Pegawai menjalankan kerja dan memasukkan maklumat → Sistem merekod dan mengurus proses → Sistem mengira kemajuan → Pengurusan memantau melalui dashboard → Sistem membantu menjana laporan berdasarkan dapatan analisis.**
-

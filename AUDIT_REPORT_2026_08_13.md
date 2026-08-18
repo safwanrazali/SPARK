@@ -17,18 +17,18 @@
 
 ## QUICK FACTS
 
-| Aspect                | Status             | Details                                                                |
-| --------------------- | ------------------ | ---------------------------------------------------------------------- |
-| **Framework**         | ✓ Ready            | Laravel 11, PHP 8.3                                                    |
-| **Database**          | ⚠️ Needs expansion | SQLite dev, 4 current tables, need 5 new tables                        |
-| **Dashboard**         | ⚠️ Basic           | Statistics calculated correctly, missing workflow view                 |
-| **Analysis Form**     | ✓ Good             | Structured input working, needs draft tracking                         |
-| **Report Generation** | ✓ Working          | PDF generation functional, approval workflow missing                   |
-| **Roles**             | ⚠️ Incomplete      | 3/6 roles (missing Ketua Bahagian, Document Controller, Pegawai Rekod) |
-| **Access Control**    | ✗ Broken           | Analysts can see all entities (should see only assigned)               |
-| **Audit Trail**       | ✗ Missing          | No activity logging                                                    |
-| **Workflow**          | ✗ Missing          | No 7-step workflow system                                              |
-| **Assignment**        | ✗ Missing          | No entity assignment tracking                                          |
+| Aspect                | Status             | Details                                                                    |
+| --------------------- | ------------------ | -------------------------------------------------------------------------- |
+| **Framework**         | ✓ Ready            | Laravel 11, PHP 8.3                                                        |
+| **Database**          | ⚠️ Needs expansion | SQLite dev, 4 current tables, need 5 new tables                            |
+| **Dashboard**         | ⚠️ Basic           | Statistics calculated correctly, missing workflow view                     |
+| **Analysis Form**     | ✓ Good             | Structured input working, needs draft tracking                             |
+| **Report Generation** | ✓ Working          | PDF generation functional, approval workflow missing                       |
+| **Roles**             | ⚠️ Incomplete      | 3/6 roles (missing Ketua Bahagian, Pegawai Kawalan Dokumen, Pegawai Rekod) |
+| **Access Control**    | ✗ Broken           | Analysts can see all entities (should see only assigned)                   |
+| **Audit Trail**       | ✗ Missing          | No activity logging                                                        |
+| **Workflow**          | ✗ Missing          | No 7-step workflow system                                                  |
+| **Assignment**        | ✗ Missing          | No entity assignment tracking                                              |
 
 ---
 
@@ -137,14 +137,14 @@ Effort: 2-3 days
 
 ## ROLE STATUS
 
-| Role                | Current   | Status                    | Gap                                           |
-| ------------------- | --------- | ------------------------- | --------------------------------------------- |
-| Pentadbir Sistem    | ✓ Exists  | Has all permissions       | None                                          |
-| Pegawai Penyelaras  | ✓ Exists  | Can manage uploads/status | Missing: assignment interface                 |
-| Pegawai Analisis    | ✓ Exists  | Can input analysis        | **BUG**: Sees all entities, not just assigned |
-| Ketua Bahagian      | ✗ Missing | -                         | Need to create                                |
-| Document Controller | ✗ Missing | -                         | Need to create                                |
-| Pegawai Rekod       | ✗ Missing | -                         | Need to create                                |
+| Role                    | Current   | Status                    | Gap                                           |
+| ----------------------- | --------- | ------------------------- | --------------------------------------------- |
+| Pentadbir Sistem        | ✓ Exists  | Has all permissions       | None                                          |
+| Pegawai Penyelaras      | ✓ Exists  | Can manage uploads/status | Missing: assignment interface                 |
+| Pegawai Analisis        | ✓ Exists  | Can input analysis        | **BUG**: Sees all entities, not just assigned |
+| Ketua Bahagian          | ✗ Missing | -                         | Need to create                                |
+| Pegawai Kawalan Dokumen | ✗ Missing | -                         | Need to create                                |
+| Pegawai Rekod           | ✗ Missing | -                         | Need to create                                |
 
 ---
 

@@ -45,7 +45,13 @@
                  sebagai maklumat sahaja dan tiada dalam borang. --}}
             <div class="mb-4">
                 <span class="form-label d-block">Peranan</span>
-                <p class="form-static">{{ $user->roleLabel() }}</p>
+                <p class="form-static">
+                    @forelse ($user->assignedRoleLabels() as $label)
+                        <span class="role-pill">{{ $label }}</span>
+                    @empty
+                        Tiada peranan
+                    @endforelse
+                </p>
                 <small class="form-hint">
                     Peranan hanya boleh ditukar oleh Pentadbir Sistem.
                 </small>

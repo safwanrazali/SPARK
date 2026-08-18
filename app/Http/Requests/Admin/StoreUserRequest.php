@@ -21,7 +21,9 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             // Senarai peranan diambil daripada model supaya peranan baharu
             // (Fasa 9) tidak perlu didaftarkan di banyak tempat.
-            'role' => ['required', 'in:'.implode(',', User::roles())],
+            // Sekurang-kurangnya satu peranan; setiap satu mesti peranan sah.
+            'roles' => ['required', 'array'],
+            'roles.*' => ['distinct', 'in:'.implode(',', User::roles())],
             'password' => [
                 'required',
                 'confirmed',
@@ -34,6 +36,9 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'password.confirmed' => 'Pengesahan kata laluan tidak sepadan.',
+            'roles.required' => 'Sila pilih sekurang-kurangnya satu peranan.',
+            'roles.array' => 'Sila pilih sekurang-kurangnya satu peranan.',
+            'roles.*.in' => 'Peranan yang dipilih tidak sah.',
         ];
     }
 }

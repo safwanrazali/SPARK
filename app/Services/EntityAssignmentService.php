@@ -208,8 +208,10 @@ class EntityAssignmentService
      */
     public function analystsAvailable(): Collection
     {
+        // Peranan disimpan sebagai senarai, jadi padanan dibuat terhadap
+        // kandungan senarai itu — pengguna berbilang peranan turut disenaraikan.
         return User::query()
-            ->where('role', User::ROLE_ANALYST)
+            ->whereJsonContains('roles', User::ROLE_ANALYST)
             ->orderBy('name')
             ->get();
     }

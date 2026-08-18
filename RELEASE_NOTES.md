@@ -28,7 +28,7 @@ report-level review statuses. The `approval_logs` table and the
 Consequence: UAT scenarios 16–18 cannot be fully executed, and the Approval
 acceptance criteria (specification §34) remain unmet. **Full V1.0 cannot be
 signed off until Phase 10 is built and a second UAT round covers those
-scenarios.** In the meantime, stage 6 (*Semakan & Kelulusan*) behaves as an
+scenarios.** In the meantime, stage 6 (_Semakan & Kelulusan_) behaves as an
 ordinary workflow stage driven by the Coordinator.
 
 ---
@@ -70,8 +70,9 @@ ordinary workflow stage driven by the Coordinator.
 
 ### Security and traceability
 
-- Six roles: Pentadbir Sistem, Pegawai Penyelaras Analisis, Pegawai Analisis,
-  Ketua Bahagian, Document Controller, Pegawai Rekod Analisis.
+- Seven roles: Pentadbir Sistem, Pegawai Analisis, Pegawai Penyelaras Analisis,
+  Pegawai Penyelaras Rekod, Pegawai Kawalan Dokumen, Ketua Bahagian,
+  Timbalan Pengarah II. A user may hold more than one role; permissions combine.
 - **Assigned-only access for Analysts**, enforced at route, controller, service,
   query and API layers — not merely by hiding buttons.
 - **Audit trail** of every important change (assignment, workflow, drafts,
@@ -132,18 +133,18 @@ ordinary workflow stage driven by the Coordinator.
 
 ## Verification performed
 
-| Check | Result |
-| --- | --- |
-| Automated tests | 455 passed, 0 failed |
+| Check                                             | Result                       |
+| ------------------------------------------------- | ---------------------------- |
+| Automated tests                                   | 455 passed, 0 failed         |
 | Clean install rehearsal (migrate → seed → verify) | Passed on a scratch database |
-| Migration rollback and re-run | Passed |
-| Backup → simulated data loss → restore | Passed |
-| Production build (`npm run build`) | Passed |
-| Code style (`vendor/bin/pint`) | Passed on all changed files |
-| PHP syntax check across the codebase | Passed |
-| Blade template compilation | Passed |
-| Route, config and view caching | Passed |
-| Real PDF generation | Passed (`%PDF-1.4`) |
+| Migration rollback and re-run                     | Passed                       |
+| Backup → simulated data loss → restore            | Passed                       |
+| Production build (`npm run build`)                | Passed                       |
+| Code style (`vendor/bin/pint`)                    | Passed on all changed files  |
+| PHP syntax check across the codebase              | Passed                       |
+| Blade template compilation                        | Passed                       |
+| Route, config and view caching                    | Passed                       |
+| Real PDF generation                               | Passed (`%PDF-1.4`)          |
 
 ---
 
@@ -165,26 +166,26 @@ first, then `migrate --force`.
 
 ## Known limitations
 
-| Area | Limitation |
-| --- | --- |
-| Review & approval | Not implemented (Phase 10) — release blocker |
-| Risk assessment / readiness modules | Roadmap; menu entries are disabled |
-| Notifications | Not in scope |
-| Password self-service | No reset flow; administrators reset manually |
-| Password policy | No complexity or rotation rules |
-| Two-factor authentication | Not implemented |
-| Timezone | Records are stored in UTC by default — decide before go-live |
-| Upload module | Retained for the legacy inventory flow; not used by reporting |
-| Automated UI testing | None; UAT covers the interface manually |
+| Area                                | Limitation                                                    |
+| ----------------------------------- | ------------------------------------------------------------- |
+| Review & approval                   | Not implemented (Phase 10) — release blocker                  |
+| Risk assessment / readiness modules | Roadmap; menu entries are disabled                            |
+| Notifications                       | Not in scope                                                  |
+| Password self-service               | No reset flow; administrators reset manually                  |
+| Password policy                     | No complexity or rotation rules                               |
+| Two-factor authentication           | Not implemented                                               |
+| Timezone                            | Records are stored in UTC by default — decide before go-live  |
+| Upload module                       | Retained for the legacy inventory flow; not used by reporting |
+| Automated UI testing                | None; UAT covers the interface manually                       |
 
 ---
 
 ## Compatibility
 
-| Component | Version |
-| --- | --- |
-| PHP | 8.3+ |
-| Laravel | 13.x |
-| Database | SQLite 3.27+ |
-| Node.js (build + PDF) | 20 LTS+ |
-| Browsers | Current Chrome, Edge, Firefox |
+| Component             | Version                       |
+| --------------------- | ----------------------------- |
+| PHP                   | 8.3+                          |
+| Laravel               | 13.x                          |
+| Database              | SQLite 3.27+                  |
+| Node.js (build + PDF) | 20 LTS+                       |
+| Browsers              | Current Chrome, Edge, Firefox |

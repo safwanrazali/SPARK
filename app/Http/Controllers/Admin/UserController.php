@@ -63,6 +63,17 @@ class UserController extends Controller
             ]);
         }
 
+        // Tanpa seorang pun Pentadbir Sistem, tiada siapa boleh menambah
+        // pengguna lagi dan sistem terkunci.
+        $pentadbirTerakhir = $user->hasRole(User::ROLE_ADMINISTRATOR)
+            && ! User::query()->administrators()->whereKeyNot($user->getKey())->exists();
+
+        if ($pentadbirTerakhir) {
+            return back()->withErrors([
+                'user' => 'Akaun ini ialah Pentadbir Sistem yang terakhir dan tidak boleh dipadam.',
+            ]);
+        }
+
         $user->delete();
 
         return redirect()

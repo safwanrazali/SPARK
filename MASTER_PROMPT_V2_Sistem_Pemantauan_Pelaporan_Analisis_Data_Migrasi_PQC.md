@@ -1,4 +1,5 @@
 # MASTER PROMPT V2
+
 # Sistem Pemantauan & Pelaporan Analisis Data Migrasi PQC
 
 ## 0. ARAHAN UTAMA KEPADA GITHUB COPILOT
@@ -13,12 +14,12 @@ Sistem semasa telah diaudit. Jangan bina semula sistem dari kosong jika komponen
 2. Kenal pasti framework, database, authentication, authorization, models, controllers, routes, views/components dan report generation.
 3. Bandingkan current state dengan specification ini.
 4. Kenal pasti apa yang:
-   - sudah siap
-   - separa siap
-   - rosak
-   - perlu diubah
-   - perlu dibina
-   - perlu dinyahaktifkan
+    - sudah siap
+    - separa siap
+    - rosak
+    - perlu diubah
+    - perlu dibina
+    - perlu dinyahaktifkan
 5. Jangan delete atau rewrite fungsi sedia ada tanpa justifikasi.
 6. Jangan reka business rule baru jika requirement belum ditetapkan.
 7. Jika requirement bercanggah dengan codebase, utamakan specification ini tetapi nyatakan konflik tersebut.
@@ -36,9 +37,11 @@ Nama sistem:
 Sistem mempunyai dua fungsi utama:
 
 ### Fungsi Utama
+
 **Pemantauan proses analisis data migrasi PQC**
 
 ### Fungsi Kedua / Sub-fungsi
+
 **Penjanaan & pengurusan laporan analisis**
 
 Sistem perlu menggantikan konsep pemantauan menggunakan log/manual tracking kepada platform berpusat.
@@ -584,9 +587,11 @@ Section sebenar hendaklah dipadankan dengan template rasmi.
 Validation di:
 
 ### Frontend
+
 Untuk UX.
 
 ### Backend
+
 Untuk integrity dan security.
 
 Required fields mesti berdasarkan keperluan sebenar laporan.
@@ -724,8 +729,8 @@ Role sasaran:
 2. Pegawai Penyelaras Analisis
 3. Pegawai Analisis
 4. Ketua Bahagian
-5. Document Controller
-6. Pegawai Rekod Analisis
+5. Pegawai Kawalan Dokumen
+6. Pegawai Penyelaras Rekod
 
 Permission sebenar perlu disahkan berdasarkan architecture dan business rules.
 
@@ -733,19 +738,19 @@ Permission sebenar perlu disahkan berdasarkan architecture dan business rules.
 
 # 26. PERMISSION MATRIX ASAS
 
-| Fungsi | Admin | Penyelaras | Analisis | Ketua |
-|---|---:|---:|---:|---:|
-| Dashboard keseluruhan | ✓ | ✓ | ✗ | ✓ |
-| Lihat semua entiti | ✓ | ✓ | ✗ | ✓ |
-| Lihat assigned entity | ✓ | ✓ | ✓ | ✓ |
-| Assign entity | ✓ | ✓ | ✗ | ✗ |
-| Input analysis | ✓ | ikut permission | ✓ | ✗ |
-| Save draft | ✓ | ikut permission | ✓ | ✗ |
-| Resume draft | ✓ | ikut permission | ✓ | ✗ |
-| Generate report | ✓ | ikut permission | ✓ | ✗ |
-| Review | ✓ | ✓ | ikut permission | ✓ |
-| Approve | ✓ | ikut permission | ✗ | ✓ |
-| Audit trail | ✓ | ✓ | ikut permission | ✓ |
+| Fungsi                | Admin |      Penyelaras |        Analisis | Ketua |
+| --------------------- | ----: | --------------: | --------------: | ----: |
+| Dashboard keseluruhan |     ✓ |               ✓ |               ✗ |     ✓ |
+| Lihat semua entiti    |     ✓ |               ✓ |               ✗ |     ✓ |
+| Lihat assigned entity |     ✓ |               ✓ |               ✓ |     ✓ |
+| Assign entity         |     ✓ |               ✓ |               ✗ |     ✗ |
+| Input analysis        |     ✓ | ikut permission |               ✓ |     ✗ |
+| Save draft            |     ✓ | ikut permission |               ✓ |     ✗ |
+| Resume draft          |     ✓ | ikut permission |               ✓ |     ✗ |
+| Generate report       |     ✓ | ikut permission |               ✓ |     ✗ |
+| Review                |     ✓ |               ✓ | ikut permission |     ✓ |
+| Approve               |     ✓ | ikut permission |               ✗ |     ✓ |
+| Audit trail           |     ✓ |               ✓ | ikut permission |     ✓ |
 
 Jangan implement permission tambahan yang belum disahkan sebagai business rule.
 

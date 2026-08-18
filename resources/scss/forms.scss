@@ -59,6 +59,88 @@
     color: $text;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Pilihan peranan
+|--------------------------------------------------------------------------
+| Peranan boleh dipilih lebih daripada satu, jadi ia dipaparkan sebagai
+| kotak semak dan bukan senarai juntai.
+*/
+.role-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.role-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    padding: 0.7rem 0.9rem;
+
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: 12px;
+
+    cursor: pointer;
+    transition: $transition;
+}
+
+.role-choice:hover {
+    border-color: $primary;
+}
+
+// Keadaan dipilih perlu jelas sekali imbas apabila beberapa kotak ditanda.
+.role-choice:has(input:checked) {
+    background: rgba($primary, 0.08);
+    border-color: $primary;
+    font-weight: 600;
+}
+
+.role-choice:has(input:focus-visible) {
+    outline: 3px solid $accent-cyan-dark;
+    outline-offset: 2px;
+}
+
+.role-choice input {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+    accent-color: $primary;
+}
+
+// Singkatan peranan — lebar tetap supaya nama penuh berbaris kemas.
+.role-choice__code {
+    flex-shrink: 0;
+    min-width: 2.9rem;
+    padding: 0.15rem 0.45rem;
+    background: rgba($primary, 0.12);
+    color: $secondary;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-align: center;
+}
+
+.role-choice:has(input:checked) .role-choice__code {
+    background: $primary;
+    color: $highlight;
+}
+
+// Peranan sebagai maklumat baca-sahaja (halaman profil).
+.role-pill {
+    display: inline-block;
+    margin: 0.15rem 0.35rem 0.15rem 0;
+    padding: 0.2rem 0.65rem;
+    background: rgba($primary, 0.12);
+    color: $secondary;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
 // Teks bantuan di bawah medan
 .form-hint {
     display: block;

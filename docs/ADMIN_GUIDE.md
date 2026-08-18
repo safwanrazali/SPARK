@@ -9,15 +9,15 @@ For day-to-day usage see [`USER_GUIDE.md`](USER_GUIDE.md).
 
 ## 1. SYSTEM REQUIREMENTS
 
-| Component | Requirement | Notes |
-| --- | --- | --- |
-| PHP | 8.3 or newer | Extensions: `pdo_sqlite`, `mbstring`, `openssl`, `zip`, `gd` |
-| Composer | 2.x | Dependency installation |
-| Node.js | 20 LTS or newer | Front-end build only; not needed at runtime except for PDF |
-| SQLite | 3.27+ | 3.27 required for hot backups (`VACUUM INTO`) |
-| Chrome / Chromium | Headless | **Required for PDF generation** (Spatie Browsershot + Puppeteer) |
-| Web server | nginx, Apache or IIS | Document root must be `public/` |
-| Disk | ~500 MB + database growth | Includes `node_modules` and the bundled Chromium |
+| Component         | Requirement               | Notes                                                            |
+| ----------------- | ------------------------- | ---------------------------------------------------------------- |
+| PHP               | 8.3 or newer              | Extensions: `pdo_sqlite`, `mbstring`, `openssl`, `zip`, `gd`     |
+| Composer          | 2.x                       | Dependency installation                                          |
+| Node.js           | 20 LTS or newer           | Front-end build only; not needed at runtime except for PDF       |
+| SQLite            | 3.27+                     | 3.27 required for hot backups (`VACUUM INTO`)                    |
+| Chrome / Chromium | Headless                  | **Required for PDF generation** (Spatie Browsershot + Puppeteer) |
+| Web server        | nginx, Apache or IIS      | Document root must be `public/`                                  |
+| Disk              | ~500 MB + database growth | Includes `node_modules` and the bundled Chromium                 |
 
 > **PDF generation depends on a working headless Chrome.** Verify it on the
 > server before UAT — see §9.3.
@@ -81,20 +81,20 @@ Then open the site: you should be redirected to `/login`.
 Start from `.env.production.example`, which is already hardened. The values
 that matter most:
 
-| Key | Production value | Why |
-| --- | --- | --- |
-| `APP_ENV` | `production` | Enables framework production behaviour |
-| `APP_DEBUG` | `false` | **Critical.** `true` exposes stack traces, file paths and config values to users |
-| `APP_KEY` | generated | Sessions and encrypted data are unreadable without it |
-| `APP_URL` | full `https://…` URL | Used for generated links and assets |
-| `DB_DATABASE` | absolute path | Scheduled tasks and backup scripts must resolve the same file |
-| `SESSION_SECURE_COOKIE` | `true` | Session cookie is never sent over plain HTTP |
-| `SESSION_HTTP_ONLY` | `true` | JavaScript cannot read the session cookie |
-| `SESSION_SAME_SITE` | `lax` | CSRF hardening |
-| `SESSION_ENCRYPT` | `true` | Session payloads encrypted at rest |
-| `LOG_LEVEL` | `warning` | `debug` writes far too much on a production box |
-| `BCRYPT_ROUNDS` | `12` | Password hashing cost; do not lower |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | set before seeding | Seeder aborts in production if `ADMIN_PASSWORD` is empty |
+| Key                                 | Production value     | Why                                                                              |
+| ----------------------------------- | -------------------- | -------------------------------------------------------------------------------- |
+| `APP_ENV`                           | `production`         | Enables framework production behaviour                                           |
+| `APP_DEBUG`                         | `false`              | **Critical.** `true` exposes stack traces, file paths and config values to users |
+| `APP_KEY`                           | generated            | Sessions and encrypted data are unreadable without it                            |
+| `APP_URL`                           | full `https://…` URL | Used for generated links and assets                                              |
+| `DB_DATABASE`                       | absolute path        | Scheduled tasks and backup scripts must resolve the same file                    |
+| `SESSION_SECURE_COOKIE`             | `true`               | Session cookie is never sent over plain HTTP                                     |
+| `SESSION_HTTP_ONLY`                 | `true`               | JavaScript cannot read the session cookie                                        |
+| `SESSION_SAME_SITE`                 | `lax`                | CSRF hardening                                                                   |
+| `SESSION_ENCRYPT`                   | `true`               | Session payloads encrypted at rest                                               |
+| `LOG_LEVEL`                         | `warning`            | `debug` writes far too much on a production box                                  |
+| `BCRYPT_ROUNDS`                     | `12`                 | Password hashing cost; do not lower                                              |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | set before seeding   | Seeder aborts in production if `ADMIN_PASSWORD` is empty                         |
 
 **After editing `.env` you must run** `php artisan config:cache` (or
 `config:clear`) — cached config does not pick up `.env` changes.
@@ -177,23 +177,65 @@ directory** (SQLite creates `-wal` / `-shm` files alongside it).
 
 Log in as the administrator and open **Pentadbiran → Pengguna**.
 
-| Role (UI label) | Key | Grants |
-| --- | --- | --- |
-| Pentadbir Sistem | `administrator` | Everything, including user management |
-| Pegawai Penyelaras Analisis | `coordinator` | Dashboard, all entities, assignment, workflow control, report status, audit trail |
-| Pegawai Analisis | `analyst` | Assigned entities only: analysis input, drafts, report generation |
-| Ketua Bahagian | `head_of_division` | Dashboard, all entities, audit trail (read-only) |
-| Document Controller | `document_controller` | No entity access (permissions not yet defined) |
-| Pegawai Rekod Analisis | `analysis_records_officer` | No entity access (permissions not yet defined) |
+| Short | Role (UI label)             | Key                        | Grants                                                                            |
+| ----- | --------------------------- | -------------------------- | --------------------------------------------------------------------------------- |
+| PS    | Pentadbir Sistem            | `administrator`            | Everything, including user management                                             |
+| PA    | Pegawai Analisis            | `analyst`                  | Assigned entities only: analysis input, drafts, report generation                 |
+| PPA   | Pegawai Penyelaras Analisis | `coordinator`              | Dashboard, all entities, assignment, workflow control, report status, audit trail |
+| PPR   | Pegawai Penyelaras Rekod    | `analysis_records_officer` | No entity access (permissions not yet defined)                                    |
+| PKD   | Pegawai Kawalan Dokumen     | `document_controller`      | No entity access (permissions not yet defined)                                    |
+| KB    | Ketua Bahagian              | `head_of_division`         | Dashboard, all entities, audit trail (read-only)                                  |
+| TPII  | Timbalan Pengarah II        | `deputy_director_ii`       | Dashboard and all entities, read-only (permissions not yet finalised)             |
+
+The short code is shown beside each role on the add/edit user form. Both the
+full name and the code come from `User::roleDefinitions()` — edit that one
+array to rename a role or change its code.
 
 **Account rules**
 
 - The username is the login credential and must be unique.
+- A user may hold **more than one role**; the permissions of every selected
+  role are combined. Adding a role never removes access the user already had.
 - Issue a temporary password and require the user to change it after first login.
 - Deleting a user does **not** delete their audit-trail entries — history is
   preserved deliberately.
 - Re-running `php artisan db:seed` never resets an existing administrator's
-  password.
+  password — see §5.1.
+
+### 5.1 The default administrator account
+
+Only `administrator` can add users, so the system guarantees that at least one
+such account always exists.
+
+`php artisan db:seed` creates it from the `ADMIN_*` values in `.env`. If
+`ADMIN_PASSWORD` is blank, a random password is generated and printed **once**
+on the console (non-production only; on production the seeder aborts instead).
+
+**The system refuses to be left without an administrator.** Removing the
+`administrator` role from the last remaining administrator is rejected with a
+validation error, as is deleting that account. Appoint a second administrator
+first if you need to hand the role over.
+
+**If the administrator password is lost**, `db:seed` will not help — it never
+resets an existing password. Use the recovery command instead:
+
+```bash
+# Report status; never changes an existing password
+php artisan pentadbir:sedia
+
+# Recreate the account if missing, or restore the administrator role if it was
+# somehow removed — other roles on the account are kept
+php artisan pentadbir:sedia
+
+# Set a specific password (shown once, then store it safely)
+php artisan pentadbir:sedia --kata-laluan='<KATA-LALUAN-BAHARU>'
+
+# Reset using ADMIN_PASSWORD from .env, or a generated one outside production
+php artisan pentadbir:sedia --tetap-semula
+```
+
+Run it from the application root as the same user that owns the database file.
+Change the password again from **Profil Saya** after logging in.
 
 ---
 
@@ -291,23 +333,23 @@ If step 5 fails, restore the backup from step 1 before bringing the site up.
 
 Run through this before handing the system to users.
 
-| # | Check | How to verify |
-| --- | --- | --- |
-| S1 | `APP_DEBUG=false` | `php artisan about` → Debug Mode: OFF |
-| S2 | `APP_ENV=production` | `php artisan about` |
-| S3 | `APP_KEY` is set and unique to this install | `.env` |
-| S4 | Site served over HTTPS only | Browser; HTTP should redirect |
-| S5 | `SESSION_SECURE_COOKIE=true` | `.env` |
-| S6 | Document root is `public/` | Request `/.env` → must be 404/403 |
-| S7 | Database file unreachable over HTTP | Request `/database/database.sqlite` → 404/403 |
-| S8 | Default admin password changed | Log in and change it |
-| S9 | No test/demo accounts exist | **Pentadbiran → Pengguna** |
-| S10 | Login rate limiting works | 5 wrong passwords → blocked ~60 s |
-| S11 | Analyst cannot reach unassigned entities | UAT scenario S6 |
-| S12 | Audit trail restricted | Analyst opening `/jejak-audit` → 403 |
-| S13 | File permissions minimal | `storage`, `bootstrap/cache`, `database` writable; nothing else |
-| S14 | Backups stored off-server and access-controlled | Backup location |
-| S15 | `.env` not committed to git | `git check-ignore .env` |
+| #   | Check                                           | How to verify                                                   |
+| --- | ----------------------------------------------- | --------------------------------------------------------------- |
+| S1  | `APP_DEBUG=false`                               | `php artisan about` → Debug Mode: OFF                           |
+| S2  | `APP_ENV=production`                            | `php artisan about`                                             |
+| S3  | `APP_KEY` is set and unique to this install     | `.env`                                                          |
+| S4  | Site served over HTTPS only                     | Browser; HTTP should redirect                                   |
+| S5  | `SESSION_SECURE_COOKIE=true`                    | `.env`                                                          |
+| S6  | Document root is `public/`                      | Request `/.env` → must be 404/403                               |
+| S7  | Database file unreachable over HTTP             | Request `/database/database.sqlite` → 404/403                   |
+| S8  | Default admin password changed                  | Log in and change it                                            |
+| S9  | No test/demo accounts exist                     | **Pentadbiran → Pengguna**                                      |
+| S10 | Login rate limiting works                       | 5 wrong passwords → blocked ~60 s                               |
+| S11 | Analyst cannot reach unassigned entities        | UAT scenario S6                                                 |
+| S12 | Audit trail restricted                          | Analyst opening `/jejak-audit` → 403                            |
+| S13 | File permissions minimal                        | `storage`, `bootstrap/cache`, `database` writable; nothing else |
+| S14 | Backups stored off-server and access-controlled | Backup location                                                 |
+| S15 | `.env` not committed to git                     | `git check-ignore .env`                                         |
 
 Automated coverage: `php artisan test --filter=Phase13ReleaseReadinessTest`
 verifies S1/S2/S5 templates, S10, S12 and S15 mechanically.
@@ -362,31 +404,31 @@ monitoring.
 
 ## 10. TROUBLESHOOTING
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| 500 on every page | Missing `APP_KEY` or unwritable `storage/` | `php artisan key:generate`; fix permissions |
-| "database is locked" | Web user cannot write the DB **directory** (WAL files) | Make `database/` writable |
-| "readonly database" | Wrong owner on `database.sqlite` | `chown www-data database/database.sqlite` |
-| Changed `.env` has no effect | Config cached | `php artisan config:cache` |
-| Blank/unstyled pages | Assets not built | `npm run build` |
-| 404 on every route except `/` | Rewrite rules missing | Enable `mod_rewrite` / URL Rewrite |
-| PDF download fails | Chrome/Node missing on server | §9.3 |
-| Everyone sees "no entities" | Users have roles without entity access | Check roles in **Pentadbiran → Pengguna** |
-| Login always fails after correct password | Rate limit still active | Wait 60 seconds |
-| Dashboard numbers look stale | Browser cache | Hard refresh; numbers are computed per request |
+| Symptom                                   | Likely cause                                           | Fix                                            |
+| ----------------------------------------- | ------------------------------------------------------ | ---------------------------------------------- |
+| 500 on every page                         | Missing `APP_KEY` or unwritable `storage/`             | `php artisan key:generate`; fix permissions    |
+| "database is locked"                      | Web user cannot write the DB **directory** (WAL files) | Make `database/` writable                      |
+| "readonly database"                       | Wrong owner on `database.sqlite`                       | `chown www-data database/database.sqlite`      |
+| Changed `.env` has no effect              | Config cached                                          | `php artisan config:cache`                     |
+| Blank/unstyled pages                      | Assets not built                                       | `npm run build`                                |
+| 404 on every route except `/`             | Rewrite rules missing                                  | Enable `mod_rewrite` / URL Rewrite             |
+| PDF download fails                        | Chrome/Node missing on server                          | §9.3                                           |
+| Everyone sees "no entities"               | Users have roles without entity access                 | Check roles in **Pentadbiran → Pengguna**      |
+| Login always fails after correct password | Rate limit still active                                | Wait 60 seconds                                |
+| Dashboard numbers look stale              | Browser cache                                          | Hard refresh; numbers are computed per request |
 
 ---
 
 ## 11. WHAT IS NOT IN V1.0-RC1
 
-| Capability | Status |
-| --- | --- |
-| Report review & approval workflow (Phase 10) | **Not implemented — release blocker for full V1.0** |
-| Risk assessment / readiness modules | Roadmap (menu items disabled) |
-| Email notifications | Out of scope |
-| Automatic document extraction / OCR / AI analysis | Explicitly out of scope |
-| External system integration | Out of scope |
-| Password reset by user | Not implemented — administrator resets manually |
+| Capability                                        | Status                                              |
+| ------------------------------------------------- | --------------------------------------------------- |
+| Report review & approval workflow (Phase 10)      | **Not implemented — release blocker for full V1.0** |
+| Risk assessment / readiness modules               | Roadmap (menu items disabled)                       |
+| Email notifications                               | Out of scope                                        |
+| Automatic document extraction / OCR / AI analysis | Explicitly out of scope                             |
+| External system integration                       | Out of scope                                        |
+| Password reset by user                            | Not implemented — administrator resets manually     |
 
 The upload module (`Muat Naik MasterTable`) still exists for the legacy
 inventory flow and is available to Pentadbir and Penyelaras. **No part of the

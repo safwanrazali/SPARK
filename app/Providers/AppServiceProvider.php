@@ -41,16 +41,24 @@ class AppServiceProvider extends ServiceProvider
         | Approve               |   ✓   |  ikut izin |    ✗     |  ✓
         | Audit trail           |   ✓   |     ✓      | ikut izin|  ✓
         |
-        | Document Controller dan Pegawai Rekod Analisis (bahagian 25)
+        | Pegawai Kawalan Dokumen dan Pegawai Penyelaras Rekod (bahagian 25)
         | TIADA baris dalam matriks. Peranan tersebut didaftarkan supaya
         | boleh diberikan kepada pengguna, tetapi tidak diberi sebarang
         | kebenaran sehingga business rule disahkan — lalai ialah tolak.
+        |
+        | Timbalan Pengarah II (TPII) juga TIADA baris dalam matriks.
+        | NEEDS CONFIRMATION: pengurusan belum memuktamadkan kebenarannya.
+        | Buat sementara ia diberi akses BACA sahaja — papan pemuka dan
+        | keterlihatan entiti (lihat User::hasFullEntityVisibility()) —
+        | supaya angka papan pemuka bermakna. Semua gate menulis, menyemak,
+        | meluluskan, jejak audit dan pentadbiran kekal ditolak.
         */
 
         $admin = [User::ROLE_ADMINISTRATOR];
         $penyelaras = [User::ROLE_COORDINATOR];
         $analisis = [User::ROLE_ANALYST];
         $ketua = [User::ROLE_KETUA_BAHAGIAN];
+        $timbalanII = [User::ROLE_TIMBALAN_PENGARAH_II];
 
         // Pentadbiran sistem — Pentadbir sahaja. Tiada peranan lain boleh
         // mewarisi akses ini secara tidak sengaja.
@@ -75,8 +83,10 @@ class AppServiceProvider extends ServiceProvider
         // "Assign entity" — Pentadbir ✓, Penyelaras ✓, Analisis ✗, Ketua ✗.
         Gate::define('manage-assignment', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras]));
 
-        // "Dashboard keseluruhan" — termasuk Ketua Bahagian.
-        Gate::define('view-dashboard', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras, ...$ketua]));
+        // "Dashboard keseluruhan" — termasuk Ketua Bahagian, dan buat
+        // sementara Timbalan Pengarah II (satu-satunya kebenaran eksplisit
+        // yang diberikan kepada peranan itu setakat ini).
+        Gate::define('view-dashboard', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras, ...$ketua, ...$timbalanII]));
 
         // "Audit trail" — Analisis "ikut permission" → tidak diberikan akses
         // kepada jejak audit berpusat; mereka tetap melihat sejarah entiti

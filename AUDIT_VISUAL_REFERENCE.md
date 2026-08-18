@@ -351,7 +351,7 @@ Week 5-6: Phase 11-13 - Testing & Deployment
 └───────────────────────┴─────────────┴──────────┴────────┴────────────┘
 
 Plus 3 additional roles:
-  - Document Controller: Manage ref numbers, signatures, versions
+  - Pegawai Kawalan Dokumen: Manage ref numbers, signatures, versions
   - Pegawai Rekod: View/manage record archive, read-only analysis
 ```
 

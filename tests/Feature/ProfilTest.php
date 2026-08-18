@@ -202,10 +202,11 @@ class ProfilTest extends TestCase
         $this->actingAs($pengguna)
             ->put(route('profil.update'), $this->borang([
                 'role' => User::ROLE_ADMINISTRATOR,
+                'roles' => [User::ROLE_ADMINISTRATOR],
             ]))
             ->assertSessionHasNoErrors();
 
-        $this->assertSame(User::ROLE_ANALYST, $pengguna->fresh()->role);
+        $this->assertSame([User::ROLE_ANALYST], $pengguna->fresh()->assignedRoles());
     }
 
     public function test_pengguna_hanya_mengemas_kini_akaunnya_sendiri(): void

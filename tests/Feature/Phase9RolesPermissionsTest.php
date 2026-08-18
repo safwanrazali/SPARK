@@ -53,18 +53,19 @@ class Phase9RolesPermissionsTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_kesemua_enam_peranan_sasaran_wujud(): void
+    public function test_kesemua_peranan_sasaran_wujud(): void
     {
         $this->assertSame([
             'administrator' => 'Pentadbir Sistem',
-            'coordinator' => 'Pegawai Penyelaras Analisis',
             'analyst' => 'Pegawai Analisis',
+            'coordinator' => 'Pegawai Penyelaras Analisis',
+            'analysis_records_officer' => 'Pegawai Penyelaras Rekod',
+            'document_controller' => 'Pegawai Kawalan Dokumen',
             'head_of_division' => 'Ketua Bahagian',
-            'document_controller' => 'Document Controller',
-            'analysis_records_officer' => 'Pegawai Rekod Analisis',
+            'deputy_director_ii' => 'Timbalan Pengarah II',
         ], User::roleLabels());
 
-        $this->assertCount(6, User::roles());
+        $this->assertCount(7, User::roles());
     }
 
     public function test_pentadbir_boleh_mencipta_pengguna_dengan_peranan_baharu(): void
@@ -74,16 +75,16 @@ class Phase9RolesPermissionsTest extends TestCase
                 'name' => 'Ketua Satu',
                 'username' => 'ketua1',
                 'email' => 'ketua1@example.my',
-                'role' => User::ROLE_KETUA_BAHAGIAN,
+                'roles' => [User::ROLE_KETUA_BAHAGIAN],
                 'password' => 'KataLaluan#2026x',
                 'password_confirmation' => 'KataLaluan#2026x',
             ])
             ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseHas('users', [
-            'username' => 'ketua1',
-            'role' => User::ROLE_KETUA_BAHAGIAN,
-        ]);
+        $this->assertSame(
+            [User::ROLE_KETUA_BAHAGIAN],
+            User::where('username', 'ketua1')->sole()->assignedRoles(),
+        );
     }
 
     public function test_peranan_tidak_sah_ditolak(): void
@@ -93,11 +94,11 @@ class Phase9RolesPermissionsTest extends TestCase
                 'name' => 'Penyusup',
                 'username' => 'penyusup',
                 'email' => 'penyusup@example.my',
-                'role' => 'superuser',
+                'roles' => ['superuser'],
                 'password' => 'KataLaluan#2026x',
                 'password_confirmation' => 'KataLaluan#2026x',
             ])
-            ->assertSessionHasErrors('role');
+            ->assertSessionHasErrors('roles.0');
     }
 
     /*
@@ -161,7 +162,7 @@ class Phase9RolesPermissionsTest extends TestCase
                 'access-administration' => false,
             ]],
             // Tiada baris dalam matriks — lalai tolak sehingga disahkan.
-            'Document Controller' => [User::ROLE_DOCUMENT_CONTROLLER, [
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, [
                 'view-dashboard' => false,
                 'view-all-entities' => false,
                 'manage-assignment' => false,
@@ -173,9 +174,23 @@ class Phase9RolesPermissionsTest extends TestCase
                 'view-audit-trail' => false,
                 'access-administration' => false,
             ]],
-            'Pegawai Rekod Analisis' => [User::ROLE_REKOD_ANALISIS, [
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, [
                 'view-dashboard' => false,
                 'view-all-entities' => false,
+                'manage-assignment' => false,
+                'manage-analysis' => false,
+                'manage-workflow' => false,
+                'manage-status' => false,
+                'review-report' => false,
+                'approve-report' => false,
+                'view-audit-trail' => false,
+                'access-administration' => false,
+            ]],
+            // NEEDS CONFIRMATION — tiada baris dalam matriks. Buat sementara
+            // baca sahaja: papan pemuka dan keterlihatan entiti, tiada lagi.
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, [
+                'view-dashboard' => true,
+                'view-all-entities' => true,
                 'manage-assignment' => false,
                 'manage-analysis' => false,
                 'manage-workflow' => false,
@@ -221,8 +236,9 @@ class Phase9RolesPermissionsTest extends TestCase
             'Penyelaras' => [User::ROLE_COORDINATOR, true],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, true],
             'Pegawai Analisis' => [User::ROLE_ANALYST, false],
-            'Document Controller' => [User::ROLE_DOCUMENT_CONTROLLER, false],
-            'Pegawai Rekod Analisis' => [User::ROLE_REKOD_ANALISIS, false],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, false],
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, true],
         ];
     }
 
@@ -254,8 +270,9 @@ class Phase9RolesPermissionsTest extends TestCase
             'Penyelaras' => [User::ROLE_COORDINATOR, 'semua'],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, 'semua'],
             'Pegawai Analisis' => [User::ROLE_ANALYST, 'ditugaskan'],
-            'Document Controller' => [User::ROLE_DOCUMENT_CONTROLLER, 'tiada'],
-            'Pegawai Rekod Analisis' => [User::ROLE_REKOD_ANALISIS, 'tiada'],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'tiada'],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'tiada'],
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, 'semua'],
         ];
     }
 
@@ -335,8 +352,9 @@ class Phase9RolesPermissionsTest extends TestCase
             'Penyelaras' => [User::ROLE_COORDINATOR, true],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, false],
             'Pegawai Analisis' => [User::ROLE_ANALYST, false],
-            'Document Controller' => [User::ROLE_DOCUMENT_CONTROLLER, false],
-            'Pegawai Rekod Analisis' => [User::ROLE_REKOD_ANALISIS, false],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, false],
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, false],
         ];
     }
 
@@ -383,8 +401,9 @@ class Phase9RolesPermissionsTest extends TestCase
             'Pegawai Analisis' => [User::ROLE_ANALYST, true],
             'Penyelaras' => [User::ROLE_COORDINATOR, false],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, false],
-            'Document Controller' => [User::ROLE_DOCUMENT_CONTROLLER, false],
-            'Pegawai Rekod Analisis' => [User::ROLE_REKOD_ANALISIS, false],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, false],
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, false],
         ];
     }
 
@@ -501,8 +520,8 @@ class Phase9RolesPermissionsTest extends TestCase
             'Penyelaras' => [User::ROLE_COORDINATOR],
             'Pegawai Analisis' => [User::ROLE_ANALYST],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN],
-            'Document Controller' => [User::ROLE_DOCUMENT_CONTROLLER],
-            'Pegawai Rekod Analisis' => [User::ROLE_REKOD_ANALISIS],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD],
         ];
     }
 
@@ -556,7 +575,7 @@ class Phase9RolesPermissionsTest extends TestCase
 
     public function test_pegawai_tanpa_kebenaran_tidak_melihat_modul_terhad(): void
     {
-        $dc = $this->pengguna(User::ROLE_DOCUMENT_CONTROLLER);
+        $dc = $this->pengguna(User::ROLE_PEGAWAI_KAWALAN_DOKUMEN);
 
         $this->actingAs($dc)
             ->get(route('analisis.index'))

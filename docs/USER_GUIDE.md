@@ -9,15 +9,15 @@
 Sistem ini **memantau** proses analisis data migrasi PQC dan **menyokong
 penjanaan laporan** hasil analisis tersebut.
 
-| Sistem ini **melakukan** | Sistem ini **tidak** melakukan |
-| --- | --- |
-| Merekod kedudukan setiap entiti dalam 7 peringkat workflow | Menjalankan analisis PQC secara automatik |
-| Menyimpan penugasan entiti kepada Pegawai Analisis | Membaca atau mentafsir dokumen secara automatik |
-| Menerima dapatan analisis melalui borang berstruktur | Mengira risiko PQC secara automatik |
-| Menyimpan draf supaya kerja tidak hilang | Memerlukan muat naik Buku Kerja Migrasi PQC |
-| Menjana Laporan Analisis Inventori Kriptografi (PDF) | Menghantar e-mel atau notifikasi |
-| Mengira statistik papan pemuka daripada rekod sebenar | Menyimpan peratusan kemajuan secara manual |
-| Merekod jejak audit setiap perubahan penting | |
+| Sistem ini **melakukan**                                   | Sistem ini **tidak** melakukan                  |
+| ---------------------------------------------------------- | ----------------------------------------------- |
+| Merekod kedudukan setiap entiti dalam 7 peringkat workflow | Menjalankan analisis PQC secara automatik       |
+| Menyimpan penugasan entiti kepada Pegawai Analisis         | Membaca atau mentafsir dokumen secara automatik |
+| Menerima dapatan analisis melalui borang berstruktur       | Mengira risiko PQC secara automatik             |
+| Menyimpan draf supaya kerja tidak hilang                   | Memerlukan muat naik Buku Kerja Migrasi PQC     |
+| Menjana Laporan Analisis Inventori Kriptografi (PDF)       | Menghantar e-mel atau notifikasi                |
+| Mengira statistik papan pemuka daripada rekod sebenar      | Menyimpan peratusan kemajuan secara manual      |
+| Merekod jejak audit setiap perubahan penting               |                                                 |
 
 > **Penting**: Pegawai Analisis tetap menjalankan kerja analisis secara manual
 > (pembersihan data, semakan, interpretasi) di luar sistem, kemudian
@@ -44,18 +44,22 @@ penjanaan laporan** hasil analisis tersebut.
 
 ## 3. PERANAN DAN AKSES
 
-| Peranan | Papan pemuka | Semua entiti | Tugaskan entiti | Isi dapatan | Jana laporan | Jejak audit |
-| --- | :---: | :---: | :---: | :---: | :---: | :---: |
-| Pentadbir Sistem | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Pegawai Penyelaras Analisis | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ |
-| Pegawai Analisis | ✗ | **hanya yang ditugaskan** | ✗ | ✓ | ✓ | ✗ |
-| Ketua Bahagian | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ |
-| Document Controller | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Pegawai Rekod Analisis | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Peranan                     | Papan pemuka |       Semua entiti        | Tugaskan entiti | Isi dapatan | Jana laporan | Jejak audit |
+| --------------------------- | :----------: | :-----------------------: | :-------------: | :---------: | :----------: | :---------: |
+| Pentadbir Sistem            |      ✓       |             ✓             |        ✓        |      ✓      |      ✓       |      ✓      |
+| Pegawai Analisis            |      ✗       | **hanya yang ditugaskan** |        ✗        |      ✓      |      ✓       |      ✗      |
+| Pegawai Penyelaras Analisis |      ✓       |             ✓             |        ✓        |      ✗      |      ✗       |      ✓      |
+| Pegawai Penyelaras Rekod    |      ✗       |             ✗             |        ✗        |      ✗      |      ✗       |      ✗      |
+| Pegawai Kawalan Dokumen     |      ✗       |             ✗             |        ✗        |      ✗      |      ✗       |      ✗      |
+| Ketua Bahagian              |      ✓       |             ✓             |        ✗        |      ✗      |      ✗       |      ✓      |
+| Timbalan Pengarah II        |      ✓       |             ✓             |        ✗        |      ✗      |      ✗       |      ✗      |
 
-> Document Controller dan Pegawai Rekod Analisis telah didaftarkan sebagai
+> Pegawai Kawalan Dokumen dan Pegawai Penyelaras Rekod telah didaftarkan sebagai
 > peranan, tetapi kebenaran sebenar mereka **belum ditetapkan** sebagai
 > peraturan perniagaan. Buat masa ini mereka tiada akses entiti.
+>
+> Timbalan Pengarah II juga belum dimuktamadkan; buat sementara ia diberi
+> akses **baca sahaja** kepada papan pemuka dan semua entiti.
 
 **Peraturan akses paling penting**: Pegawai Analisis hanya boleh melihat dan
 menyunting entiti yang **ditugaskan kepadanya**. Cuba membuka entiti lain —
@@ -107,15 +111,15 @@ Buka **Pemantauan → Kemajuan Workflow**, pilih entiti.
 
 **7 peringkat**
 
-| # | Peringkat |
-| --- | --- |
-| 1 | Penerimaan & Pendaftaran Data |
-| 2 | Semakan Awal Data |
-| 3 | Penyediaan & Pengesahan Data |
-| 4 | Pelaksanaan Analisis |
-| 5 | Penjanaan Laporan |
-| 6 | Semakan & Kelulusan |
-| 7 | Penyerahan & Penutupan |
+| #   | Peringkat                     |
+| --- | ----------------------------- |
+| 1   | Penerimaan & Pendaftaran Data |
+| 2   | Semakan Awal Data             |
+| 3   | Penyediaan & Pengesahan Data  |
+| 4   | Pelaksanaan Analisis          |
+| 5   | Penjanaan Laporan             |
+| 6   | Semakan & Kelulusan           |
+| 7   | Penyerahan & Penutupan        |
 
 **Peraturan peralihan**
 
@@ -169,25 +173,25 @@ Sistem **tidak** memerlukan anda memuat naik sebarang dokumen.
 2. Klik **Isi Borang**.
 3. Isi mengikut seksyen:
 
-| Seksyen | Kandungan |
-| --- | --- |
-| 1 · Maklumat Laporan | Tarikh laporan, kod rujukan, status laporan |
-| 2 · Status Data Diterima | Status penerimaan & kebolehgunaan Jadual 0–2 |
-| 3 · Profil Sistem dan Aset | Bilangan aset mengikut kategori |
-| 4 · Algoritma Kriptografi | **Checkbox** algoritma yang digunakan |
-| 5 · Protokol Kriptografi | Baris protokol (boleh tambah/buang) |
-| 6 · Pustaka dan Modul | Baris pustaka |
-| 7 · Maklumat Vendor | Baris vendor |
-| 8 · Cadangan Tindakan Susulan | Pilihan daripada bank ayat rasmi |
-| 9 · Kesimpulan | Pilihan daripada bank ayat rasmi |
+| Seksyen                       | Kandungan                                    |
+| ----------------------------- | -------------------------------------------- |
+| 1 · Maklumat Laporan          | Tarikh laporan, kod rujukan, status laporan  |
+| 2 · Status Data Diterima      | Status penerimaan & kebolehgunaan Jadual 0–2 |
+| 3 · Profil Sistem dan Aset    | Bilangan aset mengikut kategori              |
+| 4 · Algoritma Kriptografi     | **Checkbox** algoritma yang digunakan        |
+| 5 · Protokol Kriptografi      | Baris protokol (boleh tambah/buang)          |
+| 6 · Pustaka dan Modul         | Baris pustaka                                |
+| 7 · Maklumat Vendor           | Baris vendor                                 |
+| 8 · Cadangan Tindakan Susulan | Pilihan daripada bank ayat rasmi             |
+| 9 · Kesimpulan                | Pilihan daripada bank ayat rasmi             |
 
 ### 5.4 Checkbox algoritma — peraturan penting
 
 Senarai algoritma mengikut kategori rujukan **AKSA MySEAL**.
 
-| Keadaan checkbox | Maksud |
-| --- | --- |
-| **Ditanda** ☑ | Entiti **menggunakan** algoritma tersebut |
+| Keadaan checkbox    | Maksud                                                    |
+| ------------------- | --------------------------------------------------------- |
+| **Ditanda** ☑       | Entiti **menggunakan** algoritma tersebut                 |
 | **Tidak ditanda** ☐ | Inventori entiti **tidak menggunakan** algoritma tersebut |
 
 Menanda checkbox akan memaparkan medan **bilangan sistem/aset** dan
@@ -276,15 +280,15 @@ Untuk tugas pemasangan, sandaran dan penyelenggaraan, rujuk
 
 ## 8. BATASAN VERSI V1.0-RC1
 
-| Perkara | Status |
-| --- | --- |
-| Serah laporan untuk semakan | **Belum tersedia** (Fasa 10) |
-| Skrin semakan dan komen penyemak | **Belum tersedia** (Fasa 10) |
-| Kelulusan / pemulangan laporan | **Belum tersedia** (Fasa 10) |
-| Penilaian Risiko PQC | Modul akan datang (menu dilumpuhkan) |
-| Laporan Risiko | Modul akan datang (menu dilumpuhkan) |
-| Laporan Kesiapsiagaan | Modul akan datang (menu dilumpuhkan) |
-| Notifikasi e-mel | Tidak dalam skop |
+| Perkara                                  | Status                                |
+| ---------------------------------------- | ------------------------------------- |
+| Serah laporan untuk semakan              | **Belum tersedia** (Fasa 10)          |
+| Skrin semakan dan komen penyemak         | **Belum tersedia** (Fasa 10)          |
+| Kelulusan / pemulangan laporan           | **Belum tersedia** (Fasa 10)          |
+| Penilaian Risiko PQC                     | Modul akan datang (menu dilumpuhkan)  |
+| Laporan Risiko                           | Modul akan datang (menu dilumpuhkan)  |
+| Laporan Kesiapsiagaan                    | Modul akan datang (menu dilumpuhkan)  |
+| Notifikasi e-mel                         | Tidak dalam skop                      |
 | Muat naik dokumen dalam aliran pelaporan | Tidak diperlukan mengikut reka bentuk |
 
 Semasa menunggu Fasa 10, peringkat **6 — Semakan & Kelulusan** dikendalikan
@@ -296,17 +300,17 @@ perlu dibetulkan.
 
 ## 9. MASALAH BIASA
 
-| Masalah | Punca dan penyelesaian |
-| --- | --- |
-| "Anda tidak mempunyai akses kepada entiti ini" (403) | Entiti tersebut tidak ditugaskan kepada anda. Hubungi Pegawai Penyelaras. |
-| Dialihkan ke halaman log masuk semasa bekerja | Sesi tamat tempoh (120 minit). Log masuk semula — draf yang telah disimpan kekal. |
-| "Terlalu banyak percubaan log masuk" | 5 percubaan gagal. Tunggu 60 saat. |
-| Draf tidak muncul semasa disambung | Pastikan anda membuka entiti yang **sama** dan log masuk dengan akaun yang sama. |
-| Butang ubah peringkat tiada | Kawalan peringkat hanya untuk Penyelaras dan Pentadbir. |
-| "Peringkat mesti dilalui secara berturutan" | Anda cuba melompat peringkat. Maju satu peringkat pada satu masa. |
-| "Sebab wajib diberikan" | Pengunduran peringkat memerlukan sebab. |
-| PDF tidak dijana | Isu pelayan (komponen penjanaan PDF). Hubungi Pentadbir Sistem. |
-| Papan pemuka tidak berubah | Angka dikira daripada rekod. Pastikan perubahan telah disimpan; muat semula halaman. |
+| Masalah                                              | Punca dan penyelesaian                                                               |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| "Anda tidak mempunyai akses kepada entiti ini" (403) | Entiti tersebut tidak ditugaskan kepada anda. Hubungi Pegawai Penyelaras.            |
+| Dialihkan ke halaman log masuk semasa bekerja        | Sesi tamat tempoh (120 minit). Log masuk semula — draf yang telah disimpan kekal.    |
+| "Terlalu banyak percubaan log masuk"                 | 5 percubaan gagal. Tunggu 60 saat.                                                   |
+| Draf tidak muncul semasa disambung                   | Pastikan anda membuka entiti yang **sama** dan log masuk dengan akaun yang sama.     |
+| Butang ubah peringkat tiada                          | Kawalan peringkat hanya untuk Penyelaras dan Pentadbir.                              |
+| "Peringkat mesti dilalui secara berturutan"          | Anda cuba melompat peringkat. Maju satu peringkat pada satu masa.                    |
+| "Sebab wajib diberikan"                              | Pengunduran peringkat memerlukan sebab.                                              |
+| PDF tidak dijana                                     | Isu pelayan (komponen penjanaan PDF). Hubungi Pentadbir Sistem.                      |
+| Papan pemuka tidak berubah                           | Angka dikira daripada rekod. Pastikan perubahan telah disimpan; muat semula halaman. |
 
 Untuk masalah lain, hubungi Pentadbir Sistem dan sertakan: nama pengguna, masa
 kejadian, entiti terlibat dan langkah yang dilakukan.

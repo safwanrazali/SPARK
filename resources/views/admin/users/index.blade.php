@@ -39,9 +39,11 @@
                             <td>{{ $user->username }}</td>
                             <td>{{ $user->email }}</td>
                             <td>
-                                <span class="status-badge status-rendah">
-                                    {{ $user->roleLabel() }}
-                                </span>
+                                @forelse ($user->assignedRoleLabels() as $label)
+                                    <span class="status-badge status-rendah">{{ $label }}</span>
+                                @empty
+                                    <span class="text-secondary">Tiada peranan</span>
+                                @endforelse
                             </td>
                             <td>
                                 <a href="{{ route('administration.users.edit', $user) }}"

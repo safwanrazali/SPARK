@@ -114,9 +114,10 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
             User::ROLE_ANALYST => self::ALIH,
-            User::ROLE_DOCUMENT_CONTROLLER => self::ALIH,
-            User::ROLE_REKOD_ANALISIS => self::ALIH,
+            User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => self::ALIH,
+            User::ROLE_PENYELARAS_REKOD => self::ALIH,
         ]);
     }
 
@@ -220,6 +221,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
             User::ROLE_ANALYST => self::BENAR,
         ]);
 
@@ -227,6 +229,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
             User::ROLE_ANALYST => self::BENAR,
         ]);
     }
@@ -237,23 +240,25 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
         ]);
 
         $this->semakMatriks('GET', route('workflow.show', self::BETA), [
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
         ]);
     }
 
     /**
-     * Peranan tanpa baris dalam matriks kebenaran (Document Controller dan
-     * Pegawai Rekod Analisis) tidak boleh mewarisi akses entiti secara
+     * Peranan tanpa baris dalam matriks kebenaran (Pegawai Kawalan Dokumen dan
+     * Pegawai Penyelaras Rekod) tidak boleh mewarisi akses entiti secara
      * tersirat — lalai ialah tolak sehingga business rule disahkan.
      */
     public function test_peranan_tanpa_kebenaran_disahkan_tiada_akses_entiti(): void
     {
-        foreach ([User::ROLE_DOCUMENT_CONTROLLER, User::ROLE_REKOD_ANALISIS] as $peranan) {
+        foreach ([User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, User::ROLE_PENYELARAS_REKOD] as $peranan) {
             foreach ([self::ALPHA, self::BETA] as $kod) {
                 $this->actingAs($this->pengguna[$peranan])
                     ->get(route('entiti.show', $kod))
@@ -424,8 +429,9 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_COORDINATOR => true,
             User::ROLE_KETUA_BAHAGIAN => true,
             User::ROLE_ANALYST => false,
-            User::ROLE_DOCUMENT_CONTROLLER => false,
-            User::ROLE_REKOD_ANALISIS => false,
+            User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => false,
+            User::ROLE_PENYELARAS_REKOD => false,
+            User::ROLE_TIMBALAN_PENGARAH_II => false,
         ];
 
         $lulus = [
@@ -433,8 +439,9 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_KETUA_BAHAGIAN => true,
             User::ROLE_COORDINATOR => false,
             User::ROLE_ANALYST => false,
-            User::ROLE_DOCUMENT_CONTROLLER => false,
-            User::ROLE_REKOD_ANALISIS => false,
+            User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => false,
+            User::ROLE_PENYELARAS_REKOD => false,
+            User::ROLE_TIMBALAN_PENGARAH_II => false,
         ];
 
         foreach (User::roles() as $peranan) {
