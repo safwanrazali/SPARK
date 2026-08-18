@@ -36,10 +36,22 @@
 }
 
 .status-badge {
+    // Tanpa `inline-block`, latar dan bucu pil dipecahkan kepada dua kotak
+    // baris apabila teks berbalut — itulah bentuk berjeda yang kelihatan
+    // pada lajur sempit.
+    display: inline-block;
+    vertical-align: middle;
+
     padding: 0.35rem 0.75rem;
     border-radius: 50px;
+
     font-size: 0.85rem;
     font-weight: 600;
+    line-height: 1.25;
+
+    // Label status ialah frasa pendek dan sepatutnya kekal satu baris;
+    // jadual sudah boleh ditatal mendatar (.table-responsive-custom).
+    white-space: nowrap;
 }
 
 .status-rendah {

@@ -67,7 +67,7 @@
                         <tr>
                             <td>
                                 <strong>{{ $e['agency_code'] }}</strong><br>
-                                <span class="text-secondary">Sektor {{ $e['sector_code'] }}</span>
+                                <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
                             </td>
                             <td>
                                 @if ($w)
