@@ -109,7 +109,7 @@
     height: 40px;
     flex-shrink: 0;
 
-    border: 1px solid $sidebar-border;
+    border: 1px solid $sidebar-text;
     border-radius: 10px;
     background: transparent;
     color: $sidebar-text;
@@ -124,15 +124,16 @@
 }
 
 .sidebar-toggle:hover {
-    border-color: $accent-cyan;
-    color: $accent-cyan;
+    border-color: $sidebar-text;
+    color: $primary;
+    background: $sidebar-text;
 }
 
 // Keadaan dikunci perlu kelihatan pada butang itu sendiri.
 .sidebar-toggle[aria-pressed="true"] {
-    border-color: $accent-cyan;
-    background: rgba($accent-cyan, 0.14);
-    color: $accent-cyan;
+    border-color: $sidebar-text;
+    background: $primary;
+    color: $sidebar-text;
 }
 
 .sidebar-menu {
@@ -166,9 +167,9 @@
 }
 
 .sidebar-menu a:hover {
-    background: rgba($primary, 0.25);
-    color: $accent-cyan;
-    box-shadow: 0 0 15px rgba($primary, 0.35);
+    background: $surface;
+    color: $secondary;
+    box-shadow: 0 0 15px rgba($secondary, 0.35);
 }
 
 // Anjakan mendatar hanya masuk akal apabila ada ruang untuk bergerak.
@@ -178,10 +179,10 @@
 
 // Fasa 11 — penunjuk halaman semasa
 .sidebar-menu a.active {
-    background: rgba($primary, 0.35);
-    color: $accent-cyan;
-    box-shadow: inset 3px 0 0 $accent-cyan;
-    font-weight: 600;
+    background: $surface;
+    color: $secondary;
+    box-shadow: inset 3px 0 0 $secondary;
+    font-weight: 500;
 }
 
 .sidebar.is-expanded .sidebar-menu a.active:hover {
@@ -224,9 +225,10 @@
     margin: 1.25rem 0 0.85rem;
     padding: 0;
 
-    color: $accent-cyan;
+    color: #d8bfd8;
 
     font-size: 0.9rem;
+    font-style: italic;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.2px;
@@ -238,7 +240,7 @@
     flex: none;
     width: 28px;
     height: 1px;
-    background: rgba($accent-cyan, 0.25);
+    background: #d8bfd8;
 }
 
 .sidebar.is-expanded .sidebar-section-title {

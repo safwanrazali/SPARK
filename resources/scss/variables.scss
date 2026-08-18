@@ -2,8 +2,8 @@
 // (Platform_Analisis_Pelaporan_Migrasi_PQC_v2_animated.pptx)
 $bg: #f7f6fc;
 $surface: #ffffff;
-$primary: #7c3aed;
-$secondary: #5b21b6;
+$primary: #392a48;
+$secondary: #663399;
 
 $accent-cyan: #22d3ee;
 $accent-cyan-dark: #0891b2;
@@ -17,11 +17,11 @@ $muted: #6e6889;
 $border: #e3dff0;
 $highlight: #ffffff;
 
-$sidebar-bg: #171130;
-$sidebar-bg-end: #2a1f52;
-$sidebar-border: #3a3170;
-$sidebar-text: #efedf6;
-$sidebar-muted: #9e92cf;
+$sidebar-bg: $primary;
+$sidebar-bg-end: $secondary;
+$sidebar-border: $primary;
+$sidebar-text: #fff0f5;
+$sidebar-muted: #856088;
 
 // Navigasi sisi — dikongsi dengan `.main-content` supaya jidar kandungan
 // sentiasa sepadan dengan lebar bar sisi.
