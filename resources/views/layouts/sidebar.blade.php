@@ -34,8 +34,7 @@
         @can('manage-upload')
             <li>
                 <a href="{{ route('muat-naik.index') }}" class="{{ $pautan('muat-naik.index') }}"
-                    title="Muat Naik MasterTable"
-                    @if (request()->routeIs('muat-naik.index')) aria-current="page" @endif>
+                    title="Muat Naik MasterTable" @if (request()->routeIs('muat-naik.index')) aria-current="page" @endif>
                     <i class="bi bi-upload" aria-hidden="true"></i>
                     <span class="menu-text">Muat Naik MasterTable</span>
                 </a>
@@ -44,8 +43,7 @@
 
         <li>
             <a href="{{ route('muat-naik.history') }}" class="{{ $pautan('muat-naik.history') }}"
-                title="Sejarah Muat Naik"
-                @if (request()->routeIs('muat-naik.history')) aria-current="page" @endif>
+                title="Sejarah Muat Naik" @if (request()->routeIs('muat-naik.history')) aria-current="page" @endif>
                 <i class="bi bi-clock-history" aria-hidden="true"></i>
                 <span class="menu-text">Sejarah Muat Naik</span>
             </a>
@@ -53,8 +51,7 @@
 
         <li>
             <a href="{{ route('analisis.index') }}" class="{{ $pautan('analisis.*') }}"
-                title="Analisis Inventori Kriptografi"
-                @if (request()->routeIs('analisis.*')) aria-current="page" @endif>
+                title="Analisis Inventori Kriptografi" @if (request()->routeIs('analisis.*')) aria-current="page" @endif>
                 <i class="bi bi-hdd-stack" aria-hidden="true"></i>
                 <span class="menu-text">Analisis Inventori Kriptografi</span>
             </a>
@@ -101,7 +98,8 @@
         <li class="sidebar-section-title"><span class="menu-text">Penilaian Risiko</span></li>
 
         <li>
-            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)" aria-disabled="true">
+            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)"
+                aria-disabled="true">
                 <i class="bi bi-shield-exclamation" aria-hidden="true"></i>
                 <span class="menu-text">Penilaian Risiko PQC</span>
             </a>
@@ -118,14 +116,16 @@
         </li>
 
         <li>
-            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)" aria-disabled="true">
+            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Okt–Nov)"
+                aria-disabled="true">
                 <i class="bi bi-file-earmark-medical" aria-hidden="true"></i>
                 <span class="menu-text">Laporan Risiko</span>
             </a>
         </li>
 
         <li>
-            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Nov–Dis)" aria-disabled="true">
+            <a href="#" class="disabled-link" title="Modul Fasa 1 seterusnya (roadmap Nov–Dis)"
+                aria-disabled="true">
                 <i class="bi bi-file-earmark-richtext" aria-hidden="true"></i>
                 <span class="menu-text">Laporan Kesiapsiagaan</span>
             </a>
@@ -136,8 +136,7 @@
 
             <li>
                 <a href="{{ route('administration.users.index') }}" class="{{ $pautan('administration.*') }}"
-                    title="Pengguna"
-                    @if (request()->routeIs('administration.*')) aria-current="page" @endif>
+                    title="Pengguna" @if (request()->routeIs('administration.*')) aria-current="page" @endif>
                     <i class="bi bi-people" aria-hidden="true"></i>
                     <span class="menu-text">Pengguna</span>
                 </a>
