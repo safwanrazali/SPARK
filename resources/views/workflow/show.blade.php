@@ -1,19 +1,50 @@
 @extends('layouts.app')
 
-@section('title', 'Workflow — ' . $entiti['agency_code'])
+@section('title', 'Kemajuan Analisis Entiti — ' . $entiti['agency_code'])
 
-@section('page-title', 'Workflow Entiti')
+@section('page-title', 'Kemajuan Analisis Entiti')
 
 @section('content')
+
+    @php
+        use App\Models\LaporanSemakan;
+        use App\Models\WorkflowStageStatus;
+        use App\Models\WorkflowStatus;
+        use App\Services\KemajuanAnalisisService;
+
+        $pengguna = auth()->user();
+
+        $didaftar = $peringkat->isNotEmpty();
+
+        $bolehPA = $pengguna->can('advance-analysis-stage');
+        $bolehSemak = $pengguna->can('review-report');
+        $bolehLulus = $pengguna->can('approve-report');
+        $bolehSerah = $pengguna->can('submit-to-nacsa');
+
+        $status = fn (int $stage): string => $peringkat->get($stage)?->status ?? WorkflowStageStatus::BELUM_MULA;
+        $selesai = fn (int $stage): bool => $status($stage) === WorkflowStageStatus::SELESAI;
+
+        // Satu peringkat "terbuka" apabila pendahulunya telah Selesai.
+        $terbuka = fn (int $stage): bool => $stage === WorkflowStatus::FIRST_STAGE || $selesai($stage - 1);
+
+        $analisisLengkap = (bool) ($analisis?->selesai);
+        $statusLaporan = $laporan?->status;
+
+        $badgeKeseluruhan = match ($keseluruhan) {
+            KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
+            KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
+            default => 'status-tinggi',
+        };
+
+        $jumlahPeringkat = count(WorkflowStatus::WORKFLOW_STAGES);
+    @endphp
 
     <div class="report-card mb-4">
 
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
             <div>
                 <h4 class="section-title mb-1">{{ $entiti['agency_code'] }}</h4>
-                <p class="text-secondary mb-0">
-                    Sektor {{ $entiti['sector_code'] }}
-                </p>
+                <p class="text-secondary mb-0">Sektor {{ $entiti['sector_code'] }}</p>
             </div>
             <div class="entity-actions">
                 <a href="{{ route('entiti.show', $entiti['agency_code']) }}" class="btn btn-sm btn-primary">
@@ -27,118 +58,310 @@
 
     </div>
 
+    {{-- Stepper mendatar: kedudukan sekilas pandang, dikongsi dengan modul
+         pemantauan sedia ada. Senarai menegak di bawah ialah ruang kerja. --}}
     <div class="report-card mb-4">
+        <h4 class="section-title">Peringkat Workflow</h4>
+        <x-workflow-stepper :workflow="$workflow" />
+    </div>
 
-        <h4 class="section-title">Kemajuan Workflow</h4>
+    @if (! $didaftar)
 
-        <x-workflow-stepper :workflow="$workflow" class="mb-4" />
+        <div class="report-card">
+            <h4 class="section-title">Belum Memasuki Aliran Kerja</h4>
+            <p class="text-secondary mb-0">
+                Entiti ini belum didaftarkan dalam workflow kerana
+                <strong>Penerimaan &amp; Pendaftaran Data</strong> belum Selesai.
+                Pegawai Penyelaras Rekod perlu menandakannya melalui skrin
+                Penetapan Entiti sebelum kemajuan analisis boleh bermula.
+            </p>
+        </div>
 
-        @if ($workflow)
+    @else
+
+        <div class="report-card mb-4">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <h4 class="section-title mb-0">Ringkasan Kemajuan</h4>
+                <span class="status-badge {{ $badgeKeseluruhan }}">{{ $keseluruhan }}</span>
+            </div>
+
             <div class="row g-3 workflow-meta">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="stat-title">Peringkat Semasa</div>
                     <div class="workflow-meta__value">
-                        {{ sprintf('%02d', $workflow->current_stage) }} — {{ $workflow->stage_name }}
+                        {{ sprintf('%02d', $peringkatSemasa) }} —
+                        {{ WorkflowStatus::getStageName($peringkatSemasa) }}
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-title">Status</div>
+                <div class="col-md-4">
+                    <div class="stat-title">Peringkat Selesai</div>
+                    <div class="workflow-meta__value">{{ $bilanganSelesai }} / {{ $jumlahPeringkat }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-title">Status Laporan</div>
                     <div class="workflow-meta__value">
-                        <span class="status-badge {{ $workflow->statusBadgeClass() }}">{{ $workflow->status }}</span>
+                        @if ($laporan)
+                            <span class="status-badge {{ $laporan->statusBadgeClass() }}">{{ $laporan->status }}</span>
+                        @else
+                            <span class="text-secondary">Belum Dijana</span>
+                        @endif
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-title">Tarikh Status</div>
-                    <div class="workflow-meta__value">{{ $workflow->status_since?->format('d/m/Y H:i') ?? '-' }}</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-title">Dikemas Kini Oleh</div>
-                    <div class="workflow-meta__value">{{ $workflow->updatedBy?->name ?? '-' }}</div>
                 </div>
             </div>
 
-            @if ($workflow->notes)
-                <p class="text-secondary mt-3 mb-0">
-                    <strong>Catatan terakhir:</strong> {{ $workflow->notes }}
-                </p>
-            @endif
-        @else
-            <p class="text-secondary mb-0">
-                Entiti ini belum didaftarkan dalam workflow. Pendaftaran akan bermula
-                pada peringkat 01 — {{ \App\Models\WorkflowStatus::getStageName(1) }}.
-            </p>
-        @endif
+            <div class="workflow-progress mt-3" role="img"
+                aria-label="Kemajuan {{ round(($bilanganSelesai / $jumlahPeringkat) * 100) }} peratus">
+                <span style="--progress: {{ round(($bilanganSelesai / $jumlahPeringkat) * 100) }}%"></span>
+            </div>
 
-    </div>
+            @if ($laporan?->status === LaporanSemakan::DIKEMBALIKAN && $laporan->catatan)
+                <x-alert type="warning" title="Laporan dikembalikan" class="mt-3">
+                    {{ $laporan->catatan }}
+                </x-alert>
+            @endif
+
+        </div>
+
+        <div class="report-card mb-4">
+
+            <h4 class="section-title">Peringkat Kemajuan</h4>
+            <p class="text-secondary">
+                Setiap peringkat hanya boleh ditandakan Selesai setelah peringkat sebelumnya Selesai.
+                Tindakan yang tidak dibenarkan bagi peranan anda tidak dipaparkan.
+            </p>
+
+            <ol class="kemajuan-list">
+
+                {{-- 01 — Penerimaan & Pendaftaran Data (PPR, skrin Penetapan Entiti) --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_PENDAFTARAN"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_PENDAFTARAN)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_PENDAFTARAN)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_PENDAFTARAN"
+                    keterangan="Ditandakan oleh Pegawai Penyelaras Rekod melalui Penetapan Entiti." />
+
+                {{-- 02 — Semakan Awal Data (PA) --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_SEMAKAN_AWAL"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_SEMAKAN_AWAL)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_SEMAKAN_AWAL)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_SEMAKAN_AWAL"
+                    :dikunci="! $terbuka(WorkflowStatus::STAGE_SEMAKAN_AWAL)">
+                    @if ($bolehPA && $terbuka(WorkflowStatus::STAGE_SEMAKAN_AWAL) && ! $selesai(WorkflowStatus::STAGE_SEMAKAN_AWAL))
+                        <form action="{{ route('kemajuan.selesai', [$entiti['agency_code'], WorkflowStatus::STAGE_SEMAKAN_AWAL]) }}"
+                            method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check2-circle"></i> Selesai
+                            </button>
+                        </form>
+                    @endif
+                </x-kemajuan-peringkat>
+
+                {{-- 03 — Penyediaan & Pengesahan Data (PA) --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_PENYEDIAAN"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_PENYEDIAAN)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_PENYEDIAAN)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_PENYEDIAAN"
+                    :dikunci="! $terbuka(WorkflowStatus::STAGE_PENYEDIAAN)">
+                    @if ($bolehPA && $terbuka(WorkflowStatus::STAGE_PENYEDIAAN) && ! $selesai(WorkflowStatus::STAGE_PENYEDIAAN))
+                        <form action="{{ route('kemajuan.selesai', [$entiti['agency_code'], WorkflowStatus::STAGE_PENYEDIAAN]) }}"
+                            method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check2-circle"></i> Selesai
+                            </button>
+                        </form>
+                    @endif
+                </x-kemajuan-peringkat>
+
+                {{-- 04 — Analisis Data (PA): borang input + Simpan Dapatan + Selesai --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_ANALISIS"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_ANALISIS)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_ANALISIS)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_ANALISIS"
+                    :dikunci="! $terbuka(WorkflowStatus::STAGE_ANALISIS)"
+                    :keterangan="'Dapatan inventori: ' . ($analisisLengkap ? 'Lengkap' : 'Belum Lengkap')">
+                    @if ($bolehPA && $terbuka(WorkflowStatus::STAGE_ANALISIS))
+                        <a class="btn btn-sm btn-outline-light"
+                            href="{{ route('analisis.borang', ['sector_code' => $entiti['sector_code'], 'agency_code' => $entiti['agency_code']]) }}">
+                            <i class="bi bi-pencil-square"></i> Input Analisis Inventori Kriptografi
+                        </a>
+
+                        @if (! $selesai(WorkflowStatus::STAGE_ANALISIS))
+                            <form action="{{ route('kemajuan.selesai', [$entiti['agency_code'], WorkflowStatus::STAGE_ANALISIS]) }}"
+                                method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-primary" @disabled(! $analisisLengkap)
+                                    title="{{ $analisisLengkap ? 'Tandakan Analisis Data Selesai' : 'Simpan Dapatan perlu Lengkap dahulu' }}">
+                                    <i class="bi bi-check2-circle"></i> Selesai
+                                </button>
+                            </form>
+                        @endif
+                    @endif
+                </x-kemajuan-peringkat>
+
+                {{-- 05 — Jana Laporan (PA): Jana → Betulkan / Hantar --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_JANA_LAPORAN"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_JANA_LAPORAN)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_JANA_LAPORAN)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_JANA_LAPORAN"
+                    :dikunci="! $terbuka(WorkflowStatus::STAGE_JANA_LAPORAN)"
+                    keterangan="Peringkat ini hanya menjadi Selesai setelah laporan disahkan Ketua Bahagian.">
+                    @if ($bolehPA && $terbuka(WorkflowStatus::STAGE_JANA_LAPORAN))
+                        @if ($laporan === null)
+                            <form action="{{ route('kemajuan.jana-laporan', $entiti['agency_code']) }}" method="POST"
+                                class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-file-earmark-bar-graph"></i> Jana Laporan
+                                </button>
+                            </form>
+                        @elseif ($laporan->bolehDisuntingPA())
+                            @if ($analisis)
+                                <a class="btn btn-sm btn-outline-light"
+                                    href="{{ route('laporan.inventori', $analisis) }}">
+                                    <i class="bi bi-eye"></i> Pratonton
+                                </a>
+                            @endif
+                            <a class="btn btn-sm btn-outline-light"
+                                href="{{ route('analisis.borang', ['sector_code' => $entiti['sector_code'], 'agency_code' => $entiti['agency_code']]) }}">
+                                <i class="bi bi-pencil"></i> Betulkan
+                            </a>
+                            <form action="{{ route('kemajuan.hantar', $entiti['agency_code']) }}" method="POST"
+                                class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-send"></i> Hantar
+                                </button>
+                            </form>
+                        @endif
+                    @endif
+                </x-kemajuan-peringkat>
+
+                {{-- 06 — Semakan & Kelulusan (PPA kemudian KB) --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_SEMAKAN_KELULUSAN"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_SEMAKAN_KELULUSAN"
+                    :dikunci="! $terbuka(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN)">
+
+                    @if ($laporan && $analisis && ($bolehSemak || $bolehLulus))
+                        <a class="btn btn-sm btn-outline-light" href="{{ route('laporan.inventori', $analisis) }}">
+                            <i class="bi bi-eye"></i> Pratonton
+                        </a>
+                    @endif
+
+                    {{-- PPA: hantar kepada KB --}}
+                    @if ($bolehSemak && $statusLaporan === LaporanSemakan::MENUNGGU_PPA)
+                        <form action="{{ route('kemajuan.semak', $entiti['agency_code']) }}" method="POST"
+                            class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-send"></i> Hantar
+                            </button>
+                        </form>
+                    @endif
+
+                    {{-- KB: sahkan --}}
+                    @if ($bolehLulus && $statusLaporan === LaporanSemakan::MENUNGGU_KB)
+                        <form action="{{ route('kemajuan.sahkan', $entiti['agency_code']) }}" method="POST"
+                            class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-patch-check"></i> Sahkan
+                            </button>
+                        </form>
+                    @endif
+
+                    {{-- Kembalikan — Catatan wajib, jadi butang kekal
+                         dilumpuhkan sehingga medan diisi (lihat app.js). --}}
+                    @php
+                        $bolehKembalikan =
+                            ($bolehSemak && $statusLaporan === LaporanSemakan::MENUNGGU_PPA) ||
+                            ($bolehLulus && $statusLaporan === LaporanSemakan::MENUNGGU_KB);
+                    @endphp
+
+                    @if ($bolehKembalikan)
+                        <form action="{{ route('kemajuan.kembalikan', $entiti['agency_code']) }}" method="POST"
+                            class="kemajuan-kembalikan" data-catatan-wajib>
+                            @csrf
+                            <label class="form-label" for="catatan">Catatan (wajib untuk mengembalikan)</label>
+                            <textarea id="catatan" name="catatan" class="form-control mb-2" rows="2" maxlength="2000"
+                                required data-catatan
+                                placeholder="Nyatakan sebab laporan dikembalikan kepada Pegawai Analisis">{{ old('catatan') }}</textarea>
+                            <button type="submit" class="btn btn-sm btn-outline-light" data-catatan-butang disabled>
+                                <i class="bi bi-arrow-counterclockwise"></i> Kembalikan
+                            </button>
+                        </form>
+                    @endif
+
+                </x-kemajuan-peringkat>
+
+                {{-- 07 — Penyerahan & Penutupan --}}
+                <x-kemajuan-peringkat :nombor="WorkflowStatus::STAGE_PENYERAHAN"
+                    :nama="WorkflowStatus::getStageName(WorkflowStatus::STAGE_PENYERAHAN)"
+                    :rekod="$peringkat->get(WorkflowStatus::STAGE_PENYERAHAN)"
+                    :semasa="$peringkatSemasa === WorkflowStatus::STAGE_PENYERAHAN"
+                    :dikunci="! $terbuka(WorkflowStatus::STAGE_PENYERAHAN)"
+                    keterangan="Penyerahan laporan yang telah disahkan kepada NACSA.">
+
+                    @if ($laporan?->isSah() && $analisis)
+                        <a class="btn btn-sm btn-outline-light" href="{{ route('laporan.unduh', $analisis) }}">
+                            <i class="bi bi-download"></i> Muat Turun
+                        </a>
+                    @endif
+
+                    @if ($bolehSerah && $terbuka(WorkflowStatus::STAGE_PENYERAHAN) && ! $selesai(WorkflowStatus::STAGE_PENYERAHAN))
+                        <form action="{{ route('kemajuan.serah', $entiti['agency_code']) }}" method="POST"
+                            class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-primary" @disabled(! ($laporan?->isSah()))
+                                title="{{ $laporan?->isSah() ? 'Serahkan kepada NACSA' : 'Laporan perlu berstatus Sah dahulu' }}">
+                                <i class="bi bi-send-check"></i> Hantar
+                            </button>
+                        </form>
+                    @endif
+
+                </x-kemajuan-peringkat>
+
+            </ol>
+
+        </div>
+
+    @endif
 
     @can('manage-workflow')
         <div class="report-card mb-4">
 
-            <h4 class="section-title">Kemas Kini Workflow</h4>
+            <h4 class="section-title">Kawalan Penyeliaan</h4>
+            <p class="text-secondary">
+                Kemas kini peringkat secara manual dikekalkan untuk pembetulan penyeliaan.
+                Aliran kerja harian dipacu oleh tindakan peringkat di atas.
+            </p>
 
             @if (! $workflow)
-                <p class="text-secondary">
-                    Daftarkan entiti ini untuk mula memantau kemajuannya.
-                </p>
                 <form action="{{ route('workflow.mula', $entiti['agency_code']) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-outline-light">
                         <i class="bi bi-play-circle"></i> Daftar Dalam Workflow
                     </button>
                 </form>
             @else
                 <div class="row g-4">
 
-                    {{-- Maju satu peringkat sahaja: 01 → 02 → … → 07 --}}
-                    <div class="col-lg-4">
-                        <h6 class="workflow-action__title">Peringkat Seterusnya</h6>
-
-                        @if ($workflow->isComplete())
-                            <p class="text-secondary mb-0">
-                                Entiti telah berada pada peringkat terakhir
-                                (07 — {{ \App\Models\WorkflowStatus::getStageName(7) }}).
-                            </p>
-                        @else
-                            @php $seterusnya = $workflow->getNextStage(); @endphp
-                            <p class="text-secondary">
-                                {{ sprintf('%02d', $seterusnya) }} —
-                                {{ \App\Models\WorkflowStatus::getStageName($seterusnya) }}
-                            </p>
-                            <form action="{{ route('workflow.peringkat', $entiti['agency_code']) }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="to_stage" value="{{ $seterusnya }}">
-                                <label class="form-label" for="status_maju">Status Peringkat Baharu</label>
-                                <select id="status_maju" name="status" class="form-select mb-3">
-                                    @foreach (\App\Models\WorkflowStatus::STATUSES as $status)
-                                        <option value="{{ $status }}"
-                                            @selected($status === \App\Models\WorkflowStatus::DEFAULT_STATUS)>
-                                            {{ $status }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-arrow-right-circle"></i> Majukan Peringkat
-                                </button>
-                            </form>
-                        @endif
-                    </div>
-
-                    {{-- Kembali ke peringkat sebelumnya — sebab adalah wajib. --}}
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <h6 class="workflow-action__title">Kembali Ke Peringkat Sebelumnya</h6>
 
-                        @if ($workflow->current_stage <= \App\Models\WorkflowStatus::FIRST_STAGE)
-                            <p class="text-secondary mb-0">
-                                Tiada peringkat sebelum peringkat 01.
-                            </p>
+                        @if ($workflow->current_stage <= WorkflowStatus::FIRST_STAGE)
+                            <p class="text-secondary mb-0">Tiada peringkat sebelum peringkat 01.</p>
                         @else
                             <form action="{{ route('workflow.peringkat', $entiti['agency_code']) }}" method="POST">
                                 @csrf
                                 <label class="form-label" for="to_stage_undur">Peringkat</label>
                                 <select id="to_stage_undur" name="to_stage" class="form-select mb-3" required>
-                                    @for ($i = \App\Models\WorkflowStatus::FIRST_STAGE; $i < $workflow->current_stage; $i++)
+                                    @for ($i = WorkflowStatus::FIRST_STAGE; $i < $workflow->current_stage; $i++)
                                         <option value="{{ $i }}">
-                                            {{ sprintf('%02d', $i) }} — {{ \App\Models\WorkflowStatus::getStageName($i) }}
+                                            {{ sprintf('%02d', $i) }} — {{ WorkflowStatus::getStageName($i) }}
                                         </option>
                                     @endfor
                                 </select>
@@ -152,23 +375,22 @@
                         @endif
                     </div>
 
-                    {{-- Status dalam peringkat semasa (tanpa menukar peringkat). --}}
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <h6 class="workflow-action__title">Status Peringkat Semasa</h6>
                         <p class="text-secondary">
-                            Kitaran: {{ implode(' → ', \App\Models\WorkflowStatus::STATUSES) }}
+                            Kitaran: {{ implode(' → ', WorkflowStatus::STATUSES) }}
                         </p>
                         <form action="{{ route('workflow.status', $entiti['agency_code']) }}" method="POST">
                             @csrf
                             <label class="form-label" for="status_semasa">Status</label>
                             <select id="status_semasa" name="status" class="form-select mb-3" required>
-                                @foreach (\App\Models\WorkflowStatus::STATUSES as $status)
-                                    <option value="{{ $status }}" @selected($status === $workflow->status)>
-                                        {{ $status }}
+                                @foreach (WorkflowStatus::STATUSES as $pilihan)
+                                    <option value="{{ $pilihan }}" @selected($pilihan === $workflow->status)>
+                                        {{ $pilihan }}
                                     </option>
                                 @endforeach
                             </select>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-outline-light">
                                 <i class="bi bi-check2-circle"></i> Kemas Kini Status
                             </button>
                         </form>

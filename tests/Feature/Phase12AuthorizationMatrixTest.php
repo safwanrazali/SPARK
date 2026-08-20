@@ -134,15 +134,24 @@ class Phase12AuthorizationMatrixTest extends TestCase
         }
     }
 
-    public function test_penugasan_entiti_hanya_untuk_pentadbir_dan_penyelaras(): void
+    public function test_penetapan_entiti_dikongsi_mengikut_panel_peranan(): void
     {
-        $dibenarkan = [
+        // Skrin "Penetapan Entiti" kini memegang dua panel: pendaftaran
+        // (peringkat 1) milik Pegawai Penyelaras Rekod, dibuka semula oleh
+        // Ketua Bahagian; penugasan milik Pegawai Penyelaras Analisis.
+        // Setiap panel disediakan hanya untuk peranan yang berhak.
+        $this->semakMatriks('GET', route('penugasan.index'), [
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
-        ];
+            User::ROLE_PENYELARAS_REKOD => self::BENAR,
+            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+        ]);
 
-        $this->semakMatriks('GET', route('penugasan.index'), $dibenarkan);
-        $this->semakMatriks('GET', route('penugasan.show', self::ALPHA), $dibenarkan);
+        // Sejarah penugasan satu entiti kekal milik modul penugasan sahaja.
+        $this->semakMatriks('GET', route('penugasan.show', self::ALPHA), [
+            User::ROLE_ADMINISTRATOR => self::BENAR,
+            User::ROLE_COORDINATOR => self::BENAR,
+        ]);
     }
 
     public function test_kawalan_peringkat_workflow_hanya_untuk_pentadbir_dan_penyelaras(): void

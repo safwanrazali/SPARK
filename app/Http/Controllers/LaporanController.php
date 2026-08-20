@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
+use App\Services\LaporanSemakanService;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
 
@@ -41,6 +42,16 @@ class LaporanController extends Controller
     public function unduh(AnalisisInventori $analisis)
     {
         $this->authorize('generateReport', $analisis);
+
+        // Carta aliran bahagian 12: hanya laporan yang telah disahkan Ketua
+        // Bahagian (status Sah) boleh dimuat turun.
+        $semakan = app(LaporanSemakanService::class)->untuk($analisis->agency_code);
+
+        abort_unless(
+            $semakan !== null && $semakan->isSah(),
+            403,
+            'Laporan ini belum disahkan. Hanya laporan berstatus Sah boleh dimuat turun.',
+        );
 
         $viewData = $this->siapkanData($analisis);
 

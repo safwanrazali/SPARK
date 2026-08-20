@@ -29,6 +29,14 @@ use Illuminate\Support\Collection;
  */
 class DashboardStatistikService
 {
+    /**
+     * Nilai `workflow_status.status` yang menandakan entiti benar-benar siap.
+     *
+     * Diselaraskan oleh KemajuanAnalisisService daripada status setiap
+     * peringkat; lihat KemajuanAnalisisService::keseluruhanDaripada().
+     */
+    public const STATUS_SIAP = 'Siap';
+
     public function __construct(private readonly EntityAccessService $access) {}
 
     /**
@@ -46,12 +54,13 @@ class DashboardStatistikService
 
         $workflow = $this->workflowDalamSkop($pengguna, $entiti);
 
-        $dalamProses = $workflow->whereBetween('current_stage', [
-            WorkflowStatus::FIRST_STAGE,
-            WorkflowStatus::LAST_STAGE - 1,
-        ])->count();
+        // "Selesai" bermakna KESEMUA tujuh peringkat telah Selesai, bukan
+        // sekadar berada pada peringkat terakhir. KemajuanAnalisisService
+        // menetapkan status 'Siap' pada baris ini hanya apabila syarat itu
+        // dipenuhi, jadi entiti tidak boleh dikira siap lebih awal.
+        $selesai = $workflow->where('status', self::STATUS_SIAP)->count();
 
-        $selesai = $workflow->where('current_stage', WorkflowStatus::LAST_STAGE)->count();
+        $dalamProses = $workflow->count() - $selesai;
 
         $laporan = $this->statistikLaporan($pengguna, $entiti, $jumlahEntiti);
 
@@ -228,7 +237,7 @@ class DashboardStatistikService
 
             $selesai = $workflow
                 ->whereIn('agency_code', $dalamSektor)
-                ->where('current_stage', WorkflowStatus::LAST_STAGE)
+                ->where('status', self::STATUS_SIAP)
                 ->count();
 
             $mengikutSektor[] = [

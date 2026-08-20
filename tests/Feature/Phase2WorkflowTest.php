@@ -58,8 +58,8 @@ class Phase2WorkflowTest extends TestCase
             1 => 'Penerimaan & Pendaftaran Data',
             2 => 'Semakan Awal Data',
             3 => 'Penyediaan & Pengesahan Data',
-            4 => 'Pelaksanaan Analisis',
-            5 => 'Penjanaan Laporan',
+            4 => 'Analisis Data',
+            5 => 'Jana Laporan',
             6 => 'Semakan & Kelulusan',
             7 => 'Penyerahan & Penutupan',
         ], WorkflowStatus::WORKFLOW_STAGES);

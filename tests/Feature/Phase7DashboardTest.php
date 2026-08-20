@@ -61,6 +61,20 @@ class Phase7DashboardTest extends TestCase
             ]);
     }
 
+    /**
+     * Entiti yang telah menamatkan kesemua peringkat — berbeza daripada
+     * sekadar berada pada peringkat 7.
+     */
+    private function workflowSiap(string $agencyCode, ?string $tarikh = null): WorkflowStatus
+    {
+        return WorkflowStatus::factory()
+            ->siap()
+            ->create(SektorDirectory::cariEntiti($agencyCode) + [
+                'updated_by_user_id' => $this->coordinator->id,
+                'status_since' => $tarikh ? Carbon::parse($tarikh) : now(),
+            ]);
+    }
+
     private function statusLaporan(string $agencyCode, string $jenis, string $status): StatusLaporan
     {
         return StatusLaporan::create(SektorDirectory::cariEntiti($agencyCode) + [
@@ -133,7 +147,7 @@ class Phase7DashboardTest extends TestCase
         // 3 entiti: peringkat 2, peringkat 6, peringkat 7.
         $this->workflow(self::ALPHA, 2);
         $this->workflow(self::BETA, 6);
-        $this->workflow(self::GAMMA, WorkflowStatus::LAST_STAGE);
+        $this->workflowSiap(self::GAMMA);
 
         $statistik = $this->kira();
 
@@ -183,8 +197,8 @@ class Phase7DashboardTest extends TestCase
     public function test_kemajuan_keseluruhan_dikira_daripada_peringkat_dicapai(): void
     {
         // Peringkat 7 + 7 = 14 daripada maksimum 2 × 7 = 14 → 100%.
-        $this->workflow(self::ALPHA, 7);
-        $this->workflow(self::BETA, 7);
+        $this->workflowSiap(self::ALPHA);
+        $this->workflowSiap(self::BETA);
 
         $this->assertSame(100, $this->kira()['kemajuan']);
     }
@@ -254,9 +268,9 @@ class Phase7DashboardTest extends TestCase
 
     public function test_penapis_sektor_menghadkan_semua_kiraan(): void
     {
-        $this->workflow(self::ALPHA, 7);   // sektor 001
-        $this->workflow(self::BETA, 2);    // sektor 001
-        $this->workflow(self::DELTA, 7);   // sektor 010
+        $this->workflowSiap(self::ALPHA);   // sektor 001
+        $this->workflow(self::BETA, 2);     // sektor 001
+        $this->workflowSiap(self::DELTA);   // sektor 010
 
         $semua = $this->kira();
         $this->assertSame(3, $semua['jumlahEntiti']);
@@ -360,8 +374,8 @@ class Phase7DashboardTest extends TestCase
 
     public function test_papan_pemuka_memaparkan_nilai_dikira_bukan_nilai_tetap(): void
     {
-        $this->workflow(self::ALPHA, 7);
-        $this->workflow(self::BETA, 7);
+        $this->workflowSiap(self::ALPHA);
+        $this->workflowSiap(self::BETA);
 
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))

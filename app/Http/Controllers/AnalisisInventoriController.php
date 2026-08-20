@@ -7,6 +7,8 @@ use App\Models\StatusLaporan;
 use App\Services\AnalisisDraftService;
 use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
+use App\Services\KemajuanAnalisisService;
+use App\Models\WorkflowStatus;
 use App\Support\BorangAnalisis;
 use App\Support\SeksyenAnalisis;
 use Illuminate\Http\Request;
@@ -18,6 +20,7 @@ class AnalisisInventoriController extends Controller
         private readonly EntityAccessService $access,
         private readonly AnalisisDraftService $draf,
         private readonly AuditTrailService $audit,
+        private readonly KemajuanAnalisisService $kemajuan,
     ) {}
 
     /**
@@ -60,6 +63,15 @@ class AnalisisInventoriController extends Controller
         }
 
         $analisis = AnalisisInventori::where('agency_code', $agensi['code'])->first();
+
+        // Carta aliran bahagian 6: membuka borang input menandakan peringkat
+        // "Analisis Data" sebagai Dalam Proses secara automatik. Peringkat
+        // yang belum dibuka (peringkat 3 belum Selesai) tidak disentuh.
+        $this->kemajuan->tandakanDalamProses(
+            $agensi['code'],
+            WorkflowStatus::STAGE_ANALISIS,
+            $request->user(),
+        );
 
         // FASA 6 — sambung semula: rekod tersimpan ditindih oleh draf semasa.
         $borang = $this->draf->borangDipulihkan($analisis);

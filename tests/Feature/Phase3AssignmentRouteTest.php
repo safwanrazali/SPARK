@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -38,6 +39,19 @@ class Phase3AssignmentRouteTest extends TestCase
         return app(EntityAssignmentService::class)->assign(
             SektorDirectory::cariEntiti(self::ENTITI),
             $analyst,
+            $this->coordinator,
+        );
+    }
+
+    /**
+     * Entiti hanya tersedia kepada Pegawai Penyelaras Analisis setelah
+     * "Penerimaan & Pendaftaran Data" Selesai, jadi setiap ujian penugasan
+     * melalui HTTP mesti melalui prasyarat itu terlebih dahulu.
+     */
+    private function daftarkan(string $agencyCode = self::ENTITI): void
+    {
+        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+            SektorDirectory::cariEntiti($agencyCode),
             $this->coordinator,
         );
     }
@@ -100,6 +114,9 @@ class Phase3AssignmentRouteTest extends TestCase
 
     public function test_senarai_entiti_dipaparkan_mengikut_sektor(): void
     {
+        $this->daftarkan('A100101');
+        $this->daftarkan('A100102');
+
         $response = $this->actingAs($this->coordinator)
             ->get(route('penugasan.index', ['sector_code' => '010']));
 
@@ -110,8 +127,17 @@ class Phase3AssignmentRouteTest extends TestCase
             ->assertSee('Pegawai A');
     }
 
+    public function test_entiti_belum_didaftarkan_tidak_dipaparkan_kepada_penyelaras(): void
+    {
+        $this->actingAs($this->coordinator)
+            ->get(route('penugasan.index', ['sector_code' => '010']))
+            ->assertOk()
+            ->assertDontSee('A100101');
+    }
+
     public function test_paparan_lalai_menunjukkan_entiti_yang_telah_ditugaskan(): void
     {
+        $this->daftarkan();
         $this->tugaskan($this->analystA);
 
         $this->actingAs($this->coordinator)
@@ -136,6 +162,8 @@ class Phase3AssignmentRouteTest extends TestCase
 
     public function test_entiti_ditugaskan_melalui_http(): void
     {
+        $this->daftarkan();
+
         $this->actingAs($this->coordinator)
             ->from(route('penugasan.show', self::ENTITI))
             ->post(route('penugasan.simpan', self::ENTITI), [
@@ -204,6 +232,7 @@ class Phase3AssignmentRouteTest extends TestCase
 
     public function test_entiti_ditukar_ganti_melalui_http(): void
     {
+        $this->daftarkan();
         $asal = $this->tugaskan($this->analystA);
 
         $this->actingAs($this->coordinator)

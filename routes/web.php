@@ -8,8 +8,10 @@ use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntitiAssignmentController;
 use App\Http\Controllers\EntitiController;
+use App\Http\Controllers\KemajuanAnalisisController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MuatNaikController;
+use App\Http\Controllers\PendaftaranEntitiController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\StatusLaporanController;
 use App\Http\Controllers\WorkflowController;
@@ -142,16 +144,55 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Penugasan Entiti — Penyelaras tugaskan entiti kepada Analisis (Fasa 3)
+    | Kemajuan Analisis Entiti — tindakan setiap peringkat
     |----------------------------------------------------------------------
+    | Kebenaran peranan disemak dalam controller kerana ia berbeza bagi
+    | setiap tindakan; `entity.access` di sini memastikan Pegawai Analisis
+    | tidak boleh menyentuh entiti yang bukan miliknya.
     */
-    Route::middleware('can:manage-assignment')
-        ->prefix('penugasan')
+    Route::middleware('entity.access')
+        ->prefix('workflow/{agencyCode}')
+        ->name('kemajuan.')
+        ->group(function () {
+            Route::post('/peringkat/{stage}/selesai', [KemajuanAnalisisController::class, 'selesai'])
+                ->whereNumber('stage')
+                ->name('selesai');
+
+            Route::post('/jana-laporan', [KemajuanAnalisisController::class, 'janaLaporan'])->name('jana-laporan');
+            Route::post('/hantar', [KemajuanAnalisisController::class, 'hantar'])->name('hantar');
+            Route::post('/semak', [KemajuanAnalisisController::class, 'semak'])->name('semak');
+            Route::post('/kembalikan', [KemajuanAnalisisController::class, 'kembalikan'])->name('kembalikan');
+            Route::post('/sahkan', [KemajuanAnalisisController::class, 'sahkan'])->name('sahkan');
+            Route::post('/serah', [KemajuanAnalisisController::class, 'serah'])->name('serah');
+        });
+
+    /*
+    |----------------------------------------------------------------------
+    | Penetapan Entiti — satu skrin, dua panel mengikut peranan
+    |----------------------------------------------------------------------
+    | Panel pendaftaran (peringkat 1) milik Pegawai Penyelaras Rekod dan
+    | Ketua Bahagian; panel penugasan milik Pegawai Penyelaras Analisis.
+    | Kerana itu gate `manage-assignment` tidak lagi boleh melindungi
+    | keseluruhan kumpulan — ia dipindahkan ke setiap route penugasan.
+    |
+    | Route `pendaftaran` mesti didaftarkan SEBELUM `{agencyCode}`, jika
+    | tidak POST /penugasan/pendaftaran akan dipadankan sebagai penugasan
+    | bagi entiti bernama "pendaftaran".
+    */
+    Route::prefix('penugasan')
         ->name('penugasan.')
         ->group(function () {
             Route::get('/', [EntitiAssignmentController::class, 'index'])->name('index');
 
-            Route::middleware('entity.access')->group(function () {
+            Route::post('/pendaftaran', [PendaftaranEntitiController::class, 'kemasKini'])
+                ->middleware('can:register-entity-data')
+                ->name('pendaftaran.kemas-kini');
+
+            Route::post('/pendaftaran/{agencyCode}/set-semula', [PendaftaranEntitiController::class, 'setSemula'])
+                ->middleware('can:reset-entity-registration')
+                ->name('pendaftaran.set-semula');
+
+            Route::middleware(['can:manage-assignment', 'entity.access'])->group(function () {
                 Route::get('/{agencyCode}', [EntitiAssignmentController::class, 'show'])->name('show');
                 Route::post('/{agencyCode}', [EntitiAssignmentController::class, 'simpan'])->name('simpan');
                 Route::post('/{agencyCode}/tarik', [EntitiAssignmentController::class, 'tarik'])->name('tarik');

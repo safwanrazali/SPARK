@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 1. Penerimaan & Pendaftaran Data
  * 2. Semakan Awal Data
  * 3. Penyediaan & Pengesahan Data
- * 4. Pelaksanaan Analisis
- * 5. Penjanaan Laporan
+ * 4. Analisis Data
+ * 5. Jana Laporan
  * 6. Semakan & Kelulusan
  * 7. Penyerahan & Penutupan
  *
@@ -56,11 +56,30 @@ class WorkflowStatus extends Model
         1 => 'Penerimaan & Pendaftaran Data',
         2 => 'Semakan Awal Data',
         3 => 'Penyediaan & Pengesahan Data',
-        4 => 'Pelaksanaan Analisis',
-        5 => 'Penjanaan Laporan',
+        4 => 'Analisis Data',
+        5 => 'Jana Laporan',
         6 => 'Semakan & Kelulusan',
         7 => 'Penyerahan & Penutupan',
     ];
+
+    /**
+     * Nombor peringkat yang dirujuk secara langsung oleh aliran kerja
+     * Kemajuan Analisis Entiti. Nombor bertaburan dalam kod menjadikan
+     * perubahan susunan peringkat berisiko; namakan sekali di sini.
+     */
+    public const STAGE_PENDAFTARAN = 1;
+
+    public const STAGE_SEMAKAN_AWAL = 2;
+
+    public const STAGE_PENYEDIAAN = 3;
+
+    public const STAGE_ANALISIS = 4;
+
+    public const STAGE_JANA_LAPORAN = 5;
+
+    public const STAGE_SEMAKAN_KELULUSAN = 6;
+
+    public const STAGE_PENYERAHAN = 7;
 
     public const FIRST_STAGE = 1;
 

@@ -59,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         $analisis = [User::ROLE_ANALYST];
         $ketua = [User::ROLE_KETUA_BAHAGIAN];
         $timbalanII = [User::ROLE_TIMBALAN_PENGARAH_II];
+        $penyelarasRekod = [User::ROLE_PENYELARAS_REKOD];
 
         // Pentadbiran sistem — Pentadbir sahaja. Tiada peranan lain boleh
         // mewarisi akses ini secara tidak sengaja.
@@ -82,6 +83,42 @@ class AppServiceProvider extends ServiceProvider
 
         // "Assign entity" — Pentadbir ✓, Penyelaras ✓, Analisis ✗, Ketua ✗.
         Gate::define('manage-assignment', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelaras]));
+
+        /*
+        |------------------------------------------------------------------
+        | Kemajuan Analisis Entiti — carta aliran kerja
+        |------------------------------------------------------------------
+        |
+        | Aliran ini memberi setiap peringkat kepada peranan tertentu, jadi
+        | gate `manage-workflow` yang menyeluruh itu tidak lagi mencukupi.
+        | Ia dikekalkan sebagai kawalan penyeliaan (kemas kini peringkat
+        | secara manual); tindakan aliran kerja harian menggunakan gate
+        | khusus di bawah.
+        */
+
+        // PPR menandakan "Penerimaan & Pendaftaran Data" bagi setiap entiti.
+        // Skrin ini membaca senarai induk sektor sahaja — ia tidak mendedahkan
+        // rekod entiti, jadi PPR kekal tanpa akses kepada halaman entiti.
+        Gate::define('register-entity-data', fn (User $user) => $user->hasAnyRole([...$admin, ...$penyelarasRekod]));
+
+        // Entiti yang telah didaftarkan dikunci daripada PPR. Nota carta
+        // aliran menyatakan hanya Ketua Bahagian boleh membuka semula.
+        Gate::define('reset-entity-registration', fn (User $user) => $user->hasAnyRole([...$admin, ...$ketua]));
+
+        // PA memacu peringkat 2 hingga 5 bagi entiti yang ditugaskan
+        // kepadanya. Dimensi entiti dikuatkuasakan berasingan melalui
+        // EntityAccessService, jadi gate ini hanya menyatakan peranan.
+        Gate::define('advance-analysis-stage', fn (User $user) => $user->hasAnyRole([...$admin, ...$analisis]));
+
+        // "Penyerahan & Penutupan" — penyerahan laporan yang telah disahkan
+        // kepada NACSA.
+        //
+        // NEEDS CONFIRMATION: pengurusan belum memuktamadkan sama ada
+        // tanggungjawab ini milik Ketua Bahagian atau Timbalan Pengarah II.
+        // Buat sementara ia diberikan kepada Ketua Bahagian sahaja; tambah
+        // `...$timbalanII` pada senarai ini apabila keputusan disahkan —
+        // tiada perubahan lain diperlukan.
+        Gate::define('submit-to-nacsa', fn (User $user) => $user->hasAnyRole([...$admin, ...$ketua]));
 
         // "Dashboard keseluruhan" — termasuk Ketua Bahagian, dan buat
         // sementara Timbalan Pengarah II (satu-satunya kebenaran eksplisit

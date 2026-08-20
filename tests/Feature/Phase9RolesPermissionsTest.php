@@ -6,6 +6,7 @@ use App\Models\AnalisisInventori;
 use App\Models\User;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -358,7 +359,30 @@ class Phase9RolesPermissionsTest extends TestCase
         ];
     }
 
-    #[DataProvider('aksesPenugasan')]
+    /**
+     * Peranan yang boleh MEMBUKA skrin Penetapan Entiti.
+     *
+     * Lebih luas daripada aksesPenugasan(): skrin itu turut memegang panel
+     * Penerimaan & Pendaftaran Data, jadi Pegawai Penyelaras Rekod (menanda)
+     * dan Ketua Bahagian (Set Semula) turut dibenarkan masuk — tetapi tanpa
+     * keupayaan membuat penugasan.
+     *
+     * @return array<string, array{0: string, 1: bool}>
+     */
+    public static function aksesPenetapanEntiti(): array
+    {
+        return [
+            'Pentadbir' => [User::ROLE_ADMINISTRATOR, true],
+            'Penyelaras' => [User::ROLE_COORDINATOR, true],
+            'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, true],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, true],
+            'Pegawai Analisis' => [User::ROLE_ANALYST, false],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, false],
+        ];
+    }
+
+    #[DataProvider('aksesPenetapanEntiti')]
     public function test_akses_modul_penugasan_mengikut_peranan(string $role, bool $dibenarkan): void
     {
         $response = $this->actingAs($this->pengguna($role))->get(route('penugasan.index'));
@@ -370,6 +394,13 @@ class Phase9RolesPermissionsTest extends TestCase
     public function test_membuat_penugasan_mengikut_peranan(string $role, bool $dibenarkan): void
     {
         $analyst = $this->pengguna(User::ROLE_ANALYST);
+
+        // Prasyarat aliran kerja: entiti hanya boleh ditugaskan selepas
+        // "Penerimaan & Pendaftaran Data" Selesai.
+        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+            SektorDirectory::cariEntiti(self::ALPHA),
+            $this->pengguna(User::ROLE_ADMINISTRATOR),
+        );
 
         $response = $this->actingAs($this->pengguna($role))
             ->post(route('penugasan.simpan', self::ALPHA), [

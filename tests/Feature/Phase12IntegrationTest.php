@@ -9,6 +9,7 @@ use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -40,6 +41,8 @@ class Phase12IntegrationTest extends TestCase
 
     private User $analystB;
 
+    private User $penyelarasRekod;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -62,6 +65,27 @@ class Phase12IntegrationTest extends TestCase
             'role' => User::ROLE_ANALYST,
             'name' => 'Pegawai Analisis B',
         ]);
+
+        $this->penyelarasRekod = User::factory()->create([
+            'role' => User::ROLE_PENYELARAS_REKOD,
+            'name' => 'Pegawai Penyelaras Rekod',
+            'username' => 'rekod',
+            'password' => 'rahsia-rekod',
+        ]);
+    }
+
+    /**
+     * Peringkat 1 aliran kerja — prasyarat sebelum entiti boleh ditugaskan.
+     *
+     * Ujian yang memberi tumpuan kepada langkah kemudian memanggil servis
+     * terus; aliran hujung ke hujung di bawah melaluinya melalui HTTP.
+     */
+    private function daftarkan(string $agencyCode): void
+    {
+        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+            SektorDirectory::cariEntiti($agencyCode),
+            $this->penyelarasRekod,
+        );
     }
 
     /**
@@ -129,11 +153,21 @@ class Phase12IntegrationTest extends TestCase
 
         $this->get(route('dashboard'))->assertOk();
 
+        // 1b ── Peringkat 1: PPR menandakan Penerimaan & Pendaftaran Data.
+        //       Sebelum langkah ini entiti langsung tidak kelihatan kepada PPA.
+        $this->actingAs($this->penyelarasRekod)
+            ->post(route('penugasan.pendaftaran.kemas-kini'), [
+                'agency_codes' => [self::ALPHA],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($this->penyelaras);
+
         // 2 ── Sektor → Entiti → pilih entiti (spesifikasi bahagian 7).
+        //      Senarai PPA memaparkan entiti yang telah didaftarkan sahaja.
         $this->get(route('penugasan.index', ['sector_code' => self::SEKTOR]))
             ->assertOk()
-            ->assertViewHas('entiti', fn ($senarai) => $senarai->total()
-                === SektorDirectory::entitiDalamSektor(self::SEKTOR)->count());
+            ->assertViewHas('entiti', fn ($senarai) => $senarai->total() === 1);
 
         $this->get(route('penugasan.show', self::ALPHA))
             ->assertOk()
@@ -152,14 +186,15 @@ class Phase12IntegrationTest extends TestCase
             'status' => EntitiAssignment::STATUS_ACTIVE,
         ]);
 
-        // 4 ── Workflow: entiti didaftarkan pada peringkat 1.
+        // 4 ── Workflow: entiti telah melepasi peringkat 1 pada langkah 1b,
+        //      jadi kedudukan semasanya ialah peringkat 2 — Semakan Awal Data.
         $this->post(route('workflow.mula', self::ALPHA))->assertRedirect();
 
         $workflow = WorkflowStatus::where('agency_code', self::ALPHA)->firstOrFail();
-        $this->assertSame(1, $workflow->current_stage);
-        $this->assertSame('Penerimaan & Pendaftaran Data', $workflow->stage_name);
+        $this->assertSame(2, $workflow->current_stage);
+        $this->assertSame('Semakan Awal Data', $workflow->stage_name);
         $this->assertNotNull($workflow->status_since);
-        $this->assertSame($this->penyelaras->id, $workflow->updated_by_user_id);
+        $this->assertSame($this->penyelarasRekod->id, $workflow->updated_by_user_id);
 
         $this->post(route('logout'));
 
@@ -244,7 +279,9 @@ class Phase12IntegrationTest extends TestCase
         // 11 ── Penyelaras memajukan workflow sehingga peringkat 7.
         $this->actingAs($this->penyelaras);
 
-        foreach (range(2, WorkflowStatus::LAST_STAGE) as $peringkat) {
+        // Peringkat 2 telah dicapai melalui pendaftaran, jadi kemas kini
+        // manual bermula daripada peringkat 3.
+        foreach (range(3, WorkflowStatus::LAST_STAGE) as $peringkat) {
             $this->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => $peringkat])
                 ->assertRedirect()
                 ->assertSessionHasNoErrors();
@@ -267,9 +304,15 @@ class Phase12IntegrationTest extends TestCase
         ]);
 
         // 13 ── Dashboard dikira semula daripada rekod sebenar.
+        //
+        //       Entiti ini dimajukan melalui kawalan penyeliaan, bukan melalui
+        //       tindakan setiap peringkat, jadi status peringkatnya belum
+        //       Selesai — dan ia TIDAK dikira siap walaupun berada pada
+        //       peringkat terakhir. Aliran sebenar hingga 'Siap' diuji dalam
+        //       KemajuanAnalisisAliranTest (Senario C–L).
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('selesai', 1)
+            ->assertViewHas('selesai', 0)
             ->assertViewHas('kemajuan', 100)
             ->assertViewHas('analisisSelesai', 1);
 
@@ -339,6 +382,8 @@ class Phase12IntegrationTest extends TestCase
 
     public function test_penugasan_semula_memindahkan_akses_dan_mengekalkan_kerja_sedia_ada(): void
     {
+        $this->daftarkan(self::ALPHA);
+
         $this->actingAs($this->penyelaras)
             ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
 
@@ -380,6 +425,8 @@ class Phase12IntegrationTest extends TestCase
 
     public function test_penarikan_penugasan_menutup_akses_pegawai_analisis(): void
     {
+        $this->daftarkan(self::ALPHA);
+
         $this->actingAs($this->penyelaras)
             ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
 
@@ -480,7 +527,7 @@ class Phase12IntegrationTest extends TestCase
         $this->actingAs($this->penyelaras);
 
         WorkflowStatus::factory()->create(SektorDirectory::cariEntiti(self::ALPHA));
-        WorkflowStatus::factory()->onStage(7)->create(SektorDirectory::cariEntiti(self::BETA));
+        WorkflowStatus::factory()->siap()->create(SektorDirectory::cariEntiti(self::BETA));
 
         $this->get(route('dashboard'))
             ->assertOk()
@@ -540,12 +587,20 @@ class Phase12IntegrationTest extends TestCase
 
     public function test_pusat_maklumat_entiti_memaparkan_hasil_semua_modul(): void
     {
+        $this->daftarkan(self::ALPHA);
+
         $this->actingAs($this->penyelaras);
 
         $this->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
-        $this->post(route('workflow.mula', self::ALPHA));
-        $this->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => 2]);
         $this->post(route('status.kitar'), SektorDirectory::cariEntiti(self::ALPHA) + ['jenis' => 'inventori']);
+
+        // Entiti yang didaftarkan sudah berada pada peringkat 2; kemajuan kini
+        // dipacu oleh status setiap peringkat, bukan lagi oleh kemas kini
+        // peringkat secara manual.
+        $this->assertSame(
+            2,
+            WorkflowStatus::where('agency_code', self::ALPHA)->firstOrFail()->current_stage,
+        );
 
         $this->actingAs($this->analystA)
             ->post(route('analisis.simpan'), $this->dapatanAnalisis(['selesai' => '1']));
@@ -558,7 +613,7 @@ class Phase12IntegrationTest extends TestCase
             ->assertSee('Pegawai Analisis A')          // penugasan
             ->assertSee('PTPKM/INV/2026/001')          // dapatan analisis
             ->assertSee('Dalam Proses')                // status laporan
-            ->assertSee('Peringkat Workflow Berubah'); // sejarah
+            ->assertSee('Status Peringkat Analisis Berubah'); // sejarah
     }
 
     /*

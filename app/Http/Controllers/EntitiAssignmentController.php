@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Exceptions\InvalidAssignmentException;
 use App\Models\EntitiAssignment;
 use App\Models\User;
+use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -23,14 +25,24 @@ use Illuminate\Support\Facades\Gate;
  */
 class EntitiAssignmentController extends Controller
 {
-    public function __construct(private readonly EntityAssignmentService $assignments) {}
+    public function __construct(
+        private readonly EntityAssignmentService $assignments,
+        private readonly KemajuanAnalisisService $kemajuan,
+    ) {}
 
     /**
-     * Senarai entiti mengikut sektor beserta penugasan semasa.
+     * "Penetapan Entiti" — satu skrin dengan dua panel.
+     *
+     * Panel pendaftaran (peringkat 1) untuk PPR dan Ketua Bahagian; panel
+     * penugasan untuk PPA. Setiap panel disediakan hanya apabila pengguna
+     * berhak melihatnya, supaya tiada data dikumpulkan tanpa keperluan.
      */
     public function index(Request $request)
     {
-        Gate::authorize('manage-assignment');
+        $bolehDaftar = Gate::allows('register-entity-data') || Gate::allows('reset-entity-registration');
+        $bolehTugas = Gate::allows('manage-assignment');
+
+        abort_unless($bolehDaftar || $bolehTugas, 403, 'Anda tidak mempunyai akses kepada Penetapan Entiti.');
 
         $sectorCode = $request->query('sector_code');
 
@@ -38,34 +50,97 @@ class EntitiAssignmentController extends Controller
             $sectorCode = null;
         }
 
+        return view('penugasan.index', [
+            'sectorCode' => $sectorCode,
+            'bolehDaftar' => $bolehDaftar,
+            'bolehTugas' => $bolehTugas,
+            'pendaftaran' => $bolehDaftar ? $this->senaraiPendaftaran($request, $sectorCode) : null,
+            'entiti' => $bolehTugas ? $this->senaraiPenugasan($request, $sectorCode) : null,
+            'analysts' => $bolehTugas ? $this->assignments->analystsAvailable() : collect(),
+            'jumlahAktif' => $bolehTugas ? EntitiAssignment::query()->active()->count() : 0,
+            'jumlahDidaftar' => count($this->kemajuan->kodPendaftaranSelesai()),
+        ]);
+    }
+
+    /**
+     * Panel pendaftaran — senarai induk sektor beserta status peringkat 1.
+     *
+     * Sumbernya ialah config/sektor.php, bukan rekod entiti, kerana PPR
+     * mendaftarkan entiti yang belum mempunyai sebarang rekod lagi.
+     *
+     * @return LengthAwarePaginator<int, array<string, mixed>>
+     */
+    private function senaraiPendaftaran(Request $request, ?string $sectorCode): LengthAwarePaginator
+    {
         $entiti = $sectorCode !== null
             ? SektorDirectory::entitiDalamSektor($sectorCode)
-            : $this->entitiDitugaskan();
+            : collect($this->kemajuan->kodPendaftaranSelesai())
+                ->map(fn (string $kod) => SektorDirectory::cariEntiti($kod))
+                ->filter()
+                ->values();
 
-        $penugasan = $this->assignments->activeForMany(
-            $entiti->pluck('agency_code')->all()
-        );
+        $peringkat = $this->kemajuan->peringkatUntukBanyak($entiti->pluck('agency_code')->all());
+
+        $senarai = $entiti
+            ->map(function (array $e) use ($peringkat) {
+                $rekod = $peringkat->get($e['agency_code']);
+
+                return $e + [
+                    'pendaftaran' => $rekod?->get(WorkflowStatus::STAGE_PENDAFTARAN),
+                    'keseluruhan' => $this->kemajuan->keseluruhanDaripada($rekod),
+                ];
+            })
+            ->sortBy([['sector_code', 'asc'], ['agency_code', 'asc']])
+            ->values();
+
+        return $this->halaman($request, $senarai, 'muka_daftar');
+    }
+
+    /**
+     * Panel penugasan — HANYA entiti yang telah menyelesaikan pendaftaran.
+     *
+     * Inilah kesan "entiti menjadi tersedia kepada PPA": sebelum peringkat 1
+     * Selesai, entiti langsung tidak muncul di sini.
+     *
+     * @return LengthAwarePaginator<int, array<string, mixed>>
+     */
+    private function senaraiPenugasan(Request $request, ?string $sectorCode): LengthAwarePaginator
+    {
+        $entiti = collect($this->kemajuan->kodPendaftaranSelesai())
+            ->map(fn (string $kod) => SektorDirectory::cariEntiti($kod))
+            ->filter()
+            ->when($sectorCode !== null, fn (Collection $e) => $e->where('sector_code', $sectorCode))
+            ->values();
+
+        $penugasan = $this->assignments->activeForMany($entiti->pluck('agency_code')->all());
 
         $senarai = $entiti
             ->map(fn (array $e) => $e + ['penugasan' => $penugasan->get($e['agency_code'])])
-            ->sortBy([['sector_code', 'asc'], ['agency_name', 'asc']])
+            ->sortBy([['sector_code', 'asc'], ['agency_code', 'asc']])
             ->values();
 
-        $muka = LengthAwarePaginator::resolveCurrentPage();
-        $setiapMuka = 25;
+        return $this->halaman($request, $senarai, 'muka_tugas');
+    }
 
-        return view('penugasan.index', [
-            'entiti' => new LengthAwarePaginator(
-                $senarai->forPage($muka, $setiapMuka)->values(),
-                $senarai->count(),
-                $setiapMuka,
-                $muka,
-                ['path' => $request->url(), 'query' => $request->query()],
-            ),
-            'sectorCode' => $sectorCode,
-            'analysts' => $this->assignments->analystsAvailable(),
-            'jumlahAktif' => EntitiAssignment::query()->active()->count(),
-        ]);
+    /**
+     * Kedua-dua panel dipaparkan serentak kepada Pentadbir, jadi setiap satu
+     * memerlukan parameter halamannya sendiri.
+     *
+     * @param  Collection<int, array<string, mixed>>  $senarai
+     * @return LengthAwarePaginator<int, array<string, mixed>>
+     */
+    private function halaman(Request $request, Collection $senarai, string $namaMuka): LengthAwarePaginator
+    {
+        $setiapMuka = 25;
+        $muka = LengthAwarePaginator::resolveCurrentPage($namaMuka);
+
+        return new LengthAwarePaginator(
+            $senarai->forPage($muka, $setiapMuka)->values(),
+            $senarai->count(),
+            $setiapMuka,
+            $muka,
+            ['path' => $request->url(), 'query' => $request->query(), 'pageName' => $namaMuka],
+        );
     }
 
     /**
@@ -101,6 +176,19 @@ class EntitiAssignmentController extends Controller
         ]);
 
         $entiti = $this->entitiAtauGagal($agencyCode);
+
+        // Entiti hanya tersedia kepada PPA selepas "Penerimaan & Pendaftaran
+        // Data" Selesai. Senarai sudah menapisnya; semakan ini menutup
+        // laluan permintaan langsung.
+        if (! $this->kemajuan->pendaftaranSelesai($agencyCode)) {
+            return back()->withErrors([
+                'assigned_to_user_id' => sprintf(
+                    '%s belum menyelesaikan Penerimaan & Pendaftaran Data, jadi ia belum boleh ditugaskan.',
+                    $entiti['agency_code'],
+                ),
+            ]);
+        }
+
         $analyst = User::findOrFail($data['assigned_to_user_id']);
 
         try {
@@ -144,21 +232,6 @@ class EntitiAssignmentController extends Controller
             'Penugasan bagi %s telah ditarik balik.',
             $entiti['agency_name'],
         ));
-    }
-
-    /**
-     * Entiti yang pernah mempunyai rekod penugasan (paparan lalai tanpa penapis sektor).
-     *
-     * @return Collection<int, array<string, string>>
-     */
-    private function entitiDitugaskan(): Collection
-    {
-        return EntitiAssignment::query()
-            ->distinct()
-            ->pluck('agency_code')
-            ->map(fn (string $agencyCode) => SektorDirectory::cariEntiti($agencyCode))
-            ->filter()
-            ->values();
     }
 
     /**

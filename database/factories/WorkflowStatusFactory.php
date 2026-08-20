@@ -38,4 +38,17 @@ class WorkflowStatusFactory extends Factory
             'stage_name' => WorkflowStatus::getStageName($stage),
         ]);
     }
+
+    /**
+     * Entiti yang telah menamatkan kesemua tujuh peringkat.
+     *
+     * Berada pada peringkat terakhir TIDAK sama dengan siap — status inilah
+     * yang ditetapkan oleh KemajuanAnalisisService apabila setiap peringkat
+     * Selesai, dan papan pemuka mengiranya daripada situ.
+     */
+    public function siap(): static
+    {
+        return $this->onStage(WorkflowStatus::LAST_STAGE)
+            ->state(fn () => ['status' => 'Siap']);
+    }
 }

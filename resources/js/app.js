@@ -122,6 +122,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     kemasKiniToggle();
 
+    // ── Catatan wajib sebelum laporan boleh dikembalikan ────────────────
+    // Carta aliran bahagian 8 dan 9: butang "Kembalikan" hanya hidup apabila
+    // medan Catatan mempunyai nilai. Ini kemudahan sahaja — peraturan sebenar
+    // dikuatkuasakan pada pelayan (LaporanSemakanService::kembalikan).
+    document.querySelectorAll("[data-catatan-wajib]").forEach((borang) => {
+        const medan = borang.querySelector("[data-catatan]");
+        const butang = borang.querySelector("[data-catatan-butang]");
+
+        if (!medan || !butang) return;
+
+        const kemasKini = () => {
+            butang.disabled = medan.value.trim() === "";
+        };
+
+        medan.addEventListener("input", kemasKini);
+        kemasKini();
+    });
+
     // ── Keadaan memuat pada penghantaran borang ─────────────────────────
     // Memberi maklum balas segera dan menghalang penghantaran berganda.
     const progres = document.getElementById("route-progress");

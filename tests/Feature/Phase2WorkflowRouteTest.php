@@ -192,7 +192,7 @@ class Phase2WorkflowRouteTest extends TestCase
         $this->assertDatabaseHas('workflow_status', [
             'agency_code' => self::ENTITI,
             'current_stage' => 5,
-            'stage_name' => 'Penjanaan Laporan',
+            'stage_name' => 'Jana Laporan',
             'status' => 'Dalam Proses',
             'updated_by_user_id' => $coordinator->id,
         ]);

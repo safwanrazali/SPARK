@@ -8,7 +8,11 @@ use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
+use App\Models\AnalisisInventori as RekodAnalisis;
 use App\Services\EntityAccessService;
+use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
+use App\Services\LaporanSemakanService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
@@ -28,6 +32,9 @@ class WorkflowController extends Controller
     public function __construct(
         private readonly WorkflowTransitionService $workflow,
         private readonly EntityAccessService $access,
+        private readonly KemajuanAnalisisService $kemajuan,
+        private readonly LaporanSemakanService $semakan,
+        private readonly EntityAssignmentService $assignments,
     ) {}
 
     /**
@@ -56,8 +63,28 @@ class WorkflowController extends Controller
             ? $this->access->entitiDalamSektorFor($pengguna, $sectorCode)
             : $this->entitiDipantau($rekod->keys()->all(), $pengguna);
 
+        // Setiap baris memaparkan pegawai yang ditugaskan, status keseluruhan
+        // dan kedudukan laporan; ketiga-tiganya dimuatkan sekali gus supaya
+        // senarai tidak mengeluarkan query bagi setiap entiti.
+        $kod = $entiti->pluck('agency_code')->all();
+        $peringkat = $this->kemajuan->peringkatUntukBanyak($kod);
+        $penugasan = $this->assignments->activeForMany($kod);
+        $laporan = $this->semakan->untukBanyak($kod);
+
         $senarai = $entiti
-            ->map(fn (array $e) => $e + ['workflow' => $rekod->get($e['agency_code'])])
+            ->map(function (array $e) use ($rekod, $peringkat, $penugasan, $laporan) {
+                $milikEntiti = $peringkat->get($e['agency_code']);
+
+                return $e + [
+                    'workflow' => $rekod->get($e['agency_code']),
+                    'peringkat' => $milikEntiti,
+                    'keseluruhan' => $this->kemajuan->keseluruhanDaripada($milikEntiti),
+                    'bilanganSelesai' => $this->kemajuan->bilanganSelesai($milikEntiti),
+                    'peringkatSemasa' => $this->kemajuan->peringkatSemasa($milikEntiti),
+                    'penugasan' => $penugasan->get($e['agency_code']),
+                    'laporan' => $laporan->get($e['agency_code']),
+                ];
+            })
             ->sortBy([['sector_code', 'asc'], ['agency_name', 'asc']])
             ->values();
 
@@ -87,10 +114,17 @@ class WorkflowController extends Controller
     {
         $entiti = $this->entitiAtauGagal($agencyCode, $request);
         $workflow = WorkflowStatus::where('agency_code', $agencyCode)->first();
+        $peringkat = $this->kemajuan->peringkat($agencyCode);
 
         return view('workflow.show', [
             'entiti' => $entiti,
             'workflow' => $workflow,
+            'peringkat' => $peringkat,
+            'keseluruhan' => $this->kemajuan->keseluruhanDaripada($peringkat),
+            'bilanganSelesai' => $this->kemajuan->bilanganSelesai($peringkat),
+            'peringkatSemasa' => $this->kemajuan->peringkatSemasa($peringkat),
+            'laporan' => $this->semakan->untuk($agencyCode),
+            'analisis' => RekodAnalisis::where('agency_code', $agencyCode)->first(),
             'sejarah' => $workflow !== null ? $this->workflow->history($agencyCode) : collect(),
         ]);
     }

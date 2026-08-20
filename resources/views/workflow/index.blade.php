@@ -53,45 +53,70 @@
                 <thead>
                     <tr>
                         <th scope="col">Entiti</th>
+                        <th scope="col">Pegawai Analisis (PA)</th>
                         <th scope="col">Peringkat Semasa</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Tarikh Status</th>
-                        <th scope="col">Dikemas Kini Oleh</th>
+                        <th scope="col">Status Keseluruhan</th>
+                        <th scope="col">Status Laporan</th>
                         <th scope="col">Kemajuan</th>
                         <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $jumlahPeringkat = count(\App\Models\WorkflowStatus::WORKFLOW_STAGES);
+
+                        $badgeKeseluruhan = fn (string $nilai): string => match ($nilai) {
+                            \App\Services\KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
+                            \App\Services\KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
+                            default => 'status-tinggi',
+                        };
+                    @endphp
+
                     @forelse ($entiti as $e)
-                        @php $w = $e['workflow']; @endphp
+                        @php
+                            $didaftar = $e['peringkat']?->isNotEmpty() ?? false;
+                            $peratus = $didaftar ? round(($e['bilanganSelesai'] / $jumlahPeringkat) * 100) : 0;
+                        @endphp
                         <tr>
                             <td>
                                 <strong>{{ $e['agency_code'] }}</strong><br>
                                 <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
                             </td>
                             <td>
-                                @if ($w)
-                                    <span class="workflow-stage-tag">{{ sprintf('%02d', $w->current_stage) }}</span>
-                                    {{ $w->stage_name }}
+                                @if ($e['penugasan'])
+                                    <span class="status-badge status-rendah">{{ $e['penugasan']->assignedTo?->name }}</span>
+                                @else
+                                    <span class="status-badge status-tinggi">Belum Ditugaskan</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($didaftar)
+                                    <span class="workflow-stage-tag">{{ sprintf('%02d', $e['peringkatSemasa']) }}</span>
+                                    {{ \App\Models\WorkflowStatus::getStageName($e['peringkatSemasa']) }}
                                 @else
                                     <span class="text-secondary">Belum Didaftarkan</span>
                                 @endif
                             </td>
                             <td>
-                                @if ($w)
-                                    <span class="status-badge {{ $w->statusBadgeClass() }}">{{ $w->status }}</span>
+                                <span class="status-badge {{ $badgeKeseluruhan($e['keseluruhan']) }}">
+                                    {{ $e['keseluruhan'] }}
+                                </span>
+                            </td>
+                            <td>
+                                @if ($e['laporan'])
+                                    <span class="status-badge {{ $e['laporan']->statusBadgeClass() }}">
+                                        {{ $e['laporan']->status }}
+                                    </span>
                                 @else
-                                    <span class="status-badge status-tinggi">Belum Bermula</span>
+                                    <span class="text-secondary">Belum Dijana</span>
                                 @endif
                             </td>
-                            <td>{{ $w?->status_since?->format('d/m/Y H:i') ?? '-' }}</td>
-                            <td>{{ $w?->updatedBy?->name ?? '-' }}</td>
                             <td class="workflow-progress-cell">
                                 <div class="workflow-progress" role="img"
-                                    aria-label="Kemajuan {{ $w?->progressPercentage() ?? 0 }} peratus">
-                                    <span style="--progress: {{ $w?->progressPercentage() ?? 0 }}%"></span>
+                                    aria-label="Kemajuan {{ $peratus }} peratus">
+                                    <span style="--progress: {{ $peratus }}%"></span>
                                 </div>
-                                <small class="text-secondary">{{ $w?->current_stage ?? 0 }}/7</small>
+                                <small class="text-secondary">{{ $e['bilanganSelesai'] }}/{{ $jumlahPeringkat }}</small>
                             </td>
                             <td class="text-nowrap">
                                 <a class="btn btn-sm btn-primary"
@@ -100,7 +125,7 @@
                                 </a>
                                 <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('workflow.show', $e['agency_code']) }}">
-                                    <i class="bi bi-diagram-3"></i> Workflow
+                                    <i class="bi bi-diagram-3"></i> Kemajuan
                                 </a>
                             </td>
                         </tr>
