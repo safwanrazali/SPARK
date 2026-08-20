@@ -215,43 +215,67 @@
     display: inline;
 }
 
-// Pada rel, tajuk seksyen menjadi pemisah pendek kerana teksnya tersembunyi.
-.sidebar-section-title {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
+/*
+|--------------------------------------------------------------------------
+| Navlink induk dan SubNavlink
+|--------------------------------------------------------------------------
+| Pokok navigasi statik: tiada lungsur, tiada akordion, tiada anak panah.
+| Navlink induk hanyalah label kumpulan — ia tidak menuju ke mana-mana, jadi
+| kesan layang dimatikan padanya. SubNavlink sentiasa kelihatan; apabila menu
+| mengembang ia dilekukkan dengan garis panduan menegak yang menunjukkan
+| pemilikan, dan pada rel ia kembali menjadi ikon berpusat seperti yang lain.
+*/
+.sidebar-parent {
+    cursor: default;
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+}
 
-    margin: 1.25rem 0 0.85rem;
+// Induk bukan pautan — jangan janjikan tindakan yang tidak wujud.
+.sidebar-menu a.sidebar-parent:hover {
+    background: transparent;
+    color: $sidebar-text;
+    box-shadow: none;
+    transform: none;
+}
+
+// Halaman semasa ditandakan penuh pada SubNavlink; induk cukup diserlahkan
+// dengan latar lut sinar supaya kedua-duanya tidak bersaing. Warna $secondary
+// tidak boleh digunakan di sini kerana ia lenyap pada latar bar sisi.
+.sidebar-menu a.sidebar-parent.active {
+    background: rgba($sidebar-text, 0.12);
+    box-shadow: none;
+    color: $sidebar-text;
+}
+
+.sidebar-submenu {
+    list-style: none;
     padding: 0;
-
-    color: #d8bfd8;
-
-    font-size: 0.9rem;
-    font-style: italic;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    opacity: 0.85;
+    margin: 0;
 }
 
-.sidebar-section-title::after {
-    content: "";
-    flex: none;
-    width: 28px;
-    height: 1px;
-    background: #d8bfd8;
+.sidebar-submenu li {
+    margin-bottom: 0.35rem;
 }
 
-.sidebar.is-expanded .sidebar-section-title {
-    justify-content: flex-start;
-    margin: 2rem 0 1rem;
-    padding: 0 1rem;
+.sidebar-submenu li:last-child {
+    margin-bottom: 0;
 }
 
-.sidebar.is-expanded .sidebar-section-title::after {
-    flex: 1;
-    width: auto;
+.sidebar-submenu i {
+    font-size: 1rem;
+}
+
+.sidebar.is-expanded .sidebar-submenu {
+    margin-left: 1.4rem;
+    padding-left: 0.6rem;
+    border-left: 1px solid $sidebar-border;
+}
+
+.sidebar.is-expanded .sidebar-submenu a {
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.92rem;
 }
 
 // Latar gelap apabila menu dibuka pada skrin kecil

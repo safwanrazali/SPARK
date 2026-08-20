@@ -85,11 +85,11 @@ class Phase3AssignmentRouteTest extends TestCase
     {
         $this->actingAs($this->coordinator)
             ->get(route('workflow.index'))
-            ->assertSee('Penugasan Entiti');
+            ->assertSee('Penetapan Entiti');
 
         $this->actingAs($this->analystA)
             ->get(route('workflow.index'))
-            ->assertDontSee('Penugasan Entiti');
+            ->assertDontSee('Penetapan Entiti');
     }
 
     /*

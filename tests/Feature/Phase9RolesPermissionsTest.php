@@ -568,8 +568,8 @@ class Phase9RolesPermissionsTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Papan Pemuka')
-            ->assertSee('Jejak Audit')
-            ->assertDontSee('Penugasan Entiti')
+            ->assertSee('Log Audit')
+            ->assertDontSee('Penetapan Entiti')
             ->assertDontSee('Pengguna');
     }
 
@@ -581,8 +581,8 @@ class Phase9RolesPermissionsTest extends TestCase
             ->get(route('analisis.index'))
             ->assertOk()
             ->assertDontSee('Papan Pemuka')
-            ->assertDontSee('Jejak Audit')
-            ->assertDontSee('Penugasan Entiti')
+            ->assertDontSee('Log Audit')
+            ->assertDontSee('Penetapan Entiti')
             ->assertDontSee('Muat Naik MasterTable');
     }
 }
