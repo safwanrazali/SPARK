@@ -344,6 +344,64 @@ class Phase6DraftResumeTest extends TestCase
         $this->assertSame(2, $ringkasan['seksyen_selesai']);
     }
 
+    /**
+     * Kiraan seksyen dahulunya dibaca daripada baris draf sahaja. Kerana
+     * "Simpan Dapatan" memanggil tutupDraf(), borang yang telah lengkap
+     * dan dimuktamadkan dipaparkan sebagai "0 / 9 seksyen diisi" — data
+     * ada dalam rekod, cuma bukan lagi dalam penimbal draf.
+     */
+    public function test_kemajuan_seksyen_kekal_selepas_dapatan_dimuktamadkan(): void
+    {
+        $this->actingAs($this->analyst)->post(route('analisis.draf'), $this->borangSepara([
+            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2', 'nota' => '']],
+        ]));
+
+        $this->actingAs($this->analyst)->post(route('analisis.simpan'), $this->borangLengkap([
+            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2', 'nota' => '']],
+            'selesai' => '1',
+        ]));
+
+        $analisis = AnalisisInventori::where('agency_code', self::ENTITI)->firstOrFail();
+
+        // Tiada draf terbuka lagi — tetapi dapatan tersimpan kekal dikira.
+        $ringkasan = app(AnalisisDraftService::class)->ringkasan($analisis);
+
+        $this->assertFalse($ringkasan['ada_draf']);
+        $this->assertTrue($ringkasan['ada_rekod']);
+        $this->assertTrue($ringkasan['seksyen']['maklumat']['selesai']);
+        $this->assertTrue($ringkasan['seksyen']['data_status']['selesai']);
+        $this->assertTrue($ringkasan['seksyen']['protokol']['selesai']);
+        $this->assertTrue($ringkasan['seksyen']['kesimpulan']['selesai']);
+        $this->assertSame(4, $ringkasan['seksyen_selesai']);
+
+        $this->actingAs($this->analyst)
+            ->get(route('analisis.borang', ['sector_code' => '001', 'agency_code' => self::ENTITI]))
+            ->assertOk()
+            ->assertSee('4 / 9 seksyen diisi')
+            ->assertSee('Dapatan tersimpan dimuatkan')
+            ->assertDontSee('Belum ada draf disimpan.');
+    }
+
+    /**
+     * Borang yang diisi terus melalui "Simpan Dapatan", tanpa sekali pun
+     * menekan "Simpan Draf", juga tidak pernah mempunyai baris draf.
+     */
+    public function test_kemajuan_seksyen_dikira_walaupun_draf_tidak_pernah_disimpan(): void
+    {
+        $this->actingAs($this->analyst)->post(route('analisis.simpan'), $this->borangLengkap());
+
+        $analisis = AnalisisInventori::where('agency_code', self::ENTITI)->firstOrFail();
+
+        $this->assertDatabaseCount('analisis_draft_history', 0);
+
+        $ringkasan = app(AnalisisDraftService::class)->ringkasan($analisis);
+
+        $this->assertFalse($ringkasan['ada_draf']);
+        $this->assertSame(3, $ringkasan['seksyen_selesai']);
+        $this->assertFalse($ringkasan['seksyen']['maklumat']['ada_draf']);
+        $this->assertTrue($ringkasan['seksyen']['maklumat']['selesai']);
+    }
+
     public function test_kemajuan_seksyen_dipaparkan_pada_borang(): void
     {
         $this->actingAs($this->analyst)->post(route('analisis.draf'), $this->borangSepara());

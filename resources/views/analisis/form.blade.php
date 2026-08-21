@@ -31,6 +31,12 @@
                         @if ($draf['disimpan_oleh'])
                             oleh {{ $draf['disimpan_oleh'] }}
                         @endif
+                    @elseif ($draf['ada_rekod'])
+                        {{-- Tiada draf terbuka kerana dapatan telah dimuktamadkan;
+                             borang dimuatkan daripada rekod tersimpan. --}}
+                        Dapatan tersimpan dimuatkan — dikemas kini
+                        {{ $draf['dikemas_kini_pada']?->format('d/m/Y H:i') }}.
+                        Sebarang perubahan boleh disimpan sebagai draf sebelum dimuktamadkan.
                     @else
                         Belum ada draf disimpan. Kerja anda boleh disimpan pada bila-bila masa
                         dan disambung semula kemudian.
@@ -39,7 +45,15 @@
             </div>
 
             <div class="draft-bar__meta">
-                <span class="status-badge {{ $draf['ada_draf'] ? 'status-sederhana' : 'status-tinggi' }}">
+                @php
+                    $semuaSeksyenDiisi = $draf['seksyen_selesai'] === $draf['jumlah_seksyen'];
+                    $badgeSeksyen = match (true) {
+                        $semuaSeksyenDiisi => 'status-rendah',
+                        $draf['seksyen_selesai'] > 0 => 'status-sederhana',
+                        default => 'status-tinggi',
+                    };
+                @endphp
+                <span class="status-badge {{ $badgeSeksyen }}">
                     {{ $draf['seksyen_selesai'] }} / {{ $draf['jumlah_seksyen'] }} seksyen diisi
                 </span>
                 <button type="submit" form="borang-analisis" formaction="{{ route('analisis.draf') }}"

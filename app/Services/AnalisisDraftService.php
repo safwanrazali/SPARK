@@ -135,10 +135,22 @@ class AnalisisDraftService
      */
     public function borangDipulihkan(?AnalisisInventori $analisis): array
     {
+        return $this->gabungkanDraf($analisis, $this->drafSemasa($analisis));
+    }
+
+    /**
+     * Versi borangDipulihkan() bagi pemanggil yang telah memuatkan draf
+     * semasa — mengelakkan query kedua bagi data yang sama.
+     *
+     * @param  Collection<string, AnalisDraftHistory>  $draf
+     * @return array<string, mixed>
+     */
+    private function gabungkanDraf(?AnalisisInventori $analisis, Collection $draf): array
+    {
         $borang = BorangAnalisis::daripadaModel($analisis);
 
-        foreach ($this->drafSemasa($analisis) as $seksyen => $draf) {
-            foreach ((array) $draf->section_data as $medan => $nilai) {
+        foreach ($draf as $seksyen => $rekod) {
+            foreach ((array) $rekod->section_data as $medan => $nilai) {
                 $borang[$medan] = $nilai;
             }
         }
@@ -155,8 +167,22 @@ class AnalisisDraftService
     }
 
     /**
-     * Ringkasan draf untuk paparan: versi, masa simpanan terakhir, pegawai
+     * Ringkasan untuk paparan: versi draf, masa simpanan terakhir, pegawai
      * yang menyimpan dan keadaan setiap seksyen.
+     *
+     * Keadaan "diisi" setiap seksyen dikira daripada KEADAAN BORANG SEBENAR
+     * (rekod tersimpan ditindih draf semasa) — bukan daripada baris draf
+     * sahaja.
+     *
+     * Bezanya penting: "Simpan Dapatan" memanggil tutupDraf(), yang
+     * menurunkan is_current bagi semua baris draf. Jika kiraan bergantung
+     * pada baris draf, borang yang telah lengkap dan dimuktamadkan akan
+     * dipaparkan sebagai "0 / 9 seksyen diisi" — begitu juga borang yang
+     * diisi terus tanpa sekali pun menekan "Simpan Draf". Kedua-duanya
+     * salah: maklumatnya ada, cuma bukan di dalam penimbal draf.
+     *
+     * Metadata draf (versi, masa, pegawai) kekal daripada baris draf,
+     * kerana itu memang milik draf.
      *
      * @return array<string, mixed>
      */
@@ -164,6 +190,8 @@ class AnalisisDraftService
     {
         $draf = $this->drafSemasa($analisis);
         $terakhir = $draf->sortByDesc('saved_at')->sortByDesc('id')->first();
+
+        $borang = SeksyenAnalisis::pecahkan($this->gabungkanDraf($analisis, $draf));
 
         $seksyen = [];
 
@@ -173,19 +201,25 @@ class AnalisisDraftService
             $seksyen[$kunci] = [
                 'label' => $takrif['label'],
                 'ada_draf' => $rekod !== null,
-                'selesai' => (bool) $rekod?->completed,
+                'selesai' => SeksyenAnalisis::adaKandungan($kunci, $borang[$kunci] ?? []),
                 'versi' => $rekod?->version,
                 'disimpan_pada' => $rekod?->saved_at,
             ];
         }
 
+        $bilanganSelesai = collect($seksyen)->where('selesai', true)->count();
+
         return [
             'ada_draf' => $draf->isNotEmpty(),
+            // Dapatan yang telah disimpan ke dalam rekod sebenar, tanpa draf
+            // terbuka — keadaan biasa selepas "Simpan Dapatan".
+            'ada_rekod' => ($analisis?->exists ?? false) && $bilanganSelesai > 0,
+            'dikemas_kini_pada' => $analisis?->updated_at,
             'versi' => $draf->max('version'),
             'disimpan_pada' => $terakhir?->saved_at,
             'disimpan_oleh' => $terakhir?->savedBy?->name,
             'jumlah_seksyen' => count(SeksyenAnalisis::SEKSYEN),
-            'seksyen_selesai' => collect($seksyen)->where('selesai', true)->count(),
+            'seksyen_selesai' => $bilanganSelesai,
             'seksyen' => $seksyen,
         ];
     }
