@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\DB;
  *   PA  "Hantar kepada PPA" → Draf, lalu Dihantar kepada PPA
  *   PPA "Hantar"        → Dihantar kepada KB
  *   PPA/KB "Kembalikan" → Dikembalikan   (Catatan WAJIB)
- *   KB  "Sahkan"        → Sah            (peringkat 5 dan 6 menjadi Selesai)
+ *   KB  "Sahkan"        → Sah            (Catatan pilihan; peringkat 5 dan 6
+ *                                         menjadi Selesai)
  *
  * Setiap peralihan disemak terhadap LaporanSemakan::ALIRAN, jadi keadaan
  * tidak boleh dilangkau walaupun borang dihantar terus tanpa melalui UI.
@@ -168,14 +169,24 @@ class LaporanSemakanService
      * Hanya di sini "Jana Laporan" menjadi Selesai — bukan semasa laporan
      * dijana atau dihantar (carta aliran bahagian 7).
      *
+     * Catatan adalah PILIHAN di sini (berbeza daripada "Kembalikan", yang
+     * mewajibkannya). Ia direkodkan dalam approval_logs dan jejak audit —
+     * iaitu apa yang dipaparkan pada Sejarah Peringkat entiti — dan TIDAK
+     * pernah masuk ke dalam laporan itu sendiri.
+     *
      * @throws InvalidWorkflowTransitionException
      */
-    public function sahkan(LaporanSemakan $laporan, User $user): LaporanSemakan
+    public function sahkan(LaporanSemakan $laporan, User $user, ?string $catatan = null): LaporanSemakan
     {
-        $laporan = $this->beralih($laporan, LaporanSemakan::SAH, $user, null, function (LaporanSemakan $l) use ($user) {
+        $catatan = is_string($catatan) && trim($catatan) !== '' ? trim($catatan) : null;
+
+        $laporan = $this->beralih($laporan, LaporanSemakan::SAH, $user, $catatan, function (LaporanSemakan $l) use ($user, $catatan) {
             $l->disahkan_oleh_user_id = $user->id;
             $l->disahkan_pada = now();
-            $l->catatan = null;
+
+            // Sebab pengembalian terdahulu tidak boleh kekal selepas laporan
+            // disahkan; ia digantikan oleh catatan pengesahan, atau dikosongkan.
+            $l->catatan = $catatan;
         });
 
         $this->kemajuan->tandakanSelesai($laporan->agency_code, WorkflowStatus::STAGE_JANA_LAPORAN, $user);

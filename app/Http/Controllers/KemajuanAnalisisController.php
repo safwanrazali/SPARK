@@ -184,6 +184,9 @@ class KemajuanAnalisisController extends Controller
 
     /**
      * "Sahkan" oleh Ketua Bahagian — peringkat 5 dan 6 menjadi Selesai.
+     *
+     * Catatan di sini adalah PILIHAN, tidak seperti "Kembalikan". Ia
+     * direkodkan pada jejak entiti sahaja dan tidak muncul dalam laporan.
      */
     public function sahkan(Request $request, string $agencyCode)
     {
@@ -192,8 +195,14 @@ class KemajuanAnalisisController extends Controller
         $entiti = $this->entitiAtauGagal($agencyCode);
         $laporan = $this->laporanAtauGagal($agencyCode);
 
+        $data = $request->validate([
+            'catatan' => ['nullable', 'string', 'max:2000'],
+        ], [], [
+            'catatan' => 'catatan',
+        ]);
+
         try {
-            $this->semakan->sahkan($laporan, $request->user());
+            $this->semakan->sahkan($laporan, $request->user(), $data['catatan'] ?? null);
         } catch (InvalidWorkflowTransitionException $e) {
             return back()->withErrors(['laporan' => $e->getMessage()]);
         }

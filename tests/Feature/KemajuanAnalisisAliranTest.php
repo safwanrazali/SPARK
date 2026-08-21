@@ -265,11 +265,17 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
 
+        // Satu medan Catatan, dua tindakan: "Sahkan" dihantar melalui
+        // formaction pada borang Catatan yang sama, jadi Ketua Bahagian
+        // menaipnya sekali sahaja.
         $this->actingAs($this->kb)
             ->get(route('workflow.show', self::ALPHA))
             ->assertOk()
             ->assertSee('Sahkan')
-            ->assertSee('Kembalikan');
+            ->assertSee('Kembalikan')
+            ->assertSee('pilihan untuk mengesahkan')
+            ->assertSee('formaction="'.route('kemajuan.sahkan', self::ALPHA).'"', false)
+            ->assertSee('data-catatan', false);
 
         $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
 
@@ -652,6 +658,112 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         // Setiap tindakan semakan meninggalkan jejak dalam approval_logs.
         $this->assertSame(3, ApprovalLog::where('agency_code', self::ALPHA)->count());
+    }
+
+    /**
+     * Catatan Ketua Bahagian semasa mengesahkan adalah PILIHAN — berbeza
+     * daripada "Kembalikan", yang mewajibkannya.
+     */
+    public function test_kb_boleh_mengesahkan_dengan_catatan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+
+        $this->actingAs($this->kb)
+            ->post(route('kemajuan.sahkan', self::ALPHA), [
+                'catatan' => 'Disahkan dengan syarat Jadual 5 dikemas kini pada pusingan berikutnya.',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('laporan_semakan', [
+            'agency_code' => self::ALPHA,
+            'status' => LaporanSemakan::SAH,
+            'catatan' => 'Disahkan dengan syarat Jadual 5 dikemas kini pada pusingan berikutnya.',
+        ]);
+
+        // Direkodkan dalam approval_logs...
+        $this->assertDatabaseHas('approval_logs', [
+            'agency_code' => self::ALPHA,
+            'status_after' => LaporanSemakan::SAH,
+            'comments' => 'Disahkan dengan syarat Jadual 5 dikemas kini pada pusingan berikutnya.',
+        ]);
+
+        // ...dan muncul pada jejak kemajuan entiti.
+        $log = app(KemajuanAnalisisService::class)
+            ->sejarah(self::ALPHA, 200)
+            ->firstWhere('action', 'report_approved');
+
+        $this->assertSame(
+            'Disahkan dengan syarat Jadual 5 dikemas kini pada pusingan berikutnya.',
+            $log->metadata['catatan'],
+        );
+
+        $this->actingAs($this->kb)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Disahkan dengan syarat Jadual 5 dikemas kini pada pusingan berikutnya.');
+    }
+
+    public function test_kb_boleh_mengesahkan_tanpa_catatan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+
+        $this->actingAs($this->kb)
+            ->post(route('kemajuan.sahkan', self::ALPHA))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('laporan_semakan', [
+            'agency_code' => self::ALPHA,
+            'status' => LaporanSemakan::SAH,
+            'catatan' => null,
+        ]);
+
+        $this->assertSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
+        $this->assertSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN));
+    }
+
+    /**
+     * Sebab pengembalian terdahulu tidak boleh kekal sebagai "catatan
+     * pengesahan" setelah laporan akhirnya disahkan tanpa catatan.
+     */
+    public function test_catatan_pengembalian_tidak_kekal_selepas_disahkan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->actingAs($this->ppa)->post(route('kemajuan.kembalikan', self::ALPHA), [
+            'catatan' => 'Jadual 3 perlu disemak semula.',
+        ]);
+
+        $this->actingAs($this->pa->fresh())->post(route('analisis.simpan'), $this->dapatan());
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+
+        $this->assertDatabaseHas('laporan_semakan', [
+            'agency_code' => self::ALPHA,
+            'status' => LaporanSemakan::SAH,
+            'catatan' => null,
+        ]);
+    }
+
+    /**
+     * Catatan penyemak ialah rekod dalaman kemajuan entiti — ia tidak boleh
+     * bocor ke dalam laporan yang dipratonton atau diserahkan.
+     */
+    public function test_catatan_tidak_muncul_dalam_laporan(): void
+    {
+        $catatan = 'Catatan dalaman Ketua Bahagian yang tidak boleh masuk laporan.';
+
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA), ['catatan' => $catatan]);
+
+        $analisis = AnalisisInventori::where('agency_code', self::ALPHA)->firstOrFail();
+
+        $this->actingAs($this->kb)
+            ->get(route('laporan.inventori', $analisis))
+            ->assertOk()
+            ->assertDontSee($catatan);
     }
 
     /*

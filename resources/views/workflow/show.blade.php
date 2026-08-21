@@ -281,30 +281,53 @@
                                 </form>
                             @endif
 
-                            {{-- KB: sahkan --}}
-                            @if ($giliranKB)
-                                <form action="{{ route('kemajuan.sahkan', $entiti['agency_code']) }}" method="POST"
-                                    class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-patch-check"></i> Sahkan
-                                    </button>
-                                </form>
-                            @endif
                         </div>
 
-                        {{-- Kembalikan — Catatan wajib, jadi butang kekal
-                             dilumpuhkan sehingga medan diisi (lihat app.js). --}}
+                        {{--
+                            Satu medan Catatan berkongsi kedua-dua tindakan
+                            penyemak, kerana ia catatan yang SAMA — apa yang
+                            berbeza hanyalah sama ada ia wajib:
+
+                            - "Kembalikan" mewajibkannya; butangnya kekal
+                              dilumpuhkan sehingga medan diisi (lihat app.js),
+                              dan pelayan menolak penghantaran kosong.
+                            - "Sahkan" menerimanya sebagai pilihan.
+
+                            Kedua-dua butang berada dalam satu borang dan
+                            dibezakan melalui `formaction`, jadi Ketua Bahagian
+                            menaip sekali sahaja tanpa perlu memilih kotak yang
+                            betul dahulu.
+
+                            Catatan ini direkodkan pada jejak entiti (Sejarah
+                            Peringkat di bawah) dan TIDAK muncul dalam laporan.
+                        --}}
                         @if ($bolehKembalikan)
                             <form action="{{ route('kemajuan.kembalikan', $entiti['agency_code']) }}" method="POST"
                                 class="kemajuan-kembalikan" data-catatan-wajib>
                                 @csrf
-                                <label class="form-label" for="catatan">Catatan (wajib untuk mengembalikan)</label>
-                                <textarea id="catatan" name="catatan" class="form-control mb-2" rows="2" maxlength="2000" required
-                                    data-catatan placeholder="Nyatakan sebab laporan dikembalikan kepada Pegawai Analisis">{{ old('catatan') }}</textarea>
+
+                                <label class="form-label" for="catatan">
+                                    {{ $giliranKB
+                                        ? 'Catatan (wajib untuk mengembalikan, pilihan untuk mengesahkan)'
+                                        : 'Catatan (wajib untuk mengembalikan)' }}
+                                </label>
+
+                                <textarea id="catatan" name="catatan" class="form-control mb-2" rows="2" maxlength="2000"
+                                    data-catatan
+                                    placeholder="{{ $giliranKB
+                                        ? 'Nyatakan sebab laporan dikembalikan, atau catatan pengesahan (jika ada)'
+                                        : 'Nyatakan sebab laporan dikembalikan kepada Pegawai Analisis' }}">{{ old('catatan') }}</textarea>
+
                                 <button type="submit" class="btn btn-sm btn-outline-light" data-catatan-butang disabled>
                                     <i class="bi bi-arrow-counterclockwise"></i> Kembalikan
                                 </button>
+
+                                @if ($giliranKB)
+                                    <button type="submit" class="btn btn-sm btn-primary"
+                                        formaction="{{ route('kemajuan.sahkan', $entiti['agency_code']) }}">
+                                        <i class="bi bi-patch-check"></i> Sahkan
+                                    </button>
+                                @endif
                             </form>
                         @endif
                     </div>
