@@ -26,7 +26,6 @@ laporan seperti dalam spesifikasi bahagian 23.
 
 > **Kesan kepada penerimaan**: V1.0 penuh tidak boleh ditandatangani sehingga
 > Fasa 10 dibina dan pusingan UAT kedua dijalankan untuk senario 16–18.
-> Lihat `PHASE_13_RELEASE_READINESS_REPORT.md`, risiko R1.
 
 **Senario 7 telah diubah suai.** Skrip asal menyatakan Pegawai Analisis
 menggerakkan peringkat workflow. Kebenaran yang dilaksanakan (dan disahkan untuk

@@ -127,7 +127,6 @@ ordinary workflow stage driven by the Coordinator.
 - `docs/USER_GUIDE.md` — role-by-role usage guide in Malay.
 - `docs/ADMIN_GUIDE.md` — installation, environment, web server, permissions,
   backup/restore, upgrade, security checklist, troubleshooting.
-- `PHASE_13_RELEASE_READINESS_REPORT.md` — verification evidence and risks.
 
 ---
 
