@@ -25,6 +25,12 @@
  * yang LEBIH AWAL dalam DOM, jadi tanpa z-index garis ini akan dilukis di
  * atasnya. Kedua-dua nilai z-index diperlukan supaya garis sentiasa di
  * belakang setiap bulatan, bukan hanya bulatan langkahnya sendiri.
+ *
+ * Susunan lapisan sahaja TIDAK memadai: garis melintasi tepat pada paras
+ * tengah bulatan (garis 17px–20px, bulatan 0px–36px), jadi mana-mana
+ * bulatan berlatar LUT SINAR akan menayangkan garis itu menembusinya
+ * walaupun ia berada di belakang. Kerana itu setiap latar bulatan di bawah
+ * ini legap — warna dicampur dengan $surface dan bukan diberi alfa.
  */
 .workflow-step__track {
     position: absolute;
@@ -78,7 +84,9 @@
 
     .workflow-step__node {
         border-color: $success;
-        background: rgba($success, 0.12);
+        // Legap: rgba() akan menayangkan garis penyambung menembusi bulatan.
+        // mix() menghasilkan warna terlihat yang sama di atas $surface.
+        background: mix($success, $surface, 12%);
         color: $success;
     }
 
@@ -97,7 +105,8 @@
         border-color: $primary;
         background: linear-gradient(180deg, $primary, $secondary);
         color: $highlight;
-        box-shadow: 0 0 0 5px rgba($primary, 0.15);
+        // Cincin ini turut melindungi garis penyambung, jadi ia juga legap.
+        box-shadow: 0 0 0 5px mix($primary, $surface, 15%);
     }
 
     .workflow-step__label {
