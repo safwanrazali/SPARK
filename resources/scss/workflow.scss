@@ -19,8 +19,16 @@
     text-align: center;
 }
 
+/*
+ * Garis penyambung merentangi dua bulatan: dari tengah langkah sebelumnya
+ * ke tengah langkah ini. Bulatan sebelumnya berada dalam .workflow-step
+ * yang LEBIH AWAL dalam DOM, jadi tanpa z-index garis ini akan dilukis di
+ * atasnya. Kedua-dua nilai z-index diperlukan supaya garis sentiasa di
+ * belakang setiap bulatan, bukan hanya bulatan langkahnya sendiri.
+ */
 .workflow-step__track {
     position: absolute;
+    z-index: 0;
     top: 17px;
     left: -50%;
     width: 100%;
@@ -35,6 +43,7 @@
 
 .workflow-step__node {
     position: relative;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
