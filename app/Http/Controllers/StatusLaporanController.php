@@ -7,6 +7,7 @@ use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
+use App\Support\Halaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -40,7 +41,10 @@ class StatusLaporanController extends Controller
             ->get()
             ->groupBy('agency_code');
 
-        return view('status.index', compact('entiti', 'status'));
+        return view('status.index', [
+            'entiti' => Halaman::daripada($request, $entiti),
+            'status' => $status,
+        ]);
     }
 
     /**

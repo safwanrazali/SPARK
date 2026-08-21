@@ -73,6 +73,8 @@
             </table>
         </div>
 
+        <div class="mt-3">{{ $entiti->links() }}</div>
+
     </div>
 
 @endsection

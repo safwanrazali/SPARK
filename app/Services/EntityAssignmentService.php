@@ -6,6 +6,7 @@ use App\Exceptions\InvalidAssignmentException;
 use App\Models\ActivityLog;
 use App\Models\EntitiAssignment;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -192,13 +193,17 @@ class EntityAssignmentService
      *
      * @return Collection<int, EntitiAssignment>
      */
-    public function history(string $agencyCode): Collection
+    public function historyQuery(string $agencyCode): Builder
     {
         return EntitiAssignment::query()
             ->forAgency($agencyCode)
             ->with(['assignedTo', 'assignedBy'])
-            ->terkini()
-            ->get();
+            ->terkini();
+    }
+
+    public function history(string $agencyCode): Collection
+    {
+        return $this->historyQuery($agencyCode)->get();
     }
 
     /**

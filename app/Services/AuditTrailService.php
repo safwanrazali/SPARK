@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Support\Halaman;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -121,7 +122,7 @@ class AuditTrailService
     /**
      * @param  array<string, mixed>  $penapis
      */
-    public function halaman(User $pengguna, array $penapis = [], int $setiapMuka = 25): LengthAwarePaginator
+    public function halaman(User $pengguna, array $penapis = [], int $setiapMuka = Halaman::SETIAP_MUKA): LengthAwarePaginator
     {
         return $this->query($pengguna, $penapis)->paginate($setiapMuka)->withQueryString();
     }

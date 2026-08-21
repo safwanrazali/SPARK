@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
+use App\Models\AnalisisInventori as RekodAnalisis;
 use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
-use App\Models\AnalisisInventori as RekodAnalisis;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
 use App\Services\WorkflowTransitionService;
+use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 /**
@@ -91,19 +91,8 @@ class WorkflowController extends Controller
             ->sortBy([['sector_code', 'asc'], ['agency_name', 'asc']])
             ->values();
 
-        $muka = LengthAwarePaginator::resolveCurrentPage();
-        $setiapMuka = 25;
-
-        $paginator = new LengthAwarePaginator(
-            $senarai->forPage($muka, $setiapMuka)->values(),
-            $senarai->count(),
-            $setiapMuka,
-            $muka,
-            ['path' => $request->url(), 'query' => $request->query()],
-        );
-
         return view('workflow.index', [
-            'entiti' => $paginator,
+            'entiti' => Halaman::daripada($request, $senarai),
             'sectorCode' => $sectorCode,
             'jumlahDidaftar' => $rekod->count(),
             'sektor' => $this->access->sektorFor($pengguna),
@@ -128,7 +117,8 @@ class WorkflowController extends Controller
             'peringkatSemasa' => $this->kemajuan->peringkatSemasa($peringkat),
             'laporan' => $this->semakan->untuk($agencyCode),
             'analisis' => RekodAnalisis::where('agency_code', $agencyCode)->first(),
-            'sejarah' => $workflow !== null ? $this->workflow->history($agencyCode) : collect(),
+            'sejarah' => $this->workflow->historyQuery($agencyCode)
+                ->paginate(Halaman::SETIAP_MUKA, ['*'], 'muka_sejarah'),
         ]);
     }
 

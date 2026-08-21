@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
+use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -93,7 +94,7 @@ class EntitiAssignmentController extends Controller
             ->sortBy([['sector_code', 'asc'], ['agency_code', 'asc']])
             ->values();
 
-        return $this->halaman($request, $senarai, 'muka_daftar');
+        return Halaman::daripada($request, $senarai, 'muka_daftar');
     }
 
     /**
@@ -119,28 +120,7 @@ class EntitiAssignmentController extends Controller
             ->sortBy([['sector_code', 'asc'], ['agency_code', 'asc']])
             ->values();
 
-        return $this->halaman($request, $senarai, 'muka_tugas');
-    }
-
-    /**
-     * Kedua-dua panel dipaparkan serentak kepada Pentadbir, jadi setiap satu
-     * memerlukan parameter halamannya sendiri.
-     *
-     * @param  Collection<int, array<string, mixed>>  $senarai
-     * @return LengthAwarePaginator<int, array<string, mixed>>
-     */
-    private function halaman(Request $request, Collection $senarai, string $namaMuka): LengthAwarePaginator
-    {
-        $setiapMuka = 10;
-        $muka = LengthAwarePaginator::resolveCurrentPage($namaMuka);
-
-        return new LengthAwarePaginator(
-            $senarai->forPage($muka, $setiapMuka)->values(),
-            $senarai->count(),
-            $setiapMuka,
-            $muka,
-            ['path' => $request->url(), 'query' => $request->query(), 'pageName' => $namaMuka],
-        );
+        return Halaman::daripada($request, $senarai, 'muka_tugas');
     }
 
     /**
@@ -155,7 +135,8 @@ class EntitiAssignmentController extends Controller
         return view('penugasan.show', [
             'entiti' => $entiti,
             'aktif' => $this->assignments->activeFor($agencyCode),
-            'sejarah' => $this->assignments->history($agencyCode),
+            'sejarah' => $this->assignments->historyQuery($agencyCode)
+                ->paginate(Halaman::SETIAP_MUKA, ['*'], 'muka_sejarah'),
             'analysts' => $this->assignments->analystsAvailable(),
         ]);
     }

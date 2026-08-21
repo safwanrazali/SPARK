@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Support\Halaman;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ExcelPreviewService
 {
     public function getPreview(
         string $fullPath,
-        int $limit = 20
+        int $limit = Halaman::SETIAP_MUKA
     ): array {
 
         $spreadsheet = IOFactory::load($fullPath);

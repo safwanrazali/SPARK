@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
+use App\Models\WorkflowStatus;
 use App\Services\AnalisisDraftService;
 use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
 use App\Services\KemajuanAnalisisService;
-use App\Models\WorkflowStatus;
 use App\Support\BorangAnalisis;
+use App\Support\Halaman;
 use App\Support\SeksyenAnalisis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -32,7 +33,7 @@ class AnalisisInventoriController extends Controller
         $rekod = AnalisisInventori::query()
             ->accessibleBy($request->user())
             ->latest('updated_at')
-            ->paginate(10);
+            ->paginate(Halaman::SETIAP_MUKA);
 
         return view('analisis.index', [
             'rekod' => $rekod,

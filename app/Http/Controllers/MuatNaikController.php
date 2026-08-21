@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MuatNaik;
 use App\Services\ExcelPreviewService;
 use App\Services\ExcelValidationService;
+use App\Support\Halaman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -23,7 +24,7 @@ class MuatNaikController extends Controller
         $rekod = MuatNaik::query()
             ->accessibleBy($request->user())
             ->latest()
-            ->paginate(10);
+            ->paginate(Halaman::SETIAP_MUKA);
 
         return view(
             'uploads.history',

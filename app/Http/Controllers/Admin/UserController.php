@@ -7,13 +7,14 @@ use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
 use App\Services\TetapSemulaKataLaluan;
+use App\Support\Halaman;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('name')->paginate(15);
+        $users = User::orderBy('name')->paginate(Halaman::SETIAP_MUKA);
 
         return view('admin.users.index', compact('users'));
     }

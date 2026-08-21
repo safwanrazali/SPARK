@@ -383,6 +383,8 @@
             </table>
         </div>
 
+        <div class="mt-3">{{ $sejarah->links() }}</div>
+
     </div>
 
 @endsection

@@ -11,6 +11,10 @@
         <h4 class="section-title">
             Pratonton Rekod
         </h4>
+        <p class="text-secondary">
+            Memaparkan {{ \App\Support\Halaman::SETIAP_MUKA }} baris pertama fail
+            sebagai semakan pantas. Keseluruhan fail akan disimpan apabila disahkan.
+        </p>
 
         <div class="mb-4">
             <p><strong>Kod Sektor:</strong> {{ $sectorCode }}</p>

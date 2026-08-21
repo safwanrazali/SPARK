@@ -8,6 +8,7 @@ use App\Models\StatusLaporan;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
+use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 
@@ -60,14 +61,16 @@ class EntitiController extends Controller
                 ->where('agency_code', $agencyCode)
                 ->get()
                 ->keyBy('jenis'),
+            // Dahulunya 20 rekod terakhir tanpa jalan ke rekod lebih lama;
+            // kini bernombor mengikut peraturan sepunya. Jejak penuh kekal
+            // tersedia melalui pautan Jejak Audit pada halaman ini.
             'sejarah' => ActivityLog::query()
                 ->accessibleBy($pengguna)
                 ->where('agency_code', $agencyCode)
                 ->with('changedBy')
                 ->orderByDesc('changed_at')
                 ->orderByDesc('id')
-                ->limit(20)
-                ->get(),
+                ->paginate(Halaman::SETIAP_MUKA, ['*'], 'muka_sejarah'),
         ]);
     }
 }

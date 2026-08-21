@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
 use App\Services\LaporanSemakanService;
+use App\Support\Halaman;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
 
@@ -18,7 +19,7 @@ class LaporanController extends Controller
         $rekod = AnalisisInventori::query()
             ->accessibleBy($request->user())
             ->latest('updated_at')
-            ->paginate(15);
+            ->paginate(Halaman::SETIAP_MUKA);
 
         return view('laporan.index', compact('rekod'));
     }

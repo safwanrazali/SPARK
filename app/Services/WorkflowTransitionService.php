@@ -6,6 +6,7 @@ use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\WorkflowStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -188,9 +189,12 @@ class WorkflowTransitionService
     }
 
     /**
-     * Sejarah peringkat bagi satu entiti (sumber yang sama dengan jejak audit).
+     * Query sejarah peringkat — diasingkan daripada history() supaya
+     * pemanggil boleh menomborkannya dan bukan sekadar memotongnya.
+     *
+     * @return Builder<ActivityLog>
      */
-    public function history(string $agencyCode, int $had = 50)
+    public function historyQuery(string $agencyCode): Builder
     {
         return ActivityLog::query()
             ->where('agency_code', $agencyCode)
@@ -201,9 +205,15 @@ class WorkflowTransitionService
             ])
             ->with('changedBy')
             ->orderByDesc('changed_at')
-            ->orderByDesc('id')
-            ->limit($had)
-            ->get();
+            ->orderByDesc('id');
+    }
+
+    /**
+     * Sejarah peringkat bagi satu entiti (sumber yang sama dengan jejak audit).
+     */
+    public function history(string $agencyCode, int $had = 50)
+    {
+        return $this->historyQuery($agencyCode)->limit($had)->get();
     }
 
     /**
