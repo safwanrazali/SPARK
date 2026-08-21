@@ -121,6 +121,126 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
+    | Paparan — satu kad sahaja membawa kedudukan dan tindakan
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_bar_tindakan_memaparkan_tindakan_peringkat_semasa(): void
+    {
+        $this->sediakanEntiti();
+
+        $this->actingAs($this->pa->fresh())
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Peringkat Kemajuan')
+            ->assertSee('peringkat-tindakan', false)
+            ->assertSee(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]), false);
+    }
+
+    /**
+     * Peringkat 05 hanya menjadi Selesai setelah KB mengesahkan, jadi 06
+     * berjalan serentak dengannya. Bar tindakan mesti memaparkan tindakan
+     * penyemak walaupun peringkat SEMASA masih 05 — inilah sebabnya ia tidak
+     * boleh diringkaskan kepada satu peringkat sahaja.
+     */
+    public function test_bar_tindakan_memaparkan_peringkat_serentak_kepada_penyemak(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->assertSame(
+            WorkflowStatus::STAGE_JANA_LAPORAN,
+            app(KemajuanAnalisisService::class)->peringkatSemasa(
+                app(KemajuanAnalisisService::class)->peringkat(self::ALPHA)
+            ),
+        );
+
+        $this->actingAs($this->ppa->fresh())
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee(route('kemajuan.semak', self::ALPHA), false)
+            ->assertSee(route('kemajuan.kembalikan', self::ALPHA), false);
+    }
+
+    public function test_bar_tindakan_tidak_wujud_apabila_tiada_tindakan(): void
+    {
+        $this->sediakanEntiti();
+
+        // PPR tiada tindakan pada mana-mana peringkat selepas pendaftaran.
+        $this->actingAs($this->ppr->fresh())
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Peringkat Kemajuan')
+            ->assertDontSee('peringkat-tindakan', false);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sejarah Peringkat — mesti sampai ke kedudukan semasa
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Sejarah dahulunya ditapis dengan perbendaharaan workflow lama sahaja,
+     * jadi hanya baris "Entiti Didaftarkan Dalam Workflow" muncul walaupun
+     * entiti telah bergerak ke peringkat 04.
+     */
+    public function test_sejarah_peringkat_merangkumi_setiap_peringkat_yang_selesai(): void
+    {
+        $this->sediakanEntiti();
+
+        $this->actingAs($this->pa->fresh());
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
+
+        $sejarah = app(KemajuanAnalisisService::class)->sejarah(self::ALPHA);
+
+        $peringkatDirekod = $sejarah
+            ->pluck('metadata.stage')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(
+            [
+                WorkflowStatus::STAGE_PENDAFTARAN,
+                WorkflowStatus::STAGE_SEMAKAN_AWAL,
+                WorkflowStatus::STAGE_PENYEDIAAN,
+            ],
+            $peringkatDirekod,
+        );
+
+        $this->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Status Peringkat Analisis Berubah')
+            ->assertSee(WorkflowStatus::getStageName(WorkflowStatus::STAGE_SEMAKAN_AWAL))
+            ->assertSee(WorkflowStatus::getStageName(WorkflowStatus::STAGE_PENYEDIAAN));
+    }
+
+    /**
+     * Peringkat 05 hingga 07 digerakkan oleh kitaran laporan, jadi tindakan
+     * report_* mesti turut muncul dalam sejarah peringkat.
+     */
+    public function test_sejarah_peringkat_merangkumi_kitaran_laporan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $tindakan = app(KemajuanAnalisisService::class)
+            ->sejarah(self::ALPHA)
+            ->pluck('action')
+            ->all();
+
+        $this->assertContains('report_submitted', $tindakan);
+
+        $this->actingAs($this->ppa->fresh())
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Laporan Diserahkan untuk Semakan');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Senario C — peringkat diselesaikan mengikut turutan
     |--------------------------------------------------------------------------
     */

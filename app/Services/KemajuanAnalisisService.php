@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -523,23 +524,62 @@ class KemajuanAnalisisService
     }
 
     /**
+     * Tindakan jejak audit yang menggerakkan peringkat sesuatu entiti.
+     *
+     * Tiga kumpulan, dan ketiga-tiganya diperlukan supaya "Sejarah Peringkat"
+     * benar-benar sampai ke kedudukan semasa:
+     *
+     * 1. Aliran Kemajuan Analisis semasa — pendaftaran dan setiap perubahan
+     *    status peringkat.
+     * 2. Kitaran laporan — peringkat 05 hingga 07 digerakkan oleh penghantaran,
+     *    semakan, pengembalian dan pengesahan laporan, bukan oleh perubahan
+     *    status peringkat secara langsung.
+     * 3. Perbendaharaan workflow lama — dikekalkan supaya rekod sejarah yang
+     *    ditulis sebelum aliran semasa tidak lenyap daripada paparan.
+     *
+     * @var list<string>
+     */
+    public const TINDAKAN_SEJARAH = [
+        self::ACTION_REGISTRATION_COMPLETED,
+        self::ACTION_REGISTRATION_RESET,
+        self::ACTION_STAGE_STATUS_CHANGED,
+
+        'report_generated',
+        'report_submitted',
+        'report_reviewed',
+        'report_returned',
+        'report_approved',
+        'report_delivered',
+        'report_status_changed',
+
+        WorkflowTransitionService::ACTION_INITIALIZED,
+        WorkflowTransitionService::ACTION_STAGE_CHANGED,
+        WorkflowTransitionService::ACTION_STATUS_UPDATED,
+    ];
+
+    /**
+     * Query sejarah peringkat — diasingkan daripada sejarah() supaya
+     * pemanggil boleh menomborkannya dan bukan sekadar memotongnya.
+     *
+     * @return Builder<ActivityLog>
+     */
+    public function sejarahQuery(string $agencyCode): Builder
+    {
+        return ActivityLog::query()
+            ->where('agency_code', $agencyCode)
+            ->whereIn('action', self::TINDAKAN_SEJARAH)
+            ->with('changedBy')
+            ->orderByDesc('changed_at')
+            ->orderByDesc('id');
+    }
+
+    /**
      * Sejarah perubahan peringkat bagi satu entiti.
      *
      * @return Collection<int, ActivityLog>
      */
     public function sejarah(string $agencyCode, int $had = 50): Collection
     {
-        return ActivityLog::query()
-            ->where('agency_code', $agencyCode)
-            ->whereIn('action', [
-                self::ACTION_STAGE_STATUS_CHANGED,
-                self::ACTION_REGISTRATION_COMPLETED,
-                self::ACTION_REGISTRATION_RESET,
-            ])
-            ->with('changedBy')
-            ->orderByDesc('changed_at')
-            ->orderByDesc('id')
-            ->limit($had)
-            ->get();
+        return $this->sejarahQuery($agencyCode)->limit($had)->get();
     }
 }

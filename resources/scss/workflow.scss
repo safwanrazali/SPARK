@@ -214,111 +214,59 @@
 
 /*
 |--------------------------------------------------------------------------
-| Kemajuan Analisis Entiti — pokok peringkat menegak
+| Kemajuan Analisis Entiti — bar tindakan di bawah stepper
 |--------------------------------------------------------------------------
-| Stepper mendatar di atas menunjukkan kedudukan sekilas pandang; senarai ini
-| pula ialah ruang kerja: setiap peringkat memaparkan statusnya, masanya, dan
-| tindakan yang dibenarkan bagi peranan pengguna. Garis menegak menyambungkan
-| nod supaya turutan peringkat terbaca sebagai satu aliran.
+| Kedudukan peringkat dibaca daripada stepper mendatar di atas; bar ini
+| membawa tindakan yang benar-benar terbuka kepada peranan pengguna sahaja.
+| Peringkat 05 dan 06 boleh aktif serentak, jadi lebih daripada satu kumpulan
+| boleh muncul pada satu masa dan setiap satu dilabel dengan peringkatnya.
 */
-.kemajuan-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+.peringkat-tindakan {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid $border;
 }
 
-.kemajuan-stage {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 0 0 1.5rem;
-}
-
-// Garis penyambung antara nod; peringkat terakhir tidak memerlukannya.
-.kemajuan-stage::before {
-    content: "";
-    position: absolute;
-    top: 38px;
-    left: 17px;
-    width: 2px;
-    height: calc(100% - 38px);
-    background: $border;
-}
-
-.kemajuan-stage:last-child {
-    padding-bottom: 0;
-}
-
-.kemajuan-stage:last-child::before {
-    display: none;
-}
-
-.kemajuan-stage__node {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-
-    width: 36px;
-    height: 36px;
-
-    border: 2px solid $border;
-    border-radius: 50%;
-    background: $surface;
-
+.peringkat-tindakan__tajuk {
+    margin-bottom: 0.75rem;
     color: $muted;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
-
-.kemajuan-stage__body {
-    flex: 1;
-    min-width: 0;
-    padding-top: 0.15rem;
-}
-
-.kemajuan-stage__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.kemajuan-stage__title {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-
-    margin: 0;
-
-    font-size: 1rem;
-    font-weight: 600;
-    color: $text;
-}
-
-.kemajuan-stage__number {
-    color: $muted;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
-
-.kemajuan-stage__note,
-.kemajuan-stage__meta {
-    margin: 0.35rem 0 0;
     font-size: 0.85rem;
-    color: $muted;
 }
 
-.kemajuan-stage__actions {
+.peringkat-tindakan__kumpulan {
     display: flex;
     align-items: flex-start;
     flex-wrap: wrap;
+    gap: 0.5rem 0.85rem;
+    padding: 0.65rem 0;
+
+    & + & {
+        border-top: 1px dashed $border;
+    }
+}
+
+.peringkat-tindakan__label {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    min-width: 190px;
+    padding-top: 0.3rem;
+    color: $text;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.peringkat-tindakan__nota {
+    color: $muted;
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+.peringkat-tindakan__butang {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 0.75rem;
 }
 
 // Borang "Kembalikan" membawa medan catatan, jadi ia mengambil satu baris
@@ -326,45 +274,12 @@
 .kemajuan-kembalikan {
     flex: 1 1 100%;
     max-width: 520px;
-    margin-top: 0.25rem;
-}
-
-// ── Keadaan setiap peringkat ────────────────────────────────────────
-.kemajuan-stage--selesai {
-    .kemajuan-stage__node {
-        border-color: $success;
-        background: $success;
-        color: $highlight;
-    }
-
-    &::before {
-        background: $success;
-    }
-}
-
-.kemajuan-stage--semasa .kemajuan-stage__node {
-    border-color: $secondary;
-    background: $surface;
-    color: $secondary;
-    box-shadow: 0 0 0 4px rgba($secondary, 0.15);
-}
-
-.kemajuan-stage--semasa .kemajuan-stage__title {
-    color: $secondary;
-}
-
-// Peringkat yang belum dibuka kerana pendahulunya belum Selesai.
-.kemajuan-stage--dikunci {
-    opacity: 0.55;
+    margin-top: 0.5rem;
 }
 
 @media (max-width: 576px) {
-    .kemajuan-stage {
-        gap: 0.75rem;
-    }
-
-    .kemajuan-stage__head {
-        align-items: flex-start;
-        flex-direction: column;
+    .peringkat-tindakan__label {
+        min-width: 100%;
+        padding-top: 0;
     }
 }

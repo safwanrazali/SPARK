@@ -117,7 +117,11 @@ class WorkflowController extends Controller
             'peringkatSemasa' => $this->kemajuan->peringkatSemasa($peringkat),
             'laporan' => $this->semakan->untuk($agencyCode),
             'analisis' => RekodAnalisis::where('agency_code', $agencyCode)->first(),
-            'sejarah' => $this->workflow->historyQuery($agencyCode)
+            // Sumbernya ialah KemajuanAnalisisService, bukan
+            // WorkflowTransitionService: aliran semasa menulis tindakan
+            // 'stage_status_changed' dan kitaran laporan, yang tiada dalam
+            // perbendaharaan workflow lama. Lihat TINDAKAN_SEJARAH.
+            'sejarah' => $this->kemajuan->sejarahQuery($agencyCode)
                 ->paginate(Halaman::SETIAP_MUKA, ['*'], 'muka_sejarah'),
         ]);
     }
