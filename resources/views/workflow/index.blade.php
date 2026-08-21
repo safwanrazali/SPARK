@@ -48,6 +48,17 @@
             @endif
         </p>
 
+        @php
+            /*
+             * Pegawai Penyelaras Rekod memerhati Kemajuan Analisis Entiti
+             * sahaja — tiada satu pun tindakan peringkat miliknya, jadi lajur
+             * Tindakan digugurkan sepenuhnya daripada paparannya. Ini keputusan
+             * paparan; kebenaran sebenar tetap dikuatkuasakan oleh gate dan
+             * middleware `entity.access` pada setiap route.
+             */
+            $adaTindakan = ! auth()->user()->isPegawaiPenyelarasRekod();
+        @endphp
+
         <div class="table-responsive-custom">
             <table class="table-modern">
                 <thead>
@@ -58,7 +69,9 @@
                         <th scope="col">Status Keseluruhan</th>
                         <th scope="col">Status Laporan</th>
                         <th scope="col">Kemajuan</th>
-                        <th scope="col">Tindakan</th>
+                        @if ($adaTindakan)
+                            <th scope="col">Tindakan</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -118,19 +131,21 @@
                                 </div>
                                 <small class="text-secondary">{{ $e['bilanganSelesai'] }}/{{ $jumlahPeringkat }}</small>
                             </td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-sm btn-primary"
-                                    href="{{ route('entiti.show', $e['agency_code']) }}">
-                                    <i class="bi bi-building"></i> Entiti
-                                </a>
-                                <a class="btn btn-sm btn-outline-light"
-                                    href="{{ route('workflow.show', $e['agency_code']) }}">
-                                    <i class="bi bi-diagram-3"></i> Kemajuan
-                                </a>
-                            </td>
+                            @if ($adaTindakan)
+                                <td class="text-nowrap">
+                                    <a class="btn btn-sm btn-primary"
+                                        href="{{ route('entiti.show', $e['agency_code']) }}">
+                                        <i class="bi bi-building"></i> Entiti
+                                    </a>
+                                    <a class="btn btn-sm btn-outline-light"
+                                        href="{{ route('workflow.show', $e['agency_code']) }}">
+                                        <i class="bi bi-diagram-3"></i> Kemajuan
+                                    </a>
+                                </td>
+                            @endif
                         </tr>
                     @empty
-                        <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti dipantau">
+                        <x-empty-state :colspan="$adaTindakan ? 7 : 6" icon="bi-diagram-3" title="Tiada entiti dipantau">
                             Pilih sektor di atas untuk memaparkan entiti dan mendaftarkannya ke dalam workflow.
                         </x-empty-state>
                     @endforelse

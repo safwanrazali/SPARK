@@ -65,6 +65,31 @@ class Phase2WorkflowRouteTest extends TestCase
             ->assertSee('Penyediaan &amp; Pengesahan Data', false);
     }
 
+    /**
+     * Pegawai Penyelaras Rekod memerhati sahaja pada skrin ini, jadi lajur
+     * Tindakan tidak dipaparkan langsung kepadanya.
+     */
+    public function test_ppr_tidak_melihat_lajur_tindakan(): void
+    {
+        $this->workflowPada(3);
+
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+
+        $this->actingAs($ppr)
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->assertSee(self::ENTITI)
+            ->assertDontSee('Tindakan')
+            ->assertDontSee(route('workflow.show', self::ENTITI));
+
+        // Peranan lain kekal mempunyai pautan butiran.
+        $this->actingAs($this->coordinator())
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->assertSee('Tindakan')
+            ->assertSee(route('workflow.show', self::ENTITI));
+    }
+
     public function test_senarai_boleh_ditapis_mengikut_sektor(): void
     {
         // Entiti sektor 001 mempunyai rekod workflow; penapis sektor 010

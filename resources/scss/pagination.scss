@@ -1,0 +1,51 @@
+/*
+|--------------------------------------------------------------------------
+| Penomboran halaman
+|--------------------------------------------------------------------------
+|
+| Paparan Bootstrap 5 (didaftarkan dalam AppServiceProvider) digayakan
+| mengikut palet jenama: pautan lembut di atas kad putih, halaman semasa
+| memakai gradien yang sama dengan `.btn-primary`.
+*/
+.pagination {
+    margin-bottom: 0;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.page-link {
+    border: 1px solid $border;
+    border-radius: 10px;
+    color: $secondary;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    transition: $transition;
+}
+
+.page-link:hover,
+.page-link:focus {
+    background: rgba($primary, 0.08);
+    border-color: $primary;
+    color: $secondary;
+    box-shadow: none;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(180deg, $primary, $secondary);
+    border-color: transparent;
+    color: $highlight;
+}
+
+.page-item.disabled .page-link {
+    background: $surface;
+    border-color: $border;
+    color: $muted;
+    opacity: 0.65;
+}
+
+// Baris "Menunjukkan X hingga Y daripada Z" di sebelah kawalan halaman.
+.pagination-wrapper .small,
+nav[role="navigation"] p {
+    color: $muted;
+    margin-bottom: 0;
+}

@@ -131,7 +131,7 @@ class EntitiAssignmentController extends Controller
      */
     private function halaman(Request $request, Collection $senarai, string $namaMuka): LengthAwarePaginator
     {
-        $setiapMuka = 25;
+        $setiapMuka = 10;
         $muka = LengthAwarePaginator::resolveCurrentPage($namaMuka);
 
         return new LengthAwarePaginator(

@@ -64,6 +64,14 @@
                 // hanya PPR (dan Pentadbir) boleh menanda entiti.
                 $bolehTanda = auth()->user()->can('register-entity-data');
 
+                // Tanpa penapis sektor, senarai ini hanya mengandungi entiti
+                // yang telah dikunci — tiada apa yang boleh dikemas kini, jadi
+                // borangnya disembunyikan sepenuhnya. Perkara sama berlaku pada
+                // mana-mana halaman sektor yang kebetulan terkunci semuanya.
+                $adaUntukDitanda = $bolehTanda && $pendaftaran->contains(
+                    fn (array $e) => ! ($e['pendaftaran']?->isSelesai() ?? false)
+                );
+
                 $badgeKeseluruhan = fn (string $keseluruhan): string => match ($keseluruhan) {
                     \App\Services\KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
                     \App\Services\KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
@@ -73,6 +81,17 @@
 
             <form action="{{ route('penugasan.pendaftaran.kemas-kini') }}" method="POST">
                 @csrf
+
+                @if ($adaUntukDitanda)
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2-square"></i> Kemas Kini
+                        </button>
+                        <span class="text-secondary">
+                            Entiti yang ditanda akan bertukar kepada Selesai dan dikunci.
+                        </span>
+                    </div>
+                @endif
 
                 <div class="table-responsive-custom">
                     <table class="table-modern">
@@ -93,27 +112,34 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <input type="checkbox" class="form-check-input"
-                                            name="agency_codes[]" value="{{ $e['agency_code'] }}"
-                                            id="daftar-{{ $e['agency_code'] }}" @disabled($dikunci || ! $bolehTanda)
-                                            aria-label="Tandakan {{ $e['agency_code'] }} selesai">
+                                        @if ($dikunci)
+                                            <i class="bi bi-lock-fill text-secondary"
+                                                title="Dikunci — Penerimaan &amp; Pendaftaran Data telah selesai"
+                                                aria-label="{{ $e['agency_code'] }} telah dikunci"></i>
+                                        @else
+                                            <input type="checkbox" class="form-check-input"
+                                                name="agency_codes[]" value="{{ $e['agency_code'] }}"
+                                                id="daftar-{{ $e['agency_code'] }}" @disabled(! $bolehTanda)
+                                                aria-label="Tandakan {{ $e['agency_code'] }} selesai">
+                                        @endif
                                     </td>
                                     <td>
-                                        <label class="mb-0" for="daftar-{{ $e['agency_code'] }}">
+                                        {{-- Entiti terkunci tiada kotak semak, jadi tiada label untuk diikat. --}}
+                                        @if ($dikunci)
                                             <strong>{{ $e['agency_code'] }}</strong><br>
                                             <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
-                                        </label>
+                                        @else
+                                            <label class="mb-0" for="daftar-{{ $e['agency_code'] }}">
+                                                <strong>{{ $e['agency_code'] }}</strong><br>
+                                                <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
+                                            </label>
+                                        @endif
                                     </td>
                                     <td>
                                         <span
                                             class="status-badge {{ $daftar?->statusBadgeClass() ?? 'status-tinggi' }}">
                                             {{ $daftar?->status ?? \App\Models\WorkflowStageStatus::BELUM_MULA }}
                                         </span>
-                                        @if ($dikunci)
-                                            <i class="bi bi-lock-fill text-secondary ms-1"
-                                                title="Dikunci daripada Pegawai Penyelaras Rekod"
-                                                aria-label="Dikunci"></i>
-                                        @endif
                                     </td>
                                     <td>
                                         <span class="status-badge {{ $badgeKeseluruhan($e['keseluruhan']) }}">
@@ -146,16 +172,16 @@
                     </table>
                 </div>
 
-                @if ($bolehTanda && $pendaftaran->isNotEmpty())
-                        <div class="mt-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check2-square"></i> Kemas Kini
-                            </button>
-                            <span class="text-secondary ms-2">
-                                Entiti yang ditanda akan bertukar kepada Selesai dan dikunci.
-                            </span>
-                        </div>
-                    @endif
+                @if ($adaUntukDitanda)
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2-square"></i> Kemas Kini
+                        </button>
+                        <span class="text-secondary">
+                            Entiti yang ditanda akan bertukar kepada Selesai dan dikunci.
+                        </span>
+                    </div>
+                @endif
 
             </form>
 

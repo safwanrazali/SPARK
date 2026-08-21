@@ -69,6 +69,24 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->assertSee('Kemas Kini');
     }
 
+    /**
+     * Tanpa penapis sektor, senarai hanya memaparkan entiti yang telah dikunci.
+     * Tiada apa yang boleh ditanda di situ, jadi borangnya tidak dipaparkan
+     * langsung — bukan sekadar dilumpuhkan.
+     */
+    public function test_senarai_entiti_berdaftar_tiada_borang_kemas_kini(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
+        $this->actingAs($this->ppr)
+            ->get(route('penugasan.index'))
+            ->assertOk()
+            ->assertSee(self::ALPHA)
+            ->assertDontSee('Kemas Kini')
+            ->assertDontSee('name="agency_codes[]"', false)
+            ->assertSee('bi-lock-fill', false);
+    }
+
     public function test_kemas_kini_menandakan_peringkat_satu_selesai_dan_mengunci_entiti(): void
     {
         $this->actingAs($this->ppr)

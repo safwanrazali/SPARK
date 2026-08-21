@@ -6,6 +6,7 @@ use App\Models\AnalisisInventori;
 use App\Models\User;
 use App\Policies\AnalisisInventoriPolicy;
 use App\Services\EntityAccessService;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,6 +19,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        /*
+        |------------------------------------------------------------------
+        | Penomboran halaman
+        |------------------------------------------------------------------
+        |
+        | Paparan lalai Laravel ditulis untuk Tailwind. Aplikasi ini memuatkan
+        | Bootstrap 5 sahaja, jadi kelas utiliti Tailwind (termasuk saiz ikon
+        | `w-5 h-5`) tidak wujud dan anak panah SVG dipaparkan sebesar
+        | halaman. Paparan Bootstrap 5 digayakan semula dalam
+        | `resources/scss/pagination.scss`.
+        */
+        Paginator::useBootstrapFive();
+
         /*
         |------------------------------------------------------------------
         | Matriks kebenaran — sumber tunggal kebenaran
