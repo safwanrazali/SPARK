@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -81,6 +82,10 @@ class Phase4AccessControlTest extends TestCase
         WorkflowStatus::factory()->create($entiti + [
             'updated_by_user_id' => $this->coordinator->id,
         ]);
+
+        // Baris peringkat: tanpa peringkat 01 Selesai entiti tidak dikira
+        // berada dalam aliran kerja, jadi ia tidak akan tersenarai langsung.
+        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran($entiti, $this->coordinator);
 
         return AnalisisInventori::factory()->create($entiti + [
             'user_id' => $this->analystA->id,

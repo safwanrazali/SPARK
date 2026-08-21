@@ -14,7 +14,10 @@
 
         $pengguna = auth()->user();
 
-        $didaftar = $peringkat->isNotEmpty();
+        // Baris peringkat kekal selepas "Set Semula" Ketua Bahagian, jadi
+        // kehadirannya tidak membuktikan entiti berdaftar. Peringkat 01
+        // Selesai ialah ujian sebenar.
+        $didaftar = $peringkat->get(WorkflowStatus::STAGE_PENDAFTARAN)?->isSelesai() ?? false;
 
         $bolehPA = $pengguna->can('advance-analysis-stage');
         $bolehSemak = $pengguna->can('review-report');
@@ -90,6 +93,10 @@
         ];
 
         $adaTindakan = $didaftar && in_array(true, $tindakan, true);
+
+        // Status Laporan bermula pada peringkat 05; lihat komen pada kad
+        // Ringkasan Kemajuan di bawah.
+        $statusLaporanBerkenaan = $terbuka(WorkflowStatus::STAGE_JANA_LAPORAN);
 
         $borangUrl = route('analisis.borang', [
             'sector_code' => $entiti['sector_code'],
@@ -370,21 +377,26 @@
                     <div class="stat-title">Peringkat Selesai</div>
                     <div class="workflow-meta__value">{{ $bilanganSelesai }} / {{ $jumlahPeringkat }}</div>
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-title">Status Laporan</div>
-                    <div class="workflow-meta__value">
-                        {{--
-                            Perbendaharaan paparan ('Belum Lengkap' / 'Dalam
-                            Semakan' / 'Disahkan') dipetakan daripada keadaan
-                            sebenar laporan — lihat LaporanSemakan::PAPARAN.
-                            Keadaan terperinci (di tangan PPA atau KB) kekal
-                            dalam Sejarah Peringkat di bawah.
-                        --}}
-                        <span class="status-badge {{ LaporanSemakan::badgePaparan($laporan) }}">
-                            {{ LaporanSemakan::paparanUntuk($laporan) }}
-                        </span>
+                {{--
+                    Status Laporan muncul hanya bermula peringkat 05 (Jana
+                    Laporan) — sebelum itu tiada laporan untuk diberi status,
+                    dan "Belum Lengkap" akan terbaca sebagai kerja tertunggak.
+
+                    Perbendaharaan paparan ('Belum Lengkap' / 'Dalam Semakan'
+                    / 'Disahkan') dipetakan daripada keadaan sebenar laporan —
+                    lihat LaporanSemakan::PAPARAN. Keadaan terperinci (di
+                    tangan PPA atau KB) kekal dalam Sejarah Peringkat.
+                --}}
+                @if ($statusLaporanBerkenaan)
+                    <div class="col-md-4">
+                        <div class="stat-title">Status Laporan</div>
+                        <div class="workflow-meta__value">
+                            <span class="status-badge {{ LaporanSemakan::badgePaparan($laporan) }}">
+                                {{ LaporanSemakan::paparanUntuk($laporan) }}
+                            </span>
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
 
             <div class="workflow-progress mt-3" role="img"

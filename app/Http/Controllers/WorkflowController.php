@@ -66,11 +66,24 @@ class WorkflowController extends Controller
             ? $this->access->entitiDalamSektorFor($pengguna, $sectorCode)
             : $this->entitiDipantau($rekod->keys()->all(), $pengguna);
 
+        $peringkat = $this->kemajuan->peringkatUntukBanyak($entiti->pluck('agency_code')->all());
+
+        // Senarai lalai memantau entiti yang BERADA dalam aliran kerja.
+        // Entiti yang ditetapkan semula oleh Ketua Bahagian telah keluar
+        // daripadanya, jadi ia digugurkan di sini — sama seperti entiti yang
+        // belum pernah didaftarkan. Mod sektor sengaja dikecualikan: ia
+        // memaparkan keseluruhan sektor, dan entiti yang tidak berdaftar
+        // ditandakan "Belum Didaftarkan" pada paparan.
+        if ($sectorCode === null) {
+            $entiti = $entiti
+                ->filter(fn (array $e) => $this->kemajuan->didaftarkanDaripada($peringkat->get($e['agency_code'])))
+                ->values();
+        }
+
         // Setiap baris memaparkan pegawai yang ditugaskan, status keseluruhan
         // dan kedudukan laporan; ketiga-tiganya dimuatkan sekali gus supaya
         // senarai tidak mengeluarkan query bagi setiap entiti.
         $kod = $entiti->pluck('agency_code')->all();
-        $peringkat = $this->kemajuan->peringkatUntukBanyak($kod);
         $penugasan = $this->assignments->activeForMany($kod);
         $laporan = $this->semakan->untukBanyak($kod);
 
@@ -94,7 +107,10 @@ class WorkflowController extends Controller
         return view('workflow.index', [
             'entiti' => Halaman::daripada($request, $senarai),
             'sectorCode' => $sectorCode,
-            'jumlahDidaftar' => $rekod->count(),
+            // Dikira daripada peringkat 1, bukan daripada bilangan baris
+            // workflow_status: baris itu kekal selepas entiti ditetapkan
+            // semula, jadi ia akan melaporkan entiti yang tidak lagi berdaftar.
+            'jumlahDidaftar' => count($this->kemajuan->kodPendaftaranSelesai($pengguna)),
             'sektor' => $this->access->sektorFor($pengguna),
         ]);
     }

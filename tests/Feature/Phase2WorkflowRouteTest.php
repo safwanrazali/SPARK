@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,13 +34,25 @@ class Phase2WorkflowRouteTest extends TestCase
         return User::factory()->create(['role' => User::ROLE_ANALYST]);
     }
 
+    /**
+     * Bawa entiti ke peringkat $stage melalui pendaftaran sebenar.
+     *
+     * Baris `workflow_status` sahaja TIDAK memadai: aplikasi sentiasa
+     * mencipta baris peringkat serentak dengannya (lihat
+     * KemajuanAnalisisService::sediakan), dan senarai menguji peringkat 01
+     * Selesai untuk memutuskan sama ada entiti berada dalam aliran kerja.
+     */
     private function workflowPada(int $stage): WorkflowStatus
     {
-        return WorkflowStatus::factory()->onStage($stage)->create([
-            'agency_code' => self::ENTITI,
-            'agency_name' => 'Suruhanjaya Pilihan Raya (SPR)',
-            'updated_by_user_id' => null,
-        ]);
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ENTITI), $this->coordinator());
+
+        for ($peringkat = WorkflowStatus::FIRST_STAGE + 1; $peringkat < $stage; $peringkat++) {
+            $kemajuan->tandakanSelesai(self::ENTITI, $peringkat);
+        }
+
+        return WorkflowStatus::where('agency_code', self::ENTITI)->firstOrFail();
     }
 
     /*

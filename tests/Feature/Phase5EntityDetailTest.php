@@ -7,6 +7,7 @@ use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,10 +63,19 @@ class Phase5EntityDetailTest extends TestCase
             'updated_by_user_id' => $this->coordinator->id,
         ]);
 
-        // 1 → 2 → 3 supaya stepper mempunyai peringkat selesai dan semasa.
+        // Jejak peringkat lama — halaman memaparkan tindakan ini dalam
+        // "Sejarah", jadi ia dikekalkan.
         $transitions = app(WorkflowTransitionService::class);
         $transitions->advance($workflow, $this->coordinator);
         $transitions->advance($workflow, $this->coordinator, 'Dalam Proses');
+
+        // Baris peringkat sebenar: 01 dan 02 Selesai, jadi peringkat semasa
+        // ialah 03 — stepper mempunyai peringkat selesai dan semasa. Ini
+        // dijalankan SELEPAS advance() kerana penyelarasan kedudukan mengira
+        // peringkat semasa daripada baris peringkat, bukan sebaliknya.
+        $kemajuan = app(KemajuanAnalisisService::class);
+        $kemajuan->lengkapkanPendaftaran($entiti, $this->coordinator);
+        $kemajuan->tandakanSelesai($agencyCode, WorkflowStatus::STAGE_SEMAKAN_AWAL, $this->coordinator);
 
         AnalisisInventori::factory()->create($entiti + [
             'user_id' => $this->analystA->id,

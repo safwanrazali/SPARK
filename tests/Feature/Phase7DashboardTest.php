@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\DashboardStatistikService;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -169,6 +170,74 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(2, $statistik['jumlahEntiti']);
         $this->assertSame(1, $statistik['dalamProses']);
         $this->assertSame(0, $statistik['selesai']);
+        $this->assertSame(1, $statistik['belumDidaftar']);
+    }
+
+    /**
+     * "Set Semula" Ketua Bahagian menarik entiti keluar daripada aliran
+     * kerja, jadi angka papan pemuka mesti turun bersamanya.
+     *
+     * Baris peringkat dan baris kedudukan sengaja dikekalkan oleh setSemula()
+     * supaya jejak audit entiti itu kekal; tanpa penyingkiran eksplisit,
+     * baris yang tertinggal itu terus dikira sebagai entiti "Dalam Proses"
+     * dan terus menyumbang kepada Jumlah Laporan.
+     */
+    public function test_set_semula_entiti_menurunkan_kiraan_papan_pemuka(): void
+    {
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+        $kb = User::factory()->create(['role' => User::ROLE_KETUA_BAHAGIAN]);
+
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        foreach ([self::ALPHA, self::BETA, self::GAMMA] as $kod) {
+            $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+        }
+
+        $sebelum = $this->kira();
+
+        $this->assertSame(3, $sebelum['jumlahEntiti']);
+        $this->assertSame(3, $sebelum['dalamProses']);
+        $this->assertSame(0, $sebelum['selesai']);
+        $this->assertSame(9, $sebelum['jumlahLaporan']);
+
+        $this->actingAs($kb)
+            ->post(route('penugasan.pendaftaran.set-semula', self::GAMMA), ['reason' => 'Data tidak lengkap.'])
+            ->assertSessionHasNoErrors();
+
+        $selepas = $this->kira();
+
+        $this->assertSame(2, $selepas['jumlahEntiti']);
+        $this->assertSame(2, $selepas['dalamProses']);
+        $this->assertSame(0, $selepas['selesai']);
+        $this->assertSame(6, $selepas['jumlahLaporan']);
+
+        // Entiti itu bukan sekadar dipindahkan ke "belum didaftar" —
+        // ia keluar sepenuhnya daripada skop pemantauan.
+        $this->assertSame(0, $selepas['belumDidaftar']);
+
+        $sektor001 = collect($selepas['mengikutSektor'])->firstWhere('kod', '001');
+        $this->assertSame(2, $sektor001['jumlah']);
+    }
+
+    /**
+     * Entiti yang TIDAK PERNAH didaftarkan tiada baris peringkat, jadi ia
+     * mesti kekal dikira sebagai "belum didaftar" — bukan disingkirkan
+     * bersama entiti yang ditetapkan semula.
+     */
+    public function test_entiti_belum_didaftar_tidak_tersingkir_oleh_peraturan_set_semula(): void
+    {
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+
+        app(KemajuanAnalisisService::class)
+            ->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $ppr);
+
+        // Dipantau melalui status laporan sahaja — tiada baris peringkat.
+        $this->statusLaporan(self::BETA, 'inventori', 'Dalam Proses');
+
+        $statistik = $this->kira();
+
+        $this->assertSame(2, $statistik['jumlahEntiti']);
+        $this->assertSame(1, $statistik['dalamProses']);
         $this->assertSame(1, $statistik['belumDidaftar']);
     }
 

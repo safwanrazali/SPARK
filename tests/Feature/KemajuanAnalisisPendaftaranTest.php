@@ -207,6 +207,90 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
         );
     }
 
+    /**
+     * Entiti yang ditetapkan semula telah keluar daripada aliran kerja, jadi
+     * ia tidak boleh kekal dalam senarai "Kedudukan Semasa Entiti".
+     *
+     * setSemula() mengekalkan ketujuh-tujuh baris peringkat (supaya jejak
+     * auditnya kekal bermakna) dan hanya mengembalikan statusnya kepada
+     * Belum Mula. Senarai yang menguji "ada baris peringkat" akan terus
+     * memaparkan entiti itu; peringkat 01 Selesai ialah ujian yang betul.
+     */
+    public function test_entiti_yang_ditetapkan_semula_tidak_disenaraikan_dalam_kemajuan_analisis(): void
+    {
+        $this->daftarkan(self::ALPHA);
+        $this->daftarkan(self::BETA);
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->assertSee(route('workflow.show', self::ALPHA), false)
+            ->assertSee(route('workflow.show', self::BETA), false)
+            ->assertSee('2 entiti telah didaftarkan');
+
+        $this->actingAs($this->kb)
+            ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data perlu dihantar semula.'])
+            ->assertSessionHasNoErrors();
+
+        // Pautan baris disemak, bukan kod entiti: mesej kejayaan Set Semula
+        // turut menyebut kod itu.
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->assertDontSee(route('workflow.show', self::ALPHA), false)
+            ->assertSee(route('workflow.show', self::BETA), false)
+            ->assertSee('1 entiti telah didaftarkan');
+    }
+
+    /**
+     * Punca pepijat, diuji secara langsung: setSemula() mengekalkan
+     * ketujuh-tujuh baris peringkat, jadi "ada baris peringkat" tidak boleh
+     * digunakan sebagai ujian "entiti berdaftar".
+     */
+    public function test_baris_peringkat_kekal_selepas_set_semula_tetapi_entiti_tidak_lagi_berdaftar(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        $this->assertTrue($kemajuan->didaftarkanDaripada($kemajuan->peringkat(self::ALPHA)));
+        $this->assertContains(self::ALPHA, $kemajuan->kodPendaftaranSelesai());
+
+        $this->actingAs($this->kb)
+            ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data perlu dihantar semula.']);
+
+        $peringkat = $kemajuan->peringkat(self::ALPHA);
+
+        // Baris kekal — jejak auditnya masih bermakna...
+        $this->assertCount(count(WorkflowStatus::WORKFLOW_STAGES), $peringkat);
+
+        // ...tetapi entiti itu telah keluar daripada aliran kerja.
+        $this->assertFalse($kemajuan->didaftarkanDaripada($peringkat));
+        $this->assertNotContains(self::ALPHA, $kemajuan->kodPendaftaranSelesai());
+    }
+
+    /**
+     * Halaman kemajuan bagi entiti yang ditetapkan semula mesti kembali
+     * kepada notis "belum memasuki aliran kerja".
+     */
+    public function test_halaman_kemajuan_entiti_yang_ditetapkan_semula_menunjukkan_belum_masuk_aliran(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertDontSee('Belum Memasuki Aliran Kerja');
+
+        $this->actingAs($this->kb)
+            ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data perlu dihantar semula.']);
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Belum Memasuki Aliran Kerja');
+    }
+
     public function test_ppr_tidak_boleh_menetapkan_semula_entiti(): void
     {
         $this->daftarkan(self::ALPHA);

@@ -133,13 +133,50 @@ class KemajuanAnalisisService
     }
 
     /**
+     * Adakah entiti ini berdaftar, dijawab daripada peringkat yang telah
+     * dimuatkan — versi tanpa query bagi pendaftaranSelesai().
+     *
+     * Senarai TIDAK boleh menggunakan "ada baris peringkat" sebagai ganti:
+     * setSemula() mengekalkan ketujuh-tujuh baris dan hanya mengembalikan
+     * statusnya kepada Belum Mula, jadi entiti yang telah ditetapkan semula
+     * oleh Ketua Bahagian tetap mempunyai baris peringkat. Peringkat 1
+     * Selesai ialah satu-satunya ujian yang betul.
+     *
+     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     */
+    public function didaftarkanDaripada(?Collection $peringkat): bool
+    {
+        return $peringkat?->get(WorkflowStatus::STAGE_PENDAFTARAN)?->isSelesai() ?? false;
+    }
+
+    /**
+     * Adakah "Status Laporan" berkenaan bagi entiti ini?
+     *
+     * Laporan hanya mula wujud pada peringkat 05 (Jana Laporan), iaitu
+     * sebaik "Analisis Data" Selesai. Memaparkan statusnya lebih awal
+     * membacanya sebagai kerja yang tertunggak — "Belum Lengkap" pada
+     * peringkat 03 menuduh Pegawai Analisis kerana borang yang gilirannya
+     * belum pun tiba.
+     *
+     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     */
+    public function statusLaporanBerkenaan(?Collection $peringkat): bool
+    {
+        return $peringkat?->get(WorkflowStatus::STAGE_ANALISIS)?->isSelesai() ?? false;
+    }
+
+    /**
      * Kod entiti yang telah menyelesaikan pendaftaran.
+     *
+     * Entiti yang ditetapkan semula oleh Ketua Bahagian tidak termasuk —
+     * peringkat 1-nya kembali kepada Belum Mula.
      *
      * @return array<int, string>
      */
-    public function kodPendaftaranSelesai(): array
+    public function kodPendaftaranSelesai(?User $pengguna = null): array
     {
         return WorkflowStageStatus::query()
+            ->when($pengguna !== null, fn ($query) => $query->accessibleBy($pengguna))
             ->atStage(WorkflowStatus::STAGE_PENDAFTARAN)
             ->selesai()
             ->pluck('agency_code')
@@ -300,6 +337,35 @@ class KemajuanAnalisisService
     public function tandakanSelesai(string $agencyCode, int $stage, ?User $user = null, ?string $notes = null): WorkflowStageStatus
     {
         return $this->tetapkanStatus($agencyCode, $stage, WorkflowStageStatus::SELESAI, $user, $notes);
+    }
+
+    /**
+     * Tandakan satu peringkat Dalam Proses — dipanggil apabila kerja pada
+     * peringkat itu benar-benar bermula.
+     *
+     * Peringkat yang telah Selesai tidak diundurkan, dan peringkat yang
+     * belum terbuka (pendahulunya belum bermula) tidak disentuh langsung —
+     * jadi memanggilnya lebih awal adalah selamat dan tidak melompat
+     * peringkat.
+     */
+    public function tandakanDalamProses(string $agencyCode, int $stage, ?User $user = null): ?WorkflowStageStatus
+    {
+        $rekod = WorkflowStageStatus::query()
+            ->forAgency($agencyCode)
+            ->atStage($stage)
+            ->first();
+
+        $bolehMula = $this->ralatPeringkat($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES) === null;
+
+        if ($rekod === null || $rekod->isSelesai() || ! $bolehMula) {
+            return $rekod;
+        }
+
+        if ($rekod->status === WorkflowStageStatus::DALAM_PROSES) {
+            return $rekod;
+        }
+
+        return $this->tetapkanStatus($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES, $user);
     }
 
     /**

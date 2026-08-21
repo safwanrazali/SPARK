@@ -329,24 +329,25 @@
             <textarea name="kesimpulan_lain" class="form-control" rows="2">{{ $data['kesimpulan_lain'] ?? '' }}</textarea>
         </div>
 
+        {{--
+            Tiada lagi kotak semak "tanda analisis selesai": penyiapan bukan
+            lagi sesuatu yang Pegawai Analisis isytiharkan sendiri. "Hantar"
+            memuktamadkan borang DAN menyerahkannya kepada PPA, dan peringkat
+            Jana Laporan hanya menjadi Selesai setelah Ketua Bahagian
+            mengesahkan laporan.
+        --}}
         <div class="report-card mb-4 d-flex align-items-center gap-3 flex-wrap">
             <button type="submit" formaction="{{ route('analisis.draf') }}" class="btn btn-outline-light">
                 <i class="bi bi-journal-arrow-down"></i> Simpan Draf
             </button>
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save"></i> Simpan Dapatan
+                <i class="bi bi-send"></i> Hantar
             </button>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="selesai" name="selesai" value="1"
-                    @checked($analisis?->selesai)>
-                <label class="form-check-label" for="selesai">
-                    Tanda analisis selesai (dikira dalam kemajuan dashboard)
-                </label>
-            </div>
             <span class="text-secondary draft-hint">
                 <i class="bi bi-info-circle"></i>
                 Simpan Draf menyimpan kerja separa siap tanpa pengesahan penuh.
-                Simpan Dapatan memuktamadkan laporan.
+                Hantar memuktamadkan borang dan menyerahkan laporan kepada
+                Pegawai Penyelaras Analisis untuk semakan.
             </span>
         </div>
 

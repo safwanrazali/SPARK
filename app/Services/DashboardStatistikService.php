@@ -7,6 +7,7 @@ use App\Models\EntitiAssignment;
 use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Models\User;
+use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
 use App\Support\SektorDirectory;
 use Illuminate\Support\Carbon;
@@ -22,7 +23,9 @@ use Illuminate\Support\Collection;
  *
  * Takrifan yang digunakan (semuanya berasaskan rekod sedia ada):
  * - Entiti dipantau  : entiti yang mempunyai sekurang-kurangnya satu rekod
- *                      (workflow, penugasan, analisis, status laporan, muat naik)
+ *                      (workflow, penugasan, analisis, status laporan, muat naik),
+ *                      TOLAK entiti yang telah ditarik keluar daripada aliran
+ *                      kerja oleh "Set Semula" Ketua Bahagian
  * - Dalam proses     : workflow pada peringkat 1–6
  * - Selesai          : workflow pada peringkat 7 (Penyerahan & Penutupan)
  * - Kemajuan keseluruhan : jumlah peringkat dicapai / (bilangan entiti × 7)
@@ -111,6 +114,7 @@ class DashboardStatistikService
             ->merge(MuatNaik::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->filter()
             ->unique()
+            ->diff($this->kodDitetapkanSemula())
             ->values();
 
         if ($sectorCode !== null) {
@@ -131,6 +135,31 @@ class DashboardStatistikService
         }
 
         return $kod;
+    }
+
+    /**
+     * Entiti yang telah ditetapkan semula oleh Ketua Bahagian.
+     *
+     * "Set Semula" menarik entiti keluar daripada aliran kerja tetapi
+     * MENGEKALKAN baris peringkat dan baris kedudukannya, supaya jejak
+     * auditnya kekal bermakna. Tanpa penyingkiran eksplisit di sini, baris
+     * yang tertinggal itu terus dikira sebagai entiti dipantau yang "Dalam
+     * Proses" — angka papan pemuka tidak akan turun selepas Set Semula.
+     *
+     * Baris peringkat hanya wujud melalui pendaftaran (lihat
+     * KemajuanAnalisisService::sediakan), jadi baris peringkat 01 yang BUKAN
+     * Selesai bermakna satu perkara sahaja: entiti itu telah ditetapkan
+     * semula. Entiti yang tidak pernah didaftarkan langsung tiada baris
+     * peringkat, jadi ia tidak tersentuh dan kekal dikira "belum didaftar".
+     *
+     * @return Collection<int, string>
+     */
+    private function kodDitetapkanSemula(): Collection
+    {
+        return WorkflowStageStatus::query()
+            ->atStage(WorkflowStatus::STAGE_PENDAFTARAN)
+            ->where('status', '!=', WorkflowStageStatus::SELESAI)
+            ->pluck('agency_code');
     }
 
     /**

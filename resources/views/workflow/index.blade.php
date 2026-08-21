@@ -78,6 +78,11 @@
                     @php
                         $jumlahPeringkat = count(\App\Models\WorkflowStatus::WORKFLOW_STAGES);
 
+                        $kemajuanServis = app(\App\Services\KemajuanAnalisisService::class);
+
+                        $laporanBerkenaan = fn(?\Illuminate\Support\Collection $peringkat): bool
+                            => $kemajuanServis->statusLaporanBerkenaan($peringkat);
+
                         $badgeKeseluruhan = fn(string $nilai): string => match ($nilai) {
                             \App\Services\KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
                             \App\Services\KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
@@ -87,7 +92,11 @@
 
                     @forelse ($entiti as $e)
                         @php
-                            $didaftar = $e['peringkat']?->isNotEmpty() ?? false;
+                            // "Berdaftar" bermaksud peringkat 01 Selesai —
+                            // bukan sekadar mempunyai baris peringkat, yang
+                            // kekal walaupun selepas Ketua Bahagian menetapkan
+                            // semula entiti.
+                            $didaftar = $e['peringkat']?->get(\App\Models\WorkflowStatus::STAGE_PENDAFTARAN)?->isSelesai() ?? false;
                             $peratus = $didaftar ? round(($e['bilanganSelesai'] / $jumlahPeringkat) * 100) : 0;
                         @endphp
                         <tr>
@@ -116,10 +125,18 @@
                                 </span>
                             </td>
                             <td>
-                                <span
-                                    class="status-badge {{ \App\Models\LaporanSemakan::badgePaparan($e['laporan']) }}">
-                                    {{ \App\Models\LaporanSemakan::paparanUntuk($e['laporan']) }}
-                                </span>
+                                {{-- Lajur tidak boleh hilang bagi satu baris
+                                     sahaja, jadi entiti yang belum sampai ke
+                                     peringkat 05 memaparkan sengkang dan bukan
+                                     status laporan yang belum berkenaan. --}}
+                                @if ($laporanBerkenaan($e['peringkat']))
+                                    <span
+                                        class="status-badge {{ \App\Models\LaporanSemakan::badgePaparan($e['laporan']) }}">
+                                        {{ \App\Models\LaporanSemakan::paparanUntuk($e['laporan']) }}
+                                    </span>
+                                @else
+                                    <span class="text-secondary">&mdash;</span>
+                                @endif
                             </td>
                             <td class="workflow-progress-cell">
                                 <div class="workflow-progress" role="img"

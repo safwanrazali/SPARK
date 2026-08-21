@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
+use App\Models\WorkflowStatus;
 use App\Services\AnalisisDraftService;
 use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
+use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
 use App\Support\BorangAnalisis;
 use App\Support\Halaman;
@@ -21,6 +24,7 @@ class AnalisisInventoriController extends Controller
         private readonly AnalisisDraftService $draf,
         private readonly AuditTrailService $audit,
         private readonly LaporanSemakanService $semakan,
+        private readonly KemajuanAnalisisService $kemajuan,
     ) {}
 
     /**
@@ -72,6 +76,16 @@ class AnalisisInventoriController extends Controller
                 ->route('workflow.show', $agensi['code'])
                 ->withErrors(['agency_code' => $terkunci]);
         }
+
+        // Membuka borang bermakna kerja peringkat 05 telah bermula, jadi
+        // "Jana Laporan" menjadi Dalam Proses. Panggilan ini tidak berkesan
+        // jika peringkat itu belum terbuka (Analisis Data belum Selesai)
+        // atau telah pun Selesai, jadi ia selamat dipanggil di sini.
+        $this->kemajuan->tandakanDalamProses(
+            $agensi['code'],
+            WorkflowStatus::STAGE_JANA_LAPORAN,
+            $request->user(),
+        );
 
         // FASA 6 — sambung semula: rekod tersimpan ditindih oleh draf semasa.
         $borang = $this->draf->borangDipulihkan($analisis);
@@ -156,7 +170,14 @@ class AnalisisInventoriController extends Controller
     }
 
     /**
-     * Simpan dapatan analisis berstruktur (input pengguna -> JSON).
+     * "Hantar" — muktamadkan dapatan analisis DAN serahkannya kepada PPA.
+     *
+     * Dahulu butang ini bernama "Simpan Dapatan" dan penyiapan diisytiharkan
+     * sendiri melalui kotak semak. Kotak itu telah dibuang: menekan "Hantar"
+     * ialah pengisytiharan itu, dan penyerahan kepada PPA berlaku serentak
+     * supaya PA tidak perlu mengingati langkah kedua di skrin lain.
+     *
+     * Kerja separa siap disimpan melalui "Simpan Draf" (@see draf).
      */
     public function simpan(Request $request)
     {
@@ -173,7 +194,6 @@ class AnalisisInventoriController extends Controller
             'kod_rujukan' => ['nullable', 'string', 'max:255'],
             'status_laporan' => ['required', 'in:Muktamad,Muktamad dengan Catatan,Memerlukan Tindakan Susulan'],
             'ringkasan_data' => ['required', 'in:lengkap,catatan,pengesahan,terhad'],
-            'selesai' => ['nullable', 'boolean'],
         ]);
 
         [$sektor, $agensi] = $this->sahkanEntiti($sah['sector_code'], $sah['agency_code']);
@@ -202,8 +222,10 @@ class AnalisisInventoriController extends Controller
                 'sector_code' => $sah['sector_code'],
                 'sector_name' => $sektor['name'],
                 'agency_name' => $agensi['name'],
+                // Menekan "Hantar" ialah pengisytiharan siap; tiada lagi
+                // kotak semak berasingan untuk ditanda (atau terlupa ditanda).
                 'data' => $data,
-                'selesai' => (bool) $request->boolean('selesai'),
+                'selesai' => true,
                 'user_id' => $request->user()->id,
             ],
         );
@@ -229,22 +251,71 @@ class AnalisisInventoriController extends Controller
 
         // Analisis selesai menaikkan status laporan Inventori ke Dalam Proses
         // sekurang-kurangnya (kemuktamadan status kekal di tangan Penyelaras).
-        if ($analisis->selesai) {
-            StatusLaporan::firstOrCreate(
-                ['agency_code' => $agensi['code'], 'jenis' => 'inventori'],
-                [
-                    'sector_code' => $sah['sector_code'],
-                    'sector_name' => $sektor['name'],
-                    'agency_name' => $agensi['name'],
-                    'status' => 'Dalam Proses',
-                    'user_id' => $request->user()->id,
-                ],
-            );
+        StatusLaporan::firstOrCreate(
+            ['agency_code' => $agensi['code'], 'jenis' => 'inventori'],
+            [
+                'sector_code' => $sah['sector_code'],
+                'sector_name' => $sektor['name'],
+                'agency_name' => $agensi['name'],
+                'status' => 'Dalam Proses',
+                'user_id' => $request->user()->id,
+            ],
+        );
+
+        return $this->serahkanKepadaPPA($request, $agensi + ['sector_code' => $sah['sector_code'], 'sector_name' => $sektor['name']]);
+    }
+
+    /**
+     * Serahkan laporan yang baru dimuktamadkan kepada PPA.
+     *
+     * Penyerahan dipisahkan daripada penyimpanan kerana kedua-duanya boleh
+     * berlaku secara berasingan: borang ini turut boleh dicapai melalui modul
+     * Analisis Inventori Kriptografi bagi entiti yang belum sampai ke
+     * peringkat 05. Dalam keadaan itu dapatan tetap disimpan — cuma tiada
+     * apa untuk diserahkan lagi, dan sebabnya dinyatakan kepada pengguna
+     * dan bukan disenyapkan.
+     *
+     * @param  array<string, string>  $agensi
+     */
+    private function serahkanKepadaPPA(Request $request, array $agensi)
+    {
+        $agencyCode = $agensi['code'];
+
+        $entiti = [
+            'agency_code' => $agencyCode,
+            'agency_name' => $agensi['name'],
+            'sector_code' => $agensi['sector_code'],
+            'sector_name' => $agensi['sector_name'],
+        ];
+
+        $analisisSelesai = $this->kemajuan
+            ->peringkat($agencyCode)
+            ->get(WorkflowStatus::STAGE_ANALISIS)?->isSelesai() ?? false;
+
+        if (! $analisisSelesai) {
+            return redirect()
+                ->route('analisis.index')
+                ->with('success', sprintf(
+                    'Dapatan analisis bagi %s telah disimpan. Laporan belum diserahkan kerana '
+                    .'peringkat 04 — Analisis Data belum Selesai.',
+                    $agensi['name'],
+                ));
+        }
+
+        try {
+            $this->semakan->hantarKepadaPPA($this->semakan->mulakan($entiti), $request->user());
+        } catch (InvalidWorkflowTransitionException $e) {
+            return redirect()
+                ->route('workflow.show', $agencyCode)
+                ->withErrors(['laporan' => $e->getMessage()]);
         }
 
         return redirect()
-            ->route('analisis.index')
-            ->with('success', 'Dapatan analisis bagi '.$agensi['name'].' telah disimpan.');
+            ->route('workflow.show', $agencyCode)
+            ->with('success', sprintf(
+                'Laporan bagi %s telah dihantar kepada Pegawai Penyelaras Analisis untuk semakan.',
+                $agensi['code'],
+            ));
     }
 
     /**
