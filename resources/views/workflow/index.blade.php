@@ -8,7 +8,7 @@
 
     <div class="report-card mb-4">
 
-        <h4 class="section-title">7 Peringkat Pemantauan</h4>
+        <h4 class="section-title">7 Peringkat Kemajuan Analisis</h4>
         <p class="text-secondary">
             Setiap entiti dipantau melalui tujuh peringkat berturutan, daripada
             Penerimaan &amp; Pendaftaran Data sehingga Penyerahan &amp; Penutupan.
@@ -42,7 +42,7 @@
 
         <h4 class="section-title">Kedudukan Semasa Entiti</h4>
         <p class="text-secondary">
-            {{ $jumlahDidaftar }} entiti telah didaftarkan dalam workflow.
+            {{ $jumlahDidaftar }} entiti telah didaftarkan dalam Kemajuan Analisis.
             @if (!$sectorCode)
                 Pilih sektor di atas untuk melihat keseluruhan entiti dalam sektor tersebut.
             @endif

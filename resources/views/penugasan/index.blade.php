@@ -111,28 +111,37 @@
                                     $dikunci = $daftar?->isSelesai() ?? false;
                                 @endphp
                                 <tr>
+                                    {{--
+                                        Kotak semak hanya milik Pegawai Penyelaras Rekod. Peranan lain
+                                        (contohnya Ketua Bahagian, yang hadir untuk "Set Semula" sahaja)
+                                        melihat ikon keadaan: berkunci atau terbuka.
+                                    --}}
                                     <td>
                                         @if ($dikunci)
                                             <i class="bi bi-lock-fill text-secondary"
                                                 title="Dikunci — Penerimaan &amp; Pendaftaran Data telah selesai"
                                                 aria-label="{{ $e['agency_code'] }} telah dikunci"></i>
-                                        @else
+                                        @elseif ($bolehTanda)
                                             <input type="checkbox" class="form-check-input"
                                                 name="agency_codes[]" value="{{ $e['agency_code'] }}"
-                                                id="daftar-{{ $e['agency_code'] }}" @disabled(! $bolehTanda)
+                                                id="daftar-{{ $e['agency_code'] }}"
                                                 aria-label="Tandakan {{ $e['agency_code'] }} selesai">
+                                        @else
+                                            <i class="bi bi-unlock text-secondary"
+                                                title="Belum dikunci — menunggu Pegawai Penyelaras Rekod"
+                                                aria-label="{{ $e['agency_code'] }} belum dikunci"></i>
                                         @endif
                                     </td>
                                     <td>
-                                        {{-- Entiti terkunci tiada kotak semak, jadi tiada label untuk diikat. --}}
-                                        @if ($dikunci)
-                                            <strong>{{ $e['agency_code'] }}</strong><br>
-                                            <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
-                                        @else
+                                        {{-- Label diikat hanya apabila kotak semaknya benar-benar wujud. --}}
+                                        @if (! $dikunci && $bolehTanda)
                                             <label class="mb-0" for="daftar-{{ $e['agency_code'] }}">
                                                 <strong>{{ $e['agency_code'] }}</strong><br>
                                                 <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
                                             </label>
+                                        @else
+                                            <strong>{{ $e['agency_code'] }}</strong><br>
+                                            <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
                                         @endif
                                     </td>
                                     <td>

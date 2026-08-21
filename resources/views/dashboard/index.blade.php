@@ -115,11 +115,11 @@
     {{-- Taburan entiti merentas 7 peringkat workflow (Fasa 7). --}}
     <div class="dashboard-section">
         <div class="report-card">
-            <h4 class="section-title">Taburan Workflow 7 Peringkat</h4>
+            <h4 class="section-title">Taburan Kemajuan Analisis 7 Peringkat</h4>
             <p class="text-secondary">
-                Kedudukan semasa setiap entiti yang telah didaftarkan dalam workflow.
+                Kedudukan semasa setiap entiti yang telah didaftarkan dalam Kemajuan Analisis.
                 @if ($belumDidaftar > 0)
-                    {{ $belumDidaftar }} entiti belum didaftarkan dalam workflow.
+                    {{ $belumDidaftar }} entiti belum didaftarkan dalam Kemajuan Analisis.
                 @endif
             </p>
 

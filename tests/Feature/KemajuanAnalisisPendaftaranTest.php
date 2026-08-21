@@ -87,6 +87,26 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->assertSee('bi-lock-fill', false);
     }
 
+    /**
+     * Kotak semak ialah alat Pegawai Penyelaras Rekod. Ketua Bahagian hadir
+     * pada panel ini untuk "Set Semula" sahaja, jadi ia melihat ikon keadaan
+     * dan bukan kawalan yang tidak boleh digunakannya.
+     */
+    public function test_hanya_ppr_melihat_kotak_semak(): void
+    {
+        $this->actingAs($this->ppr)
+            ->get(route('penugasan.index', ['sector_code' => '001']))
+            ->assertOk()
+            ->assertSee('name="agency_codes[]"', false);
+
+        $this->actingAs($this->kb)
+            ->get(route('penugasan.index', ['sector_code' => '001']))
+            ->assertOk()
+            ->assertSee(self::ALPHA)
+            ->assertDontSee('name="agency_codes[]"', false)
+            ->assertSee('bi-unlock', false);
+    }
+
     public function test_kemas_kini_menandakan_peringkat_satu_selesai_dan_mengunci_entiti(): void
     {
         $this->actingAs($this->ppr)

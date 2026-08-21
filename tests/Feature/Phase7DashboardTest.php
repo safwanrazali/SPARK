@@ -354,7 +354,7 @@ class Phase7DashboardTest extends TestCase
             ->assertSee('Jumlah Laporan')
             ->assertSee('Laporan Siap')
             ->assertSee('Kemajuan Keseluruhan')
-            ->assertSee('Taburan Workflow 7 Peringkat');
+            ->assertSee('Taburan Kemajuan Analisis 7 Peringkat');
 
         // Ketujuh-tujuh peringkat disenaraikan.
         foreach (WorkflowStatus::WORKFLOW_STAGES as $nama) {
