@@ -297,7 +297,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
                 'ringkasan_data' => 'lengkap',
             ]],
             ['POST', route('kemajuan.selesai', [self::BETA, 2]), []],
-            ['POST', route('kemajuan.jana-laporan', self::BETA), []],
+            ['POST', route('kemajuan.hantar', self::BETA), []],
             ['POST', route('penugasan.simpan', self::BETA), ['assigned_to_user_id' => $analyst->id]],
             ['POST', route('penugasan.tarik', self::BETA), []],
         ];

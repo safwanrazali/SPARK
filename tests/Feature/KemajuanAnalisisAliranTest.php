@@ -11,6 +11,7 @@ use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
+use App\Services\LaporanSemakanService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -113,9 +114,8 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
-        $this->post(route('analisis.simpan'), $this->dapatan());
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]));
-        $this->post(route('kemajuan.jana-laporan', self::ALPHA));
+        $this->post(route('analisis.simpan'), $this->dapatan());
         $this->post(route('kemajuan.hantar', self::ALPHA));
     }
 
@@ -159,6 +159,83 @@ class KemajuanAnalisisAliranTest extends TestCase
             ->assertOk()
             ->assertSee(route('kemajuan.semak', self::ALPHA), false)
             ->assertSee(route('kemajuan.kembalikan', self::ALPHA), false);
+    }
+
+    /**
+     * Butang yang dipaparkan mesti sepadan dengan giliran sebenar
+     * (aliran kerja bahagian 19).
+     */
+    public function test_butang_pa_mengikut_kedudukan_laporan(): void
+    {
+        $this->sediakanEntiti();
+
+        $this->actingAs($this->pa->fresh());
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]));
+
+        // Borang belum lengkap — hanya "Lengkapkan Borang".
+        $this->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Lengkapkan Borang')
+            ->assertDontSee('Hantar kepada PPA');
+
+        $this->post(route('analisis.simpan'), $this->dapatan());
+
+        // Borang lengkap — penghantaran terbuka.
+        $this->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Hantar kepada PPA')
+            ->assertDontSee('Lengkapkan Borang');
+
+        $this->post(route('kemajuan.hantar', self::ALPHA));
+
+        // Sedang disemak — PA tiada butang sunting atau hantar.
+        $this->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertDontSee('Hantar kepada PPA')
+            ->assertDontSee('Lengkapkan Borang')
+            ->assertDontSee('Hantar Semula');
+
+        $this->actingAs($this->ppa)->post(route('kemajuan.kembalikan', self::ALPHA), [
+            'catatan' => 'Jadual 3 perlu disemak semula.',
+        ]);
+
+        // Dikembalikan — "Betulkan" dan "Hantar Semula".
+        $this->actingAs($this->pa->fresh())
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Betulkan')
+            ->assertSee('Hantar Semula')
+            ->assertSee('Jadual 3 perlu disemak semula.');
+    }
+
+    public function test_butang_kb_dipaparkan_hanya_pada_gilirannya(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        // Laporan masih di tangan PPA — KB belum boleh mengesahkan.
+        $this->actingAs($this->kb)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertDontSee('Sahkan');
+
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+
+        $this->actingAs($this->kb)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('Sahkan')
+            ->assertSee('Kembalikan');
+
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+
+        // Selepas pengesahan: tiada butang semakan, dan penyerahan terbuka.
+        $this->actingAs($this->kb)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee(LaporanSemakan::PAPARAN_DISAHKAN)
+            ->assertSee(route('kemajuan.serah', self::ALPHA), false);
     }
 
     public function test_bar_tindakan_tidak_wujud_apabila_tiada_tindakan(): void
@@ -296,22 +373,28 @@ class KemajuanAnalisisAliranTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_membuka_borang_analisis_menandakan_peringkat_dalam_proses(): void
+    /**
+     * Borang input kini milik peringkat 05, bukan 04. Membukanya tidak lagi
+     * menggerakkan mana-mana peringkat — hanya butang "Selesai" dan
+     * penghantaran laporan boleh berbuat demikian.
+     */
+    public function test_membuka_borang_analisis_tidak_mengubah_status_peringkat(): void
     {
         $this->sediakanEntiti();
 
         $this->actingAs($this->pa->fresh());
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]));
 
-        $this->assertSame(WorkflowStageStatus::BELUM_MULA, $this->statusPeringkat(WorkflowStatus::STAGE_ANALISIS));
+        $this->assertSame(WorkflowStageStatus::BELUM_MULA, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
 
         $this->get(route('analisis.borang', [
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
         ]))->assertOk();
 
-        $this->assertSame(WorkflowStageStatus::DALAM_PROSES, $this->statusPeringkat(WorkflowStatus::STAGE_ANALISIS));
+        $this->assertSame(WorkflowStageStatus::BELUM_MULA, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
     }
 
     public function test_simpan_draf_tidak_melengkapkan_analisis_dan_borang_kekal_boleh_disunting(): void
@@ -343,11 +426,18 @@ class KemajuanAnalisisAliranTest extends TestCase
             'agency_code' => self::ALPHA,
         ]))->assertOk()->assertSee('DRAF-SEPARA', false);
 
-        // Analisis Data tidak boleh ditutup dengan draf sahaja.
+        // Peringkat 04 ialah pengesahan PA semata-mata, jadi ia ditutup
+        // walaupun borang masih draf.
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]))
-            ->assertSessionHasErrors('stage');
+            ->assertSessionHasNoErrors();
 
-        $this->assertNotSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_ANALISIS));
+        $this->assertSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_ANALISIS));
+
+        // Laporan pula TIDAK boleh dihantar dengan draf sahaja.
+        $this->post(route('kemajuan.hantar', self::ALPHA))
+            ->assertSessionHasErrors('laporan');
+
+        $this->assertDatabaseCount('laporan_semakan', 0);
     }
 
     /*
@@ -372,7 +462,23 @@ class KemajuanAnalisisAliranTest extends TestCase
         ]);
     }
 
-    public function test_laporan_tidak_boleh_dijana_sebelum_dapatan_lengkap(): void
+    public function test_laporan_tidak_boleh_dihantar_sebelum_borang_lengkap(): void
+    {
+        $this->sediakanEntiti();
+
+        $this->actingAs($this->pa->fresh());
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]));
+
+        $this->post(route('kemajuan.hantar', self::ALPHA))
+            ->assertSessionHasErrors('laporan');
+
+        $this->assertDatabaseCount('laporan_semakan', 0);
+        $this->assertSame(WorkflowStageStatus::BELUM_MULA, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
+    }
+
+    public function test_laporan_tidak_boleh_dihantar_sebelum_analisis_data_selesai(): void
     {
         $this->sediakanEntiti();
 
@@ -380,8 +486,11 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
 
-        $this->post(route('kemajuan.jana-laporan', self::ALPHA))
-            ->assertSessionHasErrors('stage');
+        // Borang lengkap, tetapi peringkat 04 belum ditandakan Selesai.
+        $this->post(route('analisis.simpan'), $this->dapatan());
+
+        $this->post(route('kemajuan.hantar', self::ALPHA))
+            ->assertSessionHasErrors('laporan');
 
         $this->assertDatabaseCount('laporan_semakan', 0);
     }
@@ -604,5 +713,232 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->actingAs($this->ppa)
             ->get(route('laporan.unduh', $analisis))
             ->assertForbidden();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kunci sunting — laporan yang sedang disemak tidak boleh diubah PA
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_pa_tidak_boleh_menyunting_borang_semasa_laporan_disemak(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->actingAs($this->pa->fresh());
+
+        // Borang dialihkan kembali ke halaman kemajuan, bukan dibuka.
+        $this->get(route('analisis.borang', [
+            'sector_code' => self::SEKTOR,
+            'agency_code' => self::ALPHA,
+        ]))->assertRedirect(route('workflow.show', self::ALPHA));
+
+        $this->post(route('analisis.draf'), [
+            'sector_code' => self::SEKTOR,
+            'agency_code' => self::ALPHA,
+            'kod_rujukan' => 'CUBA-UBAH',
+        ])->assertSessionHasErrors('agency_code');
+
+        $this->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'CUBA-UBAH']))
+            ->assertSessionHasErrors('agency_code');
+
+        $this->assertDatabaseMissing('analisis_inventori', [
+            'agency_code' => self::ALPHA,
+            'kod_rujukan' => 'CUBA-UBAH',
+        ]);
+    }
+
+    public function test_pa_boleh_menyunting_semula_laporan_yang_dikembalikan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->actingAs($this->ppa)->post(route('kemajuan.kembalikan', self::ALPHA), [
+            'catatan' => 'Jadual 3 perlu disemak semula.',
+        ]);
+
+        $this->actingAs($this->pa->fresh())
+            ->get(route('analisis.borang', [
+                'sector_code' => self::SEKTOR,
+                'agency_code' => self::ALPHA,
+            ]))
+            ->assertOk();
+
+        $this->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'PTPKM/INV/2026/007-A']))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('analisis_inventori', [
+            'agency_code' => self::ALPHA,
+            'kod_rujukan' => 'PTPKM/INV/2026/007-A',
+        ]);
+    }
+
+    public function test_pa_tidak_boleh_menyunting_laporan_yang_telah_disahkan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+
+        $this->actingAs($this->pa->fresh())
+            ->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'SELEPAS-SAH']))
+            ->assertSessionHasErrors('agency_code');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Peraturan status — 05 dan 06 hanya Selesai melalui kelulusan KB
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_pa_tidak_boleh_menandakan_jana_laporan_selesai_secara_manual(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->actingAs($this->pa->fresh())
+            ->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_JANA_LAPORAN]))
+            ->assertNotFound();
+
+        $this->assertSame(WorkflowStageStatus::DALAM_PROSES, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
+    }
+
+    public function test_ppa_tidak_boleh_menandakan_semakan_kelulusan_selesai_secara_manual(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->actingAs($this->ppa)
+            ->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_KELULUSAN]))
+            ->assertForbidden();
+
+        $this->assertSame(
+            WorkflowStageStatus::DALAM_PROSES,
+            $this->statusPeringkat(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN),
+        );
+    }
+
+    public function test_kb_tidak_boleh_mengesahkan_laporan_yang_belum_dihantar_ppa(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        // Laporan masih di tangan PPA — KB tidak boleh memintasnya.
+        $this->actingAs($this->kb)
+            ->post(route('kemajuan.sahkan', self::ALPHA))
+            ->assertSessionHasErrors('laporan');
+
+        $this->assertDatabaseHas('laporan_semakan', [
+            'agency_code' => self::ALPHA,
+            'status' => LaporanSemakan::MENUNGGU_PPA,
+        ]);
+
+        $this->assertNotSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
+    }
+
+    /**
+     * Selepas KB mengembalikan laporan, PPA MESTI menyemaknya semula —
+     * penghantaran semula tidak boleh terus ke KB.
+     */
+    public function test_laporan_yang_dikembalikan_kb_mesti_melalui_ppa_semula(): void
+    {
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+
+        $this->actingAs($this->kb)->post(route('kemajuan.kembalikan', self::ALPHA), [
+            'catatan' => 'Kesimpulan perlu diperincikan.',
+        ]);
+
+        // PA membetulkan dan menghantar semula — kepada PPA, bukan KB.
+        $this->actingAs($this->pa->fresh());
+        $this->post(route('analisis.simpan'), $this->dapatan());
+        $this->post(route('kemajuan.hantar', self::ALPHA))->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('laporan_semakan', [
+            'agency_code' => self::ALPHA,
+            'status' => LaporanSemakan::MENUNGGU_PPA,
+        ]);
+
+        // KB masih belum boleh mengesahkan.
+        $this->actingAs($this->kb)
+            ->post(route('kemajuan.sahkan', self::ALPHA))
+            ->assertSessionHasErrors('laporan');
+
+        // Barulah kitaran penuh diselesaikan semula.
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA))->assertSessionHasNoErrors();
+
+        $this->assertSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN));
+        $this->assertSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Laporan — perbendaharaan paparan
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_status_laporan_dipaparkan_mengikut_kitaran_semakan(): void
+    {
+        // Belum dihantar langsung — tiada rekod laporan lagi.
+        $this->assertSame(
+            LaporanSemakan::PAPARAN_BELUM_LENGKAP,
+            LaporanSemakan::paparanUntuk(app(LaporanSemakanService::class)->untuk(self::ALPHA)),
+        );
+
+        $this->sehinggaLaporanDihantar();
+
+        $this->assertSame(
+            LaporanSemakan::PAPARAN_DALAM_SEMAKAN,
+            app(LaporanSemakanService::class)->untuk(self::ALPHA)->statusPaparan(),
+        );
+
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+
+        $this->assertSame(
+            LaporanSemakan::PAPARAN_DALAM_SEMAKAN,
+            app(LaporanSemakanService::class)->untuk(self::ALPHA)->fresh()->statusPaparan(),
+        );
+
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+
+        $this->assertSame(
+            LaporanSemakan::PAPARAN_DISAHKAN,
+            app(LaporanSemakanService::class)->untuk(self::ALPHA)->statusPaparan(),
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Jejak audit — setiap tindakan aliran kerja meninggalkan rekod
+    |--------------------------------------------------------------------------
+    */
+
+    public function test_setiap_tindakan_aliran_kerja_direkodkan_dalam_jejak_audit(): void
+    {
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.kembalikan', self::ALPHA), ['catatan' => 'Betulkan Jadual 3.']);
+
+        $this->actingAs($this->pa->fresh())->post(route('kemajuan.hantar', self::ALPHA));
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.serah', self::ALPHA));
+
+        $tindakan = app(KemajuanAnalisisService::class)->sejarah(self::ALPHA, 200)->pluck('action')->all();
+
+        foreach ([
+            'registration_completed',
+            'stage_status_changed',
+            'report_submitted',
+            'report_returned',
+            'report_reviewed',
+            'report_approved',
+            'report_delivered',
+        ] as $dijangka) {
+            $this->assertContains($dijangka, $tindakan, "Tindakan {$dijangka} sepatutnya direkodkan.");
+        }
+
+        // Catatan pengembalian kekal dalam rekod audit.
+        $dikembalikan = app(KemajuanAnalisisService::class)
+            ->sejarah(self::ALPHA, 200)
+            ->firstWhere('action', 'report_returned');
+
+        $this->assertSame('Betulkan Jadual 3.', $dikembalikan->metadata['catatan']);
+        $this->assertSame($this->ppa->id, $dikembalikan->changed_by_user_id);
     }
 }

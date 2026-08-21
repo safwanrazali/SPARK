@@ -403,7 +403,6 @@ class Phase13ReleaseReadinessTest extends TestCase
             'kata-laluan.simpan',
             'kata-laluan.tukar',
             'kemajuan.hantar',
-            'kemajuan.jana-laporan',
             'kemajuan.kembalikan',
             'kemajuan.sahkan',
             'kemajuan.selesai',

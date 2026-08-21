@@ -16,8 +16,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Aliran (carta aliran bahagian 7–9):
  *
- *   PA  "Jana Laporan"  → Draf
- *   PA  "Hantar"        → Dihantar kepada PPA
+ *   PA  "Hantar kepada PPA" → Draf, lalu Dihantar kepada PPA
  *   PPA "Hantar"        → Dihantar kepada KB
  *   PPA/KB "Kembalikan" → Dikembalikan   (Catatan WAJIB)
  *   KB  "Sahkan"        → Sah            (peringkat 5 dan 6 menjadi Selesai)
@@ -94,15 +93,21 @@ class LaporanSemakanService
             $l->catatan = null;
         });
 
-        // Semakan & Kelulusan bermula sebaik laporan berada di tangan PPA.
-        // Dilakukan di sini, bukan dalam controller, supaya kedudukan laporan
-        // dan status peringkat tidak boleh terpisah apabila salah satu gagal.
-        $this->kemajuan->tetapkanStatus(
-            $laporan->agency_code,
-            WorkflowStatus::STAGE_SEMAKAN_KELULUSAN,
-            WorkflowStageStatus::DALAM_PROSES,
-            $user,
-        );
+        // Penghantaran kepada PPA — dan BUKAN penyiapan borang — inilah yang
+        // menggerakkan kedua-dua peringkat kepada Dalam Proses. Dilakukan di
+        // sini, bukan dalam controller, supaya kedudukan laporan dan status
+        // peringkat tidak boleh terpisah apabila salah satu gagal.
+        //
+        // Kedua-duanya kekal Dalam Proses sehingga KB mengesahkan laporan;
+        // tiada tindakan PA atau PPA boleh menjadikannya Selesai.
+        foreach ([WorkflowStatus::STAGE_JANA_LAPORAN, WorkflowStatus::STAGE_SEMAKAN_KELULUSAN] as $stage) {
+            $this->kemajuan->tetapkanStatus(
+                $laporan->agency_code,
+                $stage,
+                WorkflowStageStatus::DALAM_PROSES,
+                $user,
+            );
+        }
 
         return $laporan;
     }
@@ -143,8 +148,9 @@ class LaporanSemakanService
             $l->catatan = $catatan;
         });
 
-        // Laporan kembali ke tangan PA: peringkat Jana Laporan dibuka semula
-        // dan Semakan & Kelulusan berundur daripada Dalam Proses.
+        // Laporan kembali ke tangan PA untuk dibetulkan. Kedua-dua peringkat
+        // kekal Dalam Proses — pengembalian ialah sebahagian daripada kitaran
+        // semakan, bukan pengunduran daripadanya (aliran kerja bahagian 10).
         $this->kemajuan->tetapkanStatus(
             $laporan->agency_code,
             WorkflowStatus::STAGE_JANA_LAPORAN,
@@ -176,6 +182,33 @@ class LaporanSemakanService
         $this->kemajuan->tandakanSelesai($laporan->agency_code, WorkflowStatus::STAGE_SEMAKAN_KELULUSAN, $user);
 
         return $laporan;
+    }
+
+    /**
+     * Penyerahan laporan yang telah disahkan kepada NACSA.
+     *
+     * Tiada peralihan keadaan: laporan kekal Sah. Yang direkodkan ialah
+     * penyerahannya, supaya jejak audit membezakan "disahkan KB" daripada
+     * "diserahkan kepada NACSA" (aliran kerja bahagian 23).
+     *
+     * @throws InvalidWorkflowTransitionException
+     */
+    public function rekodPenyerahan(LaporanSemakan $laporan, User $user): void
+    {
+        if (! $laporan->isSah()) {
+            throw new InvalidWorkflowTransitionException(
+                'Laporan perlu berstatus Sah sebelum boleh diserahkan kepada NACSA.'
+            );
+        }
+
+        $this->audit->rekod(
+            ['agency_code' => $laporan->agency_code, 'agency_name' => $laporan->agency_name],
+            'report_delivered',
+            LaporanSemakan::SAH,
+            LaporanSemakan::SAH,
+            $user,
+            ['report_type' => $laporan->report_type, 'stage' => WorkflowStatus::STAGE_PENYERAHAN],
+        );
     }
 
     /**

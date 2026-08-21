@@ -104,7 +104,7 @@
             @endif
         </div>
 
-        <x-workflow-stepper :workflow="$workflow" class="mb-2" />
+        <x-workflow-stepper :workflow="$workflow" :peringkat="$peringkat" class="mb-2" />
 
         @if ($workflow)
             <p class="text-secondary mb-0">

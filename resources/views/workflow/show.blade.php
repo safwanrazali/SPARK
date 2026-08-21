@@ -27,8 +27,15 @@
         // Satu peringkat "terbuka" apabila pendahulunya telah Selesai.
         $terbuka = fn(int $stage): bool => $stage === WorkflowStatus::FIRST_STAGE || $selesai($stage - 1);
 
+        // "Lengkap" bermakna borang disimpan melalui "Simpan Dapatan",
+        // bukan sekadar draf — itulah syarat laporan boleh dihantar.
         $analisisLengkap = (bool) $analisis?->selesai;
         $statusLaporan = $laporan?->status;
+        $dikembalikan = $statusLaporan === LaporanSemakan::DIKEMBALIKAN;
+
+        // Laporan berada di tangan penyemak: PA tidak boleh menyunting
+        // atau menghantar apa-apa sehingga ia dikembalikan atau disahkan.
+        $dalamSemakan = (bool) $laporan?->sedangDisemak();
 
         $badgeKeseluruhan = match ($keseluruhan) {
             KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
@@ -48,9 +55,9 @@
         | berjalan serentak dengannya — tindakan penyemak berada pada 06
         | sedangkan peringkat semasa masih 05.
         */
-        $bolehKembalikan =
-            ($bolehSemak && $statusLaporan === LaporanSemakan::MENUNGGU_PPA) ||
-            ($bolehLulus && $statusLaporan === LaporanSemakan::MENUNGGU_KB);
+        $giliranPPA = $bolehSemak && $statusLaporan === LaporanSemakan::MENUNGGU_PPA;
+        $giliranKB = $bolehLulus && $statusLaporan === LaporanSemakan::MENUNGGU_KB;
+        $bolehKembalikan = $giliranPPA || $giliranKB;
 
         $tindakan = [
             WorkflowStatus::STAGE_SEMAKAN_AWAL => $bolehPA
@@ -61,15 +68,20 @@
                 && $terbuka(WorkflowStatus::STAGE_PENYEDIAAN)
                 && ! $selesai(WorkflowStatus::STAGE_PENYEDIAAN),
 
+            // Peringkat 04 kini pengesahan PA semata-mata — borang analisis
+            // bukan lagi syaratnya, dan tiada butang kekal selepas Selesai.
             WorkflowStatus::STAGE_ANALISIS => $bolehPA
-                && $terbuka(WorkflowStatus::STAGE_ANALISIS),
+                && $terbuka(WorkflowStatus::STAGE_ANALISIS)
+                && ! $selesai(WorkflowStatus::STAGE_ANALISIS),
 
+            // Peringkat 05 milik PA sehingga laporan dihantar; sebaik ia
+            // berada di tangan penyemak, PA tiada tindakan langsung.
             WorkflowStatus::STAGE_JANA_LAPORAN => $bolehPA
                 && $terbuka(WorkflowStatus::STAGE_JANA_LAPORAN)
-                && ($laporan === null || $laporan->bolehDisuntingPA()),
+                && ! $selesai(WorkflowStatus::STAGE_JANA_LAPORAN)
+                && ! $dalamSemakan,
 
-            WorkflowStatus::STAGE_SEMAKAN_KELULUSAN => $bolehKembalikan
-                || ($laporan && $analisis && ($bolehSemak || $bolehLulus)),
+            WorkflowStatus::STAGE_SEMAKAN_KELULUSAN => $giliranPPA || $giliranKB,
 
             WorkflowStatus::STAGE_PENYERAHAN => ($laporan?->isSah() && $analisis)
                 || ($bolehSerah
@@ -78,6 +90,11 @@
         ];
 
         $adaTindakan = $didaftar && in_array(true, $tindakan, true);
+
+        $borangUrl = route('analisis.borang', [
+            'sector_code' => $entiti['sector_code'],
+            'agency_code' => $entiti['agency_code'],
+        ]);
 
         $tajukPeringkat = fn (int $stage): string => sprintf('%02d', $stage)
             .' '.WorkflowStatus::getStageName($stage);
@@ -114,7 +131,7 @@
 
         <h4 class="section-title">Peringkat Kemajuan</h4>
 
-        <x-workflow-stepper :workflow="$workflow" />
+        <x-workflow-stepper :workflow="$workflow" :peringkat="$peringkat" />
 
         @if ($adaTindakan)
             <div class="peringkat-tindakan">
@@ -161,70 +178,65 @@
                     </div>
                 @endif
 
-                {{-- 04 — Analisis Data (PA): borang input + Selesai --}}
+                {{-- 04 — Analisis Data (PA): pengesahan sahaja --}}
                 @if ($tindakan[WorkflowStatus::STAGE_ANALISIS])
                     <div class="peringkat-tindakan__kumpulan">
                         <span class="peringkat-tindakan__label">
                             {{ $tajukPeringkat(WorkflowStatus::STAGE_ANALISIS) }}
                             <small class="peringkat-tindakan__nota">
-                                Dapatan inventori: {{ $analisisLengkap ? 'Lengkap' : 'Belum Lengkap' }}
+                                Pengesahan bahawa analisis telah dilaksanakan. Borang
+                                input dilengkapkan pada peringkat berikutnya.
                             </small>
                         </span>
                         <div class="peringkat-tindakan__butang">
-                            <a class="btn btn-sm btn-outline-light"
-                                href="{{ route('analisis.borang', ['sector_code' => $entiti['sector_code'], 'agency_code' => $entiti['agency_code']]) }}">
-                                <i class="bi bi-pencil-square"></i> Input Analisis Inventori Kriptografi
-                            </a>
-
-                            @if (!$selesai(WorkflowStatus::STAGE_ANALISIS))
-                                <form
-                                    action="{{ route('kemajuan.selesai', [$entiti['agency_code'], WorkflowStatus::STAGE_ANALISIS]) }}"
-                                    method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary" @disabled(!$analisisLengkap)
-                                        title="{{ $analisisLengkap ? 'Tandakan Analisis Data Selesai' : 'Simpan Dapatan perlu Lengkap dahulu' }}">
-                                        <i class="bi bi-check2-circle"></i> Selesai
-                                    </button>
-                                </form>
-                            @endif
+                            <form
+                                action="{{ route('kemajuan.selesai', [$entiti['agency_code'], WorkflowStatus::STAGE_ANALISIS]) }}"
+                                method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-check2-circle"></i> Selesai
+                                </button>
+                            </form>
                         </div>
                     </div>
                 @endif
 
-                {{-- 05 — Jana Laporan (PA): Jana → Betulkan / Hantar --}}
+                {{-- 05 — Jana Laporan (PA): lengkapkan borang, kemudian hantar kepada PPA --}}
                 @if ($tindakan[WorkflowStatus::STAGE_JANA_LAPORAN])
                     <div class="peringkat-tindakan__kumpulan">
                         <span class="peringkat-tindakan__label">
                             {{ $tajukPeringkat(WorkflowStatus::STAGE_JANA_LAPORAN) }}
                             <small class="peringkat-tindakan__nota">
-                                Selesai hanya setelah laporan disahkan Ketua Bahagian.
+                                Borang Input Analisis Inventori Kriptografi:
+                                {{ $analisisLengkap ? 'Lengkap' : 'Belum Lengkap' }}.
+                                Peringkat ini Selesai hanya setelah laporan disahkan Ketua Bahagian.
                             </small>
                         </span>
                         <div class="peringkat-tindakan__butang">
-                            @if ($laporan === null)
-                                <form action="{{ route('kemajuan.jana-laporan', $entiti['agency_code']) }}"
-                                    method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-file-earmark-bar-graph"></i> Jana Laporan
-                                    </button>
-                                </form>
-                            @else
-                                @if ($analisis)
-                                    <a class="btn btn-sm btn-outline-light"
-                                        href="{{ route('laporan.inventori', $analisis) }}">
-                                        <i class="bi bi-eye"></i> Pratonton
-                                    </a>
-                                @endif
-                                <a class="btn btn-sm btn-outline-light"
-                                    href="{{ route('analisis.borang', ['sector_code' => $entiti['sector_code'], 'agency_code' => $entiti['agency_code']]) }}">
+                            <a class="btn btn-sm btn-outline-light" href="{{ $borangUrl }}">
+                                @if (!$analisisLengkap)
+                                    <i class="bi bi-pencil-square"></i> Lengkapkan Borang
+                                @elseif ($dikembalikan)
                                     <i class="bi bi-pencil"></i> Betulkan
+                                @else
+                                    <i class="bi bi-pencil"></i> Kemas Kini Borang
+                                @endif
+                            </a>
+
+                            @if ($analisis)
+                                <a class="btn btn-sm btn-outline-light"
+                                    href="{{ route('laporan.inventori', $analisis) }}">
+                                    <i class="bi bi-eye"></i> Pratonton
                                 </a>
+                            @endif
+
+                            @if ($analisisLengkap)
                                 <form action="{{ route('kemajuan.hantar', $entiti['agency_code']) }}" method="POST"
                                     class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-send"></i> Hantar
+                                        <i class="bi bi-send"></i>
+                                        {{ $dikembalikan ? 'Hantar Semula' : 'Hantar kepada PPA' }}
                                     </button>
                                 </form>
                             @endif
@@ -237,9 +249,14 @@
                     <div class="peringkat-tindakan__kumpulan">
                         <span class="peringkat-tindakan__label">
                             {{ $tajukPeringkat(WorkflowStatus::STAGE_SEMAKAN_KELULUSAN) }}
+                            <small class="peringkat-tindakan__nota">
+                                {{ $giliranKB
+                                    ? 'Laporan menunggu pengesahan Ketua Bahagian.'
+                                    : 'Laporan menunggu semakan Pegawai Penyelaras Analisis.' }}
+                            </small>
                         </span>
                         <div class="peringkat-tindakan__butang">
-                            @if ($laporan && $analisis && ($bolehSemak || $bolehLulus))
+                            @if ($analisis)
                                 <a class="btn btn-sm btn-outline-light"
                                     href="{{ route('laporan.inventori', $analisis) }}">
                                     <i class="bi bi-eye"></i> Pratonton
@@ -247,18 +264,18 @@
                             @endif
 
                             {{-- PPA: hantar kepada KB --}}
-                            @if ($bolehSemak && $statusLaporan === LaporanSemakan::MENUNGGU_PPA)
+                            @if ($giliranPPA)
                                 <form action="{{ route('kemajuan.semak', $entiti['agency_code']) }}" method="POST"
                                     class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-send"></i> Hantar
+                                        <i class="bi bi-send"></i> Hantar kepada KB
                                     </button>
                                 </form>
                             @endif
 
                             {{-- KB: sahkan --}}
-                            @if ($bolehLulus && $statusLaporan === LaporanSemakan::MENUNGGU_KB)
+                            @if ($giliranKB)
                                 <form action="{{ route('kemajuan.sahkan', $entiti['agency_code']) }}" method="POST"
                                     class="d-inline">
                                     @csrf
@@ -356,11 +373,16 @@
                 <div class="col-md-4">
                     <div class="stat-title">Status Laporan</div>
                     <div class="workflow-meta__value">
-                        @if ($laporan)
-                            <span class="status-badge {{ $laporan->statusBadgeClass() }}">{{ $laporan->status }}</span>
-                        @else
-                            <span class="text-secondary">Belum Dijana</span>
-                        @endif
+                        {{--
+                            Perbendaharaan paparan ('Belum Lengkap' / 'Dalam
+                            Semakan' / 'Disahkan') dipetakan daripada keadaan
+                            sebenar laporan — lihat LaporanSemakan::PAPARAN.
+                            Keadaan terperinci (di tangan PPA atau KB) kekal
+                            dalam Sejarah Peringkat di bawah.
+                        --}}
+                        <span class="status-badge {{ LaporanSemakan::badgePaparan($laporan) }}">
+                            {{ LaporanSemakan::paparanUntuk($laporan) }}
+                        </span>
                     </div>
                 </div>
             </div>

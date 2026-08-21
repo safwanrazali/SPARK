@@ -344,7 +344,7 @@ class RbacMatriksTest extends TestCase
         $this->assertDatabaseCount('analisis_inventori', 0);
     }
 
-    public function test_jana_laporan_hanya_pa(): void
+    public function test_hantar_laporan_kepada_ppa_hanya_pa(): void
     {
         $this->sediakanEntiti();
         $this->bawaAnalisisSelesai();
@@ -355,7 +355,7 @@ class RbacMatriksTest extends TestCase
             }
 
             $this->actingAs($this->sebagai($role))
-                ->post(route('kemajuan.jana-laporan', self::ALPHA))
+                ->post(route('kemajuan.hantar', self::ALPHA))
                 ->assertForbidden();
         }
 
@@ -406,7 +406,6 @@ class RbacMatriksTest extends TestCase
             ->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_JANA_LAPORAN]))
             ->assertForbidden();
 
-        $this->actingAs($ps)->post(route('kemajuan.jana-laporan', self::ALPHA))->assertForbidden();
         $this->actingAs($ps)->post(route('kemajuan.hantar', self::ALPHA))->assertForbidden();
         $this->actingAs($ps)->post(route('kemajuan.semak', self::ALPHA))->assertForbidden();
         $this->actingAs($ps)->post(route('kemajuan.kembalikan', self::ALPHA), ['catatan' => 'Cuba.'])->assertForbidden();
@@ -429,7 +428,7 @@ class RbacMatriksTest extends TestCase
     {
         // Kawalan penyeliaan manual telah dibuang: tiada laluan yang
         // membenarkan mana-mana peranan melompat peringkat di luar aliran.
-        foreach (['workflow.mula', 'workflow.peringkat', 'workflow.status'] as $nama) {
+        foreach (['workflow.mula', 'workflow.peringkat', 'workflow.status', 'kemajuan.jana-laporan'] as $nama) {
             $this->assertNull(
                 app('router')->getRoutes()->getByName($nama),
                 "Route {$nama} sepatutnya telah dibuang.",
@@ -448,7 +447,7 @@ class RbacMatriksTest extends TestCase
             ->assertDontSee('Kawalan Penyeliaan')
             ->assertDontSee('Majukan Peringkat')
             ->assertDontSee('Kembalikan Peringkat')
-            ->assertDontSee(route('kemajuan.jana-laporan', self::ALPHA));
+            ->assertDontSee(route('kemajuan.hantar', self::ALPHA));
     }
 
     /*
@@ -623,7 +622,6 @@ class RbacMatriksTest extends TestCase
         $this->bawaAnalisisSelesai();
 
         $this->actingAs($this->sebagai(User::ROLE_ANALYST));
-        $this->post(route('kemajuan.jana-laporan', self::ALPHA));
         $this->post(route('kemajuan.hantar', self::ALPHA));
 
         $this->assertNotNull(app(LaporanSemakanService::class)->untuk(self::ALPHA));

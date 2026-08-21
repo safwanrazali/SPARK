@@ -116,13 +116,10 @@
                                 </span>
                             </td>
                             <td>
-                                @if ($e['laporan'])
-                                    <span class="status-badge {{ $e['laporan']->statusBadgeClass() }}">
-                                        {{ $e['laporan']->status }}
-                                    </span>
-                                @else
-                                    <span class="text-secondary">Belum Dijana</span>
-                                @endif
+                                <span
+                                    class="status-badge {{ \App\Models\LaporanSemakan::badgePaparan($e['laporan']) }}">
+                                    {{ \App\Models\LaporanSemakan::paparanUntuk($e['laporan']) }}
+                                </span>
                             </td>
                             <td class="workflow-progress-cell">
                                 <div class="workflow-progress" role="img"

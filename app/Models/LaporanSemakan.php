@@ -100,6 +100,34 @@ class LaporanSemakan extends Model
     }
 
     /**
+     * Perbendaharaan yang dilihat pengguna pada "Status Laporan".
+     *
+     * Keadaan dalaman di atas menjejaki DI TANGAN SIAPA laporan berada;
+     * peringkat aliran kerja hanya mengambil berat sama ada laporan masih
+     * disiapkan PA, sedang dalam kitaran semakan, atau telah disahkan.
+     * Dipetakan di sini dan bukan disimpan sebagai lajur baharu, supaya
+     * tiada dua sumber kebenaran bagi status yang sama.
+     *
+     * "Dikembalikan" kekal Dalam Semakan: laporan masih berada dalam
+     * kitaran PA → PPA → KB, cuma giliran membetulkannya kembali kepada PA.
+     *
+     * @var array<string, string>
+     */
+    public const PAPARAN = [
+        self::DRAF => 'Belum Lengkap',
+        self::MENUNGGU_PPA => 'Dalam Semakan',
+        self::MENUNGGU_KB => 'Dalam Semakan',
+        self::DIKEMBALIKAN => 'Dalam Semakan',
+        self::SAH => 'Disahkan',
+    ];
+
+    public const PAPARAN_BELUM_LENGKAP = 'Belum Lengkap';
+
+    public const PAPARAN_DALAM_SEMAKAN = 'Dalam Semakan';
+
+    public const PAPARAN_DISAHKAN = 'Disahkan';
+
+    /**
      * Bolehkah laporan ini berpindah kepada keadaan $status?
      */
     public function bolehBeralihKe(string $status): bool
@@ -123,13 +151,49 @@ class LaporanSemakan extends Model
         return in_array($this->status, [self::DRAF, self::DIKEMBALIKAN], true);
     }
 
+    /**
+     * Adakah laporan berada dalam kitaran semakan PPA/KB sekarang?
+     *
+     * Inilah syarat kunci sunting PA: laporan yang berada di tangan penyemak
+     * tidak boleh diubah, walaupun melalui borang yang dihantar terus.
+     */
+    public function sedangDisemak(): bool
+    {
+        return in_array($this->status, [self::MENUNGGU_PPA, self::MENUNGGU_KB], true);
+    }
+
+    /**
+     * Label "Status Laporan" bagi paparan — lihat self::PAPARAN.
+     */
+    public function statusPaparan(): string
+    {
+        return self::PAPARAN[$this->status] ?? $this->status;
+    }
+
+    /**
+     * Label bagi entiti yang belum menghantar laporan langsung.
+     */
+    public static function paparanUntuk(?self $laporan): string
+    {
+        return $laporan?->statusPaparan() ?? self::PAPARAN_BELUM_LENGKAP;
+    }
+
     public function statusBadgeClass(): string
     {
         return [
             self::SAH => 'status-rendah',
             self::MENUNGGU_PPA => 'status-sederhana',
             self::MENUNGGU_KB => 'status-sederhana',
+            self::DIKEMBALIKAN => 'status-sederhana',
         ][$this->status] ?? 'status-tinggi';
+    }
+
+    /**
+     * Kelas badge bagi label paparan — termasuk keadaan "tiada laporan lagi".
+     */
+    public static function badgePaparan(?self $laporan): string
+    {
+        return $laporan?->statusBadgeClass() ?? 'status-tinggi';
     }
 
     public function scopeForAgency($query, string $agencyCode)

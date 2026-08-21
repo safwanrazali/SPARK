@@ -303,32 +303,6 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Tandakan satu peringkat Dalam Proses — dipanggil apabila kerja bermula
-     * (contohnya PA membuka borang analisis).
-     *
-     * Peringkat yang telah Selesai tidak diundurkan oleh panggilan ini.
-     */
-    public function tandakanDalamProses(string $agencyCode, int $stage, ?User $user = null): ?WorkflowStageStatus
-    {
-        $rekod = WorkflowStageStatus::query()
-            ->forAgency($agencyCode)
-            ->atStage($stage)
-            ->first();
-
-        $bolehMula = $this->ralatPeringkat($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES) === null;
-
-        if ($rekod === null || $rekod->isSelesai() || ! $bolehMula) {
-            return $rekod;
-        }
-
-        if ($rekod->status === WorkflowStageStatus::DALAM_PROSES) {
-            return $rekod;
-        }
-
-        return $this->tetapkanStatus($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES, $user);
-    }
-
-    /**
      * Lengkapkan "Penerimaan & Pendaftaran Data" bagi satu entiti.
      *
      * Ini ialah pintu masuk aliran kerja: entiti dicipta dalam kemajuan,

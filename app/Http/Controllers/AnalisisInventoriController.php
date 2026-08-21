@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
-use App\Models\WorkflowStatus;
 use App\Services\AnalisisDraftService;
 use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
-use App\Services\KemajuanAnalisisService;
+use App\Services\LaporanSemakanService;
 use App\Support\BorangAnalisis;
 use App\Support\Halaman;
 use App\Support\SeksyenAnalisis;
@@ -21,7 +20,7 @@ class AnalisisInventoriController extends Controller
         private readonly EntityAccessService $access,
         private readonly AnalisisDraftService $draf,
         private readonly AuditTrailService $audit,
-        private readonly KemajuanAnalisisService $kemajuan,
+        private readonly LaporanSemakanService $semakan,
     ) {}
 
     /**
@@ -65,14 +64,14 @@ class AnalisisInventoriController extends Controller
 
         $analisis = AnalisisInventori::where('agency_code', $agensi['code'])->first();
 
-        // Carta aliran bahagian 6: membuka borang input menandakan peringkat
-        // "Analisis Data" sebagai Dalam Proses secara automatik. Peringkat
-        // yang belum dibuka (peringkat 3 belum Selesai) tidak disentuh.
-        $this->kemajuan->tandakanDalamProses(
-            $agensi['code'],
-            WorkflowStatus::STAGE_ANALISIS,
-            $request->user(),
-        );
+        // Halaman kemajuan entiti ialah tempat PA melihat kenapa borang
+        // dikunci dan apa tindakan seterusnya — bukan halaman sebelumnya,
+        // yang mungkin tidak terbuka kepada Pegawai Analisis.
+        if ($terkunci = $this->kunciSemakan($agensi['code'])) {
+            return redirect()
+                ->route('workflow.show', $agensi['code'])
+                ->withErrors(['agency_code' => $terkunci]);
+        }
 
         // FASA 6 — sambung semula: rekod tersimpan ditindih oleh draf semasa.
         $borang = $this->draf->borangDipulihkan($analisis);
@@ -113,6 +112,10 @@ class AnalisisInventoriController extends Controller
 
         if (! $agensi) {
             return $this->balasDraf($request, false, 'Agensi tidak sah untuk sektor yang dipilih.');
+        }
+
+        if ($terkunci = $this->kunciSemakan($agensi['code'])) {
+            return $this->balasDraf($request, false, $terkunci);
         }
 
         $entiti = [
@@ -179,6 +182,10 @@ class AnalisisInventoriController extends Controller
             return back()->withErrors(['agency_code' => 'Agensi tidak sah untuk sektor yang dipilih.']);
         }
 
+        if ($terkunci = $this->kunciSemakan($agensi['code'])) {
+            return back()->withInput()->withErrors(['agency_code' => $terkunci]);
+        }
+
         // Susunan dapatan berstruktur dikongsi dengan simpanan draf supaya
         // draf yang disambung semula menghasilkan struktur yang sama (Fasa 6).
         ['lajur' => $lajur, 'data' => $data] = BorangAnalisis::kepadaModel(
@@ -238,6 +245,31 @@ class AnalisisInventoriController extends Controller
         return redirect()
             ->route('analisis.index')
             ->with('success', 'Dapatan analisis bagi '.$agensi['name'].' telah disimpan.');
+    }
+
+    /**
+     * Sebab borang dikunci daripada Pegawai Analisis, atau null jika terbuka.
+     *
+     * Aliran kerja bahagian 8 dan 11: sebaik laporan dihantar, ia berada di
+     * tangan PPA atau Ketua Bahagian dan PA tidak boleh mengubahnya lagi.
+     * Laporan yang telah disahkan kekal terkunci selama-lamanya. Laporan
+     * yang DIKEMBALIKAN sengaja tidak dikunci — itulah caranya PA
+     * membetulkan dan menghantar semula.
+     *
+     * Disemak di pelayan, bukan sekadar disembunyikan pada antara muka,
+     * supaya borang yang dihantar terus turut ditolak.
+     */
+    private function kunciSemakan(string $agencyCode): ?string
+    {
+        $laporan = $this->semakan->untuk($agencyCode);
+
+        if ($laporan === null || $laporan->bolehDisuntingPA()) {
+            return null;
+        }
+
+        return $laporan->isSah()
+            ? 'Laporan bagi entiti ini telah disahkan Ketua Bahagian dan tidak boleh diubah lagi.'
+            : 'Laporan bagi entiti ini sedang disemak. Borang hanya boleh disunting semula jika laporan dikembalikan kepada anda.';
     }
 
     private function sahkanEntiti(string $sectorCode, string $agencyCode): array

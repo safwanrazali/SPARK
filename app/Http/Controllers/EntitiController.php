@@ -8,6 +8,7 @@ use App\Models\StatusLaporan;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class EntitiController extends Controller
     public function __construct(
         private readonly EntityAccessService $access,
         private readonly EntityAssignmentService $assignments,
+        private readonly KemajuanAnalisisService $kemajuan,
     ) {}
 
     public function show(Request $request, string $agencyCode)
@@ -52,6 +54,10 @@ class EntitiController extends Controller
                 ->accessibleBy($pengguna)
                 ->where('agency_code', $agencyCode)
                 ->first(),
+            // Status sebenar setiap peringkat — tanpa ini stepper hanya
+            // tahu peringkat semasa dan tidak dapat menunjukkan dua
+            // peringkat yang berjalan serentak (05 dan 06).
+            'peringkat' => $this->kemajuan->peringkat($agencyCode),
             'analisis' => AnalisisInventori::query()
                 ->accessibleBy($pengguna)
                 ->where('agency_code', $agencyCode)

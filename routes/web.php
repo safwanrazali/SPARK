@@ -154,7 +154,9 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 ->whereNumber('stage')
                 ->name('selesai');
 
-            Route::post('/jana-laporan', [KemajuanAnalisisController::class, 'janaLaporan'])->name('jana-laporan');
+            // Tiada route "jana laporan" berasingan: peringkat 5 bermula
+            // apabila laporan dihantar kepada PPA, dan hanya kelulusan KB
+            // boleh menjadikannya Selesai.
             Route::post('/hantar', [KemajuanAnalisisController::class, 'hantar'])->name('hantar');
             Route::post('/semak', [KemajuanAnalisisController::class, 'semak'])->name('semak');
             Route::post('/kembalikan', [KemajuanAnalisisController::class, 'kembalikan'])->name('kembalikan');
