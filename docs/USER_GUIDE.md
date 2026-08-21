@@ -102,7 +102,7 @@ berkenaan akan kehilangan akses kepada entiti tersebut serta-merta.
 
 ### 4.3 Menggerakkan entiti melalui workflow
 
-Buka **Pemantauan → Kemajuan Workflow**, pilih entiti.
+Buka **Pemantauan → Kemajuan Analisis**, pilih entiti.
 
 1. Klik **Daftar dalam workflow** untuk memulakan pada peringkat 1.
 2. Gunakan **Kemas Kini Peringkat** untuk maju **satu peringkat pada satu masa**.
@@ -169,7 +169,7 @@ Sistem **tidak** memerlukan anda memuat naik sebarang dokumen.
 
 ### 5.3 Mengisi borang dapatan
 
-1. Pada senarai **Analisis Inventori**, pilih sektor dan entiti anda.
+1. Pada senarai **Analisis Inventori Kriptografi**, pilih sektor dan entiti anda.
 2. Klik **Isi Borang**.
 3. Isi mengikut seksyen:
 
@@ -250,7 +250,7 @@ betulkan dan simpan semula.
 ## 6. PANDUAN KETUA BAHAGIAN
 
 - **Papan Pemuka** — gambaran keseluruhan kemajuan semua sektor dan entiti.
-- **Kemajuan Workflow** — kedudukan setiap entiti.
+- **Kemajuan Analisis** — kedudukan setiap entiti.
 - **Pusat Maklumat Entiti** — himpunan maklumat satu entiti.
 - **Laporan Inventori** — pratonton dan muat turun laporan mana-mana entiti.
 - **Jejak Audit** — rekod penuh perubahan.

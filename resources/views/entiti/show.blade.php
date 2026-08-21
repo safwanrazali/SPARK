@@ -34,7 +34,8 @@
                     <a href="{{ route('analisis.borang', [
                         'sector_code' => $entiti['sector_code'],
                         'agency_code' => $entiti['agency_code'],
-                    ]) }}" class="btn btn-sm btn-outline-light">
+                    ]) }}"
+                        class="btn btn-sm btn-outline-light">
                         <i class="bi bi-pencil-square"></i> Borang Analisis
                     </a>
                 @endcan
@@ -90,11 +91,11 @@
 
     </div>
 
-    {{-- ── Kemajuan Workflow ───────────────────────────────────────────── --}}
+    {{-- ── Kemajuan Analisis ───────────────────────────────────────────── --}}
     <div class="report-card mb-4">
 
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-            <h4 class="section-title mb-0">Kemajuan Workflow</h4>
+            <h4 class="section-title mb-0">Kemajuan Analisis</h4>
             @if ($workflow)
                 <span class="text-secondary">
                     Peringkat {{ $workflow->current_stage }} daripada {{ \App\Models\WorkflowStatus::LAST_STAGE }}
@@ -210,7 +211,9 @@
                         @php
                             $rekod = $statusLaporan->get($jenis);
                             $nilai = $rekod?->status ?? 'Belum Bermula';
-                            $kelas = ['Siap' => 'status-rendah', 'Dalam Proses' => 'status-sederhana'][$nilai] ?? 'status-tinggi';
+                            $kelas =
+                                ['Siap' => 'status-rendah', 'Dalam Proses' => 'status-sederhana'][$nilai] ??
+                                'status-tinggi';
                         @endphp
                         <tr>
                             <td>{{ $nama }}</td>

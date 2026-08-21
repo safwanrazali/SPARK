@@ -100,7 +100,7 @@ dalam Bahagian D (Log Kecacatan).
 - Papan pemuka memaparkan Jumlah Sektor, Jumlah Entiti, Dalam Proses, Selesai,
   Jumlah Laporan dan Kemajuan Keseluruhan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -122,7 +122,7 @@ dalam Bahagian D (Log Kecacatan).
 - Entiti sektor lain tidak muncul.
 - Entiti yang belum mempunyai sebarang rekod turut dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -145,7 +145,7 @@ dalam Bahagian D (Log Kecacatan).
 - Ruangan yang belum mempunyai data memaparkan keadaan kosong yang jelas
   (bukan ralat).
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -171,7 +171,7 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 4: ditolak — "Entiti hanya boleh ditugaskan kepada Pegawai Analisis."
 - Sejarah penugasan kekal dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -190,10 +190,10 @@ dalam Bahagian D (Log Kecacatan).
 **Jangkaan**
 
 - Pegawai Analisis **tidak** menerima papan pemuka keseluruhan; sistem
-  mengalihkan ke senarai kerja (Analisis Inventori) dengan mesej penjelasan.
+  mengalihkan ke senarai kerja (Analisis Inventori Kriptografi) dengan mesej penjelasan.
 - Menu tidak memaparkan Penugasan Entiti, Jejak Audit atau Pentadbiran.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -218,7 +218,7 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 2–4: setiap capaian ditolak dengan ralat **403** — bukan sekadar
   butang tersembunyi, dan tiada maklumat entiti dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -253,7 +253,7 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 6: ditolak — sebab diwajibkan.
 - Langkah 7: berjaya; sebab dipaparkan dalam sejarah.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -277,7 +277,7 @@ dalam Bahagian D (Log Kecacatan).
 - Tiada medan "pilih fail" pada borang dapatan analisis.
 - Sistem tidak cuba membaca atau mentafsir dokumen secara automatik.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -290,7 +290,7 @@ dalam Bahagian D (Log Kecacatan).
 
 **Langkah**
 
-1. Buka **Analisis Inventori** → pilih Sektor 001 → ENTITI-A → **Isi Borang**.
+1. Buka **Analisis Inventori Kriptografi** → pilih Sektor 001 → ENTITI-A → **Isi Borang**.
 2. Seksyen 1: isi tarikh laporan dan kod rujukan; pilih status laporan.
 3. Seksyen 2: pilih status penerimaan/kebolehgunaan bagi Jadual 0–2.
 4. Seksyen 3: masukkan bilangan aset bagi setiap kategori profil.
@@ -307,7 +307,7 @@ dalam Bahagian D (Log Kecacatan).
 - Senarai algoritma mengikut kategori rujukan AKSA MySEAL.
 - Baris protokol/pustaka/vendor boleh ditambah dan dibuang.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -330,7 +330,7 @@ dalam Bahagian D (Log Kecacatan).
 - Sistem memaparkan masa simpanan terakhir, nombor versi dan seksyen yang telah
   mempunyai kandungan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -351,7 +351,7 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 1: pelayar memaparkan amaran kerja belum disimpan.
 - Langkah 3: sistem meminta log masuk semula; kandungan halaman tidak dipaparkan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -374,7 +374,7 @@ dalam Bahagian D (Log Kecacatan).
 - Panel draf menunjukkan versi dan masa simpanan terakhir serta nama pegawai
   yang menyimpan.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -399,7 +399,7 @@ dalam Bahagian D (Log Kecacatan).
 - Langkah 2: mesej berjaya; rekod dipaparkan dalam senarai analisis sebagai
   selesai; status laporan Inventori bagi entiti bertukar kepada **Dalam Proses**.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -423,7 +423,7 @@ dalam Bahagian D (Log Kecacatan).
 - RSA dikenal pasti sebagai berisiko kuantum.
 - Ayat ringkasan status data mengikut pilihan yang dibuat, bukan teks lalai.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -446,7 +446,7 @@ dalam Bahagian D (Log Kecacatan).
   kaki (kod rujukan + nombor muka surat).
 - Kandungan PDF sepadan dengan pratonton.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -543,7 +543,7 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 - Tarikh status dan nama pegawai yang mengemas kini direkodkan.
 - Status laporan Inventori = Siap.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -570,7 +570,7 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 - Ketua Bahagian melihat angka yang sama.
 - Penapis tidak sah (sektor tiada, tarikh salah format) tidak menyebabkan ralat.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 
@@ -598,7 +598,7 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
   metadata perubahan).
 - Langkah 4: Pegawai Analisis ditolak dengan 403.
 
-**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: **********\_\_**********
+**Keputusan**: ☐ LULUS ☐ GAGAL — Catatan: \***\*\*\*\*\***\_\_\***\*\*\*\*\***
 
 ---
 

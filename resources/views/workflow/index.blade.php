@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Kemajuan Workflow Entiti')
+@section('title', 'Kemajuan Analisis Entiti')
 
-@section('page-title', 'Kemajuan Workflow')
+@section('page-title', 'Kemajuan Analisis')
 
 @section('content')
 
@@ -43,7 +43,7 @@
         <h4 class="section-title">Kedudukan Semasa Entiti</h4>
         <p class="text-secondary">
             {{ $jumlahDidaftar }} entiti telah didaftarkan dalam workflow.
-            @if (! $sectorCode)
+            @if (!$sectorCode)
                 Pilih sektor di atas untuk melihat keseluruhan entiti dalam sektor tersebut.
             @endif
         </p>
@@ -56,7 +56,7 @@
              * paparan; kebenaran sebenar tetap dikuatkuasakan oleh gate dan
              * middleware `entity.access` pada setiap route.
              */
-            $adaTindakan = ! auth()->user()->isPegawaiPenyelarasRekod();
+            $adaTindakan = !auth()->user()->isPegawaiPenyelarasRekod();
         @endphp
 
         <div class="table-responsive-custom">
@@ -78,7 +78,7 @@
                     @php
                         $jumlahPeringkat = count(\App\Models\WorkflowStatus::WORKFLOW_STAGES);
 
-                        $badgeKeseluruhan = fn (string $nilai): string => match ($nilai) {
+                        $badgeKeseluruhan = fn(string $nilai): string => match ($nilai) {
                             \App\Services\KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
                             \App\Services\KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
                             default => 'status-tinggi',
@@ -133,8 +133,7 @@
                             </td>
                             @if ($adaTindakan)
                                 <td class="text-nowrap">
-                                    <a class="btn btn-sm btn-primary"
-                                        href="{{ route('entiti.show', $e['agency_code']) }}">
+                                    <a class="btn btn-sm btn-primary" href="{{ route('entiti.show', $e['agency_code']) }}">
                                         <i class="bi bi-building"></i> Entiti
                                     </a>
                                     <a class="btn btn-sm btn-outline-light"

@@ -2,7 +2,7 @@
 
 @section('title', 'Analisis Inventori Kriptografi')
 
-@section('page-title', 'Analisis Inventori')
+@section('page-title', 'Analisis Inventori Kriptografi')
 
 @section('content')
 

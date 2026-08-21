@@ -61,7 +61,7 @@
 
         <h2>Tujuan</h2>
         <p>
-            Laporan ini disediakan bagi membentangkan dapatan analisis inventori kriptografi
+            Laporan ini disediakan bagi membentangkan dapatan Analisis Inventori Kriptografi
             <strong>{{ $analisis->agency_name }}</strong> berdasarkan data dan maklumat yang
             dikemukakan selaras dengan Arahan Ketua Eksekutif NACSA No. 9. Analisis ini memberi
             fokus kepada data yang dikemukakan melalui Jadual 0: Inventori, Jadual 1:

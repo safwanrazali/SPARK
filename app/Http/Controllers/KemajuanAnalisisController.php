@@ -255,7 +255,7 @@ class KemajuanAnalisisController extends Controller
     }
 
     /**
-     * Adakah dapatan analisis inventori telah disimpan sebagai Lengkap?
+     * Adakah dapatan Analisis Inventori Kriptografi telah disimpan sebagai Lengkap?
      *
      * Draf sengaja tidak dikira — itulah beza antara "Simpan Draf" dan
      * "Simpan Dapatan" (carta aliran bahagian 6).

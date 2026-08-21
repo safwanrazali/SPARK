@@ -104,7 +104,7 @@ class Phase5EntityDetailTest extends TestCase
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk()
             ->assertSee('Kedudukan Semasa')
-            ->assertSee('Kemajuan Workflow')
+            ->assertSee('Kemajuan Analisis')
             ->assertSee('Penugasan')
             ->assertSee('Dapatan Analisis')
             ->assertSee('Laporan')

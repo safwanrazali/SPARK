@@ -53,9 +53,9 @@ class AppServiceProvider extends ServiceProvider
         | Kemajuan Analisis — Semak         | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✓  | ✗
         | Kemajuan Analisis — Sahkan        | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✗  | ✗
         | Kemajuan Analisis — Hantar NACSA  | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✗  | ✗
-        | Analisis Inventori — Lihat        | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
-        | Analisis Inventori — Input/Sunting| ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
-        | Analisis Inventori — Jana Laporan | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
+        | Analisis Inventori Kriptografi — Lihat        | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
+        | Analisis Inventori Kriptografi — Input/Sunting| ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
+        | Analisis Inventori Kriptografi — Jana Laporan | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
         | Status 3 Laporan                  | ✗  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
         | Log Audit                         | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
         | Pengguna                          | ✓  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✗

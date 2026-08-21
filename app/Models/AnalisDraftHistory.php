@@ -40,7 +40,7 @@ class AnalisDraftHistory extends Model
     ];
 
     /**
-     * Analisis inventori yang berkaitan.
+     * Analisis Inventori Kriptografi yang berkaitan.
      */
     public function analisisInventori(): BelongsTo
     {

@@ -24,7 +24,7 @@ return new class extends Migration
         Schema::create('analisis_draft_history', function (Blueprint $table) {
             $table->id();
 
-            // Analisis inventori yang sedang draf
+            // Analisis Inventori Kriptografi yang sedang draf
             $table->foreignId('analisis_inventori_id')->constrained('analisis_inventori')->onDelete('cascade');
 
             // Versi draf (incrementing untuk setiap simpanan)

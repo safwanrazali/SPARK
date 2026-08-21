@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
  * Menghimpunkan maklumat yang telah dibina dalam fasa terdahulu:
  * - Maklumat Entiti      (senarai induk sektor)
  * - Penugasan            (Fasa 3)
- * - Kemajuan Workflow    (Fasa 2, termasuk stepper)
+ * - Kemajuan Analisis    (Fasa 2, termasuk stepper)
  * - Dapatan Analisis     (modul sedia ada)
  * - Laporan              (status tiga laporan sedia ada)
  * - Sejarah              (activity_log)

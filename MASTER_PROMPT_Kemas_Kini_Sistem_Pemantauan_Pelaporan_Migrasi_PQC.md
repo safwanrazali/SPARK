@@ -255,7 +255,7 @@ Sekurang-kurangnya konsep berikut:
 - jumlah laporan siap
 - peratus kemajuan keseluruhan
 
-### Kemajuan workflow
+### Kemajuan Analisis
 
 Paparkan progress mengikut:
 
@@ -449,7 +449,7 @@ Jangan hilangkan input apabila pengguna keluar daripada halaman.
 
 ---
 
-# 13. LAPORAN ANALISIS INVENTORI KRIPTOGRAFI
+# 13. LAPORAN Analisis Inventori Kriptografi
 
 Untuk Fasa semasa, laporan utama ialah:
 

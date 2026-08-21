@@ -34,10 +34,10 @@ class PenomboranHalamanTest extends TestCase
         // [nama route, kunci data paparan, peranan pelakon]
         return [
             'senarai pengguna' => ['administration.users.index', 'users', User::ROLE_ADMINISTRATOR],
-            'kemajuan workflow' => ['workflow.index', 'entiti', User::ROLE_COORDINATOR],
+            'Kemajuan Analisis' => ['workflow.index', 'entiti', User::ROLE_COORDINATOR],
             'penetapan entiti — pendaftaran' => ['penugasan.index', 'pendaftaran', User::ROLE_PENYELARAS_REKOD],
             'penetapan entiti — penugasan' => ['penugasan.index', 'entiti', User::ROLE_COORDINATOR],
-            'analisis inventori' => ['analisis.index', 'rekod', User::ROLE_COORDINATOR],
+            'Analisis Inventori Kriptografi' => ['analisis.index', 'rekod', User::ROLE_COORDINATOR],
             'jejak audit' => ['audit.index', 'rekod', User::ROLE_COORDINATOR],
             'status tiga laporan' => ['status.index', 'entiti', User::ROLE_COORDINATOR],
             'penjanaan laporan' => ['laporan.index', 'rekod', User::ROLE_COORDINATOR],
@@ -73,7 +73,7 @@ class PenomboranHalamanTest extends TestCase
     {
         return [
             'pusat maklumat entiti' => ['entiti.show', User::ROLE_COORDINATOR],
-            'kemajuan workflow entiti' => ['workflow.show', User::ROLE_COORDINATOR],
+            'Kemajuan Analisis Entiti' => ['workflow.show', User::ROLE_COORDINATOR],
             'sejarah penugasan' => ['penugasan.show', User::ROLE_COORDINATOR],
         ];
     }

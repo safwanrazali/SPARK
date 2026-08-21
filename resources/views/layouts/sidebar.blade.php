@@ -70,8 +70,7 @@
                 {{-- 2.2 Kemajuan Analisis Entiti --}}
                 <li>
                     <a href="{{ route('workflow.index') }}" class="{{ $pautan('workflow.*') }}"
-                        title="Kemajuan Analisis Entiti"
-                        @if (request()->routeIs('workflow.*')) aria-current="page" @endif>
+                        title="Kemajuan Analisis Entiti" @if (request()->routeIs('workflow.*')) aria-current="page" @endif>
                         <i class="bi bi-diagram-3" aria-hidden="true"></i>
                         <span class="menu-text">Kemajuan Analisis Entiti</span>
                     </a>
@@ -126,8 +125,8 @@
                 {{-- 3.4 Status 3 Laporan --}}
                 @can('access-status-reports')
                     <li>
-                        <a href="{{ route('status.index') }}" class="{{ $pautan('status.*') }}"
-                            title="Status 3 Laporan" @if (request()->routeIs('status.*')) aria-current="page" @endif>
+                        <a href="{{ route('status.index') }}" class="{{ $pautan('status.*') }}" title="Status 3 Laporan"
+                            @if (request()->routeIs('status.*')) aria-current="page" @endif>
                             <i class="bi bi-list-check" aria-hidden="true"></i>
                             <span class="menu-text">Status 3 Laporan</span>
                         </a>
@@ -150,8 +149,7 @@
         {{-- 5. Pentadbiran --}}
         @can('access-administration')
             <li>
-                <a class="sidebar-parent {{ $pentadbiranAktif ? 'active' : '' }}" id="navPentadbiran"
-                    title="Pentadbiran">
+                <a class="sidebar-parent {{ $pentadbiranAktif ? 'active' : '' }}" id="navPentadbiran" title="Pentadbiran">
                     <i class="bi bi-gear" aria-hidden="true"></i>
                     <span class="menu-text">Pentadbiran</span>
                 </a>
