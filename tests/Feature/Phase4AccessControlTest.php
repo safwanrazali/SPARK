@@ -279,10 +279,10 @@ class Phase4AccessControlTest extends TestCase
             ->assertOk()
             ->assertViewHas('jumlahEntiti', 3);
 
-        // Pegawai Analisis dialihkan ke senarai kerjanya.
+        // Pegawai Analisis ditolak daripada papan pemuka keseluruhan.
         $this->actingAs($this->analystA)
             ->get(route('dashboard'))
-            ->assertRedirect(route('analisis.index'));
+            ->assertForbidden();
     }
 
     /*

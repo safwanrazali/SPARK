@@ -6,6 +6,7 @@ use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
+use App\Services\WorkflowTransitionService;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
 use App\Support\SektorDirectory;
@@ -175,8 +176,11 @@ class Phase12PerformanceTest extends TestCase
         // Jana aktiviti tambahan supaya senarai jejak audit mempunyai
         // banyak baris daripada pelbagai pengguna.
         foreach ($kod as $satu) {
-            $this->actingAs($this->penyelaras)
-                ->post(route('workflow.peringkat', $satu), ['to_stage' => 2]);
+            $workflow = WorkflowStatus::where('agency_code', $satu)->first();
+
+            if ($workflow !== null) {
+                app(WorkflowTransitionService::class)->advance($workflow, $this->penyelaras);
+            }
         }
 
         $bilangan = $this->bilanganQuery(function () {

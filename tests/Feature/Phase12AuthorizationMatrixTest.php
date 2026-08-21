@@ -106,18 +106,17 @@ class Phase12AuthorizationMatrixTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_papan_pemuka_keseluruhan_hanya_untuk_peranan_pengurusan(): void
+    public function test_papan_pemuka_terbuka_kepada_semua_kecuali_pegawai_analisis(): void
     {
-        // Peranan tanpa kebenaran pemantauan dialihkan ke senarai kerja —
-        // mereka tidak menerima papan pemuka keseluruhan versi ditapis.
+        // Pegawai Analisis bekerja daripada senarai entiti yang ditugaskan;
+        // capaian terus ke papan pemuka DITOLAK, bukan dialihkan.
         $this->semakMatriks('GET', route('dashboard'), [
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
             User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
-            User::ROLE_ANALYST => self::ALIH,
-            User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => self::ALIH,
-            User::ROLE_PENYELARAS_REKOD => self::ALIH,
+            User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => self::BENAR,
+            User::ROLE_PENYELARAS_REKOD => self::BENAR,
         ]);
     }
 
@@ -127,11 +126,23 @@ class Phase12AuthorizationMatrixTest extends TestCase
             route('workflow.index'),
             route('analisis.index'),
             route('laporan.index'),
-            route('status.index'),
             route('muat-naik.history'),
         ] as $url) {
             $this->semakMatriks('GET', $url, array_fill_keys(User::roles(), self::BENAR));
         }
+    }
+
+    public function test_status_tiga_laporan_terbuka_kepada_semua_kecuali_pentadbir_sistem(): void
+    {
+        // Sekatan khas: modul operasi ini bukan untuk Pentadbir Sistem.
+        $this->semakMatriks('GET', route('status.index'), [
+            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
+            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
+            User::ROLE_PENYELARAS_REKOD => self::BENAR,
+            User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => self::BENAR,
+            User::ROLE_COORDINATOR => self::BENAR,
+            User::ROLE_ANALYST => self::BENAR,
+        ]);
     }
 
     public function test_penetapan_entiti_dikongsi_mengikut_panel_peranan(): void
@@ -141,7 +152,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
         // Ketua Bahagian; penugasan milik Pegawai Penyelaras Analisis.
         // Setiap panel disediakan hanya untuk peranan yang berhak.
         $this->semakMatriks('GET', route('penugasan.index'), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
             User::ROLE_PENYELARAS_REKOD => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
@@ -149,38 +159,22 @@ class Phase12AuthorizationMatrixTest extends TestCase
 
         // Sejarah penugasan satu entiti kekal milik modul penugasan sahaja.
         $this->semakMatriks('GET', route('penugasan.show', self::ALPHA), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
         ]);
     }
 
-    public function test_kawalan_peringkat_workflow_hanya_untuk_pentadbir_dan_penyelaras(): void
-    {
-        $dibenarkan = [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-        ];
-
-        $this->semakMatriks('POST', route('workflow.mula', self::ALPHA), $dibenarkan);
-        $this->semakMatriks('POST', route('workflow.peringkat', self::ALPHA), $dibenarkan, ['to_stage' => 2]);
-        $this->semakMatriks('POST', route('workflow.status', self::ALPHA), $dibenarkan, ['status' => 'Dalam Proses']);
-    }
-
-    public function test_status_laporan_hanya_boleh_dikitar_oleh_pentadbir_dan_penyelaras(): void
+    public function test_status_laporan_hanya_boleh_dikitar_oleh_penyelaras(): void
     {
         $this->semakMatriks('POST', route('status.kitar'), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
         ], SektorDirectory::cariEntiti(self::ALPHA) + ['jenis' => 'inventori']);
     }
 
-    public function test_jejak_audit_berpusat_hanya_untuk_peranan_pemantauan(): void
+    public function test_jejak_audit_berpusat_terbuka_kepada_semua_peranan(): void
     {
-        $this->semakMatriks('GET', route('audit.index'), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
-        ]);
+        // Kandungan tetap ditapis mengikut entiti yang boleh diakses, dan
+        // rekod audit kekal tidak boleh diubah oleh sesiapa.
+        $this->semakMatriks('GET', route('audit.index'), array_fill_keys(User::roles(), self::BENAR));
     }
 
     public function test_modul_muat_naik_dan_pentadbiran_kekal_terhad(): void
@@ -189,6 +183,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
             User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_COORDINATOR => self::BENAR,
         ]);
+
 
         $this->semakMatriks('GET', route('administration.users.index'), [
             User::ROLE_ADMINISTRATOR => self::BENAR,
@@ -201,10 +196,9 @@ class Phase12AuthorizationMatrixTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_input_analisis_dan_draf_hanya_untuk_pentadbir_dan_pegawai_analisis(): void
+    public function test_input_analisis_dan_draf_hanya_untuk_pegawai_analisis(): void
     {
         $dibenarkan = [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
             User::ROLE_ANALYST => self::BENAR,
         ];
 
@@ -226,56 +220,48 @@ class Phase12AuthorizationMatrixTest extends TestCase
 
     public function test_entiti_ditugaskan_boleh_dilihat_oleh_pegawai_yang_berkenaan(): void
     {
-        $this->semakMatriks('GET', route('entiti.show', self::ALPHA), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
-            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
-            User::ROLE_ANALYST => self::BENAR,
-        ]);
+        // Semua peranan boleh MELIHAT; Pegawai Analisis hanya bagi entiti
+        // yang ditugaskan kepadanya (ALPHA ialah entiti tugasannya).
+        $semua = array_fill_keys(User::roles(), self::BENAR);
 
-        $this->semakMatriks('GET', route('workflow.show', self::ALPHA), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
-            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
-            User::ROLE_ANALYST => self::BENAR,
-        ]);
+        $this->semakMatriks('GET', route('entiti.show', self::ALPHA), $semua);
+        $this->semakMatriks('GET', route('workflow.show', self::ALPHA), $semua);
     }
 
     public function test_entiti_pegawai_lain_tidak_boleh_dilihat_oleh_pegawai_analisis(): void
     {
-        $this->semakMatriks('GET', route('entiti.show', self::BETA), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
-            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
-        ]);
+        // BETA bukan tugasan pegawai analisis dalam ujian ini — hanya dia
+        // yang ditolak; peranan lain melihat semua entiti.
+        $kecualiPegawaiAnalisis = array_fill_keys(User::roles(), self::BENAR);
+        unset($kecualiPegawaiAnalisis[User::ROLE_ANALYST]);
 
-        $this->semakMatriks('GET', route('workflow.show', self::BETA), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
-            User::ROLE_TIMBALAN_PENGARAH_II => self::BENAR,
-        ]);
+        $this->semakMatriks('GET', route('entiti.show', self::BETA), $kecualiPegawaiAnalisis);
+        $this->semakMatriks('GET', route('workflow.show', self::BETA), $kecualiPegawaiAnalisis);
     }
 
     /**
-     * Peranan tanpa baris dalam matriks kebenaran (Pegawai Kawalan Dokumen dan
-     * Pegawai Penyelaras Rekod) tidak boleh mewarisi akses entiti secara
-     * tersirat — lalai ialah tolak sehingga business rule disahkan.
+     * Peranan baca-sahaja (PKD dan PPR) boleh MELIHAT mana-mana entiti,
+     * tetapi tiada satu pun tindakan menulis terbuka kepada mereka.
+     *
+     * Melihat dan bertindak ialah dua kebenaran berasingan; ujian ini
+     * menegaskan kedua-duanya sekali gus.
      */
-    public function test_peranan_tanpa_kebenaran_disahkan_tiada_akses_entiti(): void
+    public function test_peranan_baca_sahaja_melihat_entiti_tanpa_kuasa_menulis(): void
     {
         foreach ([User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, User::ROLE_PENYELARAS_REKOD] as $peranan) {
-            foreach ([self::ALPHA, self::BETA] as $kod) {
-                $this->actingAs($this->pengguna[$peranan])
-                    ->get(route('entiti.show', $kod))
-                    ->assertForbidden();
+            $pengguna = $this->pengguna[$peranan];
 
-                $this->actingAs($this->pengguna[$peranan])
-                    ->get(route('workflow.show', $kod))
-                    ->assertForbidden();
+            foreach ([self::ALPHA, self::BETA] as $kod) {
+                $this->actingAs($pengguna)->get(route('entiti.show', $kod))->assertOk();
+                $this->actingAs($pengguna)->get(route('workflow.show', $kod))->assertOk();
+            }
+
+            // Tiada kuasa memajukan peringkat, menyemak atau meluluskan.
+            foreach (['advance-analysis-stage', 'review-report', 'approve-report', 'submit-to-nacsa'] as $gate) {
+                $this->assertFalse(
+                    $pengguna->can($gate),
+                    "Peranan {$peranan} sepatutnya tidak memiliki {$gate}.",
+                );
             }
         }
     }
@@ -310,9 +296,8 @@ class Phase12AuthorizationMatrixTest extends TestCase
                 'status_laporan' => 'Muktamad',
                 'ringkasan_data' => 'lengkap',
             ]],
-            ['POST', route('workflow.mula', self::BETA), []],
-            ['POST', route('workflow.peringkat', self::BETA), ['to_stage' => 2]],
-            ['POST', route('workflow.status', self::BETA), ['status' => 'Siap']],
+            ['POST', route('kemajuan.selesai', [self::BETA, 2]), []],
+            ['POST', route('kemajuan.jana-laporan', self::BETA), []],
             ['POST', route('penugasan.simpan', self::BETA), ['assigned_to_user_id' => $analyst->id]],
             ['POST', route('penugasan.tarik', self::BETA), []],
         ];
@@ -349,9 +334,8 @@ class Phase12AuthorizationMatrixTest extends TestCase
             ['getJson', route('workflow.show', self::BETA), null],
             ['getJson', route('entiti.show', self::BETA), null],
             ['getJson', route('penugasan.index'), null],
-            ['getJson', route('audit.index'), null],
             ['postJson', route('analisis.draf'), ['sector_code' => '001', 'agency_code' => self::BETA]],
-            ['postJson', route('workflow.status', self::BETA), ['status' => 'Siap']],
+            ['postJson', route('kemajuan.selesai', [self::BETA, 2]), []],
         ];
 
         foreach ($ditolak as [$kaedah, $url, $data]) {
@@ -434,9 +418,9 @@ class Phase12AuthorizationMatrixTest extends TestCase
     public function test_pemetaan_kebenaran_semakan_dan_kelulusan_mengikut_matriks(): void
     {
         $semak = [
-            User::ROLE_ADMINISTRATOR => true,
             User::ROLE_COORDINATOR => true,
             User::ROLE_KETUA_BAHAGIAN => true,
+            User::ROLE_ADMINISTRATOR => false,
             User::ROLE_ANALYST => false,
             User::ROLE_PEGAWAI_KAWALAN_DOKUMEN => false,
             User::ROLE_PENYELARAS_REKOD => false,
@@ -444,7 +428,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
         ];
 
         $lulus = [
-            User::ROLE_ADMINISTRATOR => true,
+            User::ROLE_ADMINISTRATOR => false,
             User::ROLE_KETUA_BAHAGIAN => true,
             User::ROLE_COORDINATOR => false,
             User::ROLE_ANALYST => false,

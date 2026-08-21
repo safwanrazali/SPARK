@@ -76,7 +76,7 @@ class Phase13ReleaseReadinessTest extends TestCase
         $this->post(route('login.attempt'), [
             'username' => 'pegawai',
             'password' => 'kata-laluan-benar',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('analisis.index'));
 
         $this->assertAuthenticated();
 
@@ -96,7 +96,7 @@ class Phase13ReleaseReadinessTest extends TestCase
         $this->post(route('login.attempt'), [
             'username' => 'pegawai.b',
             'password' => 'rahsia-b',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('analisis.index'));
 
         $this->assertAuthenticated();
     }
@@ -120,7 +120,7 @@ class Phase13ReleaseReadinessTest extends TestCase
         }
 
         $this->post(route('login.attempt'), ['username' => 'pegawai', 'password' => 'kata-laluan-benar'])
-            ->assertRedirect('/');
+            ->assertRedirect(route('analisis.index'));
 
         $this->assertAuthenticated();
     }
@@ -431,10 +431,7 @@ class Phase13ReleaseReadinessTest extends TestCase
             'status.index',
             'status.kitar',
             'workflow.index',
-            'workflow.mula',
-            'workflow.peringkat',
             'workflow.show',
-            'workflow.status',
         ];
 
         $this->assertSame($dijangka, $sebenar);

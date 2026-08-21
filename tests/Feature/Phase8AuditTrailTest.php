@@ -279,9 +279,11 @@ class Phase8AuditTrailTest extends TestCase
         $this->get(route('audit.index'))->assertRedirect(route('login'));
     }
 
-    public function test_pegawai_analisis_tidak_boleh_melihat_jejak_audit_berpusat(): void
+    public function test_pegawai_analisis_melihat_jejak_audit_ditapis_kepada_entitinya(): void
     {
-        $this->actingAs($this->analyst)->get(route('audit.index'))->assertForbidden();
+        // Jejak audit terbuka kepada setiap peranan, tetapi kandungannya
+        // kekal ditapis: pegawai analisis hanya melihat entiti tugasannya.
+        $this->actingAs($this->analyst)->get(route('audit.index'))->assertOk();
     }
 
     public function test_peranan_pengurusan_boleh_melihat_jejak_audit(): void
@@ -290,7 +292,7 @@ class Phase8AuditTrailTest extends TestCase
         $this->actingAs($this->admin)->get(route('audit.index'))->assertOk();
     }
 
-    public function test_pautan_jejak_audit_disembunyikan_daripada_pegawai_analisis(): void
+    public function test_pautan_jejak_audit_kini_terbuka_kepada_pegawai_analisis(): void
     {
         app(EntityAssignmentService::class)->assign(
             SektorDirectory::cariEntiti(self::ALPHA),
@@ -298,10 +300,12 @@ class Phase8AuditTrailTest extends TestCase
             $this->coordinator,
         );
 
+        // Jejak audit terbuka kepada semua peranan; pautannya pada halaman
+        // entiti turut dipaparkan kepada pegawai analisis.
         $this->actingAs($this->analyst)
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk()
-            ->assertDontSee('Jejak Audit');
+            ->assertSee('Jejak Audit');
 
         $this->actingAs($this->coordinator)
             ->get(route('entiti.show', self::ALPHA))

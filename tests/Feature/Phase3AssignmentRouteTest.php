@@ -87,12 +87,14 @@ class Phase3AssignmentRouteTest extends TestCase
         $this->assertDatabaseCount('entiti_assignment', 0);
     }
 
-    public function test_pentadbir_dan_penyelaras_boleh_mengakses_modul_penugasan(): void
+    public function test_penyelaras_boleh_mengakses_modul_penugasan(): void
     {
+        // Pentadbir Sistem tiada satu pun daripada tiga tindakan skrin ini,
+        // jadi ia turut ditolak — mentadbir sistem bukan menjalankan operasi.
         $pentadbir = User::factory()->create(['role' => User::ROLE_ADMINISTRATOR]);
 
         $this->actingAs($this->coordinator)->get(route('penugasan.index'))->assertOk();
-        $this->actingAs($pentadbir)->get(route('penugasan.index'))->assertOk();
+        $this->actingAs($pentadbir)->get(route('penugasan.index'))->assertForbidden();
     }
 
     public function test_pautan_penugasan_hanya_dipaparkan_kepada_peranan_yang_dibenarkan(): void

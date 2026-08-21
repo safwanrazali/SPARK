@@ -105,11 +105,11 @@ class Phase7DashboardTest extends TestCase
         $this->actingAs($this->admin)->get(route('dashboard'))->assertOk();
     }
 
-    public function test_pegawai_analisis_tidak_menerima_papan_pemuka(): void
+    public function test_pegawai_analisis_ditolak_daripada_papan_pemuka(): void
     {
         $this->actingAs($this->analyst)
             ->get(route('dashboard'))
-            ->assertRedirect(route('analisis.index'));
+            ->assertForbidden();
     }
 
     public function test_pautan_papan_pemuka_disembunyikan_daripada_pegawai_analisis(): void

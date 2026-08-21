@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -51,7 +52,10 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->intended('/');
+            // Papan pemuka kini ditolak (403) bagi peranan yang tidak
+            // dibenarkan, jadi halaman mendarat mesti dipilih mengikut
+            // kebenaran — bukan sentiasa '/'.
+            return redirect()->intended($this->halamanMendarat());
         }
 
         RateLimiter::hit($kunci, self::TEMPOH_SEKATAN);
@@ -59,6 +63,19 @@ class LoginController extends Controller
         return back()
             ->withErrors(['username' => 'Nama pengguna atau kata laluan tidak sah.'])
             ->onlyInput('username');
+    }
+
+    /**
+     * Halaman pertama selepas log masuk.
+     *
+     * Pegawai Analisis tiada papan pemuka keseluruhan; senarai analisis
+     * ialah ruang kerja mereka.
+     */
+    private function halamanMendarat(): string
+    {
+        return Gate::allows('view-dashboard')
+            ? route('dashboard')
+            : route('analisis.index');
     }
 
     public function logout(Request $request)

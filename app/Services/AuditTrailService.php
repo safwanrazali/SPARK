@@ -63,6 +63,14 @@ class AuditTrailService
         ?User $pengguna,
         array $metadata = [],
     ): ActivityLog {
+        // Peranan pelaku disimpan bersama rekod, bukan dibaca semula daripada
+        // pengguna kemudian: peranan boleh berubah, tetapi jejak audit mesti
+        // menunjukkan atas kuasa apa tindakan itu dilakukan pada masa itu.
+        $metadata = array_replace([
+            'peranan' => $pengguna?->assignedRoles() ?? [],
+            'peranan_label' => $pengguna?->roleLabel(),
+        ], $metadata);
+
         return ActivityLog::create([
             'agency_code' => $entiti['agency_code'],
             'agency_name' => $entiti['agency_name'] ?? null,

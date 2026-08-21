@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\AnalisisInventori;
 use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
@@ -18,7 +17,6 @@ use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
 
 /**
  * FASA 2 — pemantauan kedudukan setiap entiti dalam 7 peringkat workflow.
@@ -26,6 +24,11 @@ use Illuminate\Support\Facades\Gate;
  * FASA 4 — setiap senarai ditapis melalui accessibleBy() dan setiap route
  * bagi satu entiti dilindungi middleware `entity.access`. Pegawai Analisis
  * hanya melihat entiti yang ditugaskan kepadanya.
+ *
+ * Controller ini kini PAPARAN sahaja. Kemas kini peringkat secara manual
+ * telah dibuang: menggerakkan Kemajuan Analisis Entiti ialah hak Pegawai
+ * Analisis melalui KemajuanAnalisisController, dan tiada peranan lain —
+ * termasuk Pentadbir Sistem — memiliki jalan pintas mengelilinginya.
  */
 class WorkflowController extends Controller
 {
@@ -130,93 +133,6 @@ class WorkflowController extends Controller
     }
 
     /**
-     * Daftarkan entiti ke dalam workflow pada peringkat 1.
-     */
-    public function mula(Request $request, string $agencyCode)
-    {
-        Gate::authorize('manage-workflow');
-
-        $entiti = $this->entitiAtauGagal($agencyCode, $request);
-
-        $this->workflow->initialize($entiti, $request->user());
-
-        return redirect()
-            ->route('workflow.show', $agencyCode)
-            ->with('success', sprintf(
-                '%s didaftarkan dalam workflow pada peringkat 1 — %s.',
-                $entiti['agency_name'],
-                WorkflowStatus::getStageName(WorkflowStatus::FIRST_STAGE),
-            ));
-    }
-
-    /**
-     * Tukar peringkat workflow (maju satu peringkat atau kembali dengan sebab).
-     */
-    public function peringkat(Request $request, string $agencyCode)
-    {
-        Gate::authorize('manage-workflow');
-        $this->access->authorize($request->user(), $agencyCode);
-
-        $data = $request->validate([
-            'to_stage' => ['required', 'integer', 'between:'.WorkflowStatus::FIRST_STAGE.','.WorkflowStatus::LAST_STAGE],
-            'reason' => ['nullable', 'string', 'max:1000'],
-            'status' => ['nullable', 'in:'.implode(',', WorkflowStatus::STATUSES)],
-        ], [], [
-            'to_stage' => 'peringkat',
-            'reason' => 'sebab',
-        ]);
-
-        $workflow = $this->workflowAtauGagal($agencyCode);
-
-        try {
-            $this->workflow->transitionTo(
-                $workflow,
-                $data['to_stage'],
-                $request->user(),
-                $data['reason'] ?? null,
-                $data['status'] ?? null,
-            );
-        } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withInput()->withErrors(['to_stage' => $e->getMessage()]);
-        }
-
-        return back()->with('success', sprintf(
-            '%s dikemas kini ke peringkat %d — %s.',
-            $workflow->agency_name,
-            $workflow->current_stage,
-            $workflow->stage_name,
-        ));
-    }
-
-    /**
-     * Kemas kini status kerja dalam peringkat semasa.
-     */
-    public function status(Request $request, string $agencyCode)
-    {
-        Gate::authorize('manage-workflow');
-        $this->access->authorize($request->user(), $agencyCode);
-
-        $data = $request->validate([
-            'status' => ['required', 'in:'.implode(',', WorkflowStatus::STATUSES)],
-        ]);
-
-        $workflow = $this->workflowAtauGagal($agencyCode);
-
-        try {
-            $this->workflow->updateStatus($workflow, $data['status'], $request->user());
-        } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withInput()->withErrors(['status' => $e->getMessage()]);
-        }
-
-        return back()->with('success', sprintf(
-            'Status peringkat %d bagi %s dikemas kini kepada %s.',
-            $workflow->current_stage,
-            $workflow->agency_name,
-            $workflow->status,
-        ));
-    }
-
-    /**
      * Entiti yang telah terlibat dalam mana-mana proses sedia ada, digabungkan
      * dengan entiti yang telah mempunyai rekod workflow. Setiap sumber ditapis
      * mengikut akses pengguna.
@@ -256,14 +172,5 @@ class WorkflowController extends Controller
         abort_if($entiti === null, 404, 'Entiti tidak ditemui dalam senarai induk sektor.');
 
         return $entiti;
-    }
-
-    private function workflowAtauGagal(string $agencyCode): WorkflowStatus
-    {
-        $workflow = WorkflowStatus::where('agency_code', $agencyCode)->first();
-
-        abort_if($workflow === null, 404, 'Entiti belum didaftarkan dalam workflow.');
-
-        return $workflow;
     }
 }

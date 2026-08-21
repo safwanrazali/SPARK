@@ -1,4 +1,6 @@
 @php
+    use Illuminate\Support\Facades\Gate;
+
     // Fasa 11 — penunjuk halaman semasa untuk navigasi sisi.
     $pautan = function (string $pattern) {
         return request()->routeIs($pattern) ? 'active' : '';
@@ -9,13 +11,17 @@
     $pemantauanAktif = request()->routeIs('penugasan.*', 'workflow.*');
     $laporanAktif = request()->routeIs('analisis.*', 'status.*');
     $pentadbiranAktif = request()->routeIs('administration.*');
+
+    // Papan pemuka ditolak (403) bagi Pegawai Analisis, jadi tanda jenama
+    // tidak boleh menuju ke sana tanpa syarat.
+    $laman = Gate::allows('view-dashboard') ? route('dashboard') : route('analisis.index');
 @endphp
 
 <nav class="sidebar" id="sidebar" aria-label="Navigasi utama">
 
     <div class="sidebar-logo">
         {{-- Tanda jenama sahaja pada rel; jata penuh apabila menu mengembang. --}}
-        <a href="{{ route('dashboard') }}" class="sidebar-brand" aria-label="Halaman utama SPARK">
+        <a href="{{ $laman }}" class="sidebar-brand" aria-label="Halaman utama SPARK">
             <img src="{{ asset('image/main_icon.png') }}" alt="" aria-hidden="true" class="logo-mark">
             <img src="{{ asset('image/main_logo.png') }}" alt="" aria-hidden="true" class="logo">
         </a>
@@ -49,8 +55,9 @@
             </a>
 
             <ul class="sidebar-submenu" aria-labelledby="navPemantauanEntiti">
-                {{-- 2.1 Penetapan Entiti --}}
-                @can('manage-assignment')
+                {{-- 2.1 Penetapan Entiti — satu skrin, tiga tindakan berlainan
+                     peranan. Cukup satu daripadanya untuk melayakkan pautan. --}}
+                @canany(['register-entity-data', 'reset-entity-registration', 'manage-assignment'])
                     <li>
                         <a href="{{ route('penugasan.index') }}" class="{{ $pautan('penugasan.*') }}"
                             title="Penetapan Entiti" @if (request()->routeIs('penugasan.*')) aria-current="page" @endif>
@@ -58,7 +65,7 @@
                             <span class="menu-text">Penetapan Entiti</span>
                         </a>
                     </li>
-                @endcan
+                @endcanany
 
                 {{-- 2.2 Kemajuan Analisis Entiti --}}
                 <li>
@@ -117,13 +124,15 @@
                 --}}
 
                 {{-- 3.4 Status 3 Laporan --}}
-                <li>
-                    <a href="{{ route('status.index') }}" class="{{ $pautan('status.*') }}" title="Status 3 Laporan"
-                        @if (request()->routeIs('status.*')) aria-current="page" @endif>
-                        <i class="bi bi-list-check" aria-hidden="true"></i>
-                        <span class="menu-text">Status 3 Laporan</span>
-                    </a>
-                </li>
+                @can('access-status-reports')
+                    <li>
+                        <a href="{{ route('status.index') }}" class="{{ $pautan('status.*') }}"
+                            title="Status 3 Laporan" @if (request()->routeIs('status.*')) aria-current="page" @endif>
+                            <i class="bi bi-list-check" aria-hidden="true"></i>
+                            <span class="menu-text">Status 3 Laporan</span>
+                        </a>
+                    </li>
+                @endcan
             </ul>
         </li>
 

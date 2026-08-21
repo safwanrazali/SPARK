@@ -262,17 +262,16 @@ class User extends Authenticatable
     }
 
     /**
-     * Peranan yang boleh melihat SEMUA entiti tanpa penapisan penugasan.
+     * Peranan yang boleh MELIHAT semua entiti tanpa penapisan penugasan.
      *
-     * Spesifikasi bahagian 26, baris "Lihat semua entiti":
-     * Pentadbir ✓, Pegawai Penyelaras Analisis ✓, Ketua Bahagian ✓,
-     * Pegawai Analisis ✗.
+     * Matriks kebenaran memberikan "Lihat" bagi Kemajuan Analisis Entiti dan
+     * Analisis Inventori Kriptografi kepada setiap peranan kecuali Pegawai
+     * Analisis, yang dihadkan kepada entiti yang ditugaskan kepadanya.
      *
-     * Timbalan Pengarah II disertakan supaya angka papan pemuka bermakna:
-     * setiap statistik ditapis melalui getAccessibleEntities(), jadi tanpa
-     * keterlihatan ini papan pemukanya memaparkan sifar sepenuhnya.
-     * NEEDS CONFIRMATION — keluarkan baris tersebut jika pengurusan
-     * memutuskan TPII tidak boleh melihat rekod entiti.
+     * Keterlihatan ini ialah kebenaran MELIHAT sahaja. Setiap tindakan
+     * menulis mempunyai gate tersendiri (lihat AppServiceProvider), jadi
+     * peranan baca-sahaja seperti TPII, PPR dan PKD boleh membuka halaman
+     * tanpa boleh mengubah apa-apa padanya.
      */
     public function hasFullEntityVisibility(): bool
     {
@@ -281,6 +280,8 @@ class User extends Authenticatable
             self::ROLE_COORDINATOR,
             self::ROLE_KETUA_BAHAGIAN,
             self::ROLE_TIMBALAN_PENGARAH_II,
+            self::ROLE_PENYELARAS_REKOD,
+            self::ROLE_PEGAWAI_KAWALAN_DOKUMEN,
         ]);
     }
 
@@ -401,9 +402,8 @@ class User extends Authenticatable
                 ->toArray();
         }
 
-        // Pegawai Kawalan Dokumen dan Pegawai Penyelaras Rekod: kebenaran belum
-        // ditetapkan dalam matriks (spesifikasi bahagian 26), jadi lalai
-        // adalah tiada akses — bukan akses penuh.
+        // Peranan tanpa baris keterlihatan dalam matriks tidak mewarisi akses
+        // secara tersirat — lalai ialah tiada entiti langsung.
         return []; // No access
     }
 }

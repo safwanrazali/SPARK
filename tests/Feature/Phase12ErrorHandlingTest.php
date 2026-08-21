@@ -9,6 +9,7 @@ use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,13 +34,19 @@ class Phase12ErrorHandlingTest extends TestCase
 
     private User $penyelaras;
 
+    private User $penyelia;
+
     private User $analyst;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        // Beberapa ujian di bawah menggunakan kawalan penyeliaan peringkat
+        // dan borang analisis, yang kini milik peranan berlainan; pelakon
+        // dipilih setiap kali mengikut tindakan yang diuji.
         $this->penyelaras = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
+        $this->penyelia = User::factory()->create(['role' => User::ROLE_ADMINISTRATOR]);
         $this->analyst = User::factory()->create(['role' => User::ROLE_ANALYST]);
 
         app(EntityAssignmentService::class)->assign(
@@ -89,17 +96,34 @@ class Phase12ErrorHandlingTest extends TestCase
 
     public function test_entiti_yang_tidak_wujud_dalam_sektor_ditolak(): void
     {
-        // Pentadbir: melepasi kedua-dua gate `manage-analysis` dan kawalan
-        // akses entiti, supaya yang diuji ialah pengesahan senarai induk.
-        $this->actingAs(User::factory()->create(['role' => User::ROLE_ADMINISTRATOR]))
+        // Entiti yang ditugaskan, tetapi dipasangkan dengan sektor yang salah:
+        // kawalan akses entiti dilepasi, jadi yang benar-benar diuji ialah
+        // pengesahan senarai induk sektor.
+        $this->actingAs($this->analyst)
             ->from(route('analisis.index'))
+            ->post(route('analisis.simpan'), [
+                'sector_code' => '010',
+                'agency_code' => self::ALPHA,
+                'status_laporan' => 'Muktamad',
+                'ringkasan_data' => 'lengkap',
+            ])
+            ->assertSessionHasErrors('agency_code');
+
+        $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::ALPHA]);
+    }
+
+    public function test_entiti_di_luar_senarai_induk_ditolak_oleh_kawalan_akses(): void
+    {
+        // Kod yang langsung tidak wujud tidak pernah sampai ke pengesahan:
+        // kawalan akses entiti menolaknya lebih awal.
+        $this->actingAs($this->analyst)
             ->post(route('analisis.simpan'), [
                 'sector_code' => self::SEKTOR,
                 'agency_code' => 'KOD-TIDAK-WUJUD',
                 'status_laporan' => 'Muktamad',
                 'ringkasan_data' => 'lengkap',
             ])
-            ->assertSessionHasErrors('agency_code');
+            ->assertForbidden();
 
         $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => 'KOD-TIDAK-WUJUD']);
     }
@@ -114,7 +138,7 @@ class Phase12ErrorHandlingTest extends TestCase
 
     public function test_draf_menolak_entiti_tidak_sah_tanpa_mencipta_rekod(): void
     {
-        $this->actingAs(User::factory()->create(['role' => User::ROLE_ADMINISTRATOR]))
+        $this->actingAs($this->analyst)
             ->from(route('analisis.index'))
             ->post(route('analisis.draf'), [
                 'sector_code' => '999',
@@ -127,9 +151,7 @@ class Phase12ErrorHandlingTest extends TestCase
 
     public function test_draf_json_mengembalikan_ralat_dalam_bentuk_json(): void
     {
-        $pentadbir = User::factory()->create(['role' => User::ROLE_ADMINISTRATOR]);
-
-        $this->actingAs($pentadbir)
+        $this->actingAs($this->analyst)
             ->postJson(route('analisis.draf'), [
                 'sector_code' => '999',
                 'agency_code' => self::ALPHA,
@@ -144,97 +166,20 @@ class Phase12ErrorHandlingTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Daftarkan entiti dalam workflow melalui servis.
+     *
+     * Tiada route pendaftaran manual lagi — entiti memasuki workflow apabila
+     * Pegawai Penyelaras Rekod melengkapkan peringkat 1.
+     */
     private function daftarkanWorkflow(): WorkflowStatus
     {
-        $this->actingAs($this->penyelaras)->post(route('workflow.mula', self::ALPHA));
+        app(WorkflowTransitionService::class)->initialize(
+            SektorDirectory::cariEntiti(self::ALPHA),
+            $this->penyelia,
+        );
 
         return WorkflowStatus::where('agency_code', self::ALPHA)->firstOrFail();
-    }
-
-    public function test_lompatan_peringkat_ditolak_dan_peringkat_kekal(): void
-    {
-        $this->daftarkanWorkflow();
-
-        $this->actingAs($this->penyelaras)
-            ->from(route('workflow.show', self::ALPHA))
-            ->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => 5])
-            ->assertRedirect(route('workflow.show', self::ALPHA))
-            ->assertSessionHasErrors('to_stage');
-
-        $this->assertSame(1, WorkflowStatus::where('agency_code', self::ALPHA)->first()->current_stage);
-    }
-
-    public function test_peringkat_di_luar_julat_ditolak_oleh_pengesahan(): void
-    {
-        $this->daftarkanWorkflow();
-
-        foreach ([0, 8, -3, 'dua'] as $tidakSah) {
-            $this->actingAs($this->penyelaras)
-                ->from(route('workflow.show', self::ALPHA))
-                ->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => $tidakSah])
-                ->assertSessionHasErrors('to_stage');
-        }
-
-        $this->assertSame(1, WorkflowStatus::where('agency_code', self::ALPHA)->first()->current_stage);
-    }
-
-    public function test_pengunduran_tanpa_sebab_ditolak(): void
-    {
-        $this->daftarkanWorkflow();
-
-        $this->actingAs($this->penyelaras)
-            ->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => 2]);
-
-        $this->actingAs($this->penyelaras)
-            ->from(route('workflow.show', self::ALPHA))
-            ->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => 1])
-            ->assertSessionHasErrors('to_stage');
-
-        $this->assertSame(2, WorkflowStatus::where('agency_code', self::ALPHA)->first()->current_stage);
-
-        // Percubaan yang gagal tidak mencemari jejak audit.
-        $this->assertSame(
-            1,
-            ActivityLog::where('agency_code', self::ALPHA)
-                ->where('action', 'workflow_stage_changed')
-                ->count(),
-        );
-    }
-
-    public function test_peralihan_ke_peringkat_yang_sama_ditolak(): void
-    {
-        $this->daftarkanWorkflow();
-
-        $this->actingAs($this->penyelaras)
-            ->from(route('workflow.show', self::ALPHA))
-            ->post(route('workflow.peringkat', self::ALPHA), ['to_stage' => 1])
-            ->assertSessionHasErrors('to_stage');
-    }
-
-    public function test_status_peringkat_di_luar_kitaran_ditolak(): void
-    {
-        $this->daftarkanWorkflow();
-
-        $this->actingAs($this->penyelaras)
-            ->from(route('workflow.show', self::ALPHA))
-            ->post(route('workflow.status', self::ALPHA), ['status' => 'Diluluskan'])
-            ->assertSessionHasErrors('status');
-
-        $this->assertSame(
-            WorkflowStatus::DEFAULT_STATUS,
-            WorkflowStatus::where('agency_code', self::ALPHA)->first()->status,
-        );
-    }
-
-    public function test_perubahan_peringkat_bagi_entiti_belum_didaftar_memberi_404(): void
-    {
-        $this->actingAs($this->penyelaras)
-            ->post(route('workflow.peringkat', self::BETA), ['to_stage' => 2])
-            ->assertNotFound();
-
-        $this->actingAs($this->penyelaras)
-            ->post(route('workflow.status', self::BETA), ['status' => 'Siap'])
-            ->assertNotFound();
     }
 
     public function test_entiti_di_luar_senarai_induk_memberi_404_bukan_ralat_pelayan(): void

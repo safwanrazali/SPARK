@@ -126,7 +126,7 @@ class PerananBerbilangTest extends TestCase
                 'roles' => [User::ROLE_COORDINATOR, $tambahan],
             ]);
 
-            foreach (['view-dashboard', 'view-all-entities', 'manage-assignment', 'manage-workflow'] as $gate) {
+            foreach (['view-dashboard', 'view-all-entities', 'manage-assignment'] as $gate) {
                 if (Gate::forUser($penyelaras)->allows($gate)) {
                     $this->assertTrue(
                         Gate::forUser($pengguna)->allows($gate),

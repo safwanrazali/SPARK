@@ -39,7 +39,11 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         ->name('kata-laluan.simpan');
 
     // Dashboard Pemantauan — kiraan automatik daripada rekod sebenar.
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Pegawai Analisis tiada papan pemuka keseluruhan; capaian terus ditolak
+    // pada lapisan route, bukan sekadar disembunyikan daripada navigasi.
+    Route::get('/', [DashboardController::class, 'index'])
+        ->middleware('can:view-dashboard')
+        ->name('dashboard');
 
     /*
     |----------------------------------------------------------------------
@@ -97,6 +101,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::get('/status-laporan', [StatusLaporanController::class, 'index'])
+        ->middleware('can:access-status-reports')
         ->name('status.index');
 
     Route::post('/status-laporan/kitar', [StatusLaporanController::class, 'kitar'])
@@ -132,15 +137,6 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('/workflow/{agencyCode}', [WorkflowController::class, 'show'])
         ->middleware('entity.access')
         ->name('workflow.show');
-
-    Route::middleware(['can:manage-workflow', 'entity.access'])->group(function () {
-        Route::post('/workflow/{agencyCode}/mula', [WorkflowController::class, 'mula'])
-            ->name('workflow.mula');
-        Route::post('/workflow/{agencyCode}/peringkat', [WorkflowController::class, 'peringkat'])
-            ->name('workflow.peringkat');
-        Route::post('/workflow/{agencyCode}/status', [WorkflowController::class, 'status'])
-            ->name('workflow.status');
-    });
 
     /*
     |----------------------------------------------------------------------

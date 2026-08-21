@@ -113,92 +113,120 @@ class Phase9RolesPermissionsTest extends TestCase
      */
     public static function matriksPeranan(): array
     {
+        // Setiap peranan disenaraikan terhadap SETIAP gate, supaya kebenaran
+        // yang tersilap diberikan kepada peranan lain turut gagal — bukan
+        // hanya kebenaran yang hilang daripada peranan yang sepatutnya.
         return [
             'Pentadbir Sistem' => [User::ROLE_ADMINISTRATOR, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
-                'manage-assignment' => true,
-                'manage-analysis' => true,
-                'manage-workflow' => true,
-                'manage-status' => true,
-                'review-report' => true,
-                'approve-report' => true,
+                'register-entity-data' => false,
+                'reset-entity-registration' => false,
+                'manage-assignment' => false,
+                'advance-analysis-stage' => false,
+                'manage-analysis' => false,
+                'review-report' => false,
+                'approve-report' => false,
+                'submit-to-nacsa' => false,
+                'access-status-reports' => false,   // sekatan khas PS
+                'manage-status' => false,
                 'view-audit-trail' => true,
                 'access-administration' => true,
             ]],
-            'Pegawai Penyelaras Analisis' => [User::ROLE_COORDINATOR, [
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
-                'manage-assignment' => true,
-                'manage-analysis' => false,   // "ikut permission" → tidak diberikan
-                'manage-workflow' => true,
-                'manage-status' => true,
-                'review-report' => true,
-                'approve-report' => false,    // "ikut permission" → tidak diberikan
-                'view-audit-trail' => true,
-                'access-administration' => false,
-            ]],
-            'Pegawai Analisis' => [User::ROLE_ANALYST, [
-                'view-dashboard' => false,
-                'view-all-entities' => false,
+                'register-entity-data' => false,
+                'reset-entity-registration' => false,
                 'manage-assignment' => false,
-                'manage-analysis' => true,
-                'manage-workflow' => false,
-                'manage-status' => false,
-                'review-report' => false,     // "ikut permission" → tidak diberikan
+                'advance-analysis-stage' => false,
+                'manage-analysis' => false,
+                'review-report' => false,
                 'approve-report' => false,
-                'view-audit-trail' => false,  // "ikut permission" → tidak diberikan
+                'submit-to-nacsa' => false,
+                'access-status-reports' => true,
+                'manage-status' => false,
+                'view-audit-trail' => true,
                 'access-administration' => false,
             ]],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
+                'register-entity-data' => false,
+                'reset-entity-registration' => true,
                 'manage-assignment' => false,
+                'advance-analysis-stage' => false,
                 'manage-analysis' => false,
-                'manage-workflow' => false,
-                'manage-status' => false,
                 'review-report' => true,
                 'approve-report' => true,
+                'submit-to-nacsa' => true,
+                'access-status-reports' => true,
+                'manage-status' => false,
                 'view-audit-trail' => true,
                 'access-administration' => false,
             ]],
-            // Tiada baris dalam matriks — lalai tolak sehingga disahkan.
-            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, [
-                'view-dashboard' => false,
-                'view-all-entities' => false,
-                'manage-assignment' => false,
-                'manage-analysis' => false,
-                'manage-workflow' => false,
-                'manage-status' => false,
-                'review-report' => false,
-                'approve-report' => false,
-                'view-audit-trail' => false,
-                'access-administration' => false,
-            ]],
             'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, [
-                'view-dashboard' => false,
-                'view-all-entities' => false,
-                'manage-assignment' => false,
-                'manage-analysis' => false,
-                'manage-workflow' => false,
-                'manage-status' => false,
-                'review-report' => false,
-                'approve-report' => false,
-                'view-audit-trail' => false,
-                'access-administration' => false,
-            ]],
-            // NEEDS CONFIRMATION — tiada baris dalam matriks. Buat sementara
-            // baca sahaja: papan pemuka dan keterlihatan entiti, tiada lagi.
-            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
+                'register-entity-data' => true,
+                'reset-entity-registration' => false,
                 'manage-assignment' => false,
+                'advance-analysis-stage' => false,
                 'manage-analysis' => false,
-                'manage-workflow' => false,
-                'manage-status' => false,
                 'review-report' => false,
                 'approve-report' => false,
-                'view-audit-trail' => false,
+                'submit-to-nacsa' => false,
+                'access-status-reports' => true,
+                'manage-status' => false,
+                'view-audit-trail' => true,
+                'access-administration' => false,
+            ]],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, [
+                'view-dashboard' => true,
+                'view-all-entities' => true,
+                'register-entity-data' => false,
+                'reset-entity-registration' => false,
+                'manage-assignment' => false,
+                'advance-analysis-stage' => false,
+                'manage-analysis' => false,
+                'review-report' => false,
+                'approve-report' => false,
+                'submit-to-nacsa' => false,
+                'access-status-reports' => true,
+                'manage-status' => false,
+                'view-audit-trail' => true,
+                'access-administration' => false,
+            ]],
+            'Pegawai Penyelaras Analisis' => [User::ROLE_COORDINATOR, [
+                'view-dashboard' => true,
+                'view-all-entities' => true,
+                'register-entity-data' => false,
+                'reset-entity-registration' => false,
+                'manage-assignment' => true,
+                'advance-analysis-stage' => false,
+                'manage-analysis' => false,
+                'review-report' => true,
+                'approve-report' => false,
+                'submit-to-nacsa' => false,
+                'access-status-reports' => true,
+                'manage-status' => true,
+                'view-audit-trail' => true,
+                'access-administration' => false,
+            ]],
+            'Pegawai Analisis' => [User::ROLE_ANALYST, [
+                'view-dashboard' => false,
+                'view-all-entities' => false,   // entiti ditugaskan sahaja
+                'register-entity-data' => false,
+                'reset-entity-registration' => false,
+                'manage-assignment' => false,
+                'advance-analysis-stage' => true,
+                'manage-analysis' => true,
+                'review-report' => false,
+                'approve-report' => false,
+                'submit-to-nacsa' => false,
+                'access-status-reports' => true,
+                'manage-status' => false,
+                'view-audit-trail' => true,
                 'access-administration' => false,
             ]],
         ];
@@ -236,10 +264,10 @@ class Phase9RolesPermissionsTest extends TestCase
             'Pentadbir' => [User::ROLE_ADMINISTRATOR, true],
             'Penyelaras' => [User::ROLE_COORDINATOR, true],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, true],
-            'Pegawai Analisis' => [User::ROLE_ANALYST, false],
-            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
-            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, false],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, true],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, true],
             'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, true],
+            'Pegawai Analisis' => [User::ROLE_ANALYST, false],
         ];
     }
 
@@ -251,7 +279,8 @@ class Phase9RolesPermissionsTest extends TestCase
         if ($dibenarkan) {
             $response->assertOk()->assertSee('Taburan Workflow 7 Peringkat');
         } else {
-            $response->assertRedirect(route('analisis.index'));
+            // Ditolak, bukan dialihkan: menyembunyikan pautan bukan kebenaran.
+            $response->assertForbidden();
         }
     }
 
@@ -271,8 +300,10 @@ class Phase9RolesPermissionsTest extends TestCase
             'Penyelaras' => [User::ROLE_COORDINATOR, 'semua'],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, 'semua'],
             'Pegawai Analisis' => [User::ROLE_ANALYST, 'ditugaskan'],
-            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'tiada'],
-            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'tiada'],
+            // Peranan baca-sahaja melihat semua entiti tetapi tidak boleh
+            // mengubah apa-apa padanya (lihat matriksPeranan()).
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'semua'],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'semua'],
             'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, 'semua'],
         ];
     }
@@ -349,8 +380,8 @@ class Phase9RolesPermissionsTest extends TestCase
     public static function aksesPenugasan(): array
     {
         return [
-            'Pentadbir' => [User::ROLE_ADMINISTRATOR, true],
             'Penyelaras' => [User::ROLE_COORDINATOR, true],
+            'Pentadbir' => [User::ROLE_ADMINISTRATOR, false],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, false],
             'Pegawai Analisis' => [User::ROLE_ANALYST, false],
             'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
@@ -362,20 +393,19 @@ class Phase9RolesPermissionsTest extends TestCase
     /**
      * Peranan yang boleh MEMBUKA skrin Penetapan Entiti.
      *
-     * Lebih luas daripada aksesPenugasan(): skrin itu turut memegang panel
-     * Penerimaan & Pendaftaran Data, jadi Pegawai Penyelaras Rekod (menanda)
-     * dan Ketua Bahagian (Set Semula) turut dibenarkan masuk — tetapi tanpa
-     * keupayaan membuat penugasan.
+     * Skrin ini memegang tiga tindakan milik tiga peranan: PPR menanda,
+     * KB menetapkan semula, PPA menugaskan. Peranan yang tidak memiliki
+     * satu pun daripadanya — termasuk Pentadbir Sistem — ditolak.
      *
      * @return array<string, array{0: string, 1: bool}>
      */
     public static function aksesPenetapanEntiti(): array
     {
         return [
-            'Pentadbir' => [User::ROLE_ADMINISTRATOR, true],
             'Penyelaras' => [User::ROLE_COORDINATOR, true],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, true],
             'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, true],
+            'Pentadbir' => [User::ROLE_ADMINISTRATOR, false],
             'Pegawai Analisis' => [User::ROLE_ANALYST, false],
             'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
             'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, false],
@@ -428,8 +458,8 @@ class Phase9RolesPermissionsTest extends TestCase
     public static function aksesInputAnalisis(): array
     {
         return [
-            'Pentadbir' => [User::ROLE_ADMINISTRATOR, true],
             'Pegawai Analisis' => [User::ROLE_ANALYST, true],
+            'Pentadbir' => [User::ROLE_ADMINISTRATOR, false],
             'Penyelaras' => [User::ROLE_COORDINATOR, false],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, false],
             'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
@@ -512,28 +542,41 @@ class Phase9RolesPermissionsTest extends TestCase
     {
         $boleh = fn (string $role, string $gate) => Gate::forUser($this->pengguna($role))->allows($gate);
 
-        // Review: Pentadbir ✓, Penyelaras ✓, Ketua ✓, Analisis ✗.
-        $this->assertTrue($boleh(User::ROLE_ADMINISTRATOR, 'review-report'));
+        // Semak: PPA dan Ketua Bahagian sahaja.
         $this->assertTrue($boleh(User::ROLE_COORDINATOR, 'review-report'));
         $this->assertTrue($boleh(User::ROLE_KETUA_BAHAGIAN, 'review-report'));
+        $this->assertFalse($boleh(User::ROLE_ADMINISTRATOR, 'review-report'));
         $this->assertFalse($boleh(User::ROLE_ANALYST, 'review-report'));
 
-        // Approve: Pentadbir ✓, Ketua ✓ sahaja. Penyelaras "ikut permission"
-        // tidak diberikan; tiada kuasa kelulusan direka sendiri.
-        $this->assertTrue($boleh(User::ROLE_ADMINISTRATOR, 'approve-report'));
+        // Sahkan: Ketua Bahagian sahaja.
         $this->assertTrue($boleh(User::ROLE_KETUA_BAHAGIAN, 'approve-report'));
+        $this->assertFalse($boleh(User::ROLE_ADMINISTRATOR, 'approve-report'));
         $this->assertFalse($boleh(User::ROLE_COORDINATOR, 'approve-report'));
         $this->assertFalse($boleh(User::ROLE_ANALYST, 'approve-report'));
+
+        // Hantar kepada NACSA: Ketua Bahagian sahaja.
+        $this->assertTrue($boleh(User::ROLE_KETUA_BAHAGIAN, 'submit-to-nacsa'));
+        $this->assertFalse($boleh(User::ROLE_ADMINISTRATOR, 'submit-to-nacsa'));
+        $this->assertFalse($boleh(User::ROLE_COORDINATOR, 'submit-to-nacsa'));
+        $this->assertFalse($boleh(User::ROLE_TIMBALAN_PENGARAH_II, 'submit-to-nacsa'));
+        $this->assertFalse($boleh(User::ROLE_ANALYST, 'submit-to-nacsa'));
     }
 
-    public function test_tiada_aliran_kelulusan_dilaksanakan_lagi(): void
+    public function test_setiap_route_semakan_dan_kelulusan_dilindungi_gate(): void
     {
-        // Fasa 10 belum dilaksanakan — tiada route semakan/kelulusan wujud.
-        $laluan = collect(app('router')->getRoutes())
-            ->map(fn ($route) => $route->uri())
-            ->filter(fn ($uri) => str_contains($uri, 'kelulusan') || str_contains($uri, 'semakan'));
+        // Aliran semakan dan kelulusan kini wujud. Setiap route mutasinya
+        // mesti menolak peranan yang tidak berkenaan — disemak sepenuhnya
+        // dalam RbacMatriksTest.
+        foreach (['kemajuan.semak', 'kemajuan.sahkan', 'kemajuan.serah'] as $nama) {
+            $this->assertNotNull(
+                app('router')->getRoutes()->getByName($nama),
+                "Route {$nama} tidak wujud.",
+            );
+        }
 
-        $this->assertTrue($laluan->isEmpty());
+        $this->assertFalse(
+            Gate::forUser($this->pengguna(User::ROLE_ANALYST))->allows('approve-report'),
+        );
     }
 
     /*
@@ -591,29 +634,60 @@ class Phase9RolesPermissionsTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_menu_sisi_hanya_memaparkan_modul_yang_dibenarkan(): void
+    public function test_menu_sisi_ketua_bahagian_mengikut_kebenaran(): void
     {
-        $ketua = $this->pengguna(User::ROLE_KETUA_BAHAGIAN);
-
-        $this->actingAs($ketua)
+        // Ketua Bahagian memiliki "Set Semula" pada Penetapan Entiti, jadi
+        // pautan itu KELIHATAN — tetapi Pengguna tidak.
+        $this->actingAs($this->pengguna(User::ROLE_KETUA_BAHAGIAN))
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Papan Pemuka')
             ->assertSee('Log Audit')
-            ->assertDontSee('Penetapan Entiti')
+            ->assertSee(route('status.index'))
+            ->assertSee(route('penugasan.index'))
             ->assertDontSee('Pengguna');
     }
 
-    public function test_pegawai_tanpa_kebenaran_tidak_melihat_modul_terhad(): void
+    public function test_menu_sisi_pegawai_kawalan_dokumen_baca_sahaja(): void
     {
-        $dc = $this->pengguna(User::ROLE_PEGAWAI_KAWALAN_DOKUMEN);
-
-        $this->actingAs($dc)
+        // PKD melihat modul baca-sahaja, tetapi tiada satu pun skrin
+        // tindakan: Penetapan Entiti dan Pengguna tidak dipaparkan.
+        $this->actingAs($this->pengguna(User::ROLE_PEGAWAI_KAWALAN_DOKUMEN))
             ->get(route('analisis.index'))
             ->assertOk()
+            ->assertSee('Papan Pemuka')
+            ->assertSee('Log Audit')
+            ->assertSee(route('status.index'))
+            ->assertDontSee(route('penugasan.index'))
+            ->assertDontSee('Pengguna');
+    }
+
+    public function test_menu_sisi_pentadbir_sistem_tanpa_status_tiga_laporan(): void
+    {
+        // Sekatan khas: PS mentadbir sistem tetapi tidak melihat modul
+        // operasi Status 3 Laporan.
+        $this->actingAs($this->pengguna(User::ROLE_ADMINISTRATOR))
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Papan Pemuka')
+            ->assertSee('Pengguna')
+            ->assertDontSee(route('status.index'))
+            ->assertDontSee(route('penugasan.index'));
+    }
+
+    public function test_menu_sisi_pegawai_analisis_tanpa_papan_pemuka(): void
+    {
+        $pa = $this->pengguna(User::ROLE_ANALYST);
+        $this->tugaskan($pa);
+
+        $this->actingAs($pa->fresh())
+            ->get(route('analisis.index'))
+            ->assertOk()
+            ->assertSee('Kemajuan Analisis Entiti')
+            ->assertSee(route('status.index'))
+            ->assertSee('Log Audit')
             ->assertDontSee('Papan Pemuka')
-            ->assertDontSee('Log Audit')
-            ->assertDontSee('Penetapan Entiti')
-            ->assertDontSee('Muat Naik MasterTable');
+            ->assertDontSee(route('penugasan.index'))
+            ->assertDontSee('Pengguna');
     }
 }

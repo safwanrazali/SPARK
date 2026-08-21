@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Gate;
 /**
  * FASA 7 — papan pemuka pemantauan untuk pengurusan.
  *
- * Mengikut spesifikasi bahagian 10 dan 26, papan pemuka keseluruhan hanya
- * untuk peranan pemantauan (Pentadbir, Pegawai Penyelaras Analisis dan
- * kelak Ketua Bahagian). Pegawai Analisis TIDAK mempunyai papan pemuka
- * keseluruhan; mereka dialihkan ke senarai kerja entiti yang ditugaskan.
+ * Mengikut matriks kebenaran, papan pemuka keseluruhan terbuka kepada semua
+ * peranan KECUALI Pegawai Analisis, yang bekerja daripada senarai entiti yang
+ * ditugaskan kepadanya. Capaian tidak dibenarkan ditolak dengan 403, bukan
+ * dialihkan — menyembunyikan pautan sahaja bukan kebenaran.
  *
  * Semua angka dikira daripada rekod sebenar oleh DashboardStatistikService.
  */
@@ -23,13 +23,9 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
-        // Peranan bukan pemantauan tiada papan pemuka keseluruhan. Mereka
-        // dialihkan ke senarai kerja dan bukan diberi versi papan pemuka lain.
-        if (! Gate::allows('view-dashboard')) {
-            return redirect()
-                ->route('analisis.index')
-                ->with('success', 'Papan pemuka pemantauan disediakan untuk peranan pengurusan sahaja.');
-        }
+        // Lapisan kedua selepas middleware `can:view-dashboard` pada route —
+        // supaya tiada laluan kod boleh sampai ke sini tanpa kebenaran.
+        Gate::authorize('view-dashboard');
 
         $pengguna = $request->user();
 
