@@ -224,7 +224,7 @@ class DashboardStatistikService
     }
 
     /**
-     * Kiraan laporan. Setiap entiti dipantau mempunyai tiga jenis laporan.
+     * Kiraan laporan bagi setiap entiti dipantau.
      *
      * Angka di sini dikira daripada Kemajuan Analisis Entiti melalui
      * StatusTigaLaporanService — sumber yang sama seperti halaman Status
@@ -240,7 +240,9 @@ class DashboardStatistikService
             $this->statusLaporan->untukBanyak($entiti->all()),
         );
 
-        return $taburan + ['jumlah' => $jumlahEntiti * count(StatusLaporan::JENIS)];
+        // Hanya jenis laporan yang aktif dikira — Risiko PQC dan
+        // Kesiapsiagaan ("N/A") tiada dalam versi ini.
+        return $taburan + ['jumlah' => $jumlahEntiti * count(StatusLaporan::JENIS_AKTIF)];
     }
 
     /**

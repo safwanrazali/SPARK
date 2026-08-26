@@ -104,9 +104,8 @@ class StatusTigaLaporanService
     /**
      * Taburan label paparan bagi papan pemuka.
      *
-     * Setiap entiti menyumbang tiga laporan; entiti tanpa sebarang kemajuan
-     * menyumbang tiga "Belum Bermula". Kunci hasil ialah label paparan itu
-     * sendiri supaya pemanggil tidak perlu mengulang perbendaharaan.
+     * Hanya jenis laporan yang aktif dikira; "N/A" tiada dalam taburan kerana
+     * ia bukan status dan tidak sepatutnya menokok sebarang peratusan.
      *
      * @param  Collection<string, array<string, array{status: string}>>  $semua
      * @return array<string, int>
@@ -117,6 +116,10 @@ class StatusTigaLaporanService
 
         foreach ($semua as $entiti) {
             foreach ($entiti as $laporan) {
+                if ($laporan['status'] === StatusLaporan::PAPARAN_TIADA) {
+                    continue;
+                }
+
                 $taburan[$laporan['status']]++;
             }
         }
@@ -141,6 +144,17 @@ class StatusTigaLaporanService
         $hasil = [];
 
         foreach (array_keys(StatusLaporan::JENIS) as $jenis) {
+            // Jenis yang modulnya belum wujud tidak mempunyai status langsung.
+            if (! StatusLaporan::jenisAktif($jenis)) {
+                $hasil[$jenis] = [
+                    'status' => StatusLaporan::PAPARAN_TIADA,
+                    'kelas' => null,
+                    'kemas_kini' => null,
+                ];
+
+                continue;
+            }
+
             $rekod = $laporan->firstWhere('report_type', $jenis);
 
             $status = $rekod === null

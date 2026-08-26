@@ -207,7 +207,9 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(3, $sebelum['jumlahEntiti']);
         $this->assertSame(3, $sebelum['dalamProses']);
         $this->assertSame(0, $sebelum['selesai']);
-        $this->assertSame(9, $sebelum['jumlahLaporan']);
+        // Satu laporan aktif setiap entiti — Risiko PQC dan Kesiapsiagaan
+        // masih "N/A" dan tidak dikira.
+        $this->assertSame(3, $sebelum['jumlahLaporan']);
 
         $this->actingAs($kb)
             ->post(route('penugasan.pendaftaran.set-semula', self::GAMMA), ['reason' => 'Data tidak lengkap.'])
@@ -218,7 +220,7 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(2, $selepas['jumlahEntiti']);
         $this->assertSame(2, $selepas['dalamProses']);
         $this->assertSame(0, $selepas['selesai']);
-        $this->assertSame(6, $selepas['jumlahLaporan']);
+        $this->assertSame(2, $selepas['jumlahLaporan']);
 
         // Entiti itu bukan sekadar dipindahkan ke "belum didaftar" —
         // ia keluar sepenuhnya daripada skop pemantauan.
@@ -291,27 +293,29 @@ class Phase7DashboardTest extends TestCase
     }
 
     /**
-     * Kiraan laporan dikira daripada Kemajuan Analisis Entiti — kitaran
-     * semakan bagi jenis yang memilikinya, kemajuan peringkat bagi yang lain.
+     * Kiraan laporan dikira daripada Kemajuan Analisis Entiti. Hanya jenis
+     * laporan yang aktif dikira — Risiko PQC dan Kesiapsiagaan masih "N/A"
+     * dalam versi ini, jadi ia tidak menokok sebarang kiraan.
      */
-    public function test_kiraan_laporan_mengikut_tiga_jenis_setiap_entiti(): void
+    public function test_kiraan_laporan_hanya_merangkumi_jenis_aktif(): void
     {
         $kemajuan = app(KemajuanAnalisisService::class);
         $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
         $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::BETA), $this->coordinator);
 
-        // ALPHA: inventori telah disahkan KB, risiko menunggu kelulusan KB.
+        // ALPHA: inventori telah disahkan KB. Rekod "risiko" sengaja dicipta
+        // untuk membuktikan ia tetap diabaikan selagi jenis itu belum aktif.
         $this->laporanSemakan(self::ALPHA, 'inventori', LaporanSemakan::SAH);
         $this->laporanSemakan(self::ALPHA, 'risiko', LaporanSemakan::MENUNGGU_KB);
 
         $statistik = $this->kira();
 
-        // 2 entiti × 3 jenis laporan = 6 rekod dijangka.
-        $this->assertSame(6, $statistik['jumlahLaporan']);
+        // 2 entiti × 1 jenis laporan aktif = 2 rekod dijangka.
+        $this->assertSame(2, $statistik['jumlahLaporan']);
         $this->assertSame(1, $statistik['laporanSelesai']);
-        $this->assertSame(1, $statistik['laporanDalamSemakan']);
-        // Baki empat mengikut kemajuan peringkat entiti masing-masing.
-        $this->assertSame(4, $statistik['laporanDalamProses']);
+        $this->assertSame(0, $statistik['laporanDalamSemakan']);
+        // BETA baru didaftarkan dan belum menghantar laporan.
+        $this->assertSame(1, $statistik['laporanDalamProses']);
         $this->assertSame(0, $statistik['laporanBelum']);
     }
 

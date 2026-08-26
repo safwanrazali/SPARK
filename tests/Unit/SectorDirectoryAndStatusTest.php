@@ -89,6 +89,23 @@ class SectorDirectoryAndStatusTest extends TestCase
         $this->assertSame('status-tinggi', StatusLaporan::badgePaparan('Entah Apa'));
     }
 
+    /**
+     * "N/A" bukan status, jadi ia tidak mendapat pil warna dan tidak wujud
+     * dalam perbendaharaan paparan.
+     */
+    public function test_na_bukan_status_dan_tiada_pil_warna(): void
+    {
+        $this->assertNull(StatusLaporan::badgePaparan(StatusLaporan::PAPARAN_TIADA));
+        $this->assertNotContains(StatusLaporan::PAPARAN_TIADA, StatusLaporan::PAPARAN);
+    }
+
+    public function test_hanya_laporan_inventori_aktif_dalam_versi_ini(): void
+    {
+        $this->assertTrue(StatusLaporan::jenisAktif('inventori'));
+        $this->assertFalse(StatusLaporan::jenisAktif('risiko'));
+        $this->assertFalse(StatusLaporan::jenisAktif('kesiapsiagaan'));
+    }
+
     public function test_tiga_jenis_laporan_ditakrifkan(): void
     {
         $this->assertSame(

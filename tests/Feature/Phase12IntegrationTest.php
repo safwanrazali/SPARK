@@ -305,11 +305,12 @@ class Phase12IntegrationTest extends TestCase
         //       tanpa sesiapa menyentuh halaman itu.
         $this->actingAs($this->penyelaras);
 
+        // Risiko PQC dan Kesiapsiagaan kekal "N/A" — modulnya belum wujud.
         $this->assertSame(
             [
                 StatusLaporan::PAPARAN_SELESAI,
-                StatusLaporan::PAPARAN_SELESAI,
-                StatusLaporan::PAPARAN_SELESAI,
+                StatusLaporan::PAPARAN_TIADA,
+                StatusLaporan::PAPARAN_TIADA,
             ],
             array_column(app(StatusTigaLaporanService::class)->untukEntiti(self::ALPHA), 'status'),
         );

@@ -30,6 +30,23 @@ class StatusLaporan extends Model
     ];
 
     /**
+     * Jenis laporan yang benar-benar mempunyai aliran kerja dalam versi ini.
+     *
+     * Laporan Risiko PQC dan Kesiapsiagaan belum dibina, jadi tiada status
+     * yang boleh dikira bagi kedua-duanya — ia dipaparkan sebagai "N/A" dan
+     * bukan "Belum Bermula", supaya tiada siapa menyangka ia sedang menunggu
+     * tindakan. Tambah kunci di sini apabila modulnya tersedia.
+     *
+     * @var array<int, string>
+     */
+    public const JENIS_AKTIF = ['inventori'];
+
+    public static function jenisAktif(string $jenis): bool
+    {
+        return in_array($jenis, self::JENIS_AKTIF, true);
+    }
+
+    /**
      * Kitaran lama lajur `status`.
      *
      * Dikekalkan kerana WorkflowStatus::STATUSES menggunakannya sebagai
@@ -56,6 +73,13 @@ class StatusLaporan extends Model
 
     public const PAPARAN_SELESAI = 'Selesai';
 
+    /**
+     * Bukan satu status: penanda bahawa jenis laporan itu belum wujud dalam
+     * versi ini. Sengaja di luar self::PAPARAN kerana ia tidak pernah dikira
+     * dalam sebarang taburan atau peratusan.
+     */
+    public const PAPARAN_TIADA = 'N/A';
+
     public const PAPARAN = [
         self::PAPARAN_BELUM_BERMULA,
         self::PAPARAN_DALAM_PROSES,
@@ -73,9 +97,16 @@ class StatusLaporan extends Model
      *
      * "Dalam Semakan" berkongsi warna dengan "Dalam Proses" kerana kedua-duanya
      * bermakna kerja masih berjalan; hanya "Selesai" bertukar hijau.
+     *
+     * "N/A" mengembalikan null: ia bukan status, jadi ia dipaparkan sebagai
+     * teks malap tanpa pil warna.
      */
-    public static function badgePaparan(string $paparan): string
+    public static function badgePaparan(string $paparan): ?string
     {
+        if ($paparan === self::PAPARAN_TIADA) {
+            return null;
+        }
+
         return [
             self::PAPARAN_SELESAI => 'status-rendah',
             self::PAPARAN_DALAM_SEMAKAN => 'status-sederhana',

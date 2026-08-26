@@ -142,6 +142,11 @@ status dikira daripada **Kemajuan Analisis Entiti**:
 | **Dalam Proses**  | Analisis sedang berjalan; laporan belum dihantar untuk semakan     |
 | **Dalam Semakan** | Laporan sedang disemak PPA atau menunggu kelulusan Ketua Bahagian  |
 | **Selesai**       | Ketua Bahagian telah menekan **Sahkan** pada laporan itu           |
+| **N/A**           | Modul laporan itu belum tersedia dalam versi ini                   |
+
+Dalam versi ini hanya **Laporan Inventori** mempunyai aliran kerja. **Risiko PQC**
+dan **Kesiapsiagaan** dipaparkan sebagai **N/A** dan tidak dikira dalam sebarang
+statistik papan pemuka.
 
 Untuk menggerakkan status, gunakan tindakan pada **Kemajuan Analisis Entiti**
 (PA **Hantar** → PPA **Hantar kepada KB** → KB **Sahkan**). Laporan yang

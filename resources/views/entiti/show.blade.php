@@ -21,7 +21,7 @@
             {{-- Tindakan yang tersedia — hanya yang dibenarkan bagi peranan semasa. --}}
             <div class="entity-actions">
                 <a href="{{ route('workflow.show', $entiti['agency_code']) }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-diagram-3"></i> Workflow
+                    <i class="bi bi-diagram-3"></i> Kemajuan
                 </a>
 
                 @can('manage-assignment')
@@ -215,7 +215,13 @@
                         @endphp
                         <tr>
                             <td>{{ $nama }}</td>
-                            <td><span class="status-badge {{ $kelas }}">{{ $nilai }}</span></td>
+                            <td>
+                                @if ($kelas)
+                                    <span class="status-badge {{ $kelas }}">{{ $nilai }}</span>
+                                @else
+                                    <span class="text-secondary">{{ $nilai }}</span>
+                                @endif
+                            </td>
                             <td>{{ ($rekod['kemas_kini'] ?? null)?->format('d/m/Y H:i') ?? '-' }}</td>
                             <td>
                                 @if ($jenis === 'inventori' && $analisis)

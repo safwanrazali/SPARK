@@ -1289,6 +1289,26 @@ class KemajuanAnalisisAliranTest extends TestCase
     }
 
     /**
+     * Laporan Risiko PQC dan Kesiapsiagaan belum wujud dalam versi ini, jadi
+     * ia kekal "N/A" walaupun entiti telah menyelesaikan aliran kerjanya —
+     * bukan "Belum Bermula", yang menyiratkan ia sedang menunggu tindakan.
+     */
+    public function test_jenis_laporan_belum_tersedia_dipaparkan_sebagai_na(): void
+    {
+        $this->sehinggaLaporanDihantar();
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+
+        $this->assertSame(StatusLaporan::PAPARAN_SELESAI, $this->statusTigaLaporan('inventori'));
+        $this->assertSame(StatusLaporan::PAPARAN_TIADA, $this->statusTigaLaporan('risiko'));
+        $this->assertSame(StatusLaporan::PAPARAN_TIADA, $this->statusTigaLaporan('kesiapsiagaan'));
+
+        $this->get(route('status.index'))
+            ->assertOk()
+            ->assertSee(StatusLaporan::PAPARAN_TIADA);
+    }
+
+    /**
      * Halaman Status Tiga Laporan ialah paparan sahaja: tiada route kemas kini
      * dan tiada borang pada halaman itu, walaupun bagi PPA.
      */

@@ -18,6 +18,10 @@
             kelulusan Ketua Bahagian dipaparkan sebagai <strong>Dalam Semakan</strong>, dan hanya
             menjadi <strong>Selesai</strong> setelah Ketua Bahagian mengesahkannya.
         </p>
+        <p class="text-secondary">
+            Laporan Risiko PQC dan Kesiapsiagaan dipaparkan sebagai <strong>N/A</strong> —
+            modulnya belum tersedia dalam versi ini.
+        </p>
 
         <div class="table-responsive-custom">
             <table class="table-modern">
@@ -43,7 +47,12 @@
                                     $kelas = $laporan['kelas'] ?? \App\Models\StatusLaporan::badgePaparan($nilai);
                                 @endphp
                                 <td>
-                                    <span class="status-badge {{ $kelas }}">{{ $nilai }}</span>
+                                    @if ($kelas)
+                                        <span class="status-badge {{ $kelas }}">{{ $nilai }}</span>
+                                    @else
+                                        {{-- "N/A": bukan status, jadi tiada pil warna. --}}
+                                        <span class="text-secondary">{{ $nilai }}</span>
+                                    @endif
                                 </td>
                             @endforeach
                         </tr>
