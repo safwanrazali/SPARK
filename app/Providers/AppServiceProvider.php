@@ -159,8 +159,9 @@ class AppServiceProvider extends ServiceProvider
             [...$tpii, ...$kb, ...$ppr, ...$pkd, ...$ppa, ...$pa]
         ));
 
-        // Mengitar status ketiga-tiga laporan kekal milik PPA.
-        Gate::define('manage-status', fn (User $user) => $user->hasAnyRole($ppa));
+        // Tiada gate 'manage-status': Status Tiga Laporan bersifat paparan
+        // sahaja. Status dikira daripada Kemajuan Analisis Entiti, jadi tiada
+        // peranan — termasuk PPA — boleh menetapkannya terus.
 
         /*
         |------------------------------------------------------------------

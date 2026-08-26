@@ -131,9 +131,22 @@ Buka **Pemantauan → Kemajuan Analisis**, pilih entiti.
 ### 4.4 Status Tiga Laporan
 
 **Pemantauan → Status Tiga Laporan** memaparkan status bagi laporan Inventori,
-Risiko PQC dan Kesiapsiagaan setiap entiti. Klik status untuk mengitarnya:
+Risiko PQC dan Kesiapsiagaan setiap entiti.
 
-`Belum Bermula → Dalam Proses → Siap → Belum Bermula`
+Halaman ini **paparan sahaja** — tiada status boleh diubah di sini. Setiap
+status dikira daripada **Kemajuan Analisis Entiti**:
+
+| Status            | Bila ia dipaparkan                                                |
+| ----------------- | ----------------------------------------------------------------- |
+| **Belum Bermula** | Entiti belum memasuki aliran kerja analisis                        |
+| **Dalam Proses**  | Analisis sedang berjalan; laporan belum dihantar untuk semakan     |
+| **Dalam Semakan** | Laporan sedang disemak PPA atau menunggu kelulusan Ketua Bahagian  |
+| **Selesai**       | Ketua Bahagian telah menekan **Sahkan** pada laporan itu           |
+
+Untuk menggerakkan status, gunakan tindakan pada **Kemajuan Analisis Entiti**
+(PA **Hantar** → PPA **Hantar kepada KB** → KB **Sahkan**). Laporan yang
+**Dikembalikan** kekal *Dalam Semakan* kerana ia masih berada dalam kitaran
+PA → PPA → KB.
 
 ### 4.5 Jejak Audit
 

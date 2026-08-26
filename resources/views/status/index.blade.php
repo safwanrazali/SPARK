@@ -8,15 +8,15 @@
 
     <div class="report-card">
 
-        <h4 class="section-title">Kitaran Status: Belum Bermula → Dalam Proses → Siap</h4>
+        <h4 class="section-title">
+            Kitaran Status: Belum Bermula → Dalam Proses → Dalam Semakan → Selesai
+        </h4>
         <p class="text-secondary">
-            @can('manage-status')
-                Klik status untuk mengemas kini. Hak kemas kini dikawal mengikut peranan
-                (Pegawai Penyelaras Analisis / Pentadbir).
-            @else
-                Peranan semasa hanya boleh melihat status. Kemas kini dilakukan oleh
-                Pegawai Penyelaras Analisis.
-            @endcan
+            Halaman ini <strong>paparan sahaja</strong>. Setiap status dikira daripada
+            <a href="{{ route('workflow.index') }}">Kemajuan Analisis Entiti</a> dan tidak boleh
+            diubah di sini: laporan yang sedang disemak Pegawai Penyelaras Analisis atau menunggu
+            kelulusan Ketua Bahagian dipaparkan sebagai <strong>Dalam Semakan</strong>, dan hanya
+            menjadi <strong>Selesai</strong> setelah Ketua Bahagian mengesahkannya.
         </p>
 
         <div class="table-responsive-custom">
@@ -38,29 +38,12 @@
                             </td>
                             @foreach (\App\Models\StatusLaporan::JENIS as $jenis => $nama)
                                 @php
-                                    $rekod = $status->get($e->agency_code)?->firstWhere('jenis', $jenis);
-                                    $nilai = $rekod?->status ?? 'Belum Bermula';
-                                    $kelas =
-                                        ['Siap' => 'status-rendah', 'Dalam Proses' => 'status-sederhana'][$nilai] ??
-                                        'status-tinggi';
+                                    $laporan = $status->get($e->agency_code)[$jenis] ?? null;
+                                    $nilai = $laporan['status'] ?? \App\Models\StatusLaporan::PAPARAN_BELUM_BERMULA;
+                                    $kelas = $laporan['kelas'] ?? \App\Models\StatusLaporan::badgePaparan($nilai);
                                 @endphp
                                 <td>
-                                    @can('manage-status')
-                                        <form action="{{ route('status.kitar') }}" method="POST" class="m-0">
-                                            @csrf
-                                            <input type="hidden" name="sector_code" value="{{ $e->sector_code }}">
-                                            <input type="hidden" name="sector_name" value="{{ $e->sector_name }}">
-                                            <input type="hidden" name="agency_code" value="{{ $e->agency_code }}">
-                                            <input type="hidden" name="agency_name" value="{{ $e->agency_name }}">
-                                            <input type="hidden" name="jenis" value="{{ $jenis }}">
-                                            <button type="submit" class="btn btn-sm p-0 border-0 bg-transparent"
-                                                title="Klik untuk kemas kini status">
-                                                <span class="status-badge {{ $kelas }}">{{ $nilai }}</span>
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="status-badge {{ $kelas }}">{{ $nilai }}</span>
-                                    @endcan
+                                    <span class="status-badge {{ $kelas }}">{{ $nilai }}</span>
                                 </td>
                             @endforeach
                         </tr>

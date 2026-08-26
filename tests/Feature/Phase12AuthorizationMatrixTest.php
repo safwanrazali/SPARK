@@ -163,13 +163,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
         ]);
     }
 
-    public function test_status_laporan_hanya_boleh_dikitar_oleh_penyelaras(): void
-    {
-        $this->semakMatriks('POST', route('status.kitar'), [
-            User::ROLE_COORDINATOR => self::BENAR,
-        ], SektorDirectory::cariEntiti(self::ALPHA) + ['jenis' => 'inventori']);
-    }
-
     public function test_jejak_audit_berpusat_terbuka_kepada_semua_peranan(): void
     {
         // Kandungan tetap ditapis mengikut entiti yang boleh diakses, dan

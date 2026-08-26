@@ -40,7 +40,10 @@ class DashboardStatistikService
      */
     public const STATUS_SIAP = 'Siap';
 
-    public function __construct(private readonly EntityAccessService $access) {}
+    public function __construct(
+        private readonly EntityAccessService $access,
+        private readonly StatusTigaLaporanService $statusLaporan,
+    ) {}
 
     /**
      * Kira keseluruhan statistik papan pemuka.
@@ -65,7 +68,7 @@ class DashboardStatistikService
 
         $dalamProses = $workflow->count() - $selesai;
 
-        $laporan = $this->statistikLaporan($pengguna, $entiti, $jumlahEntiti);
+        $laporan = $this->statistikLaporan($entiti, $jumlahEntiti);
 
         return [
             'penapis' => [
@@ -83,9 +86,10 @@ class DashboardStatistikService
             'belumDidaftar' => max(0, $jumlahEntiti - $workflow->count()),
 
             'jumlahLaporan' => $laporan['jumlah'],
-            'laporanSiap' => $laporan['siap'],
-            'laporanDalamProses' => $laporan['dalam_proses'],
-            'laporanBelum' => $laporan['belum'],
+            'laporanSelesai' => $laporan[StatusLaporan::PAPARAN_SELESAI],
+            'laporanDalamSemakan' => $laporan[StatusLaporan::PAPARAN_DALAM_SEMAKAN],
+            'laporanDalamProses' => $laporan[StatusLaporan::PAPARAN_DALAM_PROSES],
+            'laporanBelum' => $laporan[StatusLaporan::PAPARAN_BELUM_BERMULA],
 
             'analisisSelesai' => AnalisisInventori::query()
                 ->accessibleBy($pengguna)
@@ -220,29 +224,23 @@ class DashboardStatistikService
     }
 
     /**
-     * Kiraan laporan. Setiap entiti dipantau mempunyai tiga jenis laporan;
-     * rekod yang belum wujud dikira sebagai belum bermula.
+     * Kiraan laporan. Setiap entiti dipantau mempunyai tiga jenis laporan.
+     *
+     * Angka di sini dikira daripada Kemajuan Analisis Entiti melalui
+     * StatusTigaLaporanService — sumber yang sama seperti halaman Status
+     * Tiga Laporan — supaya papan pemuka tidak boleh terpesong daripada
+     * status yang dilihat pengguna pada halaman itu.
      *
      * @param  Collection<int, string>  $entiti
      * @return array<string, int>
      */
-    private function statistikLaporan(User $pengguna, Collection $entiti, int $jumlahEntiti): array
+    private function statistikLaporan(Collection $entiti, int $jumlahEntiti): array
     {
-        $status = StatusLaporan::query()
-            ->accessibleBy($pengguna)
-            ->whereIn('agency_code', $entiti)
-            ->get();
+        $taburan = $this->statusLaporan->taburan(
+            $this->statusLaporan->untukBanyak($entiti->all()),
+        );
 
-        $jumlah = $jumlahEntiti * count(StatusLaporan::JENIS);
-        $siap = $status->where('status', 'Siap')->count();
-        $dalamProses = $status->where('status', 'Dalam Proses')->count();
-
-        return [
-            'jumlah' => $jumlah,
-            'siap' => $siap,
-            'dalam_proses' => $dalamProses,
-            'belum' => max(0, $jumlah - $siap - $dalamProses),
-        ];
+        return $taburan + ['jumlah' => $jumlahEntiti * count(StatusLaporan::JENIS)];
     }
 
     /**

@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\AnalisisInventori;
-use App\Models\StatusLaporan;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
+use App\Services\StatusTigaLaporanService;
 use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
@@ -34,6 +34,7 @@ class EntitiController extends Controller
         private readonly EntityAccessService $access,
         private readonly EntityAssignmentService $assignments,
         private readonly KemajuanAnalisisService $kemajuan,
+        private readonly StatusTigaLaporanService $statusLaporan,
     ) {}
 
     public function show(Request $request, string $agencyCode)
@@ -62,11 +63,10 @@ class EntitiController extends Controller
                 ->accessibleBy($pengguna)
                 ->where('agency_code', $agencyCode)
                 ->first(),
-            'statusLaporan' => StatusLaporan::query()
-                ->accessibleBy($pengguna)
-                ->where('agency_code', $agencyCode)
-                ->get()
-                ->keyBy('jenis'),
+            // Status ketiga-tiga laporan dikira daripada Kemajuan Analisis
+            // Entiti, sumber yang sama seperti halaman Status Tiga Laporan,
+            // supaya dua halaman tidak boleh menunjukkan nilai berbeza.
+            'statusLaporan' => $this->statusLaporan->untukEntiti($agencyCode),
             // Dahulunya 20 rekod terakhir tanpa jalan ke rekod lebih lama;
             // kini bernombor mengikut peraturan sepunya. Jejak penuh kekal
             // tersedia melalui pautan Jejak Audit pada halaman ini.

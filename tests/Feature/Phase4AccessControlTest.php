@@ -531,20 +531,14 @@ class Phase4AccessControlTest extends TestCase
             ->get(route('analisis.borang', ['sector_code' => '001', 'agency_code' => self::ALPHA]))
             ->assertForbidden();
 
-        // Pegawai Analisis tetap tiada kebenaran penugasan mahupun status laporan.
+        // Pegawai Analisis tetap tiada kebenaran penugasan.
         $this->actingAs($this->analystA)
             ->get(route('penugasan.index'))
             ->assertForbidden();
 
-        $this->actingAs($this->analystA)
-            ->post(route('status.kitar'), [
-                'sector_code' => '001',
-                'sector_name' => 'Kerajaan',
-                'agency_code' => self::ALPHA,
-                'agency_name' => 'Suruhanjaya Pilihan Raya (SPR)',
-                'jenis' => 'inventori',
-            ])
-            ->assertForbidden();
+        // Status Tiga Laporan kini paparan sahaja bagi SEMUA peranan: tiada
+        // route kemas kini wujud lagi, jadi tiada siapa boleh menetapkannya.
+        $this->assertFalse(app('router')->has('status.kitar'));
     }
 
     public function test_modul_muat_naik_dihadkan_kepada_peranan_yang_dibenarkan(): void

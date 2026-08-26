@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use App\Exceptions\ImmutableAuditLogException;
 use App\Models\ActivityLog;
+use App\Models\LaporanSemakan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\AuditTrailService;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
+use App\Services\LaporanSemakanService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -147,33 +150,42 @@ class Phase8AuditTrailTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_perubahan_status_laporan_menghasilkan_rekod_audit(): void
+    /**
+     * Status laporan tidak lagi ditetapkan pada halaman Status Tiga Laporan;
+     * ia bergerak hanya melalui kitaran semakan Kemajuan Analisis Entiti.
+     * Jejak audit mesti merekod setiap langkah kitaran itu.
+     */
+    public function test_kitaran_semakan_laporan_menghasilkan_rekod_audit(): void
     {
         $entiti = SektorDirectory::cariEntiti(self::ALPHA);
 
-        $hantar = fn () => $this->actingAs($this->coordinator)->post(route('status.kitar'), [
-            'sector_code' => $entiti['sector_code'],
-            'sector_name' => $entiti['sector_name'],
-            'agency_code' => $entiti['agency_code'],
-            'agency_name' => $entiti['agency_name'],
-            'jenis' => 'inventori',
-        ]);
+        $kemajuan = app(KemajuanAnalisisService::class);
+        $kemajuan->lengkapkanPendaftaran($entiti, $this->coordinator);
 
-        $hantar();
+        // Peringkat 2–4 mesti Selesai sebelum laporan boleh dihantar.
+        foreach ([2, 3, 4] as $peringkat) {
+            $kemajuan->tandakanSelesai(self::ALPHA, $peringkat, $this->analyst);
+        }
 
-        $pertama = ActivityLog::where('action', 'report_status_changed')->firstOrFail();
-        $this->assertNull($pertama->old_value);
-        $this->assertSame('Dalam Proses', $pertama->new_value);
-        $this->assertSame('inventori', $pertama->metadata['jenis']);
-        $this->assertSame($this->coordinator->id, $pertama->changed_by_user_id);
+        $semakan = app(LaporanSemakanService::class);
+        $laporan = $semakan->mulakan($entiti);
 
-        // Kitaran seterusnya merekod peralihan status sebenar.
-        $hantar();
+        $semakan->hantarKepadaPPA($laporan, $this->analyst);
+
+        $dihantar = ActivityLog::where('action', 'report_submitted')->firstOrFail();
+        $this->assertSame(LaporanSemakan::DRAF, $dihantar->old_value);
+        $this->assertSame(LaporanSemakan::MENUNGGU_PPA, $dihantar->new_value);
+        $this->assertSame('inventori', $dihantar->metadata['report_type']);
+        $this->assertSame($this->analyst->id, $dihantar->changed_by_user_id);
+
+        // Kelulusan KB ialah satu-satunya langkah yang menjadikan laporan Sah.
+        $semakan->hantarKepadaKB($laporan->refresh(), $this->coordinator);
+        $semakan->sahkan($laporan->refresh(), $this->admin);
 
         $this->assertDatabaseHas('activity_log', [
-            'action' => 'report_status_changed',
-            'old_value' => 'Dalam Proses',
-            'new_value' => 'Siap',
+            'action' => 'report_approved',
+            'old_value' => LaporanSemakan::MENUNGGU_KB,
+            'new_value' => LaporanSemakan::SAH,
         ]);
     }
 

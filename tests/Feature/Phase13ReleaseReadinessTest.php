@@ -428,7 +428,6 @@ class Phase13ReleaseReadinessTest extends TestCase
             'profil.edit',
             'profil.update',
             'status.index',
-            'status.kitar',
             'workflow.index',
             'workflow.show',
         ];

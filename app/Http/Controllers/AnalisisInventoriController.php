@@ -249,8 +249,10 @@ class AnalisisInventoriController extends Controller
             ],
         );
 
-        // Analisis selesai menaikkan status laporan Inventori ke Dalam Proses
-        // sekurang-kurangnya (kemuktamadan status kekal di tangan Penyelaras).
+        // Baris kehadiran sahaja: entiti yang mempunyai dapatan analisis terus
+        // muncul dalam senarai pemantauan. Lajur `status` di sini tidak lagi
+        // dipaparkan — Status Tiga Laporan dikira daripada Kemajuan Analisis
+        // Entiti (lihat App\Services\StatusTigaLaporanService).
         StatusLaporan::firstOrCreate(
             ['agency_code' => $agensi['code'], 'jenis' => 'inventori'],
             [

@@ -175,7 +175,11 @@ class Phase5EntityDetailTest extends TestCase
             $response->assertSee($nama);
         }
 
-        $response->assertSee('Belum Bermula');
+        // Status dikira daripada Kemajuan Analisis Entiti: entiti ini telah
+        // didaftarkan tetapi belum menghantar laporan untuk semakan, jadi
+        // ketiga-tiganya Dalam Proses.
+        $response->assertSee(StatusLaporan::PAPARAN_DALAM_PROSES);
+        $response->assertDontSee(StatusLaporan::PAPARAN_DALAM_SEMAKAN);
     }
 
     public function test_halaman_memaparkan_dapatan_analisis(): void

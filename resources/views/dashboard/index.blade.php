@@ -104,9 +104,9 @@
         <div class="metric-card">
             <div class="metric-card__label">
                 <span class="metric-card__dot is-success"></span>
-                Laporan Siap
+                Laporan Selesai
             </div>
-            <div class="metric-card__value">{{ $laporanSiap }}</div>
+            <div class="metric-card__value">{{ $laporanSelesai }}</div>
             <div class="metric-card__bar is-success"></div>
         </div>
 
@@ -186,7 +186,7 @@
             <div class="chart-card__title">Status 3 Laporan</div>
 
             <div class="status-pills">
-                @foreach ([['label' => 'Siap', 'nilai' => $laporanSiap, 'kelas' => 'siap'], ['label' => 'Dalam Proses', 'nilai' => $laporanDalamProses, 'kelas' => 'proses'], ['label' => 'Belum', 'nilai' => $laporanBelum, 'kelas' => 'belum']] as $baris)
+                @foreach ([['label' => 'Selesai', 'nilai' => $laporanSelesai, 'kelas' => 'siap'], ['label' => 'Dalam Semakan', 'nilai' => $laporanDalamSemakan, 'kelas' => 'proses'], ['label' => 'Dalam Proses', 'nilai' => $laporanDalamProses, 'kelas' => 'proses'], ['label' => 'Belum Bermula', 'nilai' => $laporanBelum, 'kelas' => 'belum']] as $baris)
                     @php $lebar = $jumlahLaporan ? round($baris['nilai'] / $jumlahLaporan * 100) : 0; @endphp
                     <div class="status-pill-row">
                         <span class="status-pill status-pill--{{ $baris['kelas'] }}">{{ $baris['label'] }}</span>

@@ -97,16 +97,15 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Status Tiga Laporan — kitaran dikawal Pegawai Penyelaras
+    | Status Tiga Laporan — paparan sahaja
+    |
+    | Tiada route kemas kini di sini dengan sengaja: status dikira daripada
+    | Kemajuan Analisis Entiti, jadi tiada peranan boleh menetapkannya terus.
     |----------------------------------------------------------------------
     */
     Route::get('/status-laporan', [StatusLaporanController::class, 'index'])
         ->middleware('can:access-status-reports')
         ->name('status.index');
-
-    Route::post('/status-laporan/kitar', [StatusLaporanController::class, 'kitar'])
-        ->middleware('can:manage-status')
-        ->name('status.kitar');
 
     /*
     |----------------------------------------------------------------------

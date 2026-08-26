@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AnalisisInventori;
+use App\Models\LaporanSemakan;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
@@ -82,6 +83,14 @@ class Phase7DashboardTest extends TestCase
             'jenis' => $jenis,
             'status' => $status,
             'user_id' => $this->coordinator->id,
+        ]);
+    }
+
+    private function laporanSemakan(string $agencyCode, string $jenis, string $status): LaporanSemakan
+    {
+        return LaporanSemakan::create(SektorDirectory::cariEntiti($agencyCode) + [
+            'report_type' => $jenis,
+            'status' => $status,
         ]);
     }
 
@@ -281,22 +290,29 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(50, $this->kira()['kemajuan']);
     }
 
+    /**
+     * Kiraan laporan dikira daripada Kemajuan Analisis Entiti — kitaran
+     * semakan bagi jenis yang memilikinya, kemajuan peringkat bagi yang lain.
+     */
     public function test_kiraan_laporan_mengikut_tiga_jenis_setiap_entiti(): void
     {
-        $this->workflow(self::ALPHA, 3);
-        $this->workflow(self::BETA, 3);
+        $kemajuan = app(KemajuanAnalisisService::class);
+        $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+        $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::BETA), $this->coordinator);
 
-        $this->statusLaporan(self::ALPHA, 'inventori', 'Siap');
-        $this->statusLaporan(self::ALPHA, 'risiko', 'Dalam Proses');
-        $this->statusLaporan(self::BETA, 'inventori', 'Siap');
+        // ALPHA: inventori telah disahkan KB, risiko menunggu kelulusan KB.
+        $this->laporanSemakan(self::ALPHA, 'inventori', LaporanSemakan::SAH);
+        $this->laporanSemakan(self::ALPHA, 'risiko', LaporanSemakan::MENUNGGU_KB);
 
         $statistik = $this->kira();
 
         // 2 entiti × 3 jenis laporan = 6 rekod dijangka.
         $this->assertSame(6, $statistik['jumlahLaporan']);
-        $this->assertSame(2, $statistik['laporanSiap']);
-        $this->assertSame(1, $statistik['laporanDalamProses']);
-        $this->assertSame(3, $statistik['laporanBelum']);
+        $this->assertSame(1, $statistik['laporanSelesai']);
+        $this->assertSame(1, $statistik['laporanDalamSemakan']);
+        // Baki empat mengikut kemajuan peringkat entiti masing-masing.
+        $this->assertSame(4, $statistik['laporanDalamProses']);
+        $this->assertSame(0, $statistik['laporanBelum']);
     }
 
     public function test_jumlah_sektor_dikira_daripada_senarai_induk(): void
@@ -421,7 +437,8 @@ class Phase7DashboardTest extends TestCase
             ->assertSee('Dalam Proses')
             ->assertSee('Entiti Selesai')
             ->assertSee('Jumlah Laporan')
-            ->assertSee('Laporan Siap')
+            ->assertSee('Laporan Selesai')
+            ->assertSee('Dalam Semakan')
             ->assertSee('Kemajuan Keseluruhan')
             ->assertSee('Taburan Kemajuan Analisis 7 Peringkat');
 

@@ -68,27 +68,25 @@ class SectorDirectoryAndStatusTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | Kitaran status laporan
+    | Perbendaharaan paparan status laporan
     |--------------------------------------------------------------------------
     */
 
-    public function test_kitaran_status_laporan_berpusing_mengikut_urutan(): void
+    public function test_perbendaharaan_paparan_status_laporan(): void
     {
-        $rekod = new StatusLaporan(['status' => 'Belum Bermula']);
-        $this->assertSame('Dalam Proses', $rekod->statusSeterusnya());
-
-        $rekod->status = 'Dalam Proses';
-        $this->assertSame('Siap', $rekod->statusSeterusnya());
-
-        $rekod->status = 'Siap';
-        $this->assertSame('Belum Bermula', $rekod->statusSeterusnya());
+        $this->assertSame(
+            ['Belum Bermula', 'Dalam Proses', 'Dalam Semakan', 'Selesai'],
+            StatusLaporan::PAPARAN,
+        );
     }
 
-    public function test_status_tidak_dikenali_dikembalikan_ke_permulaan_kitaran(): void
+    public function test_hanya_selesai_bertukar_hijau(): void
     {
-        $rekod = new StatusLaporan(['status' => 'Entah Apa']);
-
-        $this->assertSame('Belum Bermula', $rekod->statusSeterusnya());
+        $this->assertSame('status-rendah', StatusLaporan::badgePaparan(StatusLaporan::PAPARAN_SELESAI));
+        $this->assertSame('status-sederhana', StatusLaporan::badgePaparan(StatusLaporan::PAPARAN_DALAM_SEMAKAN));
+        $this->assertSame('status-sederhana', StatusLaporan::badgePaparan(StatusLaporan::PAPARAN_DALAM_PROSES));
+        $this->assertSame('status-tinggi', StatusLaporan::badgePaparan(StatusLaporan::PAPARAN_BELUM_BERMULA));
+        $this->assertSame('status-tinggi', StatusLaporan::badgePaparan('Entah Apa'));
     }
 
     public function test_tiga_jenis_laporan_ditakrifkan(): void

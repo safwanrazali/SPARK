@@ -209,16 +209,14 @@
                 <tbody>
                     @foreach (\App\Models\StatusLaporan::JENIS as $jenis => $nama)
                         @php
-                            $rekod = $statusLaporan->get($jenis);
-                            $nilai = $rekod?->status ?? 'Belum Bermula';
-                            $kelas =
-                                ['Siap' => 'status-rendah', 'Dalam Proses' => 'status-sederhana'][$nilai] ??
-                                'status-tinggi';
+                            $rekod = $statusLaporan[$jenis] ?? null;
+                            $nilai = $rekod['status'] ?? \App\Models\StatusLaporan::PAPARAN_BELUM_BERMULA;
+                            $kelas = $rekod['kelas'] ?? \App\Models\StatusLaporan::badgePaparan($nilai);
                         @endphp
                         <tr>
                             <td>{{ $nama }}</td>
                             <td><span class="status-badge {{ $kelas }}">{{ $nilai }}</span></td>
-                            <td>{{ $rekod?->updated_at?->format('d/m/Y H:i') ?? '-' }}</td>
+                            <td>{{ ($rekod['kemas_kini'] ?? null)?->format('d/m/Y H:i') ?? '-' }}</td>
                             <td>
                                 @if ($jenis === 'inventori' && $analisis)
                                     <a class="btn btn-sm btn-outline-light"

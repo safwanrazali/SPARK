@@ -6,10 +6,12 @@ use App\Models\ActivityLog;
 use App\Models\AnalisDraftHistory;
 use App\Models\AnalisisInventori;
 use App\Models\EntitiAssignment;
+use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
+use App\Services\StatusTigaLaporanService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -298,19 +300,23 @@ class Phase12IntegrationTest extends TestCase
         $this->assertSame('Penyerahan & Penutupan', $workflow->stage_name);
         $this->assertTrue($workflow->isComplete());
 
-        // 12 ── Status laporan dikitar: Dalam Proses → Siap.
-        //       Mengitar status ialah tindakan PPA, bukan penyeliaan.
+        // 12 ── Status Tiga Laporan dikira, bukan ditetapkan. Kesemua tujuh
+        //       peringkat kini Selesai, jadi ketiga-tiga laporan Selesai
+        //       tanpa sesiapa menyentuh halaman itu.
         $this->actingAs($this->penyelaras);
 
-        $this->post(route('status.kitar'), SektorDirectory::cariEntiti(self::ALPHA) + [
-            'jenis' => 'inventori',
-        ])->assertRedirect();
+        $this->assertSame(
+            [
+                StatusLaporan::PAPARAN_SELESAI,
+                StatusLaporan::PAPARAN_SELESAI,
+                StatusLaporan::PAPARAN_SELESAI,
+            ],
+            array_column(app(StatusTigaLaporanService::class)->untukEntiti(self::ALPHA), 'status'),
+        );
 
-        $this->assertDatabaseHas('status_laporan', [
-            'agency_code' => self::ALPHA,
-            'jenis' => 'inventori',
-            'status' => 'Siap',
-        ]);
+        $this->get(route('status.index'))
+            ->assertOk()
+            ->assertSee(StatusLaporan::PAPARAN_SELESAI);
 
         // 13 ── Dashboard dikira semula daripada rekod sebenar.
         //
@@ -333,7 +339,6 @@ class Phase12IntegrationTest extends TestCase
             'analysis_saved',
             'registration_completed',
             'stage_status_changed',
-            'report_status_changed',
         ] as $dijangka) {
             $this->assertContains($dijangka, $tindakan, "Tindakan [{$dijangka}] tiada dalam jejak audit.");
         }
@@ -542,7 +547,6 @@ class Phase12IntegrationTest extends TestCase
         $this->actingAs($this->penyelaras);
 
         $this->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
-        $this->post(route('status.kitar'), SektorDirectory::cariEntiti(self::ALPHA) + ['jenis' => 'inventori']);
 
         // Entiti yang didaftarkan sudah berada pada peringkat 2; kemajuan kini
         // dipacu oleh status setiap peringkat, bukan lagi oleh kemas kini

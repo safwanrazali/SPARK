@@ -6,12 +6,14 @@ use App\Models\AnalisDraftHistory;
 use App\Models\AnalisisInventori;
 use App\Models\ApprovalLog;
 use App\Models\LaporanSemakan;
+use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
+use App\Services\StatusTigaLaporanService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -1223,5 +1225,84 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->assertSame('Betulkan Jadual 3.', $dikembalikan->metadata['catatan']);
         $this->assertSame($this->ppa->id, $dikembalikan->changed_by_user_id);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Tiga Laporan — dikira daripada aliran ini, tidak pernah ditetapkan
+    |--------------------------------------------------------------------------
+    */
+
+    private function statusTigaLaporan(string $jenis = 'inventori'): string
+    {
+        return app(StatusTigaLaporanService::class)->untukEntiti(self::ALPHA)[$jenis]['status'];
+    }
+
+    public function test_status_tiga_laporan_mengikut_kitaran_semakan(): void
+    {
+        // Entiti belum memasuki aliran kerja langsung.
+        $this->assertSame(StatusLaporan::PAPARAN_BELUM_BERMULA, $this->statusTigaLaporan());
+
+        $this->sehinggaLaporanDihantar();
+
+        // PA telah menghantar: laporan di tangan PPA.
+        $this->assertSame(StatusLaporan::PAPARAN_DALAM_SEMAKAN, $this->statusTigaLaporan());
+
+        // PPA menghantar: menunggu kelulusan KB — masih Dalam Semakan.
+        $this->actingAs($this->ppa)->post(route('kemajuan.semak', self::ALPHA));
+        $this->assertSame(StatusLaporan::PAPARAN_DALAM_SEMAKAN, $this->statusTigaLaporan());
+
+        // Hanya "Sahkan" oleh Ketua Bahagian menjadikannya Selesai.
+        $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
+        $this->assertSame(StatusLaporan::PAPARAN_SELESAI, $this->statusTigaLaporan());
+    }
+
+    /**
+     * Entiti berdaftar yang belum menghantar laporan kekal Dalam Proses —
+     * ia tidak boleh melompat terus ke Dalam Semakan.
+     */
+    public function test_entiti_berdaftar_tanpa_penghantaran_kekal_dalam_proses(): void
+    {
+        $this->sediakanEntiti();
+
+        $this->assertSame(StatusLaporan::PAPARAN_DALAM_PROSES, $this->statusTigaLaporan());
+    }
+
+    /**
+     * Laporan yang dikembalikan masih berada dalam kitaran PA → PPA → KB,
+     * jadi ia kekal Dalam Semakan dan tidak sekali-kali menjadi Selesai.
+     */
+    public function test_laporan_dikembalikan_kekal_dalam_semakan(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->actingAs($this->ppa)->post(route('kemajuan.kembalikan', self::ALPHA), [
+            'catatan' => 'Betulkan Jadual 3.',
+        ]);
+
+        $this->assertDatabaseHas('laporan_semakan', [
+            'agency_code' => self::ALPHA,
+            'status' => LaporanSemakan::DIKEMBALIKAN,
+        ]);
+
+        $this->assertSame(StatusLaporan::PAPARAN_DALAM_SEMAKAN, $this->statusTigaLaporan());
+    }
+
+    /**
+     * Halaman Status Tiga Laporan ialah paparan sahaja: tiada route kemas kini
+     * dan tiada borang pada halaman itu, walaupun bagi PPA.
+     */
+    public function test_halaman_status_tiga_laporan_paparan_sahaja(): void
+    {
+        $this->sehinggaLaporanDihantar();
+
+        $this->assertFalse(app('router')->has('status.kitar'));
+
+        $this->actingAs($this->ppa)
+            ->get(route('status.index'))
+            ->assertOk()
+            ->assertSee(StatusLaporan::PAPARAN_DALAM_SEMAKAN)
+            ->assertSee('paparan sahaja')
+            ->assertDontSee('Klik status untuk mengemas kini');
     }
 }
