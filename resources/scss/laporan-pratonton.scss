@@ -147,6 +147,19 @@
     font-size: 0.8rem;
 }
 
+/*
+| Seksyen bergaya templat baharu — padanan skrin bagi blok `.laporan-seksyen`
+| dalam laporan-print.scss. Hanya SAIZ TAIP ditulis semula; warna bar, padding
+| dan peraturan pemisahan halaman diwarisi terus daripada fail cetakan.
+*/
+.laporan-seksyen .laporan-seksyen__tajuk {
+    font-size: 0.95rem;
+}
+
+.laporan-seksyen .laporan-seksyen__perenggan {
+    font-size: 0.85rem;
+}
+
 // Lajur berlebar tetap dalam jadual laporan.
 .laporan-rasmi__lajur-tandatangan {
     width: 120px;

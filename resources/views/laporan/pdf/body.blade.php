@@ -156,6 +156,45 @@
             font-weight: 400;
         }
 
+        /* Seksyen bergaya templat baharu — bar tajuk biru muda + perenggan.
+           SALINAN blok `.laporan-seksyen` dalam resources/scss/laporan-print.scss;
+           kekalkan kedua-duanya selaras (bar #deeaf6, teks #1f6091, tajuk 12px,
+           perenggan line-height 1.55).
+
+           Berkembar `.laporan-seksyen` + kelas anak supaya ia mengatasi pemilih
+           elemen h2/p di atas — termasuk border-bottom hitam pada h2. Seksyen
+           laporan yang BELUM ditukar kepada gaya baharu tidak menggunakan kelas
+           ini dan kekal seperti sedia ada. */
+        .laporan-seksyen .laporan-seksyen__tajuk {
+            background: #deeaf6;
+            color: #1f6091;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 10px;
+            margin: 20px 0 10px;
+            border: 0;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        .laporan-seksyen .laporan-seksyen__perenggan {
+            margin: 0 0 10px;
+            text-align: justify;
+            line-height: 1.55;
+            /* Perenggan dibenarkan terbelah antara muka surat; orphans/widows
+               menghalang baris tunggal tergantung pada sempadan halaman. */
+            orphans: 2;
+            widows: 2;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .laporan-seksyen .laporan-seksyen__perenggan:last-child {
+            margin-bottom: 0;
+        }
+
         .lajur-tandatangan {
             width: 120px;
         }
@@ -199,21 +238,34 @@
         </table>
     </div>
 
-    <h2>Tujuan</h2>
-    <p>
-        Laporan ini disediakan bagi membentangkan dapatan Analisis Inventori Kriptografi
-        <strong>{{ $analisis->agency_name }}</strong> berdasarkan data dan maklumat yang
-        dikemukakan selaras dengan Arahan Ketua Eksekutif NACSA No. 9. Analisis ini memberi
-        fokus kepada data yang dikemukakan melalui Jadual 0: Inventori, Jadual 1:
-        <em>Software Bill of Materials</em> (SBOM) dan Jadual 2: <em>Cryptographic Bill of
-            Materials</em> (CBOM), yang selepas ini dirujuk secara kolektif sebagai Jadual 0–2.
-    </p>
-    <p>
-        Laporan ini digunakan sebagai dokumen rujukan rasmi dalam pelaksanaan Klinik Migrasi
-        Kriptografi Pasca-Kuantum (PQC) bagi membincangkan isu inventori, mendapatkan
-        pengesahan entiti dan mengenal pasti tindakan susulan yang diperlukan untuk menyokong
-        analisis risiko serta perancangan migrasi PQC.
-    </p>
+    {{-- TUJUAN — gaya dalam resources/scss/laporan-print.scss (.laporan-seksyen).
+         Struktur dan teks MESTI kekal sama dengan pasangannya dalam
+         resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
+    <section class="laporan-seksyen">
+        <h2 class="laporan-seksyen__tajuk">Tujuan</h2>
+
+        <p class="laporan-seksyen__perenggan">
+            Laporan ini disediakan bagi membentangkan dapatan analisis inventori kriptografi
+            <strong>{{ $analisis->agency_name ?: '—' }}</strong> berdasarkan data dan maklumat
+            yang dikemukakan selaras dengan Arahan Ketua Eksekutif NACSA No. 9.
+        </p>
+
+        <p class="laporan-seksyen__perenggan">
+            Analisis ini dilaksanakan terhadap data yang dikemukakan melalui Jadual 0: Inventori,
+            Jadual 1: <em>Software Bill of Materials</em> (SBOM) dan Jadual 2:
+            <em>Cryptographic Bill of Materials</em> (CBOM), yang selepas ini dirujuk secara
+            kolektif sebagai Jadual 0–2. Skop analisis merangkumi maklumat aset, komponen
+            perisian, algoritma dan protokol kriptografi, pustaka atau modul kriptografi serta
+            maklumat vendor yang berkaitan.
+        </p>
+
+        <p class="laporan-seksyen__perenggan">
+            Laporan ini digunakan sebagai dokumen rujukan rasmi dalam pelaksanaan Klinik Migrasi
+            Kriptografi Pasca-Kuantum (PQC) bagi membincangkan dapatan, mendapatkan pengesahan
+            daripada entiti serta mengenal pasti tindakan susulan yang diperlukan bagi menyokong
+            penilaian risiko dan perancangan migrasi PQC.
+        </p>
+    </section>
 
     <h2>Status Data Diterima</h2>
     <table>

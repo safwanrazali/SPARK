@@ -219,3 +219,57 @@
     color: $laporan-text;
     font-weight: 400;
 }
+
+/* ==========================================================================
+   Seksyen laporan bergaya templat baharu — bar tajuk biru muda + perenggan
+   --------------------------------------------------------------------------
+   Blok ini SENGAJA berasingan daripada `.laporan-rasmi h2` di atas. Enam
+   seksyen laporan berkongsi pemilih `h2` tersebut, jadi menukar h2 secara
+   terus akan mengecat SEMUA seksyen sekali gus. Seksyen ditukar satu per satu
+   dengan membungkusnya dalam `.laporan-seksyen`; seksyen yang belum ditukar
+   kekal menggunakan gaya h2 lama tanpa sebarang perubahan.
+
+   Sama seperti `.laporan-id`, setiap pemilih berkembar `.laporan-seksyen` +
+   kelas anak (0,2,0) supaya ia mengatasi `.laporan-rasmi h2/p` (0,1,1).
+
+   Ukuran px untuk A4; padanan rem skrin dalam laporan-pratonton.scss dan
+   salinan heks mentah dalam resources/views/laporan/pdf/body.blade.php. */
+.laporan-seksyen .laporan-seksyen__tajuk {
+    background: $laporan-biru-muda;
+    color: $laporan-biru;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 10px;
+    margin: 20px 0 10px;
+
+    /* Membatalkan border-bottom hitam daripada `.laporan-rasmi h2`. */
+    border: 0;
+
+    /* Tajuk seksyen tidak boleh tertinggal seorang diri di kaki halaman. */
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+.laporan-seksyen .laporan-seksyen__perenggan {
+    margin: 0 0 10px;
+    text-align: justify;
+    line-height: 1.55;
+
+    /* Perenggan DIBENARKAN terbelah antara muka surat — mengunci dengan
+       break-inside: avoid akan menolak perenggan panjang keseluruhannya ke
+       muka surat berikut dan meninggalkan ruang kosong yang besar. orphans/
+       widows pula memastikan sekurang-kurangnya dua baris kekal bersama pada
+       setiap belahan, jadi tiada baris tunggal tergantung. */
+    orphans: 2;
+    widows: 2;
+
+    /* Nama entiti yang panjang tanpa ruang tidak boleh melimpah keluar. */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen .laporan-seksyen__perenggan:last-child {
+    margin-bottom: 0;
+}
