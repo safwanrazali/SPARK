@@ -124,11 +124,30 @@
     color: $laporan-meta;
 }
 
-// Lajur berlebar tetap dalam jadual laporan.
-.laporan-rasmi__lajur-label {
-    width: 220px;
+/*
+| Pengenalan laporan — padanan skrin bagi blok `.laporan-id` dalam
+| laporan-print.scss. Hanya SAIZ TAIP ditulis semula di sini; warna, padding,
+| sempadan dan peraturan pembalutan diwarisi terus daripada fail cetakan
+| supaya sepanduk kekal serupa antara pratonton dan PDF.
+|
+| Kekhususan 0,2,0 di sini sepadan dengan fail cetakan, jadi susunan import
+| dalam app.scss (pratonton SELEPAS print) yang menjadikan nilai rem ini
+| menang — sama seperti .laporan-rasmi h1/h2 di atas.
+*/
+.laporan-id .laporan-id__tajuk {
+    font-size: 1.25rem;
 }
 
+.laporan-id .laporan-id__baris {
+    font-size: 1.02rem;
+}
+
+.laporan-id .laporan-id__label,
+.laporan-id .laporan-id__nilai {
+    font-size: 0.8rem;
+}
+
+// Lajur berlebar tetap dalam jadual laporan.
 .laporan-rasmi__lajur-tandatangan {
     width: 120px;
 }

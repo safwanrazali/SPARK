@@ -34,30 +34,37 @@
             <img class="laporan-rasmi__jata-ptpkm" src="{{ asset('image/logo_ptpkm.png') }}">
         </div>
 
-        <h1>Laporan Analisis Inventori Kriptografi</h1>
-        <p class="text-center mb-4">
-            <strong>SEKTOR:</strong> {{ $analisis->sector_name }} ·
-            <strong>ENTITI:</strong> {{ $analisis->agency_name }}
-        </p>
+        {{-- Pengenalan laporan — gaya dalam resources/scss/laporan-print.scss
+             (ukuran A4) + laporan-pratonton.scss (saiz taip skrin). Struktur
+             ini MESTI kekal sama dengan resources/views/laporan/pdf/body.blade.php. --}}
+        <div class="laporan-id">
+            <div class="laporan-id__banner">
+                <h1 class="laporan-id__tajuk">Laporan Analisis Inventori Kriptografi</h1>
+                <div class="laporan-id__baris">Sektor : {{ $analisis->sector_name ?: '—' }}</div>
+                <div class="laporan-id__baris">Entiti : {{ $analisis->agency_name ?: '—' }}</div>
+            </div>
 
-        <table>
-            <tr>
-                <td class="laporan-rasmi__lajur-label"><strong>KLASIFIKASI</strong></td>
-                <td>RAHSIA</td>
-            </tr>
-            <tr>
-                <td><strong>TARIKH LAPORAN</strong></td>
-                <td>{{ $analisis->tarikh_laporan?->format('d/m/Y') ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td><strong>KOD RUJUKAN LAPORAN</strong></td>
-                <td>{{ $analisis->kod_rujukan ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td><strong>STATUS LAPORAN</strong></td>
-                <td>{{ $analisis->status_laporan }}</td>
-            </tr>
-        </table>
+            <table class="laporan-id__jadual">
+                <tbody>
+                    <tr>
+                        <th scope="row" class="laporan-id__label">Klasifikasi</th>
+                        <td class="laporan-id__nilai">{{ $klasifikasi }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="laporan-id__label">Tarikh Laporan</th>
+                        <td class="laporan-id__nilai">{{ $analisis->tarikh_laporan?->format('d/m/Y') ?? '—' }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="laporan-id__label">Kod Rujukan Laporan</th>
+                        <td class="laporan-id__nilai">{{ $analisis->kod_rujukan ?: '—' }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="laporan-id__label">Status Laporan</th>
+                        <td class="laporan-id__nilai">{{ $analisis->status_laporan ?: '—' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <h2>Tujuan</h2>
         <p>

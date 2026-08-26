@@ -78,6 +78,32 @@ return [
         ],
     ],
 
+    // Format kod rujukan laporan mengikut templat rasmi:
+    //     R-LP-MIG-4-****-V*.*   (cth. R-LP-MIG-4-0001-V1.0)
+    // Segmen tengah (****) menerima huruf/digit tanpa had panjang; segmen
+    // versi menerima nombor major.minor. `corak` disimpan TANPA pembatas
+    // supaya nilai yang sama boleh digunakan semula sebagai atribut
+    // `pattern` HTML pada borang dan sebagai peraturan `regex:` Laravel.
+    'kod_rujukan' => [
+        'corak' => 'R-LP-MIG-4-[A-Za-z0-9]+-V\d+\.\d+',
+        'format' => 'R-LP-MIG-4-****-V*.*',
+        'contoh' => 'R-LP-MIG-4-0001-V1.0',
+    ],
+
+    // Status laporan — DUA pilihan sahaja mengikut templat rasmi. Nilai lama
+    // ('Muktamad', 'Muktamad dengan Catatan') telah dipetakan kepada 'Selesai'
+    // oleh migrasi 2026_08_26_000001_selaraskan_status_laporan_analisis.
+    // Pilihan pertama ialah nilai lalai bagi simpanan muktamad dan draf baharu.
+    'status_laporan' => ['Selesai', 'Memerlukan Tindakan Susulan'],
+
+    // Klasifikasi keselamatan dokumen, dipaparkan dalam jadual maklumat
+    // laporan. Disimpan di sini kerana ia satu nilai dasar peringkat sistem,
+    // bukan input per-entiti: setiap Laporan Analisis Inventori Kriptografi
+    // dikeluarkan pada klasifikasi yang sama. Menyimpannya sebagai config
+    // (bukan heks dalam Blade) mengelakkan nilai ini terpesong antara
+    // pratonton skrin dan PDF.
+    'klasifikasi_laporan' => 'RAHSIA',
+
     'pengesahan_laporan' => [
         ['peranan' => 'Disahkan oleh: Ketua Bahagian Migrasi PQC, PTPKM', 'nama' => 'Dr. Isma Norshahila Binti Mohammad Shah'],
         ['peranan' => 'Diluluskan oleh: Timbalan Pengarah 2, PTPKM', 'nama' => 'Hazlin Binti Abdul Rani'],

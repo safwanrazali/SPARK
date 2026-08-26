@@ -45,3 +45,14 @@ $laporan-border: #333;
 $laporan-th-bg: #eff1f5;
 $laporan-meta: #555;
 $laporan-jarak-klasifikasi: 0.35em;
+
+// Blok pengenalan laporan (sepanduk tajuk + jadual maklumat laporan).
+// Biru gelap dan kelabu muda diambil daripada templat rasmi
+// "Laporan Analisis Inventori Kriptografi"; ia SENGAJA berasingan daripada
+// palet jenama supaya perubahan tema aplikasi tidak menjejaskan dokumen rasmi.
+// Nilai yang sama ditulis semula sebagai heks mentah dalam
+// resources/views/laporan/pdf/body.blade.php kerana dokumen PDF dipaparkan
+// tanpa helaian gaya terkumpul — kekalkan kedua-duanya selaras.
+$laporan-biru: #1f6091;
+$laporan-biru-teks: #ffffff;
+$laporan-nilai-bg: #ededed;

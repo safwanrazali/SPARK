@@ -91,8 +91,9 @@ class BorangAnalisis
             $lajur[$medan] = $borang[$medan] ?? null;
         }
 
-        // Nilai lalai dikenakan hanya pada simpanan muktamad.
-        $lajur['status_laporan'] ??= 'Muktamad';
+        // Nilai lalai dikenakan hanya pada simpanan muktamad. Pilihan pertama
+        // dalam config ialah status lalai (lihat config/kriptografi.php).
+        $lajur['status_laporan'] ??= config('kriptografi.status_laporan')[0];
 
         $data = collect($borang)->except(self::MEDAN_LAJUR)->all();
         $data['ringkasan_data'] ??= 'lengkap';

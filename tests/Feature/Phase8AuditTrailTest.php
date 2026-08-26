@@ -200,9 +200,9 @@ class Phase8AuditTrailTest extends TestCase
         $this->actingAs($this->analyst)->post(route('analisis.simpan'), [
             'sector_code' => '001',
             'agency_code' => self::ALPHA,
-            'status_laporan' => 'Muktamad',
+            'status_laporan' => 'Selesai',
             'ringkasan_data' => 'lengkap',
-            'kod_rujukan' => 'PTPKM/INV/2026/001',
+            'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'selesai' => '1',
         ]);
 
@@ -211,7 +211,7 @@ class Phase8AuditTrailTest extends TestCase
         $this->assertSame(self::ALPHA, $log->agency_code);
         $this->assertSame('Selesai', $log->new_value);
         $this->assertSame($this->analyst->id, $log->changed_by_user_id);
-        $this->assertSame('PTPKM/INV/2026/001', $log->metadata['kod_rujukan']);
+        $this->assertSame('R-LP-MIG-4-0001-V1.0', $log->metadata['kod_rujukan']);
     }
 
     /*

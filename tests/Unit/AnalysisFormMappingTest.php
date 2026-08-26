@@ -178,7 +178,7 @@ class AnalysisFormMappingTest extends TestCase
         ['lajur' => $lajur, 'data' => $data] = BorangAnalisis::kepadaModel($this->borang([
             'tarikh_laporan' => '2026-08-16',
             'kod_rujukan' => 'PTPKM/INV/2026/001',
-            'status_laporan' => 'Muktamad dengan Catatan',
+            'status_laporan' => 'Memerlukan Tindakan Susulan',
             'ringkasan_data' => 'catatan',
         ]));
 
@@ -203,10 +203,10 @@ class AnalysisFormMappingTest extends TestCase
         $this->assertNull($borang['status_laporan']);
         $this->assertNull($borang['ringkasan_data']);
 
-        // Muktamad: nilai lalai dikenakan supaya laporan boleh dijana.
+        // Simpanan muktamad: nilai lalai dikenakan supaya laporan boleh dijana.
         ['lajur' => $lajur, 'data' => $data] = BorangAnalisis::kepadaModel($borang);
 
-        $this->assertSame('Muktamad', $lajur['status_laporan']);
+        $this->assertSame('Selesai', $lajur['status_laporan']);
         $this->assertSame('lengkap', $data['ringkasan_data']);
     }
 

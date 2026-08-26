@@ -50,7 +50,7 @@ class AnalisisDraftService
                 'sector_code' => $entiti['sector_code'],
                 'sector_name' => $entiti['sector_name'],
                 'agency_name' => $entiti['agency_name'],
-                'status_laporan' => 'Muktamad',
+                'status_laporan' => config('kriptografi.status_laporan')[0],
                 'data' => [],
                 'selesai' => false,
                 'user_id' => $user->id,

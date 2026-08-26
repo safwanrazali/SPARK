@@ -12,6 +12,7 @@ use App\Services\EntityAssignmentService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -104,12 +105,117 @@ class Phase12ErrorHandlingTest extends TestCase
             ->post(route('analisis.simpan'), [
                 'sector_code' => '010',
                 'agency_code' => self::ALPHA,
-                'status_laporan' => 'Muktamad',
+                'status_laporan' => 'Selesai',
                 'ringkasan_data' => 'lengkap',
             ])
             ->assertSessionHasErrors('agency_code');
 
         $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::ALPHA]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kod rujukan dan status laporan mengikut templat rasmi
+    |--------------------------------------------------------------------------
+    */
+
+    public static function kodRujukanTidakSah(): array
+    {
+        return [
+            'awalan salah' => ['PTPKM/INV/2026/001'],
+            'tiada segmen versi' => ['R-LP-MIG-4-0001'],
+            'versi tanpa titik perpuluhan' => ['R-LP-MIG-4-0001-V1'],
+            'segmen tengah kosong' => ['R-LP-MIG-4--V1.0'],
+            'segmen tengah bukan alfanumerik' => ['R-LP-MIG-4-00/1-V1.0'],
+        ];
+    }
+
+    #[DataProvider('kodRujukanTidakSah')]
+    public function test_kod_rujukan_di_luar_format_rasmi_ditolak(string $kod): void
+    {
+        $this->actingAs($this->analyst)
+            ->from(route('analisis.index'))
+            ->post(route('analisis.simpan'), $this->muatanSah(['kod_rujukan' => $kod]))
+            ->assertSessionHasErrors('kod_rujukan');
+
+        $this->assertDatabaseMissing('analisis_inventori', ['kod_rujukan' => $kod]);
+    }
+
+    public static function kodRujukanSah(): array
+    {
+        return [
+            'nombor berjujukan' => ['R-LP-MIG-4-0001-V1.0'],
+            'segmen tengah berhuruf' => ['R-LP-MIG-4-BSN1-V1.0'],
+            'segmen tengah panjang' => ['R-LP-MIG-4-000123-V1.0'],
+            'versi dua digit' => ['R-LP-MIG-4-0001-V2.10'],
+        ];
+    }
+
+    #[DataProvider('kodRujukanSah')]
+    public function test_kod_rujukan_mengikut_format_rasmi_diterima(string $kod): void
+    {
+        $this->actingAs($this->analyst)
+            ->post(route('analisis.simpan'), $this->muatanSah(['kod_rujukan' => $kod]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('analisis_inventori', ['kod_rujukan' => $kod]);
+    }
+
+    public function test_kod_rujukan_kekal_pilihan(): void
+    {
+        // Templat menetapkan format, bukan kewajipan: laporan boleh disimpan
+        // sebelum kod rujukan rasmi dikeluarkan.
+        $this->actingAs($this->analyst)
+            ->post(route('analisis.simpan'), $this->muatanSah(['kod_rujukan' => '']))
+            ->assertSessionHasNoErrors();
+    }
+
+    public function test_status_laporan_hanya_menerima_dua_pilihan_templat(): void
+    {
+        $this->assertSame(
+            ['Selesai', 'Memerlukan Tindakan Susulan'],
+            config('kriptografi.status_laporan'),
+        );
+
+        foreach (config('kriptografi.status_laporan') as $status) {
+            $this->actingAs($this->analyst)
+                ->post(route('analisis.simpan'), $this->muatanSah(['status_laporan' => $status]))
+                ->assertSessionHasNoErrors();
+
+            $this->assertDatabaseHas('analisis_inventori', ['status_laporan' => $status]);
+        }
+    }
+
+    /**
+     * Nilai lama yang telah dibuang oleh templat rasmi tidak boleh masuk semula.
+     */
+    public function test_status_laporan_lama_ditolak(): void
+    {
+        foreach (['Muktamad', 'Muktamad dengan Catatan'] as $lama) {
+            $this->actingAs($this->analyst)
+                ->from(route('analisis.index'))
+                ->post(route('analisis.simpan'), $this->muatanSah(['status_laporan' => $lama]))
+                ->assertSessionHasErrors('status_laporan');
+        }
+
+        $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::ALPHA]);
+    }
+
+    /**
+     * Muatan simpanan muktamad yang sah, untuk diubah suai oleh setiap ujian.
+     *
+     * @param  array<string, mixed>  $ubah
+     * @return array<string, mixed>
+     */
+    private function muatanSah(array $ubah = []): array
+    {
+        return array_replace([
+            'sector_code' => self::SEKTOR,
+            'agency_code' => self::ALPHA,
+            'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
+            'status_laporan' => 'Selesai',
+            'ringkasan_data' => 'lengkap',
+        ], $ubah);
     }
 
     public function test_entiti_di_luar_senarai_induk_ditolak_oleh_kawalan_akses(): void
@@ -120,7 +226,7 @@ class Phase12ErrorHandlingTest extends TestCase
             ->post(route('analisis.simpan'), [
                 'sector_code' => self::SEKTOR,
                 'agency_code' => 'KOD-TIDAK-WUJUD',
-                'status_laporan' => 'Muktamad',
+                'status_laporan' => 'Selesai',
                 'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();

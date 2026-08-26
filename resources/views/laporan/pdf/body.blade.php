@@ -75,16 +75,85 @@
         }
 
         /* Kelas berikut menggantikan atribut gaya sebaris pada elemen di bawah. */
-        .laporan-meta {
-            text-align: center;
-        }
-
         .penafian {
             font-size: 10px;
         }
 
-        .lajur-label {
-            width: 220px;
+        /* Pengenalan laporan — sepanduk tajuk + jadual maklumat laporan.
+           SALINAN blok `.laporan-id` dalam resources/scss/laporan-print.scss;
+           kekalkan kedua-duanya selaras (biru #1f6091, kelabu #ededed,
+           sempadan putih, tajuk 17px, baris 14px, sel 11px).
+
+           Setiap pemilih berkembar `.laporan-id` + kelas anak supaya ia
+           mengatasi pemilih elemen h1/p/table/th/td di atas. */
+        .laporan-id .laporan-id__banner {
+            background: #1f6091;
+            padding: 16px 20px;
+            margin: 0 0 14px;
+            text-align: center;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .laporan-id .laporan-id__tajuk,
+        .laporan-id .laporan-id__baris {
+            margin: 0;
+            color: #ffffff;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 0.03em;
+            line-height: 1.35;
+            /* Nama sektor/entiti panjang membalut, bukan melimpah. */
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .laporan-id .laporan-id__tajuk {
+            font-size: 17px;
+        }
+
+        .laporan-id .laporan-id__baris {
+            margin-top: 6px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .laporan-id .laporan-id__jadual {
+            width: 100%;
+            /* Mengunci lajur 32%/68% supaya nilai panjang membalut dalam sel
+               dan jadual tidak melebihi lebar kandungan A4. */
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin: 0 0 18px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .laporan-id .laporan-id__label,
+        .laporan-id .laporan-id__nilai {
+            border: 1px solid #fff;
+            padding: 7px 10px;
+            /* Tiada height tetap — sel meninggi mengikut teks. */
+            vertical-align: middle;
+            font-size: 11px;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .laporan-id .laporan-id__label {
+            width: 32%;
+            background: #1f6091;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: left;
+        }
+
+        .laporan-id .laporan-id__nilai {
+            background: #ededed;
+            color: #111;
+            font-weight: 400;
         }
 
         .lajur-tandatangan {
@@ -99,30 +168,36 @@
 
 <body>
 
-    <h1>Laporan Analisis Inventori Kriptografi</h1>
-    <p class="laporan-meta">
-        <strong>SEKTOR:</strong> {{ $analisis->sector_name }} ·
-        <strong>ENTITI:</strong> {{ $analisis->agency_name }}
-    </p>
+    {{-- Pengenalan laporan — struktur MESTI kekal sama dengan
+         resources/views/laporan/inventori.blade.php (pratonton skrin). --}}
+    <div class="laporan-id">
+        <div class="laporan-id__banner">
+            <h1 class="laporan-id__tajuk">Laporan Analisis Inventori Kriptografi</h1>
+            <div class="laporan-id__baris">Sektor : {{ $analisis->sector_name ?: '—' }}</div>
+            <div class="laporan-id__baris">Entiti : {{ $analisis->agency_name ?: '—' }}</div>
+        </div>
 
-    <table>
-        <tr>
-            <td class="lajur-label"><strong>KLASIFIKASI</strong></td>
-            <td>RAHSIA</td>
-        </tr>
-        <tr>
-            <td><strong>TARIKH LAPORAN</strong></td>
-            <td>{{ $analisis->tarikh_laporan?->format('d/m/Y') ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td><strong>KOD RUJUKAN LAPORAN</strong></td>
-            <td>{{ $analisis->kod_rujukan ?? '—' }}</td>
-        </tr>
-        <tr>
-            <td><strong>STATUS LAPORAN</strong></td>
-            <td>{{ $analisis->status_laporan }}</td>
-        </tr>
-    </table>
+        <table class="laporan-id__jadual">
+            <tbody>
+                <tr>
+                    <th scope="row" class="laporan-id__label">Klasifikasi</th>
+                    <td class="laporan-id__nilai">{{ $klasifikasi }}</td>
+                </tr>
+                <tr>
+                    <th scope="row" class="laporan-id__label">Tarikh Laporan</th>
+                    <td class="laporan-id__nilai">{{ $analisis->tarikh_laporan?->format('d/m/Y') ?? '—' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row" class="laporan-id__label">Kod Rujukan Laporan</th>
+                    <td class="laporan-id__nilai">{{ $analisis->kod_rujukan ?: '—' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row" class="laporan-id__label">Status Laporan</th>
+                    <td class="laporan-id__nilai">{{ $analisis->status_laporan ?: '—' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <h2>Tujuan</h2>
     <p>

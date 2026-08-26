@@ -16,6 +16,7 @@ use App\Support\Halaman;
 use App\Support\SeksyenAnalisis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class AnalisisInventoriController extends Controller
 {
@@ -187,13 +188,26 @@ class AnalisisInventoriController extends Controller
         // dilarang, walaupun permintaan dihantar terus tanpa melalui borang.
         $this->access->authorize($request->user(), $request->input('agency_code'));
 
+        // Kod rujukan dan status laporan mengikut templat rasmi Laporan
+        // Analisis Inventori Kriptografi; senarai nilainya disimpan dalam
+        // config/kriptografi.php supaya borang, laporan dan pengesahan
+        // tidak terpesong. Pengesahan ini hanya dikenakan pada SIMPANAN
+        // MUKTAMAD — laluan draf (AnalisisInventoriController@draf) sengaja
+        // membenarkan kod separa supaya kerja boleh disimpan pertengahan.
         $sah = $request->validate([
             'sector_code' => ['required', 'string'],
             'agency_code' => ['required', 'string'],
             'tarikh_laporan' => ['nullable', 'date'],
-            'kod_rujukan' => ['nullable', 'string', 'max:255'],
-            'status_laporan' => ['required', 'in:Muktamad,Muktamad dengan Catatan,Memerlukan Tindakan Susulan'],
+            'kod_rujukan' => [
+                'nullable', 'string', 'max:255',
+                'regex:/^'.config('kriptografi.kod_rujukan.corak').'$/',
+            ],
+            'status_laporan' => ['required', Rule::in(config('kriptografi.status_laporan'))],
             'ringkasan_data' => ['required', 'in:lengkap,catatan,pengesahan,terhad'],
+        ], [
+            'kod_rujukan.regex' => 'Kod Rujukan Laporan mesti mengikut format '
+                .config('kriptografi.kod_rujukan.format')
+                .' (cth. '.config('kriptografi.kod_rujukan.contoh').').',
         ]);
 
         [$sektor, $agensi] = $this->sahkanEntiti($sah['sector_code'], $sah['agency_code']);

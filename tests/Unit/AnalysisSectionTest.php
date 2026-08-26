@@ -46,7 +46,7 @@ class AnalysisSectionTest extends TestCase
         $borang = [
             'tarikh_laporan' => '2026-08-16',
             'kod_rujukan' => 'PTPKM/INV/2026/001',
-            'status_laporan' => 'Muktamad',
+            'status_laporan' => 'Selesai',
             'ringkasan_data' => 'lengkap',
             'data_status' => ['j0' => ['penerimaan' => 'Diterima']],
             'profil' => ['Pelayan' => ['jumlah' => 3, 'nota' => '']],

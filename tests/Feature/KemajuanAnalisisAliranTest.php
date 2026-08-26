@@ -98,8 +98,8 @@ class KemajuanAnalisisAliranTest extends TestCase
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
             'tarikh_laporan' => '2026-08-20',
-            'kod_rujukan' => 'PTPKM/INV/2026/007',
-            'status_laporan' => 'Muktamad',
+            'kod_rujukan' => 'R-LP-MIG-4-0007-V1.0',
+            'status_laporan' => 'Selesai',
             'ringkasan_data' => 'lengkap',
             // Tiada medan 'selesai': kotak semak itu telah dibuang, dan
             // menekan "Hantar" itu sendirilah pengisytiharan siap.
@@ -915,15 +915,15 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->post(route('analisis.draf'), [
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
-            'kod_rujukan' => 'CUBA-UBAH',
+            'kod_rujukan' => 'R-LP-MIG-4-0007-V9.9',
         ])->assertSessionHasErrors('agency_code');
 
-        $this->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'CUBA-UBAH']))
+        $this->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'R-LP-MIG-4-0007-V9.9']))
             ->assertSessionHasErrors('agency_code');
 
         $this->assertDatabaseMissing('analisis_inventori', [
             'agency_code' => self::ALPHA,
-            'kod_rujukan' => 'CUBA-UBAH',
+            'kod_rujukan' => 'R-LP-MIG-4-0007-V9.9',
         ]);
     }
 
@@ -942,12 +942,12 @@ class KemajuanAnalisisAliranTest extends TestCase
             ]))
             ->assertOk();
 
-        $this->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'PTPKM/INV/2026/007-A']))
+        $this->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'R-LP-MIG-4-0007-V1.1']))
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('analisis_inventori', [
             'agency_code' => self::ALPHA,
-            'kod_rujukan' => 'PTPKM/INV/2026/007-A',
+            'kod_rujukan' => 'R-LP-MIG-4-0007-V1.1',
         ]);
     }
 
@@ -958,7 +958,7 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->actingAs($this->kb)->post(route('kemajuan.sahkan', self::ALPHA));
 
         $this->actingAs($this->pa->fresh())
-            ->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'SELEPAS-SAH']))
+            ->post(route('analisis.simpan'), $this->dapatan(['kod_rujukan' => 'R-LP-MIG-4-0007-V2.0']))
             ->assertSessionHasErrors('agency_code');
     }
 

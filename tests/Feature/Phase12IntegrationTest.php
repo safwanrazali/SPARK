@@ -117,8 +117,8 @@ class Phase12IntegrationTest extends TestCase
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
             'tarikh_laporan' => '2026-08-16',
-            'kod_rujukan' => 'PTPKM/INV/2026/001',
-            'status_laporan' => 'Muktamad dengan Catatan',
+            'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
+            'status_laporan' => 'Memerlukan Tindakan Susulan',
             'ringkasan_data' => 'catatan',
             'data_status' => [
                 'j0' => ['penerimaan' => 'Diterima', 'kebolehgunaan' => 'Boleh Digunakan', 'nota' => ''],
@@ -224,7 +224,7 @@ class Phase12IntegrationTest extends TestCase
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
             'seksyen' => 'maklumat',
-            'kod_rujukan' => 'PTPKM/INV/2026/001',
+            'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'tarikh_laporan' => '2026-08-16',
         ])->assertRedirect();
 
@@ -240,7 +240,7 @@ class Phase12IntegrationTest extends TestCase
         $this->get(route('analisis.borang', [
             'sector_code' => self::SEKTOR,
             'agency_code' => self::ALPHA,
-        ]))->assertOk()->assertSee('PTPKM/INV/2026/001', false);
+        ]))->assertOk()->assertSee('R-LP-MIG-4-0001-V1.0', false);
 
         // 9 ── Simpanan muktamad: dapatan penuh + tanda selesai.
         $this->post(route('analisis.simpan'), $this->dapatanAnalisis(['selesai' => '1']))
@@ -248,8 +248,8 @@ class Phase12IntegrationTest extends TestCase
 
         $analisis->refresh();
         $this->assertTrue((bool) $analisis->selesai);
-        $this->assertSame('PTPKM/INV/2026/001', $analisis->kod_rujukan);
-        $this->assertSame('Muktamad dengan Catatan', $analisis->status_laporan);
+        $this->assertSame('R-LP-MIG-4-0001-V1.0', $analisis->kod_rujukan);
+        $this->assertSame('Memerlukan Tindakan Susulan', $analisis->status_laporan);
 
         // Checkbox algoritma: hanya yang ditanda direkodkan.
         $this->assertArrayHasKey('Simetrik Blok|AES', $analisis->data['algoritma']);
@@ -566,7 +566,7 @@ class Phase12IntegrationTest extends TestCase
             ->assertSee(self::ALPHA)
             ->assertSee('Semakan Awal Data')          // workflow
             ->assertSee('Pegawai Analisis A')          // penugasan
-            ->assertSee('PTPKM/INV/2026/001')          // dapatan analisis
+            ->assertSee('R-LP-MIG-4-0001-V1.0')          // dapatan analisis
             ->assertSee('Dalam Proses')                // status laporan
             ->assertSee('Status Peringkat Analisis Berubah'); // sejarah
     }
@@ -723,7 +723,7 @@ class Phase12IntegrationTest extends TestCase
     public function test_laporan_tanpa_dapatan_tidak_menyebabkan_ralat(): void
     {
         $kosong = AnalisisInventori::create(SektorDirectory::cariEntiti(self::ALPHA) + [
-            'status_laporan' => 'Muktamad',
+            'status_laporan' => 'Selesai',
             'data' => [],
             'selesai' => false,
             'user_id' => $this->analystA->id,

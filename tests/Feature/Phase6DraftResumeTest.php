@@ -76,9 +76,9 @@ class Phase6DraftResumeTest extends TestCase
         return array_merge([
             'sector_code' => '001',
             'agency_code' => self::ENTITI,
-            'kod_rujukan' => 'PTPKM/INV/2026/001',
+            'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'tarikh_laporan' => '2026-08-14',
-            'status_laporan' => 'Muktamad',
+            'status_laporan' => 'Selesai',
             'ringkasan_data' => 'lengkap',
             'kesimpulan_lain' => 'Kesimpulan akhir.',
         ], $tambahan);
@@ -221,7 +221,7 @@ class Phase6DraftResumeTest extends TestCase
         $analisis->refresh();
 
         $this->assertTrue($analisis->selesai);
-        $this->assertSame('PTPKM/INV/2026/001', $analisis->kod_rujukan);
+        $this->assertSame('R-LP-MIG-4-0001-V1.0', $analisis->kod_rujukan);
         $this->assertSame('TLS', $analisis->data['protokol'][0]['nama']);
         $this->assertSame('Draf awal kesimpulan.', $analisis->data['kesimpulan_lain']);
 
@@ -526,6 +526,6 @@ class Phase6DraftResumeTest extends TestCase
         $this->actingAs($this->analyst)
             ->get(route('laporan.inventori', $analisis))
             ->assertOk()
-            ->assertSee('PTPKM/INV/2026/001');
+            ->assertSee('R-LP-MIG-4-0001-V1.0');
     }
 }

@@ -21,8 +21,10 @@ class AnalisisInventoriFactory extends Factory
             'agency_code' => fake()->unique()->bothify('A######'),
             'agency_name' => fake()->company(),
             'tarikh_laporan' => now()->toDateString(),
-            'kod_rujukan' => 'REF-'.fake()->unique()->numerify('####'),
-            'status_laporan' => 'Muktamad',
+            // Mengikut format rasmi R-LP-MIG-4-****-V*.* supaya rekod kilang
+            // lulus pengesahan AnalisisInventoriController@simpan.
+            'kod_rujukan' => 'R-LP-MIG-4-'.fake()->unique()->numerify('####').'-V1.0',
+            'status_laporan' => 'Selesai',
             // Struktur mesti sepadan dengan yang ditulis oleh
             // AnalisisInventoriController@simpan supaya templat laporan
             // boleh dirender dalam ujian.

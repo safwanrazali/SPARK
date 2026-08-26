@@ -338,7 +338,7 @@ class Phase4AccessControlTest extends TestCase
             ->post(route('analisis.simpan'), [
                 'sector_code' => '001',
                 'agency_code' => self::BETA,
-                'status_laporan' => 'Muktamad',
+                'status_laporan' => 'Selesai',
                 'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();
@@ -430,7 +430,7 @@ class Phase4AccessControlTest extends TestCase
             ->postJson(route('analisis.simpan'), [
                 'sector_code' => '001',
                 'agency_code' => self::BETA,
-                'status_laporan' => 'Muktamad',
+                'status_laporan' => 'Selesai',
                 'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();

@@ -72,6 +72,13 @@ class LaporanController extends Controller
             ->showBrowserHeaderAndFooter()
             ->headerHtml($headerHtml)
             ->footerHtml($footerHtml)
+            // printBackground: TANPA ini Chrome menggugurkan SETIAP latar CSS
+            // semasa mencetak ke PDF — sepanduk biru pengenalan laporan, sel
+            // kelabu jadual maklumat dan latar <th> jadual laporan menjadi
+            // putih, lalu teks putih di atasnya hilang sama sekali. Ia tidak
+            // menjejaskan kepala/kaki halaman: kedua-duanya menggunakan <img>
+            // dan teks sahaja, tiada latar CSS.
+            ->showBackground()
             // Margin atas MESTI lebih besar daripada tinggi kotak-margin
             // header (kini ~37mm), kerana header dilukis di dalam ruang
             // margin ini pada SETIAP muka surat. Bakinya (47-37=10mm)
@@ -122,6 +129,7 @@ class LaporanController extends Controller
             'kuantum' => $kuantum,
             'jumlahAset' => $jumlahAset,
             'kesimpulanLapuk' => $kesimpulanLapuk,
+            'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'ringkasanData' => config('kriptografi.ringkasan_data.'.($data['ringkasan_data'] ?? 'lengkap')),
             'tindakanBank' => config('kriptografi.tindakan_susulan'),
             'kesimpulanBank' => config('kriptografi.kesimpulan'),
