@@ -201,6 +201,23 @@ class LaporanController extends Controller
             ];
         }
 
+        // Cadangan tindakan susulan: ayat piawai yang DIPILIH pegawai daripada
+        // bank dalam config, disusun mengikut indeks bank supaya urutannya
+        // stabil, diikuti tindakan "Lain-lain" yang ditaip sendiri. Tiada
+        // cadangan dijana sendiri oleh sistem.
+        $tindakan = collect($data['tindakan'] ?? [])
+            ->sort()
+            ->map(fn ($i) => config('kriptografi.tindakan_susulan')[$i]['tindakan'] ?? null)
+            ->filter()
+            ->values()
+            ->all();
+
+        // Tindakan tambahan boleh lebih daripada satu; semuanya menyusul
+        // selepas ayat piawai yang dipilih daripada bank.
+        foreach (BorangAnalisis::senaraiTeks($data['tindakan_lain'] ?? null) as $satu) {
+            $tindakan[] = $satu;
+        }
+
         $lapuk = $analisis->algoritmaLapuk();
         $kuantum = $analisis->algoritmaKuantum();
 
@@ -242,7 +259,7 @@ class LaporanController extends Controller
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'failSumber' => $failSumber,
             'bilanganFail' => self::ejaBilangan(count($failSumber)),
-            'tindakanBank' => config('kriptografi.tindakan_susulan'),
+            'tindakan' => $tindakan,
             'kesimpulanBank' => config('kriptografi.kesimpulan'),
             'pengesahan' => config('kriptografi.pengesahan_laporan'),
         ];

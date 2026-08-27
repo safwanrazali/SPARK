@@ -59,7 +59,7 @@ class BorangAnalisis
             'vendor' => self::baris($request, 'vendor', ['nama', 'produk', 'bilangan']),
 
             'tindakan' => array_map('intval', (array) $request->input('tindakan', [])),
-            'tindakan_lain' => trim((string) $request->input('tindakan_lain', '')),
+            'tindakan_lain' => self::senaraiTeks($request->input('tindakan_lain')),
 
             'kesimpulan' => array_values(array_intersect(
                 (array) $request->input('kesimpulan', []),

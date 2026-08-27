@@ -685,3 +685,29 @@
 .laporan-seksyen .laporan-jadual-vendor__lajur-bilangan {
     width: 22%;
 }
+
+/* Senarai bernombor "Cadangan Tindakan Susulan".
+   Setiap tindakan boleh menjadi perenggan panjang, jadi item DIBENARKAN
+   terbelah antara muka surat; orphans/widows menghalang baris tunggal
+   tergantung. `break-inside: avoid` akan menolak tindakan panjang secara
+   keseluruhan ke muka surat berikut dan meninggalkan ruang kosong besar. */
+.laporan-seksyen .laporan-seksyen__senarai-tindakan {
+    margin: 0;
+    padding-left: 26px;
+    list-style-type: decimal;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-tindakan li {
+    margin-bottom: 8px;
+    padding-left: 4px;
+    text-align: justify;
+    line-height: 1.55;
+    orphans: 2;
+    widows: 2;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-tindakan li:last-child {
+    margin-bottom: 0;
+}

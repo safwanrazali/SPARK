@@ -580,6 +580,33 @@
             width: 22%;
         }
 
+
+        /* Senarai bernombor "Cadangan Tindakan Susulan".
+           Setiap tindakan boleh menjadi perenggan panjang, jadi item DIBENARKAN
+           terbelah antara muka surat; orphans/widows menghalang baris tunggal
+           tergantung. `break-inside: avoid` akan menolak tindakan panjang secara
+           keseluruhan ke muka surat berikut dan meninggalkan ruang kosong besar. */
+        .laporan-seksyen .laporan-seksyen__senarai-tindakan {
+            margin: 0;
+            padding-left: 26px;
+            list-style-type: decimal;
+        }
+
+        .laporan-seksyen .laporan-seksyen__senarai-tindakan li {
+            margin-bottom: 8px;
+            padding-left: 4px;
+            text-align: justify;
+            line-height: 1.55;
+            orphans: 2;
+            widows: 2;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .laporan-seksyen .laporan-seksyen__senarai-tindakan li:last-child {
+            margin-bottom: 0;
+        }
+
         .lajur-tandatangan {
             width: 120px;
         }
@@ -1114,35 +1141,28 @@
     </section>
 
 
-    <h2>Cadangan Tindakan Susulan</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Bil.</th>
-                <th>Cadangan Tindakan Susulan</th>
-                <th>Kategori Tindakan</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php $bil = 0; @endphp
-            @foreach (collect($data['tindakan'] ?? [])->sort() as $indeks)
-                @if (isset($tindakanBank[$indeks]))
-                    <tr>
-                        <td>{{ ++$bil }}.</td>
-                        <td>{{ $tindakanBank[$indeks]['tindakan'] }}</td>
-                        <td>{{ $tindakanBank[$indeks]['kategori'] }}</td>
-                    </tr>
-                @endif
-            @endforeach
-            @if ($data['tindakan_lain'] ?? false)
-                <tr>
-                    <td>{{ ++$bil }}.</td>
-                    <td>{{ $data['tindakan_lain'] }}</td>
-                    <td>Lain-lain</td>
-                </tr>
-            @endif
-        </tbody>
-    </table>
+    <section class="laporan-seksyen">
+        <h2 class="laporan-seksyen__tajuk">Cadangan Tindakan Susulan</h2>
+
+        @if (count($tindakan))
+            <p class="laporan-seksyen__perenggan">
+                Berdasarkan dapatan analisis, entiti disarankan untuk melaksanakan tindakan berikut:
+            </p>
+
+            {{-- SATU <ol> sahaja: memecahkannya kepada beberapa senarai akan
+                 menyebabkan nombor bermula semula dari 1 apabila laporan terbelah
+                 antara muka surat PDF. --}}
+            <ol class="laporan-seksyen__senarai-tindakan">
+                @foreach ($tindakan as $satu)
+                    <li>{{ $satu }}</li>
+                @endforeach
+            </ol>
+        @else
+            <p class="laporan-seksyen__perenggan">
+                Tiada cadangan tindakan susulan direkodkan berdasarkan dapatan analisis.
+            </p>
+        @endif
+    </section>
 
     <h2>Kesimpulan</h2>
     @foreach ($data['kesimpulan'] ?? [] as $id)

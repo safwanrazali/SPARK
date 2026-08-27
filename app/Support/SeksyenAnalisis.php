@@ -156,7 +156,8 @@ class SeksyenAnalisis
             'vendor' => ! empty($nilai['vendor'])
                 || self::adaTeks($nilai['ulasan_vendor'] ?? null),
 
-            'tindakan' => ! empty($nilai['tindakan']) || self::adaTeks($nilai['tindakan_lain'] ?? null),
+            'tindakan' => ! empty($nilai['tindakan'])
+                || BorangAnalisis::senaraiTeks($nilai['tindakan_lain'] ?? null) !== [],
 
             'kesimpulan' => ! empty($nilai['kesimpulan']) || self::adaTeks($nilai['kesimpulan_lain'] ?? null),
 
