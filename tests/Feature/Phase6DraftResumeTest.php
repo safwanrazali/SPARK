@@ -79,7 +79,10 @@ class Phase6DraftResumeTest extends TestCase
             'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'tarikh_laporan' => '2026-08-14',
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
+            // Kandungan seksyen "Status Data Diterima". Dahulunya seksyen ini
+            // dikira terisi melalui `ringkasan_data`; medan itu telah dibuang,
+            // jadi fail sumber kini yang menandakannya.
+            'fail_sumber' => ['LAMPIRAN A - BUKU KERJA MIGRASI PQC'],
             'kesimpulan_lain' => 'Kesimpulan akhir.',
         ], $tambahan);
     }
@@ -116,7 +119,7 @@ class Phase6DraftResumeTest extends TestCase
 
     public function test_draf_menyimpan_data_separa_tanpa_pengesahan_penuh(): void
     {
-        // Tiada status_laporan mahupun ringkasan_data — simpanan muktamad
+        // Tiada status_laporan — simpanan muktamad
         // akan menolaknya, tetapi draf mesti diterima.
         $this->actingAs($this->analyst)
             ->post(route('analisis.draf'), $this->borangSepara())

@@ -22,7 +22,7 @@ class SeksyenAnalisis
         ],
         'data_status' => [
             'label' => '2 · Status Data Diterima',
-            'medan' => ['data_status', 'ringkasan_data'],
+            'medan' => ['data_status', 'fail_sumber'],
         ],
         'profil' => [
             'label' => '3 · Profil Sistem dan Aset',
@@ -130,8 +130,13 @@ class SeksyenAnalisis
             'maklumat' => self::adaTeks($nilai['tarikh_laporan'] ?? null)
                 || self::adaTeks($nilai['kod_rujukan'] ?? null),
 
-            'data_status' => self::adaTeks($nilai['ringkasan_data'] ?? null)
-                || collect($nilai['data_status'] ?? [])->contains(fn ($j) => self::adaTeks($j['nota'] ?? null)),
+            // `nota` kini senarai penerangan (lihat BorangAnalisis::penerangan).
+            // adaTeks() bersandarkan is_scalar, jadi memanggilnya terus pada
+            // senarai akan sentiasa memberi FALSE dan chip "seksyen diisi"
+            // tidak akan menyala walaupun pegawai telah mengisi penerangan.
+            'data_status' => BorangAnalisis::senaraiTeks($nilai['fail_sumber'] ?? null) !== []
+                || collect($nilai['data_status'] ?? [])
+                    ->contains(fn ($j) => BorangAnalisis::senaraiTeks($j['nota'] ?? null) !== []),
 
             'profil' => collect($nilai['profil'] ?? [])->contains(
                 fn ($p) => (int) ($p['jumlah'] ?? 0) > 0 || self::adaTeks($p['nota'] ?? null)

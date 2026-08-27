@@ -29,11 +29,10 @@ class AnalisisInventoriFactory extends Factory
             // AnalisisInventoriController@simpan supaya templat laporan
             // boleh dirender dalam ujian.
             'data' => [
-                'ringkasan_data' => 'lengkap',
                 'data_status' => [
-                    'j0' => ['penerimaan' => 'Diterima', 'kebolehgunaan' => 'Boleh Digunakan', 'nota' => ''],
-                    'j1' => ['penerimaan' => 'Diterima', 'kebolehgunaan' => 'Boleh Digunakan', 'nota' => ''],
-                    'j2' => ['penerimaan' => 'Tiada', 'kebolehgunaan' => 'Tidak Boleh Digunakan', 'nota' => ''],
+                    'j0' => ['kebolehgunaan' => 'Lengkap', 'nota' => ''],
+                    'j1' => ['kebolehgunaan' => 'Lengkap', 'nota' => ''],
+                    'j2' => ['kebolehgunaan' => 'Tidak Lengkap', 'nota' => ''],
                 ],
                 'profil' => [
                     'Sistem/Aplikasi' => ['jumlah' => 5, 'nota' => ''],

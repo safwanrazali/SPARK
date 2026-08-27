@@ -38,8 +38,13 @@ class BorangAnalisis
             'kod_rujukan' => $request->input('kod_rujukan') ?: null,
             'status_laporan' => $request->input('status_laporan') ?: null,
 
-            'ringkasan_data' => $request->input('ringkasan_data') ?: null,
             'data_status' => self::dataStatus($request),
+
+            // Fail rujukan yang menjadi sumber analisis, dipaparkan di bawah
+            // "Catatan:" dalam laporan. Direkodkan sebagai input borang kerana
+            // aliran pelaporan tidak boleh bergantung pada modul muat naik
+            // (spesifikasi bahagian 3).
+            'fail_sumber' => self::senaraiTeks($request->input('fail_sumber')),
             'profil' => self::profil($request),
             'algoritma' => self::algoritma($request),
             'algoritma_lain' => trim((string) $request->input('algoritma_lain', '')),
@@ -96,7 +101,6 @@ class BorangAnalisis
         $lajur['status_laporan'] ??= config('kriptografi.status_laporan')[0];
 
         $data = collect($borang)->except(self::MEDAN_LAJUR)->all();
-        $data['ringkasan_data'] ??= 'lengkap';
 
         return [
             'lajur' => $lajur,
@@ -105,17 +109,50 @@ class BorangAnalisis
     }
 
     /**
-     * @return array<string, array<string, string>>
+     * Normalkan medan teks boleh-berbilang kepada senarai rata.
+     *
+     * Digunakan oleh `data_status.*.nota` (penerangan status) dan
+     * `fail_sumber` (senarai fail rujukan). Kedua-duanya dihantar sebagai
+     * beberapa input bernama `[]`.
+     *
+     * `nota` dahulunya SATU rentetan (medan teks tunggal), jadi fungsi ini
+     * menerima KEDUA-DUA bentuk supaya rekod lama terus terbaca tanpa migrasi
+     * data: rentetan menjadi senarai satu item, dan nilai kosong digugurkan
+     * supaya baris tidak memaparkan penerangan kosong.
+     *
+     * @return list<string>
+     */
+    public static function senaraiTeks(mixed $nota): array
+    {
+        if ($nota === null) {
+            return [];
+        }
+
+        $senarai = is_array($nota) ? $nota : [$nota];
+
+        return array_values(array_filter(
+            array_map(fn ($n) => is_scalar($n) ? trim((string) $n) : '', $senarai),
+            fn ($n) => $n !== '',
+        ));
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
      */
     private static function dataStatus(Request $request): array
     {
+        $pilihan = config('kriptografi.kebolehgunaan_data');
+
+        // Lalai ialah pilihan TERAKHIR ("Tidak Lengkap"): jadual yang tidak
+        // disentuh oleh pegawai tidak boleh dianggap lengkap secara senyap.
+        $lalai = $pilihan[count($pilihan) - 1] ?? null;
+
         $status = [];
 
         foreach (['j0', 'j1', 'j2'] as $j) {
             $status[$j] = [
-                'penerimaan' => $request->input("data_status.$j.penerimaan", 'Tiada'),
-                'kebolehgunaan' => $request->input("data_status.$j.kebolehgunaan", 'Tidak Boleh Digunakan'),
-                'nota' => $request->input("data_status.$j.nota", ''),
+                'kebolehgunaan' => $request->input("data_status.$j.kebolehgunaan", $lalai),
+                'nota' => self::senaraiTeks($request->input("data_status.$j.nota")),
             ];
         }
 

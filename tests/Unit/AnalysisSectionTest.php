@@ -47,8 +47,8 @@ class AnalysisSectionTest extends TestCase
             'tarikh_laporan' => '2026-08-16',
             'kod_rujukan' => 'PTPKM/INV/2026/001',
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
-            'data_status' => ['j0' => ['penerimaan' => 'Diterima']],
+            'data_status' => ['j0' => ['kebolehgunaan' => 'Lengkap']],
+            'fail_sumber' => ['LAMPIRAN A - BUKU KERJA MIGRASI PQC'],
             'profil' => ['Pelayan' => ['jumlah' => 3, 'nota' => '']],
             'algoritma' => ['Simetrik Blok|AES' => ['bilangan' => '3', 'nota' => '']],
             'algoritma_lain' => '',
@@ -92,7 +92,12 @@ class AnalysisSectionTest extends TestCase
         $this->assertTrue(SeksyenAnalisis::adaKandungan('maklumat', ['kod_rujukan' => 'REF-1']));
         $this->assertFalse(SeksyenAnalisis::adaKandungan('maklumat', ['kod_rujukan' => '   ']));
 
-        $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', ['ringkasan_data' => 'lengkap']));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
+            'fail_sumber' => ['LAMPIRAN A'],
+        ]));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
+            'data_status' => ['j0' => ['nota' => ['perlu pengesahan', 'medan kosong']]],
+        ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
             'data_status' => ['j0' => ['nota' => 'perlu pengesahan']],
         ]));

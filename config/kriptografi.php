@@ -35,13 +35,6 @@ return [
 
     'kategori_profil' => ['Sistem/Aplikasi', 'Pelayan', 'Peranti', 'Lain-lain'],
 
-    'ringkasan_data' => [
-        'lengkap' => 'Berdasarkan semakan yang dilaksanakan, data inventori kriptografi yang diterima didapati lengkap, konsisten dan mempunyai kesinambungan yang mencukupi untuk digunakan bagi tujuan analisis.',
-        'catatan' => 'Berdasarkan semakan yang dilaksanakan, data inventori kriptografi yang diterima boleh digunakan bagi tujuan analisis. Walau bagaimanapun, terdapat beberapa isu yang memerlukan tindakan susulan oleh entiti sebelum pelaksanaan fasa migrasi PQC yang seterusnya dapat diteruskan.',
-        'pengesahan' => 'Berdasarkan semakan yang dilaksanakan, terdapat maklumat tertentu yang memerlukan pengesahan lanjut daripada entiti sebelum analisis dapat dimuktamadkan.',
-        'terhad' => 'Semakan mendapati data yang diterima mempunyai keterbatasan yang ketara dari segi kelengkapan, ketepatan, konsistensi atau kesinambungan. Analisis hanya dapat dilaksanakan berdasarkan maklumat yang tersedia dan dapatan hendaklah dianggap sebagai penilaian awal serta tertakluk kepada pengesahan lanjut.',
-    ],
-
     'tindakan_susulan' => [
         ['tindakan' => 'Mengemas kini Jadual 0–2 berdasarkan pembetulan dan pengesahan yang telah dilaksanakan serta mengemukakan semula data yang dikemas kini melalui saluran yang ditetapkan.', 'kategori' => 'Pengemaskinian inventori'],
         ['tindakan' => 'Memastikan setiap rekod dalam Jadual 0 mempunyai pemetaan yang jelas dan konsisten kepada rekod berkaitan dalam SBOM dan CBOM melalui pengenal unik sistem atau aset.', 'kategori' => 'Pemetaan dan kesinambungan data'],
@@ -95,6 +88,23 @@ return [
     // oleh migrasi 2026_08_26_000001_selaraskan_status_laporan_analisis.
     // Pilihan pertama ialah nilai lalai bagi simpanan muktamad dan draf baharu.
     'status_laporan' => ['Selesai', 'Memerlukan Tindakan Susulan'],
+
+    // Status kebolehgunaan bagi setiap Jadual 0-2 — DUA pilihan sahaja
+    // mengikut templat rasmi. Nilai lama ('Boleh Digunakan', 'Boleh Digunakan
+    // dengan Catatan', 'Memerlukan Pengesahan', 'Tidak Boleh Digunakan')
+    // telah dipetakan oleh migrasi
+    // 2026_08_26_000002_selaraskan_status_kebolehgunaan_data.
+    // Pilihan pertama ialah nilai lalai borang.
+    'kebolehgunaan_data' => ['Lengkap', 'Tidak Lengkap'],
+
+    // Perkataan bilangan bagi ayat Catatan dalam seksyen Status Penerimaan
+    // dan Kebolehgunaan Data ("Maklumat diperoleh daripada satu (1) fail
+    // berikut"). Bilangan di luar senarai ini jatuh kembali kepada digit
+    // sahaja, jadi senarai pendek memadai.
+    'bilangan_perkataan' => [
+        1 => 'satu', 2 => 'dua', 3 => 'tiga', 4 => 'empat', 5 => 'lima',
+        6 => 'enam', 7 => 'tujuh', 8 => 'lapan', 9 => 'sembilan', 10 => 'sepuluh',
+    ],
 
     // Klasifikasi keselamatan dokumen, dipaparkan dalam jadual maklumat
     // laporan. Disimpan di sini kerana ia satu nilai dasar peringkat sistem,

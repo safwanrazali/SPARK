@@ -100,7 +100,6 @@ class KemajuanAnalisisAliranTest extends TestCase
             'tarikh_laporan' => '2026-08-20',
             'kod_rujukan' => 'R-LP-MIG-4-0007-V1.0',
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
             // Tiada medan 'selesai': kotak semak itu telah dibuang, dan
             // menekan "Hantar" itu sendirilah pengisytiharan siap.
         ], $ubah);

@@ -95,31 +95,83 @@
             </p>
         </section>
 
-        <h2>Status Data Diterima</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Bil.</th>
-                    <th>Komponen</th>
-                    <th>Status Penerimaan</th>
-                    <th>Status Kebolehgunaan</th>
-                    <th>Pemerhatian</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (['j0' => 'Jadual 0 : Inventori', 'j1' => 'Jadual 1 : SBOM', 'j2' => 'Jadual 2 : CBOM'] as $kunci => $nama)
-                    @php $baris = $data['data_status'][$kunci] ?? []; @endphp
+        {{-- STATUS PENERIMAAN DAN KEBOLEHGUNAAN DATA — gaya .laporan-seksyen /
+             .laporan-jadual dalam resources/scss/laporan-print.scss. Struktur dan
+             teks MESTI kekal sama dengan pasangannya dalam
+             resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
+        <section class="laporan-seksyen">
+            <h2 class="laporan-seksyen__tajuk">Status Penerimaan dan Kebolehgunaan Data</h2>
+
+            <p class="laporan-seksyen__perenggan">
+                Bahagian ini merumuskan status penerimaan dan kebolehgunaan data inventori kriptografi
+                yang dikemukakan melalui Jadual 0–2. Penilaian dilaksanakan berdasarkan aspek
+                kelengkapan, kejelasan dan konsistensi data bagi menentukan kesesuaiannya untuk tujuan
+                analisis.
+            </p>
+
+            <table class="laporan-jadual">
+                {{-- Lebar lajur MESTI diisytiharkan di sini. Dengan
+                     `table-layout: fixed`, hanya BARIS PERTAMA yang menentukan lebar
+                     lajur; meletakkan `width` pada <td> dalam <tbody> tidak memberi
+                     kesan dan jadual akan terbahagi sama rata. --}}
+                <colgroup>
+                    <col class="laporan-jadual__lajur-bil">
+                    <col class="laporan-jadual__lajur-komponen">
+                    <col class="laporan-jadual__lajur-status">
+                </colgroup>
+                <thead>
                     <tr>
-                        <td>{{ $loop->iteration }}.</td>
-                        <td>{{ $nama }}</td>
-                        <td>{{ $baris['penerimaan'] ?? '—' }}</td>
-                        <td>{{ $baris['kebolehgunaan'] ?? '—' }}</td>
-                        <td>{{ $baris['nota'] ?? '' ?: '—' }}</td>
+                        <th class="laporan-jadual__kepala">Bil.</th>
+                        <th class="laporan-jadual__kepala">Komponen</th>
+                        <th class="laporan-jadual__kepala">Status Kebolehgunaan</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-        <p><strong>Ringkasan status data:</strong> {{ $ringkasanData }}</p>
+                </thead>
+                <tbody>
+                    @foreach (['j0' => 'Jadual 0 : Inventori', 'j1' => 'Jadual 1: Software Bill of Materials (SBOM)', 'j2' => 'Jadual 2: Cryptographic Bill of Materials (CBOM)'] as $kunci => $nama)
+                        @php
+                            $baris = $data['data_status'][$kunci] ?? [];
+                            $penerangan = \App\Support\BorangAnalisis::senaraiTeks($baris['nota'] ?? null);
+                        @endphp
+                        <tr>
+                            <td class="laporan-jadual__bil">{{ $loop->iteration }}.</td>
+                            <td class="laporan-jadual__komponen">{{ $nama }}</td>
+                            <td class="laporan-jadual__status">
+                                <span class="laporan-jadual__status-nilai">{{ $baris['kebolehgunaan'] ?? '—' }}</span>
+                                @if (count($penerangan) > 1)
+                                    <ol class="laporan-jadual__penerangan">
+                                        @foreach ($penerangan as $titik)
+                                            <li>{{ $titik }}</li>
+                                        @endforeach
+                                    </ol>
+                                @elseif (count($penerangan) === 1)
+                                    <p class="laporan-jadual__penerangan-tunggal">{{ $penerangan[0] }}</p>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+
+            <p class="laporan-seksyen__catatan-tajuk">Catatan:</p>
+            @if (count($failSumber))
+                <p class="laporan-seksyen__perenggan">
+                    Maklumat diperoleh daripada {{ $bilanganFail }} fail berikut:
+                </p>
+                <ol class="laporan-seksyen__senarai-fail">
+                    @foreach ($failSumber as $fail)
+                        <li>
+                            {{ $fail }}
+                            (dirujuk sebagai <strong>FAIL {{ $loop->iteration }}</strong> dalam laporan ini).
+                        </li>
+                    @endforeach
+                </ol>
+            @else
+                <p class="laporan-seksyen__perenggan">
+                    Tiada fail sumber direkodkan bagi entiti ini.
+                </p>
+            @endif
+        </section>
 
         <h2>Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
 

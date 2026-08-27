@@ -339,7 +339,6 @@ class Phase4AccessControlTest extends TestCase
                 'sector_code' => '001',
                 'agency_code' => self::BETA,
                 'status_laporan' => 'Selesai',
-                'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();
 
@@ -431,7 +430,6 @@ class Phase4AccessControlTest extends TestCase
                 'sector_code' => '001',
                 'agency_code' => self::BETA,
                 'status_laporan' => 'Selesai',
-                'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();
 

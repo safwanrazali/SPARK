@@ -201,7 +201,6 @@ class Phase8AuditTrailTest extends TestCase
             'sector_code' => '001',
             'agency_code' => self::ALPHA,
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
             'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'selesai' => '1',
         ]);

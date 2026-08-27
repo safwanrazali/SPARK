@@ -119,11 +119,10 @@ class Phase12IntegrationTest extends TestCase
             'tarikh_laporan' => '2026-08-16',
             'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'status_laporan' => 'Memerlukan Tindakan Susulan',
-            'ringkasan_data' => 'catatan',
             'data_status' => [
-                'j0' => ['penerimaan' => 'Diterima', 'kebolehgunaan' => 'Boleh Digunakan', 'nota' => ''],
-                'j1' => ['penerimaan' => 'Diterima', 'kebolehgunaan' => 'Boleh Digunakan', 'nota' => ''],
-                'j2' => ['penerimaan' => 'Tiada', 'kebolehgunaan' => 'Tidak Boleh Digunakan', 'nota' => 'Belum diterima'],
+                'j0' => ['kebolehgunaan' => 'Lengkap', 'nota' => ''],
+                'j1' => ['kebolehgunaan' => 'Lengkap', 'nota' => ''],
+                'j2' => ['kebolehgunaan' => 'Tidak Lengkap', 'nota' => 'Belum diterima'],
             ],
             'profil' => [
                 md5('Sistem/Aplikasi') => ['jumlah' => '12', 'nota' => ''],
@@ -682,8 +681,14 @@ class Phase12IntegrationTest extends TestCase
             ->assertSee('RSA')
             ->assertSee('Kesimpulan Umum')
             ->assertSee('Sistem Legasi')
-            // Ringkasan mengikut pilihan 'catatan', bukan teks lalai.
-            ->assertSee('memerlukan tindakan susulan oleh entiti', false);
+            // Templat rasmi memaparkan SATU status bagi setiap Jadual 0-2,
+            // diambil daripada medan kebolehgunaan, bersama penerangannya.
+            // Ayat "Ringkasan Status Data" tidak lagi dipaparkan dalam laporan
+            // (lihat seksyen Status Penerimaan dan Kebolehgunaan Data).
+            ->assertSee('Status Kebolehgunaan')
+            ->assertSee('Tidak Lengkap')
+            ->assertSee('Belum diterima')
+            ->assertDontSee('memerlukan tindakan susulan oleh entiti', false);
     }
 
     /**

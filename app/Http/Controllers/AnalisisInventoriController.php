@@ -203,7 +203,6 @@ class AnalisisInventoriController extends Controller
                 'regex:/^'.config('kriptografi.kod_rujukan.corak').'$/',
             ],
             'status_laporan' => ['required', Rule::in(config('kriptografi.status_laporan'))],
-            'ringkasan_data' => ['required', 'in:lengkap,catatan,pengesahan,terhad'],
         ], [
             'kod_rujukan.regex' => 'Kod Rujukan Laporan mesti mengikut format '
                 .config('kriptografi.kod_rujukan.format')

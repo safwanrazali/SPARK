@@ -140,6 +140,60 @@ document.addEventListener("DOMContentLoaded", () => {
         kemasKini();
     });
 
+    // ── Penerangan status data boleh berbilang ──────────────────────────
+    // Templat laporan memaparkan beberapa penerangan bernombor bagi setiap
+    // Jadual 0-2. Baris ditambah/dibuang di sini sahaja; pelayan menormalkan
+    // nilainya melalui BorangAnalisis::penerangan(), termasuk membuang baris
+    // kosong, jadi tiada pengesahan diperlukan di pihak pelayar.
+    //
+    // Pendengar didelegasikan pada document supaya baris yang BARU ditambah
+    // turut berfungsi tanpa perlu memasang pendengar semula.
+    document.addEventListener("click", (e) => {
+        const tambah = e.target.closest(".penerangan-tambah");
+
+        if (tambah) {
+            const senarai = document.querySelector(
+                `[data-penerangan="${tambah.dataset.sasaran}"]`,
+            );
+
+            if (!senarai) return;
+
+            const contoh = senarai.querySelector(".penerangan-baris");
+
+            if (!contoh) return;
+
+            const baris = contoh.cloneNode(true);
+            const medan = baris.querySelector("input");
+
+            if (medan) medan.value = "";
+
+            senarai.appendChild(baris);
+            medan?.focus();
+            return;
+        }
+
+        const buang = e.target.closest(".penerangan-buang");
+
+        if (!buang) return;
+
+        const senarai = buang.closest(".penerangan-senarai");
+        const baris = buang.closest(".penerangan-baris");
+
+        if (!senarai || !baris) return;
+
+        // Baris terakhir dikosongkan, bukan dibuang: mengeluarkannya akan
+        // meninggalkan seksyen tanpa medan input langsung dan pegawai tidak
+        // dapat menambah semula tanpa memuat semula halaman (butang Tambah
+        // mengklon baris sedia ada).
+        if (senarai.querySelectorAll(".penerangan-baris").length === 1) {
+            const medan = baris.querySelector("input");
+            if (medan) medan.value = "";
+            return;
+        }
+
+        baris.remove();
+    });
+
     // ── Keadaan memuat pada penghantaran borang ─────────────────────────
     // Memberi maklum balas segera dan menghalang penghantaran berganda.
     const progres = document.getElementById("route-progress");

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
 use App\Services\LaporanSemakanService;
+use App\Support\BorangAnalisis;
 use App\Support\Halaman;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
@@ -98,6 +99,17 @@ class LaporanController extends Controller
     }
 
     /**
+     * Eja bilangan dalam bentuk "satu (1)" untuk ayat Catatan.
+     * Bilangan di luar senarai config jatuh kembali kepada digit sahaja.
+     */
+    private static function ejaBilangan(int $bilangan): string
+    {
+        $perkataan = config('kriptografi.bilangan_perkataan')[$bilangan] ?? null;
+
+        return $perkataan === null ? (string) $bilangan : $perkataan.' ('.$bilangan.')';
+    }
+
+    /**
      * Sediakan semua data yang diperlukan oleh templat laporan
      * (dikongsi antara pratonton skrin dan muat turun PDF).
      */
@@ -116,6 +128,13 @@ class LaporanController extends Controller
 
         $jumlahAset = collect($data['profil'] ?? [])->sum(fn ($p) => (int) ($p['jumlah'] ?? 0));
 
+        // Fail sumber bagi nota "Catatan:" dalam seksyen Status Penerimaan dan
+        // Kebolehgunaan Data. Diambil daripada input borang, BUKAN daripada
+        // modul muat naik: spesifikasi bahagian 3 menetapkan aliran pelaporan
+        // tidak boleh bergantung pada modul tersebut (dikuatkuasakan oleh
+        // Phase13ReleaseReadinessTest::test_aliran_pelaporan_tidak_merujuk_modul_muat_naik).
+        $failSumber = BorangAnalisis::senaraiTeks($data['fail_sumber'] ?? null);
+
         $kesimpulanLapuk = sprintf(
             'Hasil analisis mengenal pasti penggunaan algoritma atau fungsi kriptografi yang mempunyai kelemahan keselamatan yang diketahui atau tidak lagi disyorkan%s. Walaupun kelemahan tersebut tidak semestinya berkaitan secara langsung dengan ancaman pengkomputeran kuantum, penggunaannya boleh meningkatkan risiko keselamatan dan menjejaskan tahap perlindungan sistem. Oleh itu, algoritma berkenaan perlu diberi perhatian untuk digantikan dengan mekanisme yang lebih selamat sebagai sebahagian daripada usaha pemodenan kriptografi dan persediaan migrasi PQC.',
             $lapuk ? ', iaitu '.implode(', ', $lapuk) : '',
@@ -130,7 +149,8 @@ class LaporanController extends Controller
             'jumlahAset' => $jumlahAset,
             'kesimpulanLapuk' => $kesimpulanLapuk,
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
-            'ringkasanData' => config('kriptografi.ringkasan_data.'.($data['ringkasan_data'] ?? 'lengkap')),
+            'failSumber' => $failSumber,
+            'bilanganFail' => self::ejaBilangan(count($failSumber)),
             'tindakanBank' => config('kriptografi.tindakan_susulan'),
             'kesimpulanBank' => config('kriptografi.kesimpulan'),
             'pengesahan' => config('kriptografi.pengesahan_laporan'),

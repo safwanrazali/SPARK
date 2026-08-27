@@ -336,7 +336,6 @@ class RbacMatriksTest extends TestCase
             $this->actingAs($this->sebagai($role))
                 ->post(route('analisis.simpan'), $muatan + [
                     'status_laporan' => 'Selesai',
-                    'ringkasan_data' => 'lengkap',
                 ])
                 ->assertForbidden();
         }
@@ -492,7 +491,6 @@ class RbacMatriksTest extends TestCase
                 'sector_code' => '001',
                 'agency_code' => self::BETA,
                 'status_laporan' => 'Selesai',
-                'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();
 
@@ -610,7 +608,6 @@ class RbacMatriksTest extends TestCase
             'sector_code' => '001',
             'agency_code' => self::ALPHA,
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
             'selesai' => '1',
         ]);
         $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]));

@@ -74,7 +74,7 @@ class Phase12ErrorHandlingTest extends TestCase
                 'agency_code' => self::ALPHA,
             ])
             ->assertRedirect(route('analisis.index'))
-            ->assertSessionHasErrors(['status_laporan', 'ringkasan_data']);
+            ->assertSessionHasErrors('status_laporan');
 
         $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::ALPHA]);
     }
@@ -87,10 +87,9 @@ class Phase12ErrorHandlingTest extends TestCase
                 'sector_code' => self::SEKTOR,
                 'agency_code' => self::ALPHA,
                 'status_laporan' => 'Status Direka Sendiri',
-                'ringkasan_data' => 'entah-apa',
                 'tarikh_laporan' => 'bukan-tarikh',
             ])
-            ->assertSessionHasErrors(['status_laporan', 'ringkasan_data', 'tarikh_laporan']);
+            ->assertSessionHasErrors(['status_laporan', 'tarikh_laporan']);
 
         $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::ALPHA]);
     }
@@ -106,7 +105,6 @@ class Phase12ErrorHandlingTest extends TestCase
                 'sector_code' => '010',
                 'agency_code' => self::ALPHA,
                 'status_laporan' => 'Selesai',
-                'ringkasan_data' => 'lengkap',
             ])
             ->assertSessionHasErrors('agency_code');
 
@@ -214,7 +212,6 @@ class Phase12ErrorHandlingTest extends TestCase
             'agency_code' => self::ALPHA,
             'kod_rujukan' => 'R-LP-MIG-4-0001-V1.0',
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
         ], $ubah);
     }
 
@@ -227,7 +224,6 @@ class Phase12ErrorHandlingTest extends TestCase
                 'sector_code' => self::SEKTOR,
                 'agency_code' => 'KOD-TIDAK-WUJUD',
                 'status_laporan' => 'Selesai',
-                'ringkasan_data' => 'lengkap',
             ])
             ->assertForbidden();
 

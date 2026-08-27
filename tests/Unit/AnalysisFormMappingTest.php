@@ -159,12 +159,17 @@ class AnalysisFormMappingTest extends TestCase
     public function test_status_data_meliputi_ketiga_tiga_jadual(): void
     {
         $borang = $this->borang([
-            'data_status' => ['j0' => ['penerimaan' => 'Diterima']],
+            'data_status' => ['j0' => ['kebolehgunaan' => 'Lengkap']],
         ]);
 
         $this->assertSame(['j0', 'j1', 'j2'], array_keys($borang['data_status']));
-        $this->assertSame('Diterima', $borang['data_status']['j0']['penerimaan']);
-        $this->assertSame('Tiada', $borang['data_status']['j1']['penerimaan']);
+        $this->assertSame('Lengkap', $borang['data_status']['j0']['kebolehgunaan']);
+
+        // Jadual yang tidak disentuh tidak boleh dianggap lengkap secara senyap.
+        $this->assertSame('Tidak Lengkap', $borang['data_status']['j1']['kebolehgunaan']);
+
+        // Medan "Penerimaan" telah dibuang: ia bertindih dengan kebolehgunaan.
+        $this->assertArrayNotHasKey('penerimaan', $borang['data_status']['j0']);
     }
 
     /*
@@ -179,7 +184,6 @@ class AnalysisFormMappingTest extends TestCase
             'tarikh_laporan' => '2026-08-16',
             'kod_rujukan' => 'PTPKM/INV/2026/001',
             'status_laporan' => 'Memerlukan Tindakan Susulan',
-            'ringkasan_data' => 'catatan',
         ]));
 
         $this->assertSame(
@@ -188,7 +192,6 @@ class AnalysisFormMappingTest extends TestCase
         );
 
         $this->assertSame('PTPKM/INV/2026/001', $lajur['kod_rujukan']);
-        $this->assertSame('catatan', $data['ringkasan_data']);
 
         foreach (BorangAnalisis::MEDAN_LAJUR as $medan) {
             $this->assertArrayNotHasKey($medan, $data);
@@ -201,13 +204,15 @@ class AnalysisFormMappingTest extends TestCase
 
         // Draf: apa yang pegawai belum isi kekal kosong.
         $this->assertNull($borang['status_laporan']);
-        $this->assertNull($borang['ringkasan_data']);
 
         // Simpanan muktamad: nilai lalai dikenakan supaya laporan boleh dijana.
         ['lajur' => $lajur, 'data' => $data] = BorangAnalisis::kepadaModel($borang);
 
         $this->assertSame('Selesai', $lajur['status_laporan']);
-        $this->assertSame('lengkap', $data['ringkasan_data']);
+
+        // Medan "Ringkasan Status Data" telah dibuang sepenuhnya: ia tidak
+        // lagi dipaparkan dalam laporan, jadi tiada nilai lalai dikenakan.
+        $this->assertArrayNotHasKey('ringkasan_data', $data);
     }
 
     public function test_borang_daripada_model_kosong_apabila_tiada_rekod(): void

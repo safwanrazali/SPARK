@@ -201,7 +201,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
         $this->semakMatriks('POST', route('analisis.draf'), $dibenarkan, $entiti);
         $this->semakMatriks('POST', route('analisis.simpan'), $dibenarkan, $entiti + [
             'status_laporan' => 'Selesai',
-            'ringkasan_data' => 'lengkap',
         ]);
     }
 
@@ -287,7 +286,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
                 'sector_code' => '001',
                 'agency_code' => self::BETA,
                 'status_laporan' => 'Selesai',
-                'ringkasan_data' => 'lengkap',
             ]],
             ['POST', route('kemajuan.selesai', [self::BETA, 2]), []],
             ['POST', route('kemajuan.hantar', self::BETA), []],

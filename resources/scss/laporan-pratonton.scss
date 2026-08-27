@@ -160,6 +160,17 @@
     font-size: 0.85rem;
 }
 
+/*
+| Jadual bergaya templat baharu — padanan skrin. Hanya saiz taip; warna,
+| jalur baris dan peraturan pemisahan halaman diwarisi daripada fail cetakan.
+*/
+.laporan-seksyen .laporan-jadual__kepala,
+.laporan-seksyen .laporan-jadual__bil,
+.laporan-seksyen .laporan-jadual__komponen,
+.laporan-seksyen .laporan-jadual__status {
+    font-size: 0.8rem;
+}
+
 // Lajur berlebar tetap dalam jadual laporan.
 .laporan-rasmi__lajur-tandatangan {
     width: 120px;
