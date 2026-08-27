@@ -139,7 +139,7 @@ class Phase12IntegrationTest extends TestCase
             ],
             'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '9']],
             'pustaka' => [['nama' => 'OpenSSL', 'versi' => '3.0', 'bilangan' => '9', 'nota' => '']],
-            'vendor' => [['nama' => 'Vendor A', 'produk' => 'HSM', 'versi' => '2.1', 'bilangan' => '2', 'nota' => '']],
+            'vendor' => [['nama' => 'Vendor A', 'produk' => 'HSM', 'bilangan' => '2']],
             'tindakan' => [0, 1],
             'tindakan_lain' => '',
             'kesimpulan' => ['umum'],

@@ -54,8 +54,9 @@ class BorangAnalisis
             'protokol' => self::baris($request, 'protokol', ['nama', 'versi', 'bilangan']),
             'ulasan_protokol' => trim((string) $request->input('ulasan_protokol', '')),
             'ulasan_pustaka' => trim((string) $request->input('ulasan_pustaka', '')),
+            'ulasan_vendor' => trim((string) $request->input('ulasan_vendor', '')),
             'pustaka' => self::baris($request, 'pustaka', ['nama', 'versi', 'bilangan']),
-            'vendor' => self::baris($request, 'vendor', ['nama', 'produk', 'versi', 'bilangan', 'nota']),
+            'vendor' => self::baris($request, 'vendor', ['nama', 'produk', 'bilangan']),
 
             'tindakan' => array_map('intval', (array) $request->input('tindakan', [])),
             'tindakan_lain' => trim((string) $request->input('tindakan_lain', '')),

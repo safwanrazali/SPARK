@@ -532,7 +532,8 @@
    algoritma membalut ke baris kedua. */
 .laporan-seksyen .laporan-jadual-algo,
 .laporan-seksyen .laporan-jadual-protokol,
-.laporan-seksyen .laporan-jadual-pustaka {
+.laporan-seksyen .laporan-jadual-pustaka,
+.laporan-seksyen .laporan-jadual-vendor {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
@@ -558,7 +559,8 @@
 /* Kepala diulang pada setiap muka surat apabila jadual terbelah. */
 .laporan-seksyen .laporan-jadual-algo thead,
 .laporan-seksyen .laporan-jadual-protokol thead,
-.laporan-seksyen .laporan-jadual-pustaka thead {
+.laporan-seksyen .laporan-jadual-pustaka thead,
+.laporan-seksyen .laporan-jadual-vendor thead {
     display: table-header-group;
 }
 
@@ -567,7 +569,8 @@
    mengunci keseluruhan kumpulan akan meninggalkan ruang kosong besar. */
 .laporan-seksyen .laporan-jadual-algo tr,
 .laporan-seksyen .laporan-jadual-protokol tr,
-.laporan-seksyen .laporan-jadual-pustaka tr {
+.laporan-seksyen .laporan-jadual-pustaka tr,
+.laporan-seksyen .laporan-jadual-vendor tr {
     page-break-inside: avoid;
     break-inside: avoid;
 }
@@ -577,7 +580,9 @@
 .laporan-seksyen .laporan-jadual-protokol th,
 .laporan-seksyen .laporan-jadual-protokol td,
 .laporan-seksyen .laporan-jadual-pustaka th,
-.laporan-seksyen .laporan-jadual-pustaka td {
+.laporan-seksyen .laporan-jadual-pustaka td,
+.laporan-seksyen .laporan-jadual-vendor th,
+.laporan-seksyen .laporan-jadual-vendor td {
     border: 1px solid #fff;
     padding: 7px 10px;
     font-size: 11px;
@@ -590,7 +595,8 @@
 
 .laporan-seksyen .laporan-jadual-algo th,
 .laporan-seksyen .laporan-jadual-protokol th,
-.laporan-seksyen .laporan-jadual-pustaka th {
+.laporan-seksyen .laporan-jadual-pustaka th,
+.laporan-seksyen .laporan-jadual-vendor th {
     background: $laporan-biru;
     color: $laporan-biru-teks;
     font-weight: 700;
@@ -600,7 +606,8 @@
 
 .laporan-seksyen .laporan-jadual-algo td,
 .laporan-seksyen .laporan-jadual-protokol td,
-.laporan-seksyen .laporan-jadual-pustaka td {
+.laporan-seksyen .laporan-jadual-pustaka td,
+.laporan-seksyen .laporan-jadual-vendor td {
     background: $laporan-nilai-bg;
     color: $laporan-text;
 }
@@ -658,4 +665,23 @@
 
 .laporan-seksyen .laporan-jadual-pustaka__lajur-bilangan {
     width: 32%;
+}
+
+/* Jadual vendor menggunakan pengumpulan rowspan yang sama seperti jadual
+   algoritma: satu vendor boleh mempunyai beberapa produk. Pemilihnya ditambah
+   pada peraturan di atas; hanya lebar lajur diisytiharkan di sini. */
+.laporan-seksyen .laporan-jadual-vendor__lajur-bil {
+    width: 7%;
+}
+
+.laporan-seksyen .laporan-jadual-vendor__lajur-nama {
+    width: 30%;
+}
+
+.laporan-seksyen .laporan-jadual-vendor__lajur-produk {
+    width: 41%;
+}
+
+.laporan-seksyen .laporan-jadual-vendor__lajur-bilangan {
+    width: 22%;
 }

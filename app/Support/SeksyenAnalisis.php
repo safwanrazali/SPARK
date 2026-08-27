@@ -42,7 +42,7 @@ class SeksyenAnalisis
         ],
         'vendor' => [
             'label' => '7 · Maklumat Vendor',
-            'medan' => ['vendor'],
+            'medan' => ['vendor', 'ulasan_vendor'],
         ],
         'tindakan' => [
             'label' => '8 · Cadangan Tindakan Susulan',
@@ -153,7 +153,8 @@ class SeksyenAnalisis
             'pustaka' => ! empty($nilai['pustaka'])
                 || self::adaTeks($nilai['ulasan_pustaka'] ?? null),
 
-            'vendor' => ! empty($nilai['vendor']),
+            'vendor' => ! empty($nilai['vendor'])
+                || self::adaTeks($nilai['ulasan_vendor'] ?? null),
 
             'tindakan' => ! empty($nilai['tindakan']) || self::adaTeks($nilai['tindakan_lain'] ?? null),
 

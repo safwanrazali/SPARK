@@ -172,6 +172,35 @@ class LaporanController extends Controller
             ];
         }
 
+        // Vendor dikumpulkan mengikut nama supaya vendor yang mempunyai
+        // beberapa produk tidak berulang pada setiap baris. Pengumpulan ini
+        // dilakukan pada masa PAPARAN sahaja — struktur data asal (senarai
+        // baris rata) kekal tidak berubah.
+        $kumpulanVendor = [];
+
+        foreach ($data['vendor'] ?? [] as $baris) {
+            $nama = trim((string) ($baris['nama'] ?? ''));
+            $kunci = $nama !== '' ? $nama : '—';
+
+            $kumpulanVendor[$kunci][] = [
+                'produk' => trim((string) ($baris['produk'] ?? '')),
+                'bilangan' => trim((string) ($baris['bilangan'] ?? '')),
+            ];
+        }
+
+        $vendor = [];
+
+        foreach ($kumpulanVendor as $nama => $item) {
+            $vendor[] = [
+                'nama' => $nama,
+                // Nombor roman hanya apabila vendor mempunyai lebih daripada
+                // satu produk; satu produk dipaparkan tanpa penomboran.
+                'item' => array_map(fn ($satu, $i) => $satu + [
+                    'label' => count($item) > 1 ? self::angkaRomawi($i + 1) : '',
+                ], $item, array_keys($item)),
+            ];
+        }
+
         $lapuk = $analisis->algoritmaLapuk();
         $kuantum = $analisis->algoritmaKuantum();
 
@@ -207,6 +236,8 @@ class LaporanController extends Controller
             'ulasanAlgoritma' => TeksBerformat::blok($data['ulasan_algoritma'] ?? null),
             'ulasanProtokol' => TeksBerformat::blok($data['ulasan_protokol'] ?? null),
             'ulasanPustaka' => TeksBerformat::blok($data['ulasan_pustaka'] ?? null),
+            'vendor' => $vendor,
+            'ulasanVendor' => TeksBerformat::blok($data['ulasan_vendor'] ?? null),
             'kesimpulanLapuk' => $kesimpulanLapuk,
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'failSumber' => $failSumber,

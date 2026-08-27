@@ -143,8 +143,8 @@ class AnalysisFormMappingTest extends TestCase
     {
         $borang = $this->borang([
             'protokol' => [
-                ['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4', 'nota' => ''],
-                ['nama' => '', 'versi' => '', 'bilangan' => '', 'nota' => ''],
+                ['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4'],
+                ['nama' => '', 'versi' => '', 'bilangan' => ''],
             ],
         ]);
 
@@ -158,8 +158,10 @@ class AnalysisFormMappingTest extends TestCase
             'vendor' => [['nama' => 'Vendor A', 'produk' => 'HSM', 'suntikan' => 'x']],
         ]);
 
+        // Kunci luar takrifan ('suntikan') digugurkan; medan 'nota' telah
+        // dibuang daripada seksyen vendor mengikut templat rasmi.
         $this->assertSame(
-            ['nama', 'produk', 'versi', 'bilangan', 'nota'],
+            ['nama', 'produk', 'bilangan'],
             array_keys($borang['vendor'][0]),
         );
     }

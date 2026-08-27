@@ -59,6 +59,7 @@ class AnalysisSectionTest extends TestCase
             'pustaka' => [],
             'ulasan_pustaka' => 'Ulasan pustaka dan modul kriptografi.',
             'vendor' => [],
+            'ulasan_vendor' => 'Ulasan maklumat vendor.',
             'tindakan' => [1],
             'tindakan_lain' => '',
             'kesimpulan' => ['umum'],
@@ -107,6 +108,9 @@ class AnalysisSectionTest extends TestCase
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('pustaka', [
             'ulasan_pustaka' => 'Versi pustaka tidak dinyatakan.',
+        ]));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('vendor', [
+            'ulasan_vendor' => 'Maklumat vendor tidak lengkap.',
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
             'data_status' => ['j0' => ['nota' => ['perlu pengesahan', 'medan kosong']]],

@@ -351,7 +351,7 @@
         @foreach ([
             'protokol' => ['5 · Protokol Kriptografi', ['nama' => 'Nama protokol', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset']],
             'pustaka' => ['6 · Pustaka dan Modul Kriptografi', ['nama' => 'Nama pustaka/modul', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset']],
-            'vendor' => ['7 · Maklumat Vendor', ['nama' => 'Nama vendor', 'produk' => 'Produk/Komponen', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
+            'vendor' => ['7 · Maklumat Vendor', ['nama' => 'Nama vendor', 'produk' => 'Produk/Komponen', 'bilangan' => 'Bil. sistem/aset']],
         ] as $medan => [$tajuk, $kolum])
             <div class="report-card mb-4" data-senarai="{{ $medan }}" data-seksyen="{{ $medan }}">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -394,7 +394,7 @@
                     </div>
                 </template>
 
-                @if (in_array($medan, ['protokol', 'pustaka'], true))
+                @if (in_array($medan, ['protokol', 'pustaka', 'vendor'], true))
                     {{-- Ulasan ditaip sendiri oleh pegawai; perenggan dan
                          senarai bernombor dihasilkan oleh TeksBerformat. --}}
                     @php $medanUlasan = 'ulasan_'.$medan; @endphp
