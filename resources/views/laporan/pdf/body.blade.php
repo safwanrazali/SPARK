@@ -410,6 +410,93 @@
             list-style-type: disc;
         }
 
+
+        /* ==========================================================================
+           Jadual algoritma — 4 lajur dengan kategori dikumpulkan melalui rowspan
+           --------------------------------------------------------------------------
+           Digunakan oleh subseksyen "2. Algoritma Kriptografi" sahaja.
+
+           Sel Bil. dan Kategori merentangi semua algoritma dalam kumpulannya
+           (rowspan), jadi kategori tidak berulang pada setiap baris manakala setiap
+           algoritma mengekalkan lajur Bilangan tersendiri — susunan yang tidak boleh
+           dicapai dengan satu baris per kategori tanpa nombor tersasar apabila nama
+           algoritma membalut ke baris kedua. */
+        .laporan-seksyen .laporan-jadual-algo {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin: 0 0 12px;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo__lajur-bil {
+            width: 7%;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo__lajur-kategori {
+            width: 30%;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo__lajur-algoritma {
+            width: 41%;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo__lajur-bilangan {
+            width: 22%;
+        }
+
+        /* Kepala diulang pada setiap muka surat apabila jadual terbelah. */
+        .laporan-seksyen .laporan-jadual-algo thead {
+            display: table-header-group;
+        }
+
+        /* Baris tunggal tidak dibelah; kumpulan rowspan DIBENARKAN terbelah antara
+           muka surat kerana satu kategori boleh mempunyai enam algoritma dan
+           mengunci keseluruhan kumpulan akan meninggalkan ruang kosong besar. */
+        .laporan-seksyen .laporan-jadual-algo tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo th,
+        .laporan-seksyen .laporan-jadual-algo td {
+            border: 1px solid #fff;
+            padding: 7px 10px;
+            font-size: 11px;
+
+            /* Tiada height tetap — sel meninggi mengikut teks. */
+            vertical-align: middle;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo th {
+            background: #1f6091;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo td {
+            background: #ededed;
+            color: #111;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo__bil,
+        .laporan-seksyen .laporan-jadual-algo__bilangan {
+            text-align: center;
+        }
+
+        .laporan-seksyen .laporan-jadual-algo__bil {
+            font-weight: 700;
+        }
+
+        /* Angka romawi dipisahkan supaya nama algoritma yang membalut sejajar. */
+        .laporan-seksyen .laporan-jadual-algo__label {
+            display: inline-block;
+            min-width: 20px;
+        }
+
         .lajur-tandatangan {
             width: 120px;
         }
@@ -632,52 +719,88 @@
                 @endif
             @endforeach
         @endif
-    </section>
 
-    <p><strong>b. Algoritma Kriptografi</strong></p>
-    @if (count($ikutKategori))
-        <table>
+    <h3 class="laporan-seksyen__subtajuk">2. Algoritma Kriptografi</h3>
+
+    <p class="laporan-seksyen__perenggan">
+        Jadual di bawah merumuskan algoritma dan mekanisme kriptografi yang dikenal pasti
+        berdasarkan data dalam Jadual 0–2, mengikut primitif atau kategori kriptografi serta
+        bilangan sistem dan aset yang terlibat.
+    </p>
+
+    @if (count($algoritma))
+        <table class="laporan-jadual-algo">
+            {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                 pertama menentukan lebar lajur. --}}
+            <colgroup>
+                <col class="laporan-jadual-algo__lajur-bil">
+                <col class="laporan-jadual-algo__lajur-kategori">
+                <col class="laporan-jadual-algo__lajur-algoritma">
+                <col class="laporan-jadual-algo__lajur-bilangan">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Bil.</th>
-                    <th>Primitif/Kategori</th>
+                    <th>Primitif/Kategori Kriptografi</th>
                     <th>Algoritma/Mekanisme Dikenal Pasti</th>
-                    <th>Bil. Sistem/Aset</th>
-                    <th>Pemerhatian</th>
+                    <th>Bilangan Sistem/Aset Terlibat</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($ikutKategori as $kategori => $senarai)
-                    <tr>
-                        <td>{{ $loop->iteration }}.</td>
-                        <td>{{ $kategori }}</td>
-                        <td>{{ collect($senarai)->pluck('nama')->implode(', ') }}</td>
-                        <td>{{ collect($senarai)->pluck('bilangan')->map(fn($b) => $b ?: '—')->implode(', ') }}</td>
-                        <td>{{ collect($senarai)->pluck('nota')->filter()->implode('; ') ?: '—' }}</td>
-                    </tr>
+                @foreach ($algoritma as $kategori)
+                    @foreach ($kategori['item'] as $item)
+                        <tr>
+                            {{-- Bil. dan kategori ditulis SEKALI sahaja bagi setiap
+                                 kumpulan; rowspan merentangi semua algoritmanya
+                                 supaya kategori tidak berulang pada setiap baris. --}}
+                            @if ($loop->first)
+                                <td class="laporan-jadual-algo__bil" rowspan="{{ count($kategori['item']) }}">
+                                    {{ $loop->parent->iteration }}.
+                                </td>
+                                <td class="laporan-jadual-algo__kategori" rowspan="{{ count($kategori['item']) }}">
+                                    {{ $kategori['kategori'] }}
+                                </td>
+                            @endif
+                            <td class="laporan-jadual-algo__algoritma">
+                                <span class="laporan-jadual-algo__label">{{ $item['label'] }}.</span>
+                                {{ $item['nama'] }}
+                            </td>
+                            <td class="laporan-jadual-algo__bilangan">{{ $item['bilangan'] !== '' ? $item['bilangan'] : '—' }}</td>
+                        </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>
     @else
-        <p>Tidak dikenal pasti.</p>
+        <p class="laporan-seksyen__perenggan">
+            Tiada algoritma atau mekanisme kriptografi dikenal pasti berdasarkan data yang dikemukakan.
+        </p>
     @endif
-    <p>
-        Berdasarkan analisis yang dilaksanakan, sebanyak
-        <strong>{{ collect($ikutKategori)->flatten(1)->count() }}</strong> algoritma atau
-        mekanisme kriptografi telah dikenal pasti.
-        @if ($lapuk)
-            Analisis mengenal pasti penggunaan algoritma yang tidak lagi disyorkan, iaitu
-            <strong>{{ implode(', ', $lapuk) }}</strong>.
-        @endif
-        @if ($kuantum)
-            Algoritma yang berisiko terhadap ancaman pengkomputeran kuantum turut dikenal
-            pasti, iaitu <strong>{{ implode(', ', $kuantum) }}</strong>, dan perlu diberi
-            keutamaan dalam perancangan migrasi PQC.
-        @endif
-        @if ($data['algoritma_lain'] ?? false)
-            Lain-lain mekanisme yang dikenal pasti: {{ $data['algoritma_lain'] }}.
-        @endif
-    </p>
+
+    @if (count($ulasanAlgoritma))
+        <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+        @foreach ($ulasanAlgoritma as $blok)
+            @if ($blok['jenis'] === 'senarai')
+                @if ($blok['bernombor'])
+                    <ol class="laporan-seksyen__senarai-ulasan">
+                        @foreach ($blok['isi'] as $titik)
+                            <li>{{ $titik }}</li>
+                        @endforeach
+                    </ol>
+                @else
+                    <ul class="laporan-seksyen__senarai-ulasan">
+                        @foreach ($blok['isi'] as $titik)
+                            <li>{{ $titik }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            @else
+                <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+            @endif
+        @endforeach
+    @endif
+
+    </section>
 
     @foreach ([
         'protokol' => ['c. Protokol Kriptografi', ['nama' => 'Protokol Kriptografi', 'versi' => 'Versi', 'bilangan' => 'Bil. Sistem/Aset', 'nota' => 'Pemerhatian']],

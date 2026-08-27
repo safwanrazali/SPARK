@@ -216,3 +216,10 @@
 option.is-kementerian {
     color: purple;
 }
+
+// Medan bilangan pada baris "Lain-lain" algoritma: dihadkan supaya medan nama
+// mendapat sebahagian besar lebar baris.
+.algo-lain-bilangan {
+    max-width: 190px;
+    flex: 0 0 190px;
+}

@@ -148,6 +148,22 @@ document.addEventListener("DOMContentLoaded", () => {
     //
     // Pendengar didelegasikan pada document supaya baris yang BARU ditambah
     // turut berfungsi tanpa perlu memasang pendengar semula.
+    // Senarai bertanda `data-berindeks` mempunyai LEBIH daripada satu medan
+    // setiap baris, jadi namanya tidak boleh menggunakan `medan[]` — PHP akan
+    // memisahkan pasangannya. Nama dinomborkan semula selepas setiap tambah
+    // atau buang supaya indeksnya kekal rapat dan tiada baris bertindih.
+    const susunSemulaIndeks = (senarai) => {
+        if (!senarai.hasAttribute("data-berindeks")) return;
+
+        const medan = senarai.dataset.penerangan;
+
+        senarai.querySelectorAll(".penerangan-baris").forEach((baris, i) => {
+            baris.querySelectorAll("[data-nama]").forEach((input) => {
+                input.name = `${medan}[${i}][${input.dataset.nama}]`;
+            });
+        });
+    };
+
     document.addEventListener("click", (e) => {
         const tambah = e.target.closest(".penerangan-tambah");
 
@@ -163,12 +179,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!contoh) return;
 
             const baris = contoh.cloneNode(true);
-            const medan = baris.querySelector("input");
 
-            if (medan) medan.value = "";
+            // SEMUA medan dikosongkan, bukan yang pertama sahaja: baris
+            // "Lain-lain" membawa nama DAN bilangan, dan menyalin bilangan
+            // baris sebelumnya akan merekodkan kiraan palsu secara senyap.
+            baris.querySelectorAll("input").forEach((input) => {
+                input.value = "";
+            });
 
             senarai.appendChild(baris);
-            medan?.focus();
+            susunSemulaIndeks(senarai);
+            baris.querySelector("input")?.focus();
             return;
         }
 
@@ -186,12 +207,14 @@ document.addEventListener("DOMContentLoaded", () => {
         // dapat menambah semula tanpa memuat semula halaman (butang Tambah
         // mengklon baris sedia ada).
         if (senarai.querySelectorAll(".penerangan-baris").length === 1) {
-            const medan = baris.querySelector("input");
-            if (medan) medan.value = "";
+            baris.querySelectorAll("input").forEach((input) => {
+                input.value = "";
+            });
             return;
         }
 
         baris.remove();
+        susunSemulaIndeks(senarai);
     });
 
     // ── Keadaan memuat pada penghantaran borang ─────────────────────────

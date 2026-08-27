@@ -48,7 +48,8 @@ class BorangAnalisis
             'profil' => self::profil($request),
             'ulasan_profil' => trim((string) $request->input('ulasan_profil', '')),
             'algoritma' => self::algoritma($request),
-            'algoritma_lain' => trim((string) $request->input('algoritma_lain', '')),
+            'algoritma_lain' => self::algoritmaLain($request->input('algoritma_lain')),
+            'ulasan_algoritma' => trim((string) $request->input('ulasan_algoritma', '')),
 
             'protokol' => self::baris($request, 'protokol', ['nama', 'versi', 'bilangan', 'nota']),
             'pustaka' => self::baris($request, 'pustaka', ['nama', 'versi', 'bilangan', 'nota']),
@@ -138,6 +139,45 @@ class BorangAnalisis
     }
 
     /**
+     * Normalkan medan "Lain-lain" algoritma kepada senarai nama + bilangan.
+     *
+     * Tiga bentuk diterima supaya rekod lama terus terbaca tanpa migrasi:
+     *   - rentetan tunggal            (borang asal)
+     *   - senarai rentetan            (borang boleh-tambah pertama)
+     *   - senarai ['nama','bilangan'] (bentuk semasa)
+     *
+     * Baris tanpa nama digugurkan; bilangan dikekalkan sebagai rentetan
+     * supaya konsisten dengan medan bilangan algoritma katalog.
+     *
+     * @return list<array{nama: string, bilangan: string}>
+     */
+    public static function algoritmaLain(mixed $nilai): array
+    {
+        if ($nilai === null) {
+            return [];
+        }
+
+        $senarai = is_array($nilai) ? $nilai : [$nilai];
+        $bersih = [];
+
+        foreach ($senarai as $satu) {
+            if (is_array($satu)) {
+                $nama = trim((string) ($satu['nama'] ?? ''));
+                $bilangan = trim((string) ($satu['bilangan'] ?? ''));
+            } else {
+                $nama = is_scalar($satu) ? trim((string) $satu) : '';
+                $bilangan = '';
+            }
+
+            if ($nama !== '') {
+                $bersih[] = ['nama' => $nama, 'bilangan' => $bilangan];
+            }
+        }
+
+        return $bersih;
+    }
+
+    /**
      * @return array<string, array<string, mixed>>
      */
     private static function dataStatus(Request $request): array
@@ -192,7 +232,6 @@ class BorangAnalisis
 
             $algoritma[$nilai['id']] = [
                 'bilangan' => $nilai['bilangan'] ?? '',
-                'nota' => $nilai['nota'] ?? '',
             ];
         }
 

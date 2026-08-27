@@ -51,8 +51,9 @@ class AnalysisSectionTest extends TestCase
             'fail_sumber' => ['LAMPIRAN A - BUKU KERJA MIGRASI PQC'],
             'profil' => ['Pelayan' => ['jumlah' => 3]],
             'ulasan_profil' => 'Ulasan profil sistem dan aset.',
-            'algoritma' => ['Simetrik Blok|AES' => ['bilangan' => '3', 'nota' => '']],
+            'algoritma' => ['Sifer Blok|AES' => ['bilangan' => '3', 'nota' => '']],
             'algoritma_lain' => '',
+            'ulasan_algoritma' => 'Ulasan algoritma kriptografi.',
             'protokol' => [],
             'pustaka' => [],
             'vendor' => [],
@@ -109,7 +110,7 @@ class AnalysisSectionTest extends TestCase
         $this->assertTrue(SeksyenAnalisis::adaKandungan('profil', ['profil' => ['Pelayan' => ['jumlah' => 2]]]));
         $this->assertFalse(SeksyenAnalisis::adaKandungan('profil', ['profil' => ['Pelayan' => ['jumlah' => 0, 'nota' => '']]]));
 
-        $this->assertTrue(SeksyenAnalisis::adaKandungan('algoritma', ['algoritma' => ['Simetrik Blok|AES' => []]]));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('algoritma', ['algoritma' => ['Sifer Blok|AES' => []]]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('protokol', ['protokol' => [['nama' => 'TLS']]]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('tindakan', ['tindakan' => [0]]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('kesimpulan', ['kesimpulan_lain' => 'nota']));

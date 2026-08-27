@@ -11,26 +11,150 @@
 
 return [
 
+    /*
+    | Katalog algoritma mengikut AKSA MySEAL 2.1 (Approved).
+    | Sumber: mykripto.cybersecurity.my — 12 kategori, 104 algoritma.
+    |
+    | Struktur: kategori => sub-kumpulan => senarai algoritma.
+    | Sub-kumpulan bernama '' bermakna kategori tersebut tiada sub-kumpulan
+    | pada laman rasmi; borang tidak memaparkan tajuk kecil untuknya.
+    |
+    | PENTING — kunci tersimpan kekal berbentuk "Kategori|Algoritma" (DUA
+    | bahagian). Sub-kumpulan ialah pengelompokan PAPARAN sahaja dan tidak
+    | masuk ke dalam kunci; menambahnya akan memecahkan
+    | AnalisisInventori::algoritmaLapuk() yang mengambil bahagian kedua.
+    |
+    | Katalog ini mengandungi algoritma DILULUSKAN sahaja. Algoritma lapuk
+    | (3DES, RC4, MD5, SHA-1) dan klasik (RSA, DSA, ElGamal) tiada di sini —
+    | ia direkodkan melalui medan "Lain-lain" pada borang. Oleh itu
+    | AnalisisInventori::algoritmaLapuk() dan algoritmaKuantum() turut
+    | mengimbas `algoritma_lain`, bukan kunci checkbox sahaja.
+    */
     'kategori_algoritma' => [
-        'Simetrik Blok' => ['AES', 'Camellia', 'CLEFIA', 'SEED', '3DES', 'Blowfish'],
-        'Simetrik Alir' => ['ChaCha20', 'RC4'],
-        'Asimetrik (Penyulitan)' => ['RSA', 'ElGamal'],
-        'Fungsi Cincang' => ['SHA-2', 'SHA-3', 'SM3', 'SHA-1', 'MD5'],
-        'Penjanaan / Persetujuan Kunci' => ['DH', 'ECDH', 'ECDHE'],
-        'Skim Tandatangan Digital' => ['RSASSA-PSS', 'RSASSA-PKCS1-v1_5', 'ECDSA', 'DSA'],
-        'Kod Pengesahan Mesej (MAC)' => ['HMAC', 'CMAC'],
-        'Fungsi Derivasi Kunci (KDF)' => ['PBKDF2', 'HKDF'],
-        'Penyulitan Disahkan (AEAD)' => ['AES-GCM', 'ChaCha20-Poly1305'],
-        'Penjana Bit Rawak Deterministik (DRBG)' => ['Hash_DRBG', 'HMAC_DRBG', 'CTR_DRBG'],
+
+        'Sifer Blok' => [
+            'Tujuan Umum' => ['AES', 'Camellia', 'CLEFIA', 'SEED'],
+            'Ringan' => ['HIGHT', 'PRESENT'],
+            'Boleh Laras (Tweakable)' => ['Deoxys-TBC', 'Skinny', 'XTS-AES'],
+        ],
+
+        'Sifer Alir' => [
+            '' => ['ChaCha20', 'HC', 'KCipher-2', 'MUGI', 'Rabbit'],
+        ],
+
+        'Fungsi Cincang Kriptografi' => [
+            'Tujuan Umum' => ['SHA2', 'SHA3', 'SM3'],
+            'Ringan' => ['PHOTON', 'SPONGENT'],
+        ],
+
+        'Penyulitan Asimetri' => [
+            'Skim Penyulitan' => [
+                'ACE-KEM', 'ECIES-KEM', 'FACE-KEM', 'PSEC-KEM', 'RSA-KEM', 'RSA-OAEP',
+            ],
+            'Skim Persetujuan Kunci' => [
+                'DH Ephemeral-Ephemeral (C(2e,0s))',
+                'DH Ephemeral-Static (C(1e,1s))',
+                'DH Ephemeral-Static (C(1e,2s))',
+                'DH Ephemeral-Static (C(2e,2s))',
+                'ECDH Ephemeral-Ephemeral (C(2e,0s))',
+                'ECDH Ephemeral-Static (C(1e,2s))',
+                'ECDH Ephemeral-Static (C(2e,2s))',
+                'ECDH Ephemeral-Static (C(1e,1s))',
+            ],
+            'Mekanisme Enkapsulasi Kunci Pasca-Kuantum' => [
+                'mceliece 460896', 'mceliece 6688128', 'mceliece 6960119', 'mceliece 8192128',
+                'FrodoKEM', 'eFrodoKEM', 'HQC', 'ML-KEM', 'NTRUHPS', 'NTRUHRSS',
+            ],
+        ],
+
+        'Skim Tandatangan Digital' => [
+            'Berasaskan Masalah Sukar Klasik' => [
+                'BLS Signature Scheme',
+                'Elliptic Curve Digital Signature Algorithm (ECDSA)',
+                'Elliptic Curve Schnorr DSA (ECSDSA)',
+                'RSA-PSS (RSA-Probabilistic Signature Scheme)',
+                'ShangMi2 (SM2)',
+            ],
+            'Berasaskan Cincang Berkeadaan' => ['LMS', 'XMSS', 'XMSS^MT'],
+            'Pasca-Kuantum' => ['ML-DSA', 'Falcon', 'SLH-DSA-SHA2', 'SLH-DSA-SHAKE'],
+        ],
+
+        'Penjana Nombor Perdana Kriptografi' => [
+            'Algoritma Ujian Keperdanaan' => [
+                'Elliptic Curve Primality Test',
+                'Miller-Rabin Primality Test',
+                'Probabilistic Lucas Primality Test',
+                'Pocklington Primality Test',
+            ],
+        ],
+
+        'Penjana Bit Rawak Deterministik (DRBG)' => [
+            '' => ['AES-CTR-DRBG', 'HMAC-SHA2-DRBG', 'SHA2-DRBG'],
+        ],
+
+        'Kod Pengesahan Mesej (MAC)' => [
+            '' => [
+                'CMAC', 'GMAC', 'HMAC', 'KMAC', 'UMAC', 'XCBC-MAC',
+                'Chaskey-12', 'LightMAC', 'MDx-MAC', 'MDx-MAC-Short',
+                'Poly1305', "Tsudik's Keymode",
+            ],
+        ],
+
+        'Fungsi Derivasi Kunci (KDF)' => [
+            'KDF Umum' => [
+                'One Step HASH-KDF-SHA', 'One Step HASH-KDF-SHA3',
+                'One Step HMAC-KDF-SHA', 'One Step HMAC-KDF-SHA3',
+                'One Step KMAC-KDF', 'Two Step HMAC-KDF-SHA',
+                'Two Step HMAC-KDF-SHA3', 'Two Step AES-CMAC-KDF', 'KMAC-PRF-KDF',
+            ],
+            'KDF Berasaskan Kata Laluan' => [
+                'Argon', 'bcrypt', 'PBKDF2-HMAC-SHA', 'PBKDF2-HMAC-SHA3', 'scrypt',
+            ],
+        ],
+
+        'Penyulitan Disahkan (AE)' => [
+            '' => [
+                'ASCON-AEAD', 'ChaCha20-Poly1305', 'XChaCha20-Poly1305',
+                'AES-CCM', 'GCM-AES-XPN', 'AES-GCM', 'AES-GCM-SIV',
+                'Sophie Germain Counter Mode (SGCM)', 'AES-SIV-CMAC',
+            ],
+        ],
+
+        'Penyulitan Homomorfik' => [
+            '' => [
+                'Exponential ElGamal Encryption',
+                'Paillier Encryption',
+                'Cheon-Kim-Kim-Song (CKKS) Homomorphic Encryption',
+            ],
+        ],
+
+        'Kriptografi Ambang' => [
+            'Tandatangan Ambang' => [
+                'FROST (Ed25519, SHA-512)', 'FROST (Ed448, SHAKE256)',
+                'FROST (Ristretto255, SHA-512)', 'FROST (Secp256k1, SHA-256)',
+            ],
+        ],
+
     ],
 
-    // Algoritma yang tidak lagi disyorkan.
-    'tidak_disyorkan' => ['3DES', 'Blowfish', 'RC4', 'SHA-1', 'MD5'],
+    // Algoritma yang tidak lagi disyorkan. Nama ini TIADA dalam katalog
+    // AKSA MySEAL (Approved), jadi ia dipadankan dengan teks yang ditaip
+    // pegawai dalam medan "Lain-lain" — lihat AnalisisInventori::padanan().
+    'tidak_disyorkan' => ['3DES', 'DES', 'Blowfish', 'RC4', 'SHA-1', 'MD5'],
 
     // Algoritma berisiko terhadap ancaman pengkomputeran kuantum.
+    // Dua kumpulan digabungkan di sini:
+    //   - nama AKSA MySEAL, dipadankan dengan checkbox katalog;
+    //   - nama klasik/legasi, dipadankan dengan teks medan "Lain-lain".
+    //
+    // NOTA: algoritma klasik AKSA MySEAL yang lain (RSA-KEM, RSA-OAEP,
+    // ACE-KEM, ECIES-KEM, FACE-KEM, PSEC-KEM, varian DH/ECDH, BLS, ECSDSA,
+    // SM2) BELUM disenaraikan — pengelasan risiko ialah keputusan dasar,
+    // bukan andaian teknikal.
     'risiko_kuantum' => [
-        'RSA', 'ElGamal', 'DH', 'ECDH', 'ECDHE',
-        'RSASSA-PSS', 'RSASSA-PKCS1-v1_5', 'ECDSA', 'DSA',
+        'RSA-PSS (RSA-Probabilistic Signature Scheme)',
+        'Elliptic Curve Digital Signature Algorithm (ECDSA)',
+        'RSA', 'ElGamal', 'DH', 'ECDH', 'ECDHE', 'RSASSA-PKCS1-v1_5', 'DSA',
     ],
 
     'kategori_profil' => ['Sistem/Aplikasi', 'Pelayan', 'Peranti', 'Lain-lain'],

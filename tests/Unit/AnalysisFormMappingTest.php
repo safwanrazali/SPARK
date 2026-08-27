@@ -28,9 +28,9 @@ class AnalysisFormMappingTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    private function algoritma(string $id, bool $dipilih, string $bilangan = '', string $nota = ''): array
+    private function algoritma(string $id, bool $dipilih, string $bilangan = ''): array
     {
-        $medan = ['id' => $id, 'bilangan' => $bilangan, 'nota' => $nota];
+        $medan = ['id' => $id, 'bilangan' => $bilangan];
 
         return $dipilih
             ? [md5($id) => $medan + ['dipilih' => '1']]
@@ -46,20 +46,22 @@ class AnalysisFormMappingTest extends TestCase
     public function test_checkbox_ditanda_bermakna_algoritma_digunakan(): void
     {
         $borang = $this->borang([
-            'algoritma' => $this->algoritma('Simetrik Blok|AES', true, '12', 'TLS'),
+            'algoritma' => $this->algoritma('Sifer Blok|AES', true, '12'),
         ]);
 
-        $this->assertArrayHasKey('Simetrik Blok|AES', $borang['algoritma']);
-        $this->assertSame('12', $borang['algoritma']['Simetrik Blok|AES']['bilangan']);
-        $this->assertSame('TLS', $borang['algoritma']['Simetrik Blok|AES']['nota']);
+        $this->assertArrayHasKey('Sifer Blok|AES', $borang['algoritma']);
+        $this->assertSame('12', $borang['algoritma']['Sifer Blok|AES']['bilangan']);
+
+        // Medan "Pemerhatian" telah dibuang daripada seksyen algoritma.
+        $this->assertArrayNotHasKey('nota', $borang['algoritma']['Sifer Blok|AES']);
     }
 
     public function test_checkbox_tidak_ditanda_bermakna_algoritma_tidak_digunakan(): void
     {
-        // Medan bilangan/nota tetap dihantar oleh borang walaupun checkbox
+        // Medan bilangan tetap dihantar oleh borang walaupun checkbox
         // tidak ditanda — ia TIDAK boleh menyebabkan algoritma direkodkan.
         $borang = $this->borang([
-            'algoritma' => $this->algoritma('Fungsi Cincang|MD5', false, '99', 'nota lama'),
+            'algoritma' => $this->algoritma('Legasi / Luar Senarai AKSA MySEAL|MD5', false, '99'),
         ]);
 
         $this->assertSame([], $borang['algoritma']);
@@ -68,13 +70,13 @@ class AnalysisFormMappingTest extends TestCase
     public function test_hanya_algoritma_ditanda_disimpan_apabila_bercampur(): void
     {
         $borang = $this->borang([
-            'algoritma' => $this->algoritma('Simetrik Blok|AES', true)
-                + $this->algoritma('Simetrik Blok|3DES', false)
-                + $this->algoritma('Asimetrik (Penyulitan)|RSA', true),
+            'algoritma' => $this->algoritma('Sifer Blok|AES', true)
+                + $this->algoritma('Legasi / Luar Senarai AKSA MySEAL|3DES', false)
+                + $this->algoritma('Legasi / Luar Senarai AKSA MySEAL|RSA', true),
         ]);
 
         $this->assertSame(
-            ['Simetrik Blok|AES', 'Asimetrik (Penyulitan)|RSA'],
+            ['Sifer Blok|AES', 'Legasi / Luar Senarai AKSA MySEAL|RSA'],
             array_keys($borang['algoritma']),
         );
     }
@@ -90,9 +92,45 @@ class AnalysisFormMappingTest extends TestCase
 
     public function test_medan_algoritma_lain_kekal_sebagai_teks_bebas_tambahan(): void
     {
+        // Rentetan tunggal (borang lama) dinormalkan kepada satu pasangan;
+        // bilangan kekal kosong kerana ia tidak pernah direkodkan dahulu.
         $borang = $this->borang(['algoritma_lain' => '  SNOW 3G  ']);
 
-        $this->assertSame('SNOW 3G', $borang['algoritma_lain']);
+        $this->assertSame(
+            [['nama' => 'SNOW 3G', 'bilangan' => '']],
+            $borang['algoritma_lain'],
+        );
+    }
+
+    public function test_medan_algoritma_lain_menerima_beberapa_algoritma(): void
+    {
+        // Katalog checkbox mengandungi AKSA MySEAL (Approved) sahaja, jadi
+        // algoritma lapuk/klasik direkodkan di sini — selalunya lebih daripada
+        // satu, masing-masing dengan bilangan sistem/aset tersendiri.
+        $borang = $this->borang(['algoritma_lain' => [
+            ['nama' => '3DES', 'bilangan' => '3'],
+            ['nama' => '  RC4  ', 'bilangan' => ''],
+            ['nama' => '', 'bilangan' => '9'],
+            ['nama' => 'MD5', 'bilangan' => '12'],
+        ]]);
+
+        // Baris tanpa nama digugurkan walaupun bilangannya diisi.
+        $this->assertSame([
+            ['nama' => '3DES', 'bilangan' => '3'],
+            ['nama' => 'RC4', 'bilangan' => ''],
+            ['nama' => 'MD5', 'bilangan' => '12'],
+        ], $borang['algoritma_lain']);
+    }
+
+    public function test_senarai_rentetan_lama_algoritma_lain_masih_terbaca(): void
+    {
+        // Bentuk perantaraan (senarai rentetan) sebelum medan bilangan wujud.
+        $borang = $this->borang(['algoritma_lain' => ['3DES', 'RC4']]);
+
+        $this->assertSame([
+            ['nama' => '3DES', 'bilangan' => ''],
+            ['nama' => 'RC4', 'bilangan' => ''],
+        ], $borang['algoritma_lain']);
     }
 
     /*

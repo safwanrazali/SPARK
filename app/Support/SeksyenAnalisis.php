@@ -30,7 +30,7 @@ class SeksyenAnalisis
         ],
         'algoritma' => [
             'label' => '4 · Algoritma Kriptografi',
-            'medan' => ['algoritma', 'algoritma_lain'],
+            'medan' => ['algoritma', 'algoritma_lain', 'ulasan_algoritma'],
         ],
         'protokol' => [
             'label' => '5 · Protokol Kriptografi',
@@ -143,7 +143,9 @@ class SeksyenAnalisis
                     fn ($p) => (int) ($p['jumlah'] ?? 0) > 0
                 ),
 
-            'algoritma' => ! empty($nilai['algoritma']) || self::adaTeks($nilai['algoritma_lain'] ?? null),
+            'algoritma' => ! empty($nilai['algoritma'])
+                || BorangAnalisis::algoritmaLain($nilai['algoritma_lain'] ?? null) !== []
+                || self::adaTeks($nilai['ulasan_algoritma'] ?? null),
 
             'protokol', 'pustaka', 'vendor' => ! empty($nilai[$seksyen]),
 

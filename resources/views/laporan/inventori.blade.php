@@ -245,52 +245,88 @@
                     @endif
                 @endforeach
             @endif
-        </section>
 
-        <p><strong>b. Algoritma Kriptografi</strong></p>
-        @if (count($ikutKategori))
-            <table>
+        <h3 class="laporan-seksyen__subtajuk">2. Algoritma Kriptografi</h3>
+
+        <p class="laporan-seksyen__perenggan">
+            Jadual di bawah merumuskan algoritma dan mekanisme kriptografi yang dikenal pasti
+            berdasarkan data dalam Jadual 0–2, mengikut primitif atau kategori kriptografi serta
+            bilangan sistem dan aset yang terlibat.
+        </p>
+
+        @if (count($algoritma))
+            <table class="laporan-jadual-algo">
+                {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                     pertama menentukan lebar lajur. --}}
+                <colgroup>
+                    <col class="laporan-jadual-algo__lajur-bil">
+                    <col class="laporan-jadual-algo__lajur-kategori">
+                    <col class="laporan-jadual-algo__lajur-algoritma">
+                    <col class="laporan-jadual-algo__lajur-bilangan">
+                </colgroup>
                 <thead>
                     <tr>
                         <th>Bil.</th>
-                        <th>Primitif/Kategori</th>
+                        <th>Primitif/Kategori Kriptografi</th>
                         <th>Algoritma/Mekanisme Dikenal Pasti</th>
-                        <th>Bil. Sistem/Aset</th>
-                        <th>Pemerhatian</th>
+                        <th>Bilangan Sistem/Aset Terlibat</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($ikutKategori as $kategori => $senarai)
-                        <tr>
-                            <td>{{ $loop->iteration }}.</td>
-                            <td>{{ $kategori }}</td>
-                            <td>{{ collect($senarai)->pluck('nama')->implode(', ') }}</td>
-                            <td>{{ collect($senarai)->pluck('bilangan')->map(fn($b) => $b ?: '—')->implode(', ') }}</td>
-                            <td>{{ collect($senarai)->pluck('nota')->filter()->implode('; ') ?: '—' }}</td>
-                        </tr>
+                    @foreach ($algoritma as $kategori)
+                        @foreach ($kategori['item'] as $item)
+                            <tr>
+                                {{-- Bil. dan kategori ditulis SEKALI sahaja bagi setiap
+                                     kumpulan; rowspan merentangi semua algoritmanya
+                                     supaya kategori tidak berulang pada setiap baris. --}}
+                                @if ($loop->first)
+                                    <td class="laporan-jadual-algo__bil" rowspan="{{ count($kategori['item']) }}">
+                                        {{ $loop->parent->iteration }}.
+                                    </td>
+                                    <td class="laporan-jadual-algo__kategori" rowspan="{{ count($kategori['item']) }}">
+                                        {{ $kategori['kategori'] }}
+                                    </td>
+                                @endif
+                                <td class="laporan-jadual-algo__algoritma">
+                                    <span class="laporan-jadual-algo__label">{{ $item['label'] }}.</span>
+                                    {{ $item['nama'] }}
+                                </td>
+                                <td class="laporan-jadual-algo__bilangan">{{ $item['bilangan'] !== '' ? $item['bilangan'] : '—' }}</td>
+                            </tr>
+                        @endforeach
                     @endforeach
                 </tbody>
             </table>
         @else
-            <p>Tidak dikenal pasti.</p>
+            <p class="laporan-seksyen__perenggan">
+                Tiada algoritma atau mekanisme kriptografi dikenal pasti berdasarkan data yang dikemukakan.
+            </p>
         @endif
-        <p>
-            Berdasarkan analisis yang dilaksanakan, sebanyak
-            <strong>{{ collect($ikutKategori)->flatten(1)->count() }}</strong> algoritma atau
-            mekanisme kriptografi telah dikenal pasti.
-            @if ($lapuk)
-                Analisis mengenal pasti penggunaan algoritma yang tidak lagi disyorkan, iaitu
-                <strong>{{ implode(', ', $lapuk) }}</strong>.
-            @endif
-            @if ($kuantum)
-                Algoritma yang berisiko terhadap ancaman pengkomputeran kuantum turut dikenal
-                pasti, iaitu <strong>{{ implode(', ', $kuantum) }}</strong>, dan perlu diberi
-                keutamaan dalam perancangan migrasi PQC.
-            @endif
-            @if ($data['algoritma_lain'] ?? false)
-                Lain-lain mekanisme yang dikenal pasti: {{ $data['algoritma_lain'] }}.
-            @endif
-        </p>
+
+        @if (count($ulasanAlgoritma))
+            <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+            @foreach ($ulasanAlgoritma as $blok)
+                @if ($blok['jenis'] === 'senarai')
+                    @if ($blok['bernombor'])
+                        <ol class="laporan-seksyen__senarai-ulasan">
+                            @foreach ($blok['isi'] as $titik)
+                                <li>{{ $titik }}</li>
+                            @endforeach
+                        </ol>
+                    @else
+                        <ul class="laporan-seksyen__senarai-ulasan">
+                            @foreach ($blok['isi'] as $titik)
+                                <li>{{ $titik }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+                @else
+                    <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+                @endif
+            @endforeach
+        @endif
+
+        </section>
 
         @foreach ([
             'protokol' => ['c. Protokol Kriptografi', ['nama' => 'Protokol Kriptografi', 'versi' => 'Versi', 'bilangan' => 'Bil. Sistem/Aset', 'nota' => 'Pemerhatian']],

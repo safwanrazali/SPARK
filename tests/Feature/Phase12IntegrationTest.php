@@ -128,11 +128,15 @@ class Phase12IntegrationTest extends TestCase
                 md5('Sistem/Aplikasi') => ['jumlah' => '12', 'nota' => ''],
                 md5('Pelayan') => ['jumlah' => '8', 'nota' => ''],
             ],
-            // Checkbox: AES + RSA ditanda; MD5 sengaja TIDAK ditanda.
-            'algoritma' => $algoritma('Simetrik Blok|AES', true, '12')
-                + $algoritma('Asimetrik (Penyulitan)|RSA', true, '5')
-                + $algoritma('Fungsi Cincang|MD5', false, '3'),
-            'algoritma_lain' => '',
+            // Checkbox: AES ditanda; ChaCha20 sengaja TIDAK ditanda.
+            'algoritma' => $algoritma('Sifer Blok|AES', true, '12')
+                + $algoritma('Sifer Alir|ChaCha20', false, '5'),
+            // Katalog AKSA MySEAL tiada RSA/MD5, jadi ia direkodkan di sini,
+            // masing-masing dengan bilangan sistem/aset tersendiri.
+            'algoritma_lain' => [
+                ['nama' => 'RSA', 'bilangan' => '5'],
+                ['nama' => 'MD5', 'bilangan' => '3'],
+            ],
             'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '9', 'nota' => '']],
             'pustaka' => [['nama' => 'OpenSSL', 'versi' => '3.0', 'bilangan' => '9', 'nota' => '']],
             'vendor' => [['nama' => 'Vendor A', 'produk' => 'HSM', 'versi' => '2.1', 'bilangan' => '2', 'nota' => '']],
@@ -251,9 +255,14 @@ class Phase12IntegrationTest extends TestCase
         $this->assertSame('Memerlukan Tindakan Susulan', $analisis->status_laporan);
 
         // Checkbox algoritma: hanya yang ditanda direkodkan.
-        $this->assertArrayHasKey('Simetrik Blok|AES', $analisis->data['algoritma']);
-        $this->assertArrayHasKey('Asimetrik (Penyulitan)|RSA', $analisis->data['algoritma']);
-        $this->assertArrayNotHasKey('Fungsi Cincang|MD5', $analisis->data['algoritma']);
+        $this->assertArrayHasKey('Sifer Blok|AES', $analisis->data['algoritma']);
+        $this->assertArrayNotHasKey('Sifer Alir|ChaCha20', $analisis->data['algoritma']);
+
+        // Algoritma di luar katalog AKSA MySEAL kekal dalam "Lain-lain".
+        $this->assertSame([
+            ['nama' => 'RSA', 'bilangan' => '5'],
+            ['nama' => 'MD5', 'bilangan' => '3'],
+        ], $analisis->data['algoritma_lain']);
 
         // Draf tidak lagi menjadi sumber pemulihan, tetapi kekal sebagai sejarah.
         $this->assertFalse(
@@ -660,9 +669,12 @@ class Phase12IntegrationTest extends TestCase
         $this->actingAs($this->analystA->fresh())
             ->post(route('analisis.simpan'), $this->dapatanAnalisis([
                 'kesimpulan' => ['umum', 'legasi'],
-                'algoritma' => [
-                    md5('Fungsi Cincang|MD5') => ['id' => 'Fungsi Cincang|MD5', 'dipilih' => '1', 'bilangan' => '2'],
-                    md5('Asimetrik (Penyulitan)|RSA') => ['id' => 'Asimetrik (Penyulitan)|RSA', 'dipilih' => '1', 'bilangan' => '4'],
+                // MD5 dan RSA tiada dalam katalog AKSA MySEAL (Approved);
+                // penandaan lapuk/kuantum mesti tetap berfungsi daripada
+                // medan "Lain-lain".
+                'algoritma_lain' => [
+                    ['nama' => 'MD5', 'bilangan' => '2'],
+                    ['nama' => 'RSA', 'bilangan' => '4'],
                 ],
                 'selesai' => '1',
             ]));

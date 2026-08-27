@@ -100,6 +100,18 @@ class LaporanController extends Controller
     }
 
     /**
+     * Angka Romawi kecil (i, ii, iii...) untuk penomboran algoritma dalam
+     * jadual. Senarai katalog terbesar ialah enam item, jadi julat pendek
+     * memadai; nilai di luar julat jatuh kembali kepada digit.
+     */
+    private static function angkaRomawi(int $n): string
+    {
+        $romawi = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x'];
+
+        return $romawi[$n - 1] ?? (string) $n;
+    }
+
+    /**
      * Eja bilangan dalam bentuk "satu (1)" untuk ayat Catatan.
      * Bilangan di luar senarai config jatuh kembali kepada digit sahaja.
      */
@@ -122,6 +134,42 @@ class LaporanController extends Controller
         foreach ($data['algoritma'] ?? [] as $kunci => $nilai) {
             [$kategori, $nama] = array_pad(explode('|', $kunci, 2), 2, $kunci);
             $ikutKategori[$kategori][] = ['nama' => $nama] + $nilai;
+        }
+
+        // Algoritma dikumpulkan mengikut susunan katalog dalam config supaya
+        // penomboran kategori stabil antara laporan, bukan mengikut susunan
+        // pegawai menanda kotak semak. Hanya kategori yang MEMPUNYAI algoritma
+        // dikenal pasti disenaraikan — lajur templat ialah "Dikenal Pasti".
+        $algoritma = [];
+
+        foreach (array_keys(config('kriptografi.kategori_algoritma')) as $kategori) {
+            if (empty($ikutKategori[$kategori])) {
+                continue;
+            }
+
+            $algoritma[] = [
+                'kategori' => $kategori,
+                'item' => array_map(fn ($a, $i) => [
+                    'label' => self::angkaRomawi($i + 1),
+                    'nama' => $a['nama'],
+                    'bilangan' => trim((string) ($a['bilangan'] ?? '')),
+                ], $ikutKategori[$kategori], array_keys($ikutKategori[$kategori])),
+            ];
+        }
+
+        // Baris "Lain-lain" templat: mekanisme di luar katalog AKSA MySEAL,
+        // ditaip bebas oleh pegawai dan boleh lebih daripada satu.
+        $lain = BorangAnalisis::algoritmaLain($data['algoritma_lain'] ?? null);
+
+        if ($lain !== []) {
+            $algoritma[] = [
+                'kategori' => 'Lain-lain',
+                'item' => array_map(fn ($satu, $i) => [
+                    'label' => self::angkaRomawi($i + 1),
+                    'nama' => $satu['nama'],
+                    'bilangan' => $satu['bilangan'],
+                ], $lain, array_keys($lain)),
+            ];
         }
 
         $lapuk = $analisis->algoritmaLapuk();
@@ -153,11 +201,10 @@ class LaporanController extends Controller
         return [
             'analisis' => $analisis,
             'data' => $data,
-            'ikutKategori' => $ikutKategori,
-            'lapuk' => $lapuk,
-            'kuantum' => $kuantum,
             'profil' => $profil,
             'ulasanProfil' => TeksBerformat::blok($data['ulasan_profil'] ?? null),
+            'algoritma' => $algoritma,
+            'ulasanAlgoritma' => TeksBerformat::blok($data['ulasan_algoritma'] ?? null),
             'kesimpulanLapuk' => $kesimpulanLapuk,
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'failSumber' => $failSumber,
