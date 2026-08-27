@@ -62,8 +62,7 @@ class AnalysisSectionTest extends TestCase
             'ulasan_vendor' => 'Ulasan maklumat vendor.',
             'tindakan' => [1],
             'tindakan_lain' => '',
-            'kesimpulan' => ['umum'],
-            'kesimpulan_lain' => '',
+            'kesimpulan' => 'Kesimpulan analisis.',
         ];
 
         $digabung = SeksyenAnalisis::gabung(SeksyenAnalisis::pecahkan($borang));
@@ -125,7 +124,8 @@ class AnalysisSectionTest extends TestCase
         $this->assertTrue(SeksyenAnalisis::adaKandungan('algoritma', ['algoritma' => ['Sifer Blok|AES' => []]]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('protokol', ['protokol' => [['nama' => 'TLS']]]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('tindakan', ['tindakan' => [0]]));
-        $this->assertTrue(SeksyenAnalisis::adaKandungan('kesimpulan', ['kesimpulan_lain' => 'nota']));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('kesimpulan', ['kesimpulan' => 'Kesimpulan ditaip.']));
+        $this->assertFalse(SeksyenAnalisis::adaKandungan('kesimpulan', ['kesimpulan' => '   ']));
     }
 
     public function test_seksyen_tidak_dikenali_tidak_menyebabkan_ralat(): void

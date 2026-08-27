@@ -61,11 +61,11 @@ class BorangAnalisis
             'tindakan' => array_map('intval', (array) $request->input('tindakan', [])),
             'tindakan_lain' => self::senaraiTeks($request->input('tindakan_lain')),
 
-            'kesimpulan' => array_values(array_intersect(
-                (array) $request->input('kesimpulan', []),
-                array_keys(config('kriptografi.kesimpulan')),
-            )),
-            'kesimpulan_lain' => trim((string) $request->input('kesimpulan_lain', '')),
+            // is_scalar: borang lama menghantar `kesimpulan[]` (senarai ID
+            // kotak semak). ID tersebut tiada makna selepas bank ayat dibuang,
+            // jadi ia diabaikan — bukan ditukar kepada rentetan, yang akan
+            // membangkitkan ralat "Array to string conversion".
+            'kesimpulan' => is_scalar($k = $request->input('kesimpulan', '')) ? trim((string) $k) : '',
         ];
     }
 

@@ -580,18 +580,35 @@
             @endif
         </section>
 
-        <h2>Kesimpulan</h2>
-        @foreach ($data['kesimpulan'] ?? [] as $id)
-            @if (isset($kesimpulanBank[$id]))
-                <p>
-                    <strong>{{ $loop->iteration }}. {{ $kesimpulanBank[$id]['nama'] }}.</strong>
-                    {{ $id === 'lapuk' ? $kesimpulanLapuk : $kesimpulanBank[$id]['teks'] }}
+        <section class="laporan-seksyen">
+            <h2 class="laporan-seksyen__tajuk">Kesimpulan</h2>
+
+            @if (count($kesimpulan))
+                @foreach ($kesimpulan as $blok)
+                    @if ($blok['jenis'] === 'senarai')
+                        @if ($blok['bernombor'])
+                            <ol class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ol>
+                        @else
+                            <ul class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @else
+                        <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+                    @endif
+                @endforeach
+            @else
+                <p class="laporan-seksyen__perenggan">
+                    Tiada kesimpulan direkodkan berdasarkan dapatan analisis.
                 </p>
             @endif
-        @endforeach
-        @if ($data['kesimpulan_lain'] ?? false)
-            <p>{{ $data['kesimpulan_lain'] }}</p>
-        @endif
+        </section>
 
         <h2>Pengesahan Laporan</h2>
         <table>

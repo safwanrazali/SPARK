@@ -83,7 +83,7 @@ class Phase6DraftResumeTest extends TestCase
             // dikira terisi melalui `ringkasan_data`; medan itu telah dibuang,
             // jadi fail sumber kini yang menandakannya.
             'fail_sumber' => ['LAMPIRAN A - BUKU KERJA MIGRASI PQC'],
-            'kesimpulan_lain' => 'Kesimpulan akhir.',
+            'kesimpulan' => 'Kesimpulan akhir.',
         ], $tambahan);
     }
 
@@ -179,7 +179,7 @@ class Phase6DraftResumeTest extends TestCase
         Carbon::setTestNow('2026-08-14 09:00:00');
         $this->actingAs($this->analyst)
             ->post(route('analisis.draf'), $this->borangSepara([
-                'kesimpulan_lain' => 'Draf awal kesimpulan.',
+                'kesimpulan' => 'Draf awal kesimpulan.',
             ]))
             ->assertSessionHasNoErrors();
 
@@ -198,7 +198,7 @@ class Phase6DraftResumeTest extends TestCase
         // 4. Continue + Save again — tambah maklumat pada seksyen lain.
         $this->actingAs($this->analyst)
             ->post(route('analisis.draf'), $this->borangSepara([
-                'kesimpulan_lain' => 'Draf awal kesimpulan.',
+                'kesimpulan' => 'Draf awal kesimpulan.',
                 'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4']],
             ]))
             ->assertSessionHasNoErrors();
@@ -206,13 +206,13 @@ class Phase6DraftResumeTest extends TestCase
         $analisis = AnalisisInventori::where('agency_code', self::ENTITI)->firstOrFail();
         $borang = app(AnalisisDraftService::class)->borangDipulihkan($analisis);
 
-        $this->assertSame('Draf awal kesimpulan.', $borang['kesimpulan_lain']);
+        $this->assertSame('Draf awal kesimpulan.', $borang['kesimpulan']);
         $this->assertSame('TLS', $borang['protokol'][0]['nama']);
 
         // 5. Complete — simpanan muktamad dengan medan wajib.
         $this->actingAs($this->analyst)
             ->post(route('analisis.simpan'), $this->borangLengkap([
-                'kesimpulan_lain' => 'Draf awal kesimpulan.',
+                'kesimpulan' => 'Draf awal kesimpulan.',
                 'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4']],
                 'selesai' => '1',
             ]))
@@ -226,7 +226,7 @@ class Phase6DraftResumeTest extends TestCase
         $this->assertTrue($analisis->selesai);
         $this->assertSame('R-LP-MIG-4-0001-V1.0', $analisis->kod_rujukan);
         $this->assertSame('TLS', $analisis->data['protokol'][0]['nama']);
-        $this->assertSame('Draf awal kesimpulan.', $analisis->data['kesimpulan_lain']);
+        $this->assertSame('Draf awal kesimpulan.', $analisis->data['kesimpulan']);
 
         // Draf tidak lagi menjadi sumber pemulihan, tetapi sejarahnya kekal.
         $this->assertFalse(app(AnalisisDraftService::class)->adaDrafBelumSelesai($analisis->fresh()));

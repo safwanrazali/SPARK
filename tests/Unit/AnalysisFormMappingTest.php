@@ -172,13 +172,28 @@ class AnalysisFormMappingTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_kesimpulan_terhad_kepada_bank_ayat_rasmi(): void
+    public function test_kesimpulan_disimpan_sebagai_teks_bebas(): void
     {
+        // Bank ayat dan kotak semak telah dibuang: kesimpulan berbeza bagi
+        // setiap entiti, jadi ia ditaip sepenuhnya oleh pegawai.
         $borang = $this->borang([
-            'kesimpulan' => ['umum', 'kesimpulan-direka-sendiri', 'legasi'],
+            'kesimpulan' => '  Perenggan pertama.
+
+Perenggan kedua.  ',
         ]);
 
-        $this->assertSame(['umum', 'legasi'], $borang['kesimpulan']);
+        $this->assertSame('Perenggan pertama.
+
+Perenggan kedua.', $borang['kesimpulan']);
+    }
+
+    public function test_kesimpulan_daripada_borang_lama_tidak_meruntuhkan_simpanan(): void
+    {
+        // Tab lama masih menghantar senarai ID kotak semak; ID itu tiada makna
+        // sekarang dan mesti diabaikan tanpa ralat.
+        $borang = $this->borang(['kesimpulan' => ['umum', 'legasi']]);
+
+        $this->assertSame('', $borang['kesimpulan']);
     }
 
     public function test_profil_meliputi_setiap_kategori_dengan_nilai_lalai_sifar(): void

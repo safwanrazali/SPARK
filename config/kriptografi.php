@@ -170,31 +170,6 @@ return [
         ['tindakan' => 'Mengesahkan maklumat yang tidak lengkap, tidak jelas atau tidak konsisten bersama pemilik sistem, pegawai teknikal atau vendor yang berkaitan, mengikut keperluan.', 'kategori' => 'Pengesahan maklumat'],
     ],
 
-    'kesimpulan' => [
-        'umum' => [
-            'nama' => 'Kesimpulan Umum',
-            'teks' => 'Hasil analisis menunjukkan bahawa inventori kriptografi yang diterima masih memerlukan penambahbaikan dari segi kelengkapan, ketepatan, konsistensi dan kesinambungan maklumat. Keadaan ini mengehadkan kebolehlihatan terhadap penggunaan kriptografi dalam sistem dan aset serta menyukarkan pengenalpastian algoritma yang tidak lagi disyorkan atau berisiko terhadap ancaman kuantum, pemetaan antara sistem atau aset dengan komponen berkaitan, serta penentuan keutamaan bagi pelaksanaan migrasi PQC. Sehubungan itu, inventori hendaklah dikemas kini dan disahkan bagi menyokong analisis risiko serta perancangan migrasi PQC yang lebih tepat.',
-        ],
-        'ot' => [
-            'nama' => 'Sistem Teknologi Operasi',
-            'teks' => 'Hasil analisis menunjukkan bahawa maklumat kriptografi bagi sistem Teknologi Operasi (Operational Technology, OT) adalah terhad dan tidak dapat dikenal pasti secara menyeluruh. Keadaan ini dipengaruhi oleh keterbatasan dokumentasi teknikal, kebergantungan kepada vendor dan maklumat konfigurasi kriptografi yang tidak dinyatakan secara terperinci. Saluran komunikasi antara persekitaran OT dan teknologi maklumat turut memerlukan perhatian kerana berpotensi menggunakan mekanisme kriptografi yang perlu dinilai dalam konteks migrasi PQC. Oleh itu, pengesahan lanjut bersama pemilik sistem, pegawai teknikal dan vendor berkaitan diperlukan.',
-        ],
-        'lapuk' => [
-            'nama' => 'Penggunaan Algoritma Kriptografi yang Tidak Lagi Selamat',
-            // Teks dijana secara dinamik dalam LaporanController — nama algoritma
-            // diisi automatik daripada pilihan yang tidak lagi disyorkan.
-            'teks' => null,
-        ],
-        'legasi' => [
-            'nama' => 'Sistem Legasi',
-            'teks' => 'Hasil analisis menunjukkan bahawa sistem legasi menghadapi kekangan dari segi dokumentasi teknikal, sokongan naik taraf, kelincahan kriptografi dan keupayaan untuk menukar mekanisme kriptografi sedia ada. Dalam keadaan tertentu, sistem legasi turut menggunakan algoritma, protokol atau konfigurasi yang tidak lagi disyorkan. Kekangan ini meningkatkan kerumitan penilaian dan perancangan migrasi PQC. Oleh itu, penilaian lanjut diperlukan bagi menentukan pendekatan mitigasi, naik taraf, penggantian atau migrasi yang bersesuaian.',
-        ],
-        'legasi_ot' => [
-            'nama' => 'Sistem Legasi dan Teknologi Operasi',
-            'teks' => 'Hasil analisis menunjukkan bahawa sistem legasi dan sistem Teknologi Operasi merupakan antara aset yang paling mencabar untuk dinilai dari perspektif kriptografi. Kekangan seperti dokumentasi yang tidak lengkap, kebergantungan kepada vendor, sokongan naik taraf yang terhad dan kelincahan kriptografi yang rendah menyukarkan pengenalpastian algoritma, protokol serta komponen kriptografi yang digunakan. Keadaan ini mengehadkan kebolehlihatan kriptografi dan boleh menjejaskan ketepatan penentuan keutamaan aset bagi perancangan migrasi PQC. Sehubungan itu, penilaian lanjut bersama pemilik sistem, pegawai teknikal dan vendor berkaitan diperlukan.',
-        ],
-    ],
-
     // Format kod rujukan laporan mengikut templat rasmi:
     //     R-LP-MIG-4-****-V*.*   (cth. R-LP-MIG-4-0001-V1.0)
     // Segmen tengah (****) menerima huruf/digit tanpa had panjang; segmen

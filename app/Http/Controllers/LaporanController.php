@@ -218,9 +218,6 @@ class LaporanController extends Controller
             $tindakan[] = $satu;
         }
 
-        $lapuk = $analisis->algoritmaLapuk();
-        $kuantum = $analisis->algoritmaKuantum();
-
         // Profil sistem dan aset dibina mengikut susunan kategori dalam config,
         // BUKAN mengikut susunan kunci yang tersimpan. Ini memastikan keempat-empat
         // baris templat sentiasa hadir dan tersusun sama, walaupun rekod lama
@@ -239,11 +236,6 @@ class LaporanController extends Controller
         // Phase13ReleaseReadinessTest::test_aliran_pelaporan_tidak_merujuk_modul_muat_naik).
         $failSumber = BorangAnalisis::senaraiTeks($data['fail_sumber'] ?? null);
 
-        $kesimpulanLapuk = sprintf(
-            'Hasil analisis mengenal pasti penggunaan algoritma atau fungsi kriptografi yang mempunyai kelemahan keselamatan yang diketahui atau tidak lagi disyorkan%s. Walaupun kelemahan tersebut tidak semestinya berkaitan secara langsung dengan ancaman pengkomputeran kuantum, penggunaannya boleh meningkatkan risiko keselamatan dan menjejaskan tahap perlindungan sistem. Oleh itu, algoritma berkenaan perlu diberi perhatian untuk digantikan dengan mekanisme yang lebih selamat sebagai sebahagian daripada usaha pemodenan kriptografi dan persediaan migrasi PQC.',
-            $lapuk ? ', iaitu '.implode(', ', $lapuk) : '',
-        );
-
         return [
             'analisis' => $analisis,
             'data' => $data,
@@ -255,12 +247,11 @@ class LaporanController extends Controller
             'ulasanPustaka' => TeksBerformat::blok($data['ulasan_pustaka'] ?? null),
             'vendor' => $vendor,
             'ulasanVendor' => TeksBerformat::blok($data['ulasan_vendor'] ?? null),
-            'kesimpulanLapuk' => $kesimpulanLapuk,
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'failSumber' => $failSumber,
             'bilanganFail' => self::ejaBilangan(count($failSumber)),
             'tindakan' => $tindakan,
-            'kesimpulanBank' => config('kriptografi.kesimpulan'),
+            'kesimpulan' => TeksBerformat::blok($data['kesimpulan'] ?? null),
             'pengesahan' => config('kriptografi.pengesahan_laporan'),
         ];
     }

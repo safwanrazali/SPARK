@@ -50,7 +50,7 @@ class SeksyenAnalisis
         ],
         'kesimpulan' => [
             'label' => '9 · Kesimpulan',
-            'medan' => ['kesimpulan', 'kesimpulan_lain'],
+            'medan' => ['kesimpulan'],
         ],
     ];
 
@@ -159,7 +159,7 @@ class SeksyenAnalisis
             'tindakan' => ! empty($nilai['tindakan'])
                 || BorangAnalisis::senaraiTeks($nilai['tindakan_lain'] ?? null) !== [],
 
-            'kesimpulan' => ! empty($nilai['kesimpulan']) || self::adaTeks($nilai['kesimpulan_lain'] ?? null),
+            'kesimpulan' => self::adaTeks($nilai['kesimpulan'] ?? null),
 
             default => false,
         };

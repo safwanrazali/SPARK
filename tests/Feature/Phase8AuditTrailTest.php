@@ -467,7 +467,7 @@ class Phase8AuditTrailTest extends TestCase
             'sector_code' => '001',
             'agency_code' => self::ALPHA,
             'kod_rujukan' => 'PTPKM/INV/2026/001',
-            'kesimpulan_lain' => 'Kandungan dapatan sulit yang tidak sepatutnya dicatat.',
+            'kesimpulan' => 'Kandungan dapatan sulit yang tidak sepatutnya dicatat.',
         ]);
 
         $log = ActivityLog::where('action', 'draft_created')->firstOrFail();

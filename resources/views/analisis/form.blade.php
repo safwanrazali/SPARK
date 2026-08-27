@@ -458,22 +458,17 @@
 
         {{-- 9 · Kesimpulan --}}
         <div class="report-card mb-4" data-seksyen="kesimpulan">
-            <h4 class="section-title">9 · Kesimpulan (pilih yang berkaitan dengan dapatan sebenar)</h4>
-            @foreach (config('kriptografi.kesimpulan') as $id => $kesimpulan)
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="kesimpulan-{{ $id }}"
-                        name="kesimpulan[]" value="{{ $id }}" @checked(in_array($id, $data['kesimpulan'] ?? []))>
-                    <label class="form-check-label" for="kesimpulan-{{ $id }}">
-                        <strong>{{ $kesimpulan['nama'] }}</strong>
-                        @if ($id === 'lapuk')
-                            <span class="text-secondary">— nama algoritma diisi automatik daripada pilihan bertanda
-                                ▲</span>
-                        @endif
-                    </label>
-                </div>
-            @endforeach
-            <label class="form-label mt-2">Kesimpulan Tambahan (jika berkaitan)</label>
-            <textarea name="kesimpulan_lain" class="form-control" rows="2">{{ $data['kesimpulan_lain'] ?? '' }}</textarea>
+            <h4 class="section-title">9 · Kesimpulan</h4>
+            {{-- Kesimpulan ditaip sepenuhnya oleh pegawai: ia berbeza bagi
+                 setiap entiti, jadi tiada bank ayat atau kotak semak. Perenggan
+                 dan senarai bernombor dihasilkan oleh TeksBerformat. --}}
+            <textarea name="kesimpulan" id="kesimpulan" class="form-control" rows="10"
+                placeholder="Nyatakan kesimpulan analisis bagi entiti ini.">{{ $data['kesimpulan'] ?? '' }}</textarea>
+            <div class="form-text">
+                Tinggalkan satu baris kosong untuk memulakan perenggan baharu.
+                Mulakan baris dengan <code>1.</code> <code>2.</code> (atau <code>-</code>)
+                untuk menghasilkan senarai bernombor.
+            </div>
         </div>
 
         {{--

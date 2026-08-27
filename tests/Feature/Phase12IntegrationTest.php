@@ -142,8 +142,7 @@ class Phase12IntegrationTest extends TestCase
             'vendor' => [['nama' => 'Vendor A', 'produk' => 'HSM', 'bilangan' => '2']],
             'tindakan' => [0, 1],
             'tindakan_lain' => '',
-            'kesimpulan' => ['umum'],
-            'kesimpulan_lain' => '',
+            'kesimpulan' => 'Kesimpulan yang ditaip oleh pegawai.',
         ], $ubah);
     }
 
@@ -668,7 +667,9 @@ class Phase12IntegrationTest extends TestCase
 
         $this->actingAs($this->analystA->fresh())
             ->post(route('analisis.simpan'), $this->dapatanAnalisis([
-                'kesimpulan' => ['umum', 'legasi'],
+                'kesimpulan' => 'Inventori memerlukan penambahbaikan.
+
+Sistem legasi menghadapi kekangan.',
                 // MD5 dan RSA tiada dalam katalog AKSA MySEAL (Approved);
                 // penandaan lapuk/kuantum mesti tetap berfungsi daripada
                 // medan "Lain-lain".
@@ -691,8 +692,10 @@ class Phase12IntegrationTest extends TestCase
             ->assertSee('Laporan Analisis Inventori Kriptografi')
             ->assertSee('MD5')
             ->assertSee('RSA')
-            ->assertSee('Kesimpulan Umum')
-            ->assertSee('Sistem Legasi')
+            // Kesimpulan kini ditaip sepenuhnya oleh pegawai; setiap perenggan
+            // yang ditaip mesti muncul dalam laporan.
+            ->assertSee('Inventori memerlukan penambahbaikan.')
+            ->assertSee('Sistem legasi menghadapi kekangan.')
             // Templat rasmi memaparkan SATU status bagi setiap Jadual 0-2,
             // diambil daripada medan kebolehgunaan, bersama penerangannya.
             // Ayat "Ringkasan Status Data" tidak lagi dipaparkan dalam laporan
