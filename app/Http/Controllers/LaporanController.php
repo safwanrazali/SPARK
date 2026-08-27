@@ -205,6 +205,7 @@ class LaporanController extends Controller
             'ulasanProfil' => TeksBerformat::blok($data['ulasan_profil'] ?? null),
             'algoritma' => $algoritma,
             'ulasanAlgoritma' => TeksBerformat::blok($data['ulasan_algoritma'] ?? null),
+            'ulasanProtokol' => TeksBerformat::blok($data['ulasan_protokol'] ?? null),
             'kesimpulanLapuk' => $kesimpulanLapuk,
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'failSumber' => $failSumber,

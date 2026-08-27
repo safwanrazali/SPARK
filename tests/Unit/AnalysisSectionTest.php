@@ -55,6 +55,7 @@ class AnalysisSectionTest extends TestCase
             'algoritma_lain' => '',
             'ulasan_algoritma' => 'Ulasan algoritma kriptografi.',
             'protokol' => [],
+            'ulasan_protokol' => 'Ulasan protokol kriptografi.',
             'pustaka' => [],
             'vendor' => [],
             'tindakan' => [1],
@@ -99,6 +100,9 @@ class AnalysisSectionTest extends TestCase
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('profil', [
             'ulasan_profil' => 'Ulasan ditaip tanpa sebarang jumlah.',
+        ]));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('protokol', [
+            'ulasan_protokol' => 'Versi tidak konsisten.',
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
             'data_status' => ['j0' => ['nota' => ['perlu pengesahan', 'medan kosong']]],

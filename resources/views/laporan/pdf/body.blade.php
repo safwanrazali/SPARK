@@ -421,7 +421,8 @@
            algoritma mengekalkan lajur Bilangan tersendiri — susunan yang tidak boleh
            dicapai dengan satu baris per kategori tanpa nombor tersasar apabila nama
            algoritma membalut ke baris kedua. */
-        .laporan-seksyen .laporan-jadual-algo {
+        .laporan-seksyen .laporan-jadual-algo,
+        .laporan-seksyen .laporan-jadual-protokol {
             width: 100%;
             table-layout: fixed;
             border-collapse: collapse;
@@ -445,20 +446,24 @@
         }
 
         /* Kepala diulang pada setiap muka surat apabila jadual terbelah. */
-        .laporan-seksyen .laporan-jadual-algo thead {
+        .laporan-seksyen .laporan-jadual-algo thead,
+        .laporan-seksyen .laporan-jadual-protokol thead {
             display: table-header-group;
         }
 
         /* Baris tunggal tidak dibelah; kumpulan rowspan DIBENARKAN terbelah antara
            muka surat kerana satu kategori boleh mempunyai enam algoritma dan
            mengunci keseluruhan kumpulan akan meninggalkan ruang kosong besar. */
-        .laporan-seksyen .laporan-jadual-algo tr {
+        .laporan-seksyen .laporan-jadual-algo tr,
+        .laporan-seksyen .laporan-jadual-protokol tr {
             page-break-inside: avoid;
             break-inside: avoid;
         }
 
         .laporan-seksyen .laporan-jadual-algo th,
-        .laporan-seksyen .laporan-jadual-algo td {
+        .laporan-seksyen .laporan-jadual-algo td,
+        .laporan-seksyen .laporan-jadual-protokol th,
+        .laporan-seksyen .laporan-jadual-protokol td {
             border: 1px solid #fff;
             padding: 7px 10px;
             font-size: 11px;
@@ -469,7 +474,8 @@
             word-wrap: break-word;
         }
 
-        .laporan-seksyen .laporan-jadual-algo th {
+        .laporan-seksyen .laporan-jadual-algo th,
+        .laporan-seksyen .laporan-jadual-protokol th {
             background: #1f6091;
             color: #ffffff;
             font-weight: 700;
@@ -477,7 +483,8 @@
             text-align: center;
         }
 
-        .laporan-seksyen .laporan-jadual-algo td {
+        .laporan-seksyen .laporan-jadual-algo td,
+        .laporan-seksyen .laporan-jadual-protokol td {
             background: #ededed;
             color: #111;
         }
@@ -495,6 +502,29 @@
         .laporan-seksyen .laporan-jadual-algo__label {
             display: inline-block;
             min-width: 20px;
+        }
+
+
+        /* Jadual protokol berkongsi rupa jadual algoritma (pemilihnya ditambah pada
+           peraturan di atas); hanya lebar lajur dan penjajaran versi berbeza. */
+        .laporan-seksyen .laporan-jadual-protokol__lajur-bil {
+            width: 8%;
+        }
+
+        .laporan-seksyen .laporan-jadual-protokol__lajur-nama {
+            width: 34%;
+        }
+
+        .laporan-seksyen .laporan-jadual-protokol__lajur-versi {
+            width: 26%;
+        }
+
+        .laporan-seksyen .laporan-jadual-protokol__lajur-bilangan {
+            width: 32%;
+        }
+
+        .laporan-seksyen .laporan-jadual-protokol__versi {
+            text-align: center;
         }
 
         .lajur-tandatangan {
@@ -800,10 +830,76 @@
         @endforeach
     @endif
 
+    <h3 class="laporan-seksyen__subtajuk">3. Protokol Kriptografi</h3>
+
+    <p class="laporan-seksyen__perenggan">
+        Jadual di bawah merumuskan protokol kriptografi yang dikenal pasti berdasarkan maklumat
+        yang direkodkan dalam Jadual 0–2. Pada masa ini, Buku Kerja Migrasi PQC tidak menyediakan
+        medan khusus untuk merekodkan protokol kriptografi. Oleh itu, maklumat protokol dikenal
+        pasti berdasarkan rekod yang dikemukakan oleh entiti, termasuk maklumat yang direkodkan
+        pada medan komponen atau algoritma.
+    </p>
+
+    @if (count($data['protokol'] ?? []))
+        <table class="laporan-jadual-protokol">
+            {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                 pertama menentukan lebar lajur. --}}
+            <colgroup>
+                <col class="laporan-jadual-protokol__lajur-bil">
+                <col class="laporan-jadual-protokol__lajur-nama">
+                <col class="laporan-jadual-protokol__lajur-versi">
+                <col class="laporan-jadual-protokol__lajur-bilangan">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Bil.</th>
+                    <th>Protokol Kriptografi</th>
+                    <th>Versi</th>
+                    <th>Bilangan Sistem/Aset Terlibat</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($data['protokol'] as $baris)
+                    <tr>
+                        <td class="laporan-jadual-algo__bil">{{ $loop->iteration }}.</td>
+                        <td>{{ $baris['nama'] ?? '' ?: '—' }}</td>
+                        <td class="laporan-jadual-protokol__versi">{{ $baris['versi'] ?? '' ?: '—' }}</td>
+                        <td class="laporan-jadual-algo__bilangan">{{ $baris['bilangan'] ?? '' ?: '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @else
+        <p class="laporan-seksyen__perenggan">
+            Tiada protokol kriptografi dikenal pasti berdasarkan data yang dikemukakan.
+        </p>
+    @endif
+
+    @if (count($ulasanProtokol))
+        <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+        @foreach ($ulasanProtokol as $blok)
+            @if ($blok['jenis'] === 'senarai')
+                @if ($blok['bernombor'])
+                    <ol class="laporan-seksyen__senarai-ulasan">
+                        @foreach ($blok['isi'] as $titik)
+                            <li>{{ $titik }}</li>
+                        @endforeach
+                    </ol>
+                @else
+                    <ul class="laporan-seksyen__senarai-ulasan">
+                        @foreach ($blok['isi'] as $titik)
+                            <li>{{ $titik }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            @else
+                <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+            @endif
+        @endforeach
+    @endif
     </section>
 
     @foreach ([
-        'protokol' => ['c. Protokol Kriptografi', ['nama' => 'Protokol Kriptografi', 'versi' => 'Versi', 'bilangan' => 'Bil. Sistem/Aset', 'nota' => 'Pemerhatian']],
         'pustaka' => ['d. Pustaka dan Modul Kriptografi', ['nama' => 'Pustaka/Modul', 'versi' => 'Versi', 'bilangan' => 'Bil. Sistem/Aset', 'nota' => 'Pemerhatian']],
         'vendor' => ['e. Maklumat Vendor', ['nama' => 'Nama Vendor', 'produk' => 'Produk/Komponen', 'versi' => 'Versi', 'bilangan' => 'Bil. Sistem/Aset', 'nota' => 'Pemerhatian']],
     ] as $medan => [$tajuk, $kolum])

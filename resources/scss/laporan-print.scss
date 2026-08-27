@@ -530,7 +530,8 @@
    algoritma mengekalkan lajur Bilangan tersendiri — susunan yang tidak boleh
    dicapai dengan satu baris per kategori tanpa nombor tersasar apabila nama
    algoritma membalut ke baris kedua. */
-.laporan-seksyen .laporan-jadual-algo {
+.laporan-seksyen .laporan-jadual-algo,
+.laporan-seksyen .laporan-jadual-protokol {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
@@ -554,20 +555,24 @@
 }
 
 /* Kepala diulang pada setiap muka surat apabila jadual terbelah. */
-.laporan-seksyen .laporan-jadual-algo thead {
+.laporan-seksyen .laporan-jadual-algo thead,
+.laporan-seksyen .laporan-jadual-protokol thead {
     display: table-header-group;
 }
 
 /* Baris tunggal tidak dibelah; kumpulan rowspan DIBENARKAN terbelah antara
    muka surat kerana satu kategori boleh mempunyai enam algoritma dan
    mengunci keseluruhan kumpulan akan meninggalkan ruang kosong besar. */
-.laporan-seksyen .laporan-jadual-algo tr {
+.laporan-seksyen .laporan-jadual-algo tr,
+.laporan-seksyen .laporan-jadual-protokol tr {
     page-break-inside: avoid;
     break-inside: avoid;
 }
 
 .laporan-seksyen .laporan-jadual-algo th,
-.laporan-seksyen .laporan-jadual-algo td {
+.laporan-seksyen .laporan-jadual-algo td,
+.laporan-seksyen .laporan-jadual-protokol th,
+.laporan-seksyen .laporan-jadual-protokol td {
     border: 1px solid #fff;
     padding: 7px 10px;
     font-size: 11px;
@@ -578,7 +583,8 @@
     word-wrap: break-word;
 }
 
-.laporan-seksyen .laporan-jadual-algo th {
+.laporan-seksyen .laporan-jadual-algo th,
+.laporan-seksyen .laporan-jadual-protokol th {
     background: $laporan-biru;
     color: $laporan-biru-teks;
     font-weight: 700;
@@ -586,7 +592,8 @@
     text-align: center;
 }
 
-.laporan-seksyen .laporan-jadual-algo td {
+.laporan-seksyen .laporan-jadual-algo td,
+.laporan-seksyen .laporan-jadual-protokol td {
     background: $laporan-nilai-bg;
     color: $laporan-text;
 }
@@ -604,4 +611,26 @@
 .laporan-seksyen .laporan-jadual-algo__label {
     display: inline-block;
     min-width: 20px;
+}
+
+/* Jadual protokol berkongsi rupa jadual algoritma (pemilihnya ditambah pada
+   peraturan di atas); hanya lebar lajur dan penjajaran versi berbeza. */
+.laporan-seksyen .laporan-jadual-protokol__lajur-bil {
+    width: 8%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__lajur-nama {
+    width: 34%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__lajur-versi {
+    width: 26%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__lajur-bilangan {
+    width: 32%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__versi {
+    text-align: center;
 }

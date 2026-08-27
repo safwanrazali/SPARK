@@ -34,7 +34,7 @@ class SeksyenAnalisis
         ],
         'protokol' => [
             'label' => '5 · Protokol Kriptografi',
-            'medan' => ['protokol'],
+            'medan' => ['protokol', 'ulasan_protokol'],
         ],
         'pustaka' => [
             'label' => '6 · Pustaka dan Modul',
@@ -147,7 +147,10 @@ class SeksyenAnalisis
                 || BorangAnalisis::algoritmaLain($nilai['algoritma_lain'] ?? null) !== []
                 || self::adaTeks($nilai['ulasan_algoritma'] ?? null),
 
-            'protokol', 'pustaka', 'vendor' => ! empty($nilai[$seksyen]),
+            'protokol' => ! empty($nilai['protokol'])
+                || self::adaTeks($nilai['ulasan_protokol'] ?? null),
+
+            'pustaka', 'vendor' => ! empty($nilai[$seksyen]),
 
             'tindakan' => ! empty($nilai['tindakan']) || self::adaTeks($nilai['tindakan_lain'] ?? null),
 

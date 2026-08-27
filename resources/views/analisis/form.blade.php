@@ -394,6 +394,21 @@
                     </div>
                 </template>
 
+                @if ($medan === 'protokol')
+                    {{-- Ulasan ditaip sendiri oleh pegawai; perenggan dan
+                         senarai bernombor dihasilkan oleh TeksBerformat. --}}
+                    <div class="mt-3">
+                        <label class="form-label" for="ulasan_protokol">Ulasan</label>
+                        <textarea name="ulasan_protokol" id="ulasan_protokol" class="form-control" rows="6"
+                            placeholder="cth. Versi protokol tidak direkodkan secara konsisten bagi sebahagian aset.">{{ $data['ulasan_protokol'] ?? '' }}</textarea>
+                        <div class="form-text">
+                            Tinggalkan satu baris kosong untuk memulakan perenggan baharu.
+                            Mulakan baris dengan <code>1.</code> <code>2.</code> (atau <code>-</code>)
+                            untuk menghasilkan senarai bernombor.
+                        </div>
+                    </div>
+                @endif
+
                 <p @class([
                     'text-secondary',
                     'mb-0',
