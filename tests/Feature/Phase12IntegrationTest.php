@@ -137,7 +137,7 @@ class Phase12IntegrationTest extends TestCase
                 ['nama' => 'RSA', 'bilangan' => '5'],
                 ['nama' => 'MD5', 'bilangan' => '3'],
             ],
-            'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '9', 'nota' => '']],
+            'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '9']],
             'pustaka' => [['nama' => 'OpenSSL', 'versi' => '3.0', 'bilangan' => '9', 'nota' => '']],
             'vendor' => [['nama' => 'Vendor A', 'produk' => 'HSM', 'versi' => '2.1', 'bilangan' => '2', 'nota' => '']],
             'tindakan' => [0, 1],

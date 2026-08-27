@@ -349,7 +349,7 @@
 
         {{-- 5–7 · Protokol / Pustaka / Vendor --}}
         @foreach ([
-            'protokol' => ['5 · Protokol Kriptografi', ['nama' => 'Nama protokol', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
+            'protokol' => ['5 · Protokol Kriptografi', ['nama' => 'Nama protokol', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset']],
             'pustaka' => ['6 · Pustaka dan Modul Kriptografi', ['nama' => 'Nama pustaka/modul', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
             'vendor' => ['7 · Maklumat Vendor', ['nama' => 'Nama vendor', 'produk' => 'Produk/Komponen', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
         ] as $medan => [$tajuk, $kolum])

@@ -607,7 +607,7 @@
         <h2 class="laporan-seksyen__tajuk">Status Penerimaan dan Kebolehgunaan Data</h2>
 
         <p class="laporan-seksyen__perenggan">
-            Bahagian ini merumuskan status penerimaan dan kebolehgunaan data inventori kriptografi
+            Jadual di bawah merumuskan status penerimaan dan kebolehgunaan data inventori kriptografi
             yang dikemukakan melalui Jadual 0–2. Penilaian dilaksanakan berdasarkan aspek
             kelengkapan, kejelasan dan konsistensi data bagi menentukan kesesuaiannya untuk tujuan
             analisis.
@@ -752,13 +752,19 @@
 
     <h3 class="laporan-seksyen__subtajuk">2. Algoritma Kriptografi</h3>
 
+    {{-- Jadual hanya muncul apabila ada algoritma dikenal pasti, jadi ayat
+         pembuka mesti mengikutinya: "Jadual di bawah" apabila jadual dipaparkan,
+         "Bahagian ini" apabila tidak. Pembolehubah yang SAMA mengawal kedua-duanya
+         supaya ayat dan jadual tidak boleh terpesong. --}}
+    @php $adaJadualAlgoritma = count($algoritma) > 0; @endphp
+
     <p class="laporan-seksyen__perenggan">
-        Jadual di bawah merumuskan algoritma dan mekanisme kriptografi yang dikenal pasti
-        berdasarkan data dalam Jadual 0–2, mengikut primitif atau kategori kriptografi serta
-        bilangan sistem dan aset yang terlibat.
+        {{ $adaJadualAlgoritma ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan algoritma dan
+        mekanisme kriptografi yang dikenal pasti berdasarkan data dalam Jadual 0–2, mengikut
+        primitif atau kategori kriptografi serta bilangan sistem dan aset yang terlibat.
     </p>
 
-    @if (count($algoritma))
+    @if ($adaJadualAlgoritma)
         <table class="laporan-jadual-algo">
             {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
                  pertama menentukan lebar lajur. --}}
@@ -832,15 +838,19 @@
 
     <h3 class="laporan-seksyen__subtajuk">3. Protokol Kriptografi</h3>
 
+    {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
+    @php $adaJadualProtokol = count($data['protokol'] ?? []) > 0; @endphp
+
     <p class="laporan-seksyen__perenggan">
-        Jadual di bawah merumuskan protokol kriptografi yang dikenal pasti berdasarkan maklumat
-        yang direkodkan dalam Jadual 0–2. Pada masa ini, Buku Kerja Migrasi PQC tidak menyediakan
-        medan khusus untuk merekodkan protokol kriptografi. Oleh itu, maklumat protokol dikenal
-        pasti berdasarkan rekod yang dikemukakan oleh entiti, termasuk maklumat yang direkodkan
-        pada medan komponen atau algoritma.
+        {{ $adaJadualProtokol ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan protokol
+        kriptografi yang dikenal pasti berdasarkan maklumat yang direkodkan dalam Jadual 0–2.
+        Pada masa ini, Buku Kerja Migrasi PQC tidak menyediakan medan khusus untuk merekodkan
+        protokol kriptografi. Oleh itu, maklumat protokol dikenal pasti berdasarkan rekod yang
+        dikemukakan oleh entiti, termasuk maklumat yang direkodkan pada medan komponen atau
+        algoritma.
     </p>
 
-    @if (count($data['protokol'] ?? []))
+    @if ($adaJadualProtokol)
         <table class="laporan-jadual-protokol">
             {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
                  pertama menentukan lebar lajur. --}}

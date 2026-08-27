@@ -199,7 +199,7 @@ class Phase6DraftResumeTest extends TestCase
         $this->actingAs($this->analyst)
             ->post(route('analisis.draf'), $this->borangSepara([
                 'kesimpulan_lain' => 'Draf awal kesimpulan.',
-                'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4', 'nota' => '']],
+                'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4']],
             ]))
             ->assertSessionHasNoErrors();
 
@@ -213,7 +213,7 @@ class Phase6DraftResumeTest extends TestCase
         $this->actingAs($this->analyst)
             ->post(route('analisis.simpan'), $this->borangLengkap([
                 'kesimpulan_lain' => 'Draf awal kesimpulan.',
-                'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4', 'nota' => '']],
+                'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4']],
                 'selesai' => '1',
             ]))
             ->assertRedirect(route('analisis.index'))
@@ -333,7 +333,7 @@ class Phase6DraftResumeTest extends TestCase
     public function test_keadaan_seksyen_menunjukkan_seksyen_yang_telah_diisi(): void
     {
         $this->actingAs($this->analyst)->post(route('analisis.draf'), $this->borangSepara([
-            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2', 'nota' => '']],
+            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2']],
         ]));
 
         $analisis = AnalisisInventori::where('agency_code', self::ENTITI)->firstOrFail();
@@ -356,11 +356,11 @@ class Phase6DraftResumeTest extends TestCase
     public function test_kemajuan_seksyen_kekal_selepas_dapatan_dimuktamadkan(): void
     {
         $this->actingAs($this->analyst)->post(route('analisis.draf'), $this->borangSepara([
-            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2', 'nota' => '']],
+            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2']],
         ]));
 
         $this->actingAs($this->analyst)->post(route('analisis.simpan'), $this->borangLengkap([
-            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2', 'nota' => '']],
+            'protokol' => [['nama' => 'TLS', 'versi' => '1.3', 'bilangan' => '2']],
             'selesai' => '1',
         ]));
 
