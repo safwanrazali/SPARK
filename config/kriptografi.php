@@ -213,9 +213,30 @@ return [
     // pratonton skrin dan PDF.
     'klasifikasi_laporan' => 'RAHSIA',
 
+    /*
+    | Baris pengesahan laporan mengikut templat rasmi: dua pegawai PTPKM,
+    | diikuti dua ruang kosong untuk pihak NACSA menandatangani.
+    |
+    | `sumber` menandakan baris yang namanya diambil daripada aliran kerja
+    | sebenar dan bukan daripada config: 'disahkan' bermaksud pegawai yang
+    | benar-benar menekan "Sahkan" (laporan_semakan.disahkan_oleh). Nama dalam
+    | config hanya menjadi sandaran sebelum pengesahan dibuat.
+    |
+    | Baris tanpa `sumber` tiada langkah aliran kerja yang sepadan, jadi
+    | namanya kekal sebagai teks tetap atau dibiarkan kosong untuk ditulis
+    | tangan pada salinan bercetak.
+    */
     'pengesahan_laporan' => [
-        ['peranan' => 'Disahkan oleh: Ketua Bahagian Migrasi PQC, PTPKM', 'nama' => 'Dr. Isma Norshahila Binti Mohammad Shah'],
-        ['peranan' => 'Diluluskan oleh: Timbalan Pengarah 2, PTPKM', 'nama' => 'Hazlin Binti Abdul Rani'],
-        ['peranan' => 'Diluluskan oleh: [Jawatan Pegawai], NACSA', 'nama' => ''],
+        [
+            'peranan' => 'Disahkan oleh: Ketua Bahagian Migrasi PQC, PTPKM',
+            'nama' => 'Dr. Isma Norshahila Binti Mohammad Shah',
+            'sumber' => 'disahkan',
+        ],
+        [
+            'peranan' => 'Diluluskan oleh: Timbalan Pengarah 2, PTPKM',
+            'nama' => 'Hazlin Binti Abdul Rani',
+        ],
+        ['peranan' => 'Disahkan oleh:', 'nama' => ''],
+        ['peranan' => 'Diluluskan oleh:', 'nama' => ''],
     ],
 ];

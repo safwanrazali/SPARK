@@ -396,7 +396,8 @@
 
 /* Nota "Catatan:" selepas jadual. */
 .laporan-seksyen .laporan-seksyen__catatan-tajuk,
-.laporan-seksyen .laporan-seksyen__ulasan-tajuk {
+.laporan-seksyen .laporan-seksyen__ulasan-tajuk,
+.laporan-seksyen .laporan-seksyen__penafian-tajuk {
     margin: 12px 0 4px;
     font-weight: 700;
     text-align: left;
@@ -710,4 +711,90 @@
 
 .laporan-seksyen .laporan-seksyen__senarai-tindakan li:last-child {
     margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Jadual pengesahan laporan
+   --------------------------------------------------------------------------
+   Sel Tandatangan dan Tarikh dibiarkan KOSONG untuk ditandatangani pada
+   salinan bercetak. `height` pada sel bertindak sebagai tinggi MINIMUM dalam
+   susun atur jadual, jadi ia memberi ruang menandatangani tanpa memotong
+   nama atau peranan yang panjang — sel tetap meninggi mengikut teksnya. */
+.laporan-seksyen .laporan-pengesahan {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0 0 14px;
+}
+
+.laporan-seksyen .laporan-pengesahan__lajur-peranan {
+    width: 32%;
+}
+
+.laporan-seksyen .laporan-pengesahan__lajur-nama {
+    width: 26%;
+}
+
+.laporan-seksyen .laporan-pengesahan__lajur-tandatangan {
+    width: 25%;
+}
+
+.laporan-seksyen .laporan-pengesahan__lajur-tarikh {
+    width: 17%;
+}
+
+.laporan-seksyen .laporan-pengesahan thead {
+    display: table-header-group;
+}
+
+/* Satu baris tandatangan tidak boleh terbelah antara muka surat. */
+.laporan-seksyen .laporan-pengesahan tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.laporan-seksyen .laporan-pengesahan th,
+.laporan-seksyen .laporan-pengesahan td {
+    border: 1px solid #fff;
+    padding: 8px 10px;
+    font-size: 11px;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen .laporan-pengesahan th {
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* Lajur Peranan berlatar biru pada setiap baris, seperti templat. */
+.laporan-seksyen .laporan-pengesahan__peranan {
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    font-weight: 700;
+}
+
+.laporan-seksyen .laporan-pengesahan__nama,
+.laporan-seksyen .laporan-pengesahan__tandatangan,
+.laporan-seksyen .laporan-pengesahan__tarikh {
+    background: $laporan-nilai-bg;
+    color: $laporan-text;
+
+    /* Ruang menandatangani: kira-kira 16mm pada cetakan A4. */
+    height: 60px;
+}
+
+.laporan-seksyen .laporan-pengesahan__tarikh {
+    text-align: center;
+}
+
+/* Baris yang ditandatangani sepenuhnya dengan tangan: label dijajarkan ke atas
+   supaya seluruh tinggi sel di bawahnya kekal kosong untuk ditulis pada
+   salinan bercetak. */
+.laporan-seksyen .laporan-pengesahan__baris-manual td {
+    vertical-align: top;
 }

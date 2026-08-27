@@ -100,6 +100,38 @@ class LaporanController extends Controller
     }
 
     /**
+     * Baris pengesahan laporan, dengan nama dan tarikh diambil daripada aliran
+     * kerja sebenar apabila langkah tersebut telah dilaksanakan.
+     *
+     * Hanya baris bertanda `sumber` mempunyai langkah aliran kerja yang
+     * sepadan; yang lain kekal kosong untuk ditandatangani secara manual.
+     * Aliran kerja, kebenaran dan logik tandatangan TIDAK disentuh di sini —
+     * kaedah ini hanya MEMBACA keadaan semakan yang sedia ada.
+     *
+     * @return list<array{peranan: string, nama: string, tarikh: string}>
+     */
+    private function pengesahan(AnalisisInventori $analisis): array
+    {
+        $semakan = app(LaporanSemakanService::class)->untuk($analisis->agency_code);
+
+        return array_map(function (array $baris) use ($semakan) {
+            $nama = (string) ($baris['nama'] ?? '');
+            $tarikh = '';
+
+            if (($baris['sumber'] ?? null) === 'disahkan' && $semakan?->disahkan_pada !== null) {
+                $nama = $semakan->disahkanOleh?->name ?: $nama;
+                $tarikh = $semakan->disahkan_pada->format('d/m/Y');
+            }
+
+            return [
+                'peranan' => (string) $baris['peranan'],
+                'nama' => $nama,
+                'tarikh' => $tarikh,
+            ];
+        }, config('kriptografi.pengesahan_laporan'));
+    }
+
+    /**
      * Angka Romawi kecil (i, ii, iii...) untuk penomboran algoritma dalam
      * jadual. Senarai katalog terbesar ialah enam item, jadi julat pendek
      * memadai; nilai di luar julat jatuh kembali kepada digit.
@@ -252,7 +284,7 @@ class LaporanController extends Controller
             'bilanganFail' => self::ejaBilangan(count($failSumber)),
             'tindakan' => $tindakan,
             'kesimpulan' => TeksBerformat::blok($data['kesimpulan'] ?? null),
-            'pengesahan' => config('kriptografi.pengesahan_laporan'),
+            'pengesahan' => $this->pengesahan($analisis),
         ];
     }
 }
