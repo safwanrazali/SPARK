@@ -173,33 +173,79 @@
             @endif
         </section>
 
-        <h2>Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
+        {{-- RINGKASAN DAPATAN ANALISIS INVENTORI KRIPTOGRAFI + subseksyen 1.
+             Gaya dalam resources/scss/laporan-print.scss (.laporan-seksyen /
+             .laporan-jadual-ringkas). Struktur dan teks MESTI kekal sama dengan
+             pasangannya dalam resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
+        <section class="laporan-seksyen">
+            <h2 class="laporan-seksyen__tajuk">Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
 
-        <p><strong>a. Profil Sistem dan Aset</strong></p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Bil.</th>
-                    <th>Perkara</th>
-                    <th>Jumlah</th>
-                    <th>Pemerhatian</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($data['profil'] ?? [] as $kategori => $baris)
+            <p class="laporan-seksyen__perenggan">
+                Bahagian ini merumuskan dapatan utama hasil analisis inventori kriptografi berdasarkan
+                data dalam Jadual 0–2, merangkumi profil sistem dan aset, penggunaan algoritma dan
+                protokol kriptografi, pustaka atau modul kriptografi serta maklumat vendor yang
+                berkaitan.
+            </p>
+
+            <h3 class="laporan-seksyen__subtajuk">1. Profil Sistem dan Aset</h3>
+
+            <p class="laporan-seksyen__perenggan">
+                Jadual di bawah merumuskan profil sistem dan aset yang dikenal pasti berdasarkan data
+                dalam Jadual 0, mengikut kategori utama yang digunakan bagi tujuan analisis inventori
+                kriptografi.
+            </p>
+
+            <table class="laporan-jadual-ringkas">
+                {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                     pertama menentukan lebar lajur. --}}
+                <colgroup>
+                    <col class="laporan-jadual-ringkas__lajur-bil">
+                    <col class="laporan-jadual-ringkas__lajur-perkara">
+                    <col class="laporan-jadual-ringkas__lajur-jumlah">
+                </colgroup>
+                <thead>
                     <tr>
-                        <td>{{ $loop->iteration }}.</td>
-                        <td>{{ $kategori }}</td>
-                        <td>{{ $baris['jumlah'] ?? '' ?: '—' }}</td>
-                        <td>{{ $baris['nota'] ?? '' ?: '—' }}</td>
+                        <th>Bil.</th>
+                        <th>Perkara</th>
+                        <th>Jumlah</th>
                     </tr>
+                </thead>
+                <tbody>
+                    @foreach ($profil as $baris)
+                        <tr>
+                            <td class="laporan-jadual-ringkas__bil">{{ $loop->iteration }}.</td>
+                            <td>{{ $baris['perkara'] }}</td>
+                            <td class="laporan-jadual-ringkas__jumlah">{{ $baris['jumlah'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            @if (count($ulasanProfil))
+                <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+                {{-- Perenggan dan senarai dihasilkan daripada teks yang ditaip pegawai;
+                     lihat App\Support\TeksBerformat untuk konvensyennya. --}}
+                @foreach ($ulasanProfil as $blok)
+                    @if ($blok['jenis'] === 'senarai')
+                        @if ($blok['bernombor'])
+                            <ol class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ol>
+                        @else
+                            <ul class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @else
+                        <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+                    @endif
                 @endforeach
-            </tbody>
-        </table>
-        <p>
-            Sebanyak <strong>{{ $jumlahAset }}</strong> rekod sistem dan aset telah dikenal pasti
-            untuk dianalisis.
-        </p>
+            @endif
+        </section>
 
         <p><strong>b. Algoritma Kriptografi</strong></p>
         @if (count($ikutKategori))

@@ -46,6 +46,7 @@ class BorangAnalisis
             // (spesifikasi bahagian 3).
             'fail_sumber' => self::senaraiTeks($request->input('fail_sumber')),
             'profil' => self::profil($request),
+            'ulasan_profil' => trim((string) $request->input('ulasan_profil', '')),
             'algoritma' => self::algoritma($request),
             'algoritma_lain' => trim((string) $request->input('algoritma_lain', '')),
 
@@ -169,7 +170,6 @@ class BorangAnalisis
         foreach (config('kriptografi.kategori_profil') as $kategori) {
             $profil[$kategori] = [
                 'jumlah' => (int) $request->input('profil.'.md5($kategori).'.jumlah', 0),
-                'nota' => $request->input('profil.'.md5($kategori).'.nota', ''),
             ];
         }
 

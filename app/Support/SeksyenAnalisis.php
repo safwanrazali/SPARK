@@ -26,7 +26,7 @@ class SeksyenAnalisis
         ],
         'profil' => [
             'label' => '3 · Profil Sistem dan Aset',
-            'medan' => ['profil'],
+            'medan' => ['profil', 'ulasan_profil'],
         ],
         'algoritma' => [
             'label' => '4 · Algoritma Kriptografi',
@@ -138,9 +138,10 @@ class SeksyenAnalisis
                 || collect($nilai['data_status'] ?? [])
                     ->contains(fn ($j) => BorangAnalisis::senaraiTeks($j['nota'] ?? null) !== []),
 
-            'profil' => collect($nilai['profil'] ?? [])->contains(
-                fn ($p) => (int) ($p['jumlah'] ?? 0) > 0 || self::adaTeks($p['nota'] ?? null)
-            ),
+            'profil' => self::adaTeks($nilai['ulasan_profil'] ?? null)
+                || collect($nilai['profil'] ?? [])->contains(
+                    fn ($p) => (int) ($p['jumlah'] ?? 0) > 0
+                ),
 
             'algoritma' => ! empty($nilai['algoritma']) || self::adaTeks($nilai['algoritma_lain'] ?? null),
 

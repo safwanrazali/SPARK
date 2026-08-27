@@ -49,7 +49,8 @@ class AnalysisSectionTest extends TestCase
             'status_laporan' => 'Selesai',
             'data_status' => ['j0' => ['kebolehgunaan' => 'Lengkap']],
             'fail_sumber' => ['LAMPIRAN A - BUKU KERJA MIGRASI PQC'],
-            'profil' => ['Pelayan' => ['jumlah' => 3, 'nota' => '']],
+            'profil' => ['Pelayan' => ['jumlah' => 3]],
+            'ulasan_profil' => 'Ulasan profil sistem dan aset.',
             'algoritma' => ['Simetrik Blok|AES' => ['bilangan' => '3', 'nota' => '']],
             'algoritma_lain' => '',
             'protokol' => [],
@@ -94,6 +95,9 @@ class AnalysisSectionTest extends TestCase
 
         $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
             'fail_sumber' => ['LAMPIRAN A'],
+        ]));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('profil', [
+            'ulasan_profil' => 'Ulasan ditaip tanpa sebarang jumlah.',
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
             'data_status' => ['j0' => ['nota' => ['perlu pengesahan', 'medan kosong']]],

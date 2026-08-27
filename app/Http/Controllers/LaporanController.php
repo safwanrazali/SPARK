@@ -6,6 +6,7 @@ use App\Models\AnalisisInventori;
 use App\Services\LaporanSemakanService;
 use App\Support\BorangAnalisis;
 use App\Support\Halaman;
+use App\Support\TeksBerformat;
 use Illuminate\Http\Request;
 use Spatie\Browsershot\Browsershot;
 
@@ -126,7 +127,16 @@ class LaporanController extends Controller
         $lapuk = $analisis->algoritmaLapuk();
         $kuantum = $analisis->algoritmaKuantum();
 
-        $jumlahAset = collect($data['profil'] ?? [])->sum(fn ($p) => (int) ($p['jumlah'] ?? 0));
+        // Profil sistem dan aset dibina mengikut susunan kategori dalam config,
+        // BUKAN mengikut susunan kunci yang tersimpan. Ini memastikan keempat-empat
+        // baris templat sentiasa hadir dan tersusun sama, walaupun rekod lama
+        // tidak mengandungi salah satu kategori.
+        $profil = collect(config('kriptografi.kategori_profil'))
+            ->map(fn ($kategori) => [
+                'perkara' => $kategori,
+                'jumlah' => (int) ($data['profil'][$kategori]['jumlah'] ?? 0),
+            ])
+            ->all();
 
         // Fail sumber bagi nota "Catatan:" dalam seksyen Status Penerimaan dan
         // Kebolehgunaan Data. Diambil daripada input borang, BUKAN daripada
@@ -146,7 +156,8 @@ class LaporanController extends Controller
             'ikutKategori' => $ikutKategori,
             'lapuk' => $lapuk,
             'kuantum' => $kuantum,
-            'jumlahAset' => $jumlahAset,
+            'profil' => $profil,
+            'ulasanProfil' => TeksBerformat::blok($data['ulasan_profil'] ?? null),
             'kesimpulanLapuk' => $kesimpulanLapuk,
             'klasifikasi' => config('kriptografi.klasifikasi_laporan'),
             'failSumber' => $failSumber,
