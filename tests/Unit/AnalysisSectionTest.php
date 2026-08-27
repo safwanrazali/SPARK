@@ -57,6 +57,7 @@ class AnalysisSectionTest extends TestCase
             'protokol' => [],
             'ulasan_protokol' => 'Ulasan protokol kriptografi.',
             'pustaka' => [],
+            'ulasan_pustaka' => 'Ulasan pustaka dan modul kriptografi.',
             'vendor' => [],
             'tindakan' => [1],
             'tindakan_lain' => '',
@@ -103,6 +104,9 @@ class AnalysisSectionTest extends TestCase
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('protokol', [
             'ulasan_protokol' => 'Versi tidak konsisten.',
+        ]));
+        $this->assertTrue(SeksyenAnalisis::adaKandungan('pustaka', [
+            'ulasan_pustaka' => 'Versi pustaka tidak dinyatakan.',
         ]));
         $this->assertTrue(SeksyenAnalisis::adaKandungan('data_status', [
             'data_status' => ['j0' => ['nota' => ['perlu pengesahan', 'medan kosong']]],

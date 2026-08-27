@@ -531,7 +531,8 @@
    dicapai dengan satu baris per kategori tanpa nombor tersasar apabila nama
    algoritma membalut ke baris kedua. */
 .laporan-seksyen .laporan-jadual-algo,
-.laporan-seksyen .laporan-jadual-protokol {
+.laporan-seksyen .laporan-jadual-protokol,
+.laporan-seksyen .laporan-jadual-pustaka {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
@@ -556,7 +557,8 @@
 
 /* Kepala diulang pada setiap muka surat apabila jadual terbelah. */
 .laporan-seksyen .laporan-jadual-algo thead,
-.laporan-seksyen .laporan-jadual-protokol thead {
+.laporan-seksyen .laporan-jadual-protokol thead,
+.laporan-seksyen .laporan-jadual-pustaka thead {
     display: table-header-group;
 }
 
@@ -564,7 +566,8 @@
    muka surat kerana satu kategori boleh mempunyai enam algoritma dan
    mengunci keseluruhan kumpulan akan meninggalkan ruang kosong besar. */
 .laporan-seksyen .laporan-jadual-algo tr,
-.laporan-seksyen .laporan-jadual-protokol tr {
+.laporan-seksyen .laporan-jadual-protokol tr,
+.laporan-seksyen .laporan-jadual-pustaka tr {
     page-break-inside: avoid;
     break-inside: avoid;
 }
@@ -572,7 +575,9 @@
 .laporan-seksyen .laporan-jadual-algo th,
 .laporan-seksyen .laporan-jadual-algo td,
 .laporan-seksyen .laporan-jadual-protokol th,
-.laporan-seksyen .laporan-jadual-protokol td {
+.laporan-seksyen .laporan-jadual-protokol td,
+.laporan-seksyen .laporan-jadual-pustaka th,
+.laporan-seksyen .laporan-jadual-pustaka td {
     border: 1px solid #fff;
     padding: 7px 10px;
     font-size: 11px;
@@ -584,7 +589,8 @@
 }
 
 .laporan-seksyen .laporan-jadual-algo th,
-.laporan-seksyen .laporan-jadual-protokol th {
+.laporan-seksyen .laporan-jadual-protokol th,
+.laporan-seksyen .laporan-jadual-pustaka th {
     background: $laporan-biru;
     color: $laporan-biru-teks;
     font-weight: 700;
@@ -593,7 +599,8 @@
 }
 
 .laporan-seksyen .laporan-jadual-algo td,
-.laporan-seksyen .laporan-jadual-protokol td {
+.laporan-seksyen .laporan-jadual-protokol td,
+.laporan-seksyen .laporan-jadual-pustaka td {
     background: $laporan-nilai-bg;
     color: $laporan-text;
 }
@@ -633,4 +640,22 @@
 
 .laporan-seksyen .laporan-jadual-protokol__versi {
     text-align: center;
+}
+
+/* Jadual pustaka berkongsi rupa dan bentuk lajur jadual protokol; pemilihnya
+   ditambah pada peraturan di atas dan hanya lebarnya diisytiharkan di sini. */
+.laporan-seksyen .laporan-jadual-pustaka__lajur-bil {
+    width: 8%;
+}
+
+.laporan-seksyen .laporan-jadual-pustaka__lajur-nama {
+    width: 34%;
+}
+
+.laporan-seksyen .laporan-jadual-pustaka__lajur-versi {
+    width: 26%;
+}
+
+.laporan-seksyen .laporan-jadual-pustaka__lajur-bilangan {
+    width: 32%;
 }

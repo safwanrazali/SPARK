@@ -38,7 +38,7 @@ class SeksyenAnalisis
         ],
         'pustaka' => [
             'label' => '6 · Pustaka dan Modul',
-            'medan' => ['pustaka'],
+            'medan' => ['pustaka', 'ulasan_pustaka'],
         ],
         'vendor' => [
             'label' => '7 · Maklumat Vendor',
@@ -150,7 +150,10 @@ class SeksyenAnalisis
             'protokol' => ! empty($nilai['protokol'])
                 || self::adaTeks($nilai['ulasan_protokol'] ?? null),
 
-            'pustaka', 'vendor' => ! empty($nilai[$seksyen]),
+            'pustaka' => ! empty($nilai['pustaka'])
+                || self::adaTeks($nilai['ulasan_pustaka'] ?? null),
+
+            'vendor' => ! empty($nilai['vendor']),
 
             'tindakan' => ! empty($nilai['tindakan']) || self::adaTeks($nilai['tindakan_lain'] ?? null),
 

@@ -350,7 +350,7 @@
         {{-- 5–7 · Protokol / Pustaka / Vendor --}}
         @foreach ([
             'protokol' => ['5 · Protokol Kriptografi', ['nama' => 'Nama protokol', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset']],
-            'pustaka' => ['6 · Pustaka dan Modul Kriptografi', ['nama' => 'Nama pustaka/modul', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
+            'pustaka' => ['6 · Pustaka dan Modul Kriptografi', ['nama' => 'Nama pustaka/modul', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset']],
             'vendor' => ['7 · Maklumat Vendor', ['nama' => 'Nama vendor', 'produk' => 'Produk/Komponen', 'versi' => 'Versi', 'bilangan' => 'Bil. sistem/aset', 'nota' => 'Pemerhatian']],
         ] as $medan => [$tajuk, $kolum])
             <div class="report-card mb-4" data-senarai="{{ $medan }}" data-seksyen="{{ $medan }}">
@@ -394,13 +394,14 @@
                     </div>
                 </template>
 
-                @if ($medan === 'protokol')
+                @if (in_array($medan, ['protokol', 'pustaka'], true))
                     {{-- Ulasan ditaip sendiri oleh pegawai; perenggan dan
                          senarai bernombor dihasilkan oleh TeksBerformat. --}}
+                    @php $medanUlasan = 'ulasan_'.$medan; @endphp
                     <div class="mt-3">
-                        <label class="form-label" for="ulasan_protokol">Ulasan</label>
-                        <textarea name="ulasan_protokol" id="ulasan_protokol" class="form-control" rows="6"
-                            placeholder="cth. Versi protokol tidak direkodkan secara konsisten bagi sebahagian aset.">{{ $data['ulasan_protokol'] ?? '' }}</textarea>
+                        <label class="form-label" for="{{ $medanUlasan }}">Ulasan</label>
+                        <textarea name="{{ $medanUlasan }}" id="{{ $medanUlasan }}" class="form-control" rows="6"
+                            placeholder="cth. Maklumat versi tidak direkodkan secara konsisten bagi sebahagian rekod.">{{ $data[$medanUlasan] ?? '' }}</textarea>
                         <div class="form-text">
                             Tinggalkan satu baris kosong untuk memulakan perenggan baharu.
                             Mulakan baris dengan <code>1.</code> <code>2.</code> (atau <code>-</code>)
