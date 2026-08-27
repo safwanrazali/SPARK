@@ -809,7 +809,10 @@
     text-align: center;
 }
 
-/* Lajur Peranan berlatar biru pada setiap baris, seperti templat. */
+/* Lajur Peranan berlatar kelabu pada setiap baris, sama seperti sel
+   Nama/Tandatangan/Tarikh di sebelahnya; hanya teksnya ditebalkan.
+   Nilai MESTI kekal sama dengan blok pasangannya dalam <style>
+   resources/views/laporan/pdf/body.blade.php. */
 .laporan-seksyen .laporan-pengesahan__peranan {
     background: #ededed;
     color: #111111;

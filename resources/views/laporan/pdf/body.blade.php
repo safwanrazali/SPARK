@@ -690,10 +690,13 @@
             text-align: center;
         }
 
-        /* Lajur Peranan berlatar biru pada setiap baris, seperti templat. */
+        /* Lajur Peranan berlatar kelabu pada setiap baris, sama seperti sel
+           Nama/Tandatangan/Tarikh di sebelahnya; hanya teksnya ditebalkan.
+           Nilai MESTI kekal sama dengan blok pasangannya dalam
+           resources/scss/laporan-print.scss. */
         .laporan-seksyen .laporan-pengesahan__peranan {
-            background: #1f6091;
-            color: #ffffff;
+            background: #ededed;
+            color: #111111;
             font-weight: 700;
         }
 
