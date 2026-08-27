@@ -356,13 +356,29 @@
 
 /* Jalur baris berselang-seli pada sel kandungan sahaja — lajur Bil.
    mengekalkan birunya. */
-.laporan-seksyen .laporan-jadual tbody tr:nth-child(odd) .laporan-jadual__komponen,
-.laporan-seksyen .laporan-jadual tbody tr:nth-child(odd) .laporan-jadual__status {
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(odd)
+    .laporan-jadual__komponen,
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(odd)
+    .laporan-jadual__status {
     background: $laporan-nilai-bg;
 }
 
-.laporan-seksyen .laporan-jadual tbody tr:nth-child(even) .laporan-jadual__komponen,
-.laporan-seksyen .laporan-jadual tbody tr:nth-child(even) .laporan-jadual__status {
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(even)
+    .laporan-jadual__komponen,
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(even)
+    .laporan-jadual__status {
     background: #f6f7f9;
 }
 
@@ -398,7 +414,7 @@
 .laporan-seksyen .laporan-seksyen__catatan-tajuk,
 .laporan-seksyen .laporan-seksyen__ulasan-tajuk,
 .laporan-seksyen .laporan-seksyen__penafian-tajuk {
-    margin: 12px 0 4px;
+    margin: 20px 0 4px;
     font-weight: 700;
     text-align: left;
 }
@@ -427,7 +443,7 @@
    BUKAN pengubah suai — mengubah `.laporan-jadual__bil` akan mengecat semula
    jadual seksyen 2. */
 .laporan-seksyen .laporan-seksyen__subtajuk {
-    margin: 14px 0 6px;
+    margin: 20px 0 6px;
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
@@ -795,8 +811,8 @@
 
 /* Lajur Peranan berlatar biru pada setiap baris, seperti templat. */
 .laporan-seksyen .laporan-pengesahan__peranan {
-    background: $laporan-biru;
-    color: $laporan-biru-teks;
+    background: #ededed;
+    color: #111111;
     font-weight: 700;
 }
 
