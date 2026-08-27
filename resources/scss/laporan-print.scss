@@ -438,6 +438,28 @@
     break-after: avoid;
 }
 
+/* Penomboran halaman mengikut templat rujukan 11 muka surat. Pasangan blok ini
+   ada dalam <style> resources/views/laporan/pdf/body.blade.php — kekalkan
+   kedua-duanya selaras.
+
+   Sifat page-break-* hanya berkesan pada media berhalaman (penjanaan PDF oleh
+   Chrome/Browsershot, atau cetakan pelayar). Pada paparan WebView yang
+   berterusan ia diabaikan sepenuhnya, jadi tiada jurang kosong terhasil.
+
+   Seksyen yang bermula pada halaman baharu: Status Penerimaan, Ringkasan
+   (membawa subseksyen 1 bersamanya), 2 Algoritma, 3 Protokol, 4 Pustaka,
+   5 Vendor, Cadangan, Kesimpulan, Pengesahan.
+
+   SENGAJA TIADA pemisah: Tujuan (kekal bersama blok pengenalan pada halaman 1),
+   subseksyen 1 Profil (kekal bersama tajuk Ringkasan) dan Penafian (berada
+   dalam seksyen Pengesahan). Kandungan yang melebihi satu halaman dibiarkan
+   mengalir ke halaman berikutnya secara semula jadi. */
+.laporan-seksyen.laporan-seksyen--mula-halaman,
+.laporan-seksyen .laporan-seksyen__subtajuk--mula-halaman {
+    page-break-before: always;
+    break-before: page;
+}
+
 .laporan-seksyen .laporan-jadual-ringkas {
     /* Lebih sempit daripada lebar kandungan dan berpusat, seperti templat. */
     width: 68%;

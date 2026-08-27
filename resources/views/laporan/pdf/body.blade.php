@@ -334,6 +334,29 @@
             break-after: avoid;
         }
 
+        /* Penomboran halaman mengikut templat rujukan 11 muka surat.
+           SALINAN blok `--mula-halaman` dalam resources/scss/laporan-print.scss;
+           kekalkan kedua-duanya selaras.
+
+           Sifat page-break-* hanya berkesan pada media berhalaman (penjanaan
+           PDF oleh Chrome/Browsershot). Pada paparan WebView yang berterusan
+           ia diabaikan sepenuhnya, jadi WebView kekal tanpa jurang kosong.
+
+           Seksyen yang bermula pada halaman baharu: Status Penerimaan,
+           Ringkasan (membawa subseksyen 1 bersamanya), 2 Algoritma,
+           3 Protokol, 4 Pustaka, 5 Vendor, Cadangan, Kesimpulan, Pengesahan.
+
+           SENGAJA TIADA pemisah: Tujuan (kekal bersama blok pengenalan pada
+           halaman 1), subseksyen 1 Profil (kekal bersama tajuk Ringkasan) dan
+           Penafian (berada dalam seksyen Pengesahan). Kandungan yang melebihi
+           satu halaman — contohnya jadual algoritma — dibiarkan mengalir ke
+           halaman berikutnya secara semula jadi tanpa dikecilkan atau dipotong. */
+        .laporan-seksyen.laporan-seksyen--mula-halaman,
+        .laporan-seksyen .laporan-seksyen__subtajuk--mula-halaman {
+            page-break-before: always;
+            break-before: page;
+        }
+
         .laporan-seksyen .laporan-jadual-ringkas {
             width: 68%;
             margin: 0 auto 12px;
@@ -764,7 +787,7 @@
          .laporan-jadual dalam resources/scss/laporan-print.scss. Struktur dan
          teks MESTI kekal sama dengan pasangannya dalam
          resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
-    <section class="laporan-seksyen">
+    <section class="laporan-seksyen laporan-seksyen--mula-halaman">
         <h2 class="laporan-seksyen__tajuk">Status Penerimaan dan Kebolehgunaan Data</h2>
 
         <p class="laporan-seksyen__perenggan">
@@ -842,7 +865,7 @@
          Gaya dalam resources/scss/laporan-print.scss (.laporan-seksyen /
          .laporan-jadual-ringkas). Struktur dan teks MESTI kekal sama dengan
          pasangannya dalam resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
-    <section class="laporan-seksyen">
+    <section class="laporan-seksyen laporan-seksyen--mula-halaman">
         <h2 class="laporan-seksyen__tajuk">Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
 
         <p class="laporan-seksyen__perenggan">
@@ -911,7 +934,7 @@
             @endforeach
         @endif
 
-    <h3 class="laporan-seksyen__subtajuk">2. Algoritma Kriptografi</h3>
+    <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">2. Algoritma Kriptografi</h3>
 
     {{-- Jadual hanya muncul apabila ada algoritma dikenal pasti, jadi ayat
          pembuka mesti mengikutinya: "Jadual di bawah" apabila jadual dipaparkan,
@@ -997,7 +1020,7 @@
         @endforeach
     @endif
 
-    <h3 class="laporan-seksyen__subtajuk">3. Protokol Kriptografi</h3>
+    <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">3. Protokol Kriptografi</h3>
 
     {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
     @php $adaJadualProtokol = count($data['protokol'] ?? []) > 0; @endphp
@@ -1068,7 +1091,7 @@
             @endif
         @endforeach
     @endif
-    <h3 class="laporan-seksyen__subtajuk">4. Pustaka dan Modul Kriptografi</h3>
+    <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">4. Pustaka dan Modul Kriptografi</h3>
 
     {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
     @php $adaJadualPustaka = count($data['pustaka'] ?? []) > 0; @endphp
@@ -1136,7 +1159,7 @@
             @endif
         @endforeach
     @endif
-    <h3 class="laporan-seksyen__subtajuk">5. Maklumat Vendor</h3>
+    <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">5. Maklumat Vendor</h3>
 
     {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
     @php $adaJadualVendor = count($vendor) > 0; @endphp
@@ -1222,7 +1245,7 @@
     </section>
 
 
-    <section class="laporan-seksyen">
+    <section class="laporan-seksyen laporan-seksyen--mula-halaman">
         <h2 class="laporan-seksyen__tajuk">Cadangan Tindakan Susulan</h2>
 
         @if (count($tindakan))
@@ -1245,7 +1268,7 @@
         @endif
     </section>
 
-    <section class="laporan-seksyen">
+    <section class="laporan-seksyen laporan-seksyen--mula-halaman">
         <h2 class="laporan-seksyen__tajuk">Kesimpulan</h2>
 
         @if (count($kesimpulan))
@@ -1275,7 +1298,7 @@
         @endif
     </section>
 
-    <section class="laporan-seksyen">
+    <section class="laporan-seksyen laporan-seksyen--mula-halaman">
         <h2 class="laporan-seksyen__tajuk">Pengesahan Laporan</h2>
 
         <table class="laporan-pengesahan">
