@@ -60,9 +60,16 @@ class LaporanController extends Controller
 
         $bodyHtml = view('laporan.pdf.body', $viewData)->render();
 
+        // Varian image/pdf/* ialah logo yang SAMA dengan image/logo_*.png,
+        // cuma jidar lutsinar di sekelilingnya dibuang. Tiada piksel dakwat
+        // dipotong. Ia diperlukan kerana kepala PDF memberi kedua-dua logo
+        // kotak bersaiz tetap: dengan fail asal, jidar lutsinar itu mengambil
+        // sebahagian besar kotak dan logo kelihatan jauh lebih kecil daripada
+        // kotaknya. Fail asal SENGAJA dikekalkan untuk pratonton skrin —
+        // resources/views/laporan/inventori.blade.php merujuknya secara terus.
         $headerHtml = view('laporan.pdf.header', [
-            'nacsaLogoBase64' => base64_encode(file_get_contents(public_path('image/logo_nacsa.png'))),
-            'ptpkmLogoBase64' => base64_encode(file_get_contents(public_path('image/logo_ptpkm.png'))),
+            'nacsaLogoBase64' => base64_encode(file_get_contents(public_path('image/pdf/logo_nacsa_pdf.png'))),
+            'ptpkmLogoBase64' => base64_encode(file_get_contents(public_path('image/pdf/logo_ptpkm_pdf.png'))),
         ])->render();
 
         $footerHtml = view('laporan.pdf.footer', [

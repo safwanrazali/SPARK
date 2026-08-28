@@ -13,6 +13,15 @@
     pratonton skrin (resources/views/laporan/inventori.blade.php) kekal
     pada fon aplikasi sedia ada.
 
+    Kepala dan kaki halaman WAJIB memasukkan partial ini sendiri: Chrome
+    memaparkan headerTemplate/footerTemplate sebagai dokumen TERASING yang
+    tidak mewarisi @font-face daripada halaman utama.
+
+    Parameter pilihan `$aptosPilihan` — senarai pasangan [berat, gaya] —
+    mengehadkan berat yang dibenamkan. Kepala/kaki halaman hanya memerlukan
+    400 normal, jadi ia mengelak membenamkan lima fon pada setiap templat.
+    Tanpa parameter ini, semua berat dibenamkan.
+
     Sumber fon dan lesen: public/fonts/aptos/README.md
 --}}
 @php
@@ -26,6 +35,13 @@
         ['fail' => 'Aptos-Bold-Italic.woff2', 'berat' => 700, 'gaya' => 'italic'],
         ['fail' => 'Aptos-ExtraBold.woff2',   'berat' => 800, 'gaya' => 'normal'],
     ];
+
+    if (! empty($aptosPilihan)) {
+        $fonAptos = array_values(array_filter(
+            $fonAptos,
+            fn (array $fon) => in_array([$fon['berat'], $fon['gaya']], $aptosPilihan, true),
+        ));
+    }
 @endphp
 <style>
     @foreach ($fonAptos as $fon)
