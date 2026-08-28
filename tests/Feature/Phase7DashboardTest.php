@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ActivityLog;
 use App\Models\AnalisisInventori;
 use App\Models\LaporanSemakan;
 use App\Models\StatusLaporan;
@@ -10,6 +11,7 @@ use App\Models\WorkflowStatus;
 use App\Services\DashboardStatistikService;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
+use App\Services\LaporanSemakanService;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -52,12 +54,20 @@ class Phase7DashboardTest extends TestCase
 
     /**
      * Cipta rekod workflow bagi satu entiti pada peringkat tertentu.
+     *
+     * Status mengikut peraturan yang ditulis oleh
+     * KemajuanAnalisisService::selaraskanKedudukan: entiti hanya melepasi
+     * peringkat 1 setelah pendaftarannya Selesai, dan sejak itu ia berstatus
+     * 'Dalam Proses' sehingga kesemua tujuh peringkat Selesai.
      */
     private function workflow(string $agencyCode, int $peringkat, ?string $tarikh = null): WorkflowStatus
     {
         return WorkflowStatus::factory()
             ->onStage($peringkat)
             ->create(SektorDirectory::cariEntiti($agencyCode) + [
+                'status' => $peringkat > WorkflowStatus::FIRST_STAGE
+                    ? DashboardStatistikService::STATUS_DALAM_PROSES
+                    : WorkflowStatus::DEFAULT_STATUS,
                 'updated_by_user_id' => $this->coordinator->id,
                 'status_since' => $tarikh ? Carbon::parse($tarikh) : now(),
             ]);
@@ -92,6 +102,58 @@ class Phase7DashboardTest extends TestCase
             'report_type' => $jenis,
             'status' => $status,
         ]);
+    }
+
+    /**
+     * Serahkan laporan yang telah disahkan kepada NACSA — tindakan "Hantar"
+     * peringkat 07. Melalui servis sebenar, jadi jejak `report_delivered`
+     * yang dibaca papan pemuka ditulis oleh kod pengeluaran.
+     */
+    private function serahkanKepadaNacsa(string $agencyCode, string $jenis = 'inventori'): LaporanSemakan
+    {
+        $laporan = $this->laporanSemakan($agencyCode, $jenis, LaporanSemakan::SAH);
+
+        app(LaporanSemakanService::class)->rekodPenyerahan($laporan, $this->coordinator);
+
+        return $laporan;
+    }
+
+    /**
+     * Daftarkan entiti melalui aliran sebenar — peringkat 01 Selesai.
+     */
+    private function daftarkan(string $agencyCode): void
+    {
+        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+            SektorDirectory::cariEntiti($agencyCode),
+            $this->coordinator,
+        );
+    }
+
+    /**
+     * Daftarkan entiti dan tandakan KESEMUA tujuh peringkat Selesai —
+     * satu-satunya cara entiti benar-benar menjadi 'Siap'.
+     */
+    private function siapkanSemuaPeringkat(string $agencyCode): void
+    {
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        $this->daftarkan($agencyCode);
+
+        foreach (array_keys(WorkflowStatus::WORKFLOW_STAGES) as $stage) {
+            $kemajuan->tandakanSelesai($agencyCode, $stage, $this->coordinator);
+        }
+    }
+
+    /**
+     * Bilangan entiti dalam senarai induk — penyebut setiap peratusan
+     * papan pemuka. Dikira daripada config supaya ujian tidak pecah apabila
+     * senarai induk dikemas kini.
+     */
+    private function jumlahSenaraiInduk(?string $sektor = null): int
+    {
+        return $sektor === null
+            ? SektorDirectory::semuaEntiti()->count()
+            : SektorDirectory::entitiDalamSektor($sektor)->count();
     }
 
     /**
@@ -161,9 +223,12 @@ class Phase7DashboardTest extends TestCase
 
         $statistik = $this->kira();
 
-        $this->assertSame(3, $statistik['jumlahEntiti']);
-        $this->assertSame(2, $statistik['dalamProses']); // peringkat 1–6
-        $this->assertSame(1, $statistik['selesai']);     // peringkat 7
+        // Jumlah Entiti ialah keseluruhan senarai induk, bukan hanya
+        // entiti yang telah disentuh.
+        $this->assertSame($this->jumlahSenaraiInduk(), $statistik['jumlahEntiti']);
+        $this->assertSame(3, $statistik['jumlahDipantau']);
+        $this->assertSame(2, $statistik['dalamProses']);
+        $this->assertSame(1, $statistik['selesai']);
         $this->assertSame(0, $statistik['belumDidaftar']);
     }
 
@@ -176,7 +241,8 @@ class Phase7DashboardTest extends TestCase
 
         $statistik = $this->kira();
 
-        $this->assertSame(2, $statistik['jumlahEntiti']);
+        $this->assertSame($this->jumlahSenaraiInduk(), $statistik['jumlahEntiti']);
+        $this->assertSame(2, $statistik['jumlahDipantau']);
         $this->assertSame(1, $statistik['dalamProses']);
         $this->assertSame(0, $statistik['selesai']);
         $this->assertSame(1, $statistik['belumDidaftar']);
@@ -200,16 +266,15 @@ class Phase7DashboardTest extends TestCase
 
         foreach ([self::ALPHA, self::BETA, self::GAMMA] as $kod) {
             $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+            $this->serahkanKepadaNacsa($kod);
         }
 
         $sebelum = $this->kira();
 
-        $this->assertSame(3, $sebelum['jumlahEntiti']);
+        $this->assertSame(3, $sebelum['jumlahDipantau']);
         $this->assertSame(3, $sebelum['dalamProses']);
         $this->assertSame(0, $sebelum['selesai']);
-        // Satu laporan aktif setiap entiti — Risiko PQC dan Kesiapsiagaan
-        // masih "N/A" dan tidak dikira.
-        $this->assertSame(3, $sebelum['jumlahLaporan']);
+        $this->assertSame(3, $sebelum['jumlahLaporan']['inventori']);
 
         $this->actingAs($kb)
             ->post(route('penugasan.pendaftaran.set-semula', self::GAMMA), ['reason' => 'Data tidak lengkap.'])
@@ -217,17 +282,14 @@ class Phase7DashboardTest extends TestCase
 
         $selepas = $this->kira();
 
-        $this->assertSame(2, $selepas['jumlahEntiti']);
+        $this->assertSame(2, $selepas['jumlahDipantau']);
         $this->assertSame(2, $selepas['dalamProses']);
         $this->assertSame(0, $selepas['selesai']);
-        $this->assertSame(2, $selepas['jumlahLaporan']);
+        $this->assertSame(2, $selepas['jumlahLaporan']['inventori']);
 
         // Entiti itu bukan sekadar dipindahkan ke "belum didaftar" —
         // ia keluar sepenuhnya daripada skop pemantauan.
         $this->assertSame(0, $selepas['belumDidaftar']);
-
-        $sektor001 = collect($selepas['mengikutSektor'])->firstWhere('kod', '001');
-        $this->assertSame(2, $sektor001['jumlah']);
     }
 
     /**
@@ -247,31 +309,157 @@ class Phase7DashboardTest extends TestCase
 
         $statistik = $this->kira();
 
-        $this->assertSame(2, $statistik['jumlahEntiti']);
+        $this->assertSame(2, $statistik['jumlahDipantau']);
         $this->assertSame(1, $statistik['dalamProses']);
         $this->assertSame(1, $statistik['belumDidaftar']);
     }
 
-    public function test_taburan_workflow_merentas_tujuh_peringkat(): void
+    /**
+     * Carta "Kemajuan Keseluruhan" — taburan entiti merentas tiga keadaan
+     * Kemajuan Analisis, dan bukan perbendaharaan kemajuan baharu.
+     */
+    public function test_taburan_kemajuan_merentas_tiga_keadaan(): void
     {
-        // Dua entiti pada peringkat 1, satu pada peringkat 4.
-        $this->workflow(self::ALPHA, 1);
-        $this->workflow(self::BETA, 1);
-        $this->workflow(self::GAMMA, 4);
+        // Sektor 010 mengandungi TIGA entiti dalam senarai induk. Dua
+        // disentuh (1 siap, 1 dalam proses); yang ketiga tidak pernah
+        // disentuh langsung dan mesti muncul sebagai "Belum Mula".
+        $this->assertSame(3, $this->jumlahSenaraiInduk('010'));
 
-        $taburan = collect($this->kira()['taburanWorkflow'])->keyBy('peringkat');
+        $this->workflowSiap('K100100');
+        $this->workflow('A100101', 4);
 
-        $this->assertCount(7, $taburan);
+        $statistik = $this->kira('010');
+        $taburan = collect($statistik['kemajuanTaburan'])->keyBy('kunci');
 
-        $this->assertSame(2, $taburan[1]['bilangan']);
-        $this->assertSame(67, $taburan[1]['peratus']); // 2/3
-        $this->assertSame(1, $taburan[4]['bilangan']);
-        $this->assertSame(33, $taburan[4]['peratus']); // 1/3
-        $this->assertSame(0, $taburan[7]['bilangan']);
+        $this->assertSame(3, $statistik['jumlahEntiti']);
+        $this->assertSame(2, $statistik['jumlahDipantau']);
 
-        // Nama peringkat mengikut spesifikasi.
-        $this->assertSame('Penerimaan & Pendaftaran Data', $taburan[1]['nama']);
-        $this->assertSame('Penyerahan & Penutupan', $taburan[7]['nama']);
+        $this->assertCount(3, $taburan);
+
+        $this->assertSame(KemajuanAnalisisService::KESELURUHAN_SIAP, $taburan['selesai']['label']);
+        $this->assertSame(1, $taburan['selesai']['nilai']);
+        $this->assertSame(33, $taburan['selesai']['peratus']);
+
+        $this->assertSame(KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES, $taburan['proses']['label']);
+        $this->assertSame(1, $taburan['proses']['nilai']);
+        $this->assertSame(33, $taburan['proses']['peratus']);
+
+        // Entiti yang TIDAK PERNAH disentuh tetap dikira — inilah sebabnya
+        // penyebutnya mesti keseluruhan senarai induk.
+        $this->assertSame(KemajuanAnalisisService::KESELURUHAN_BELUM_MULA, $taburan['belum']['label']);
+        $this->assertSame(1, $taburan['belum']['nilai']);
+        $this->assertSame(33, $taburan['belum']['peratus']);
+
+    }
+
+    /**
+     * Kad "Entiti Dalam Proses" dan "Entiti Selesai" diukur terhadap entiti
+     * yang TELAH selesai "Penerimaan & Pendaftaran Data" — bukan terhadap
+     * keseluruhan senarai induk. Entiti yang belum melepasi pintu masuk itu
+     * belum boleh bergerak, jadi ia tidak layak menjadi penyebut.
+     */
+    public function test_peratus_kemajuan_diukur_terhadap_entiti_selesai_pendaftaran(): void
+    {
+        // Sektor 010: tiga entiti. Dua didaftarkan, satu daripadanya siap
+        // sepenuhnya; entiti ketiga tidak pernah disentuh.
+        $this->siapkanSemuaPeringkat('K100100');
+        $this->daftarkan('A100101');
+
+        $statistik = $this->kira('010');
+
+        $this->assertSame(3, $statistik['jumlahEntiti']);
+        $this->assertSame(2, $statistik['pendaftaranSelesai']);
+        $this->assertSame(1, $statistik['selesai']);
+        $this->assertSame(1, $statistik['dalamProses']);
+
+        // Liputan pendaftaran: 2 daripada 3 entiti.
+        $this->assertSame(67, $statistik['peratusPendaftaranSelesai']);
+
+        // Kemajuan: 1 daripada 2 entiti yang telah selesai pendaftaran.
+        $this->assertSame(50, $statistik['peratusDalamProses']);
+        $this->assertSame(50, $statistik['peratusSelesai']);
+
+        // Carta Kemajuan Keseluruhan kekal meliputi KESEMUA entiti, jadi
+        // hirisannya tidak sama dengan kad — dan sengaja begitu.
+        $taburan = collect($statistik['kemajuanTaburan'])->keyBy('kunci');
+        $this->assertSame(33, $taburan['selesai']['peratus']); // 1 / 3
+        $this->assertSame(1, $taburan['belum']['nilai']);
+    }
+
+    /**
+     * Tiada entiti yang selesai pendaftaran — penyebut sifar tidak boleh
+     * menghasilkan NaN atau Infinity.
+     */
+    public function test_peratus_kemajuan_sifar_apabila_tiada_pendaftaran_selesai(): void
+    {
+        $this->statusLaporan(self::ALPHA, 'inventori', 'Dalam Proses');
+
+        $statistik = $this->kira();
+
+        $this->assertSame(0, $statistik['pendaftaranSelesai']);
+        $this->assertSame(0, $statistik['peratusDalamProses']);
+        $this->assertSame(0, $statistik['peratusSelesai']);
+    }
+
+    /**
+     * Carta "Entiti Selesai Kemajuan Analisis Mengikut Sektor".
+     *
+     * Gelang membahagikan KESELURUHAN entiti kepada sektornya — `jumlah`
+     * ialah saiz hirisan — manakala `selesai` dan `peratus` melaporkan kadar
+     * siap dalam sektor itu sendiri.
+     */
+    public function test_entiti_disenaraikan_bagi_setiap_sektor(): void
+    {
+        $this->workflowSiap(self::ALPHA);   // sektor 001
+        $this->workflowSiap(self::BETA);    // sektor 001
+        $this->workflow(self::GAMMA, 4);    // sektor 001, belum siap
+        $this->workflowSiap(self::DELTA);   // sektor 010
+
+        $statistik = $this->kira();
+        $mengikutSektor = collect($statistik['selesaiMengikutSektor'])->keyBy('kod');
+
+        // Kesebelas-sebelas sektor hadir, mengikut susunan senarai induk.
+        $this->assertSame(array_map('strval', array_keys(config('sektor'))), $mengikutSektor->keys()->all());
+
+        // Saiz hirisan = bilangan entiti sektor itu; semuanya berjumlah
+        // keseluruhan entiti, jadi gelang menutup pada 100%.
+        foreach (config('sektor') as $kod => $sektor) {
+            $this->assertSame(count($sektor['agencies']), $mengikutSektor[(string) $kod]['jumlah']);
+        }
+
+        $this->assertSame(
+            $this->jumlahSenaraiInduk(),
+            collect($statistik['selesaiMengikutSektor'])->sum('jumlah'),
+        );
+
+        $this->assertSame(2, $mengikutSektor['001']['selesai']);
+        $this->assertSame(1, $mengikutSektor['010']['selesai']);
+
+        // Sektor tanpa entiti selesai kekal disenaraikan pada sifar.
+        $this->assertSame(0, $mengikutSektor['005']['selesai']);
+        $this->assertSame(0, $mengikutSektor['005']['peratus']);
+    }
+
+    /**
+     * Peratusan setiap sektor ialah kadar siap DALAM sektor itu.
+     */
+    public function test_peratus_sektor_ialah_kadar_siap_dalam_sektor_itu(): void
+    {
+        // Sektor 010 mempunyai tiga entiti; satu daripadanya siap.
+        $this->workflowSiap('K100100');
+
+        $sektor010 = collect($this->kira()['selesaiMengikutSektor'])->firstWhere('kod', '010');
+
+        $this->assertSame(3, $sektor010['jumlah']);
+        $this->assertSame(1, $sektor010['selesai']);
+        $this->assertSame(33, $sektor010['peratus']); // 1 / 3 entiti sektor itu
+
+        // Sektor 002 mempunyai 19 entiti dan tiada satu pun siap.
+        $sektor002 = collect($this->kira()['selesaiMengikutSektor'])->firstWhere('kod', '002');
+
+        $this->assertSame(19, $sektor002['jumlah']);
+        $this->assertSame(0, $sektor002['selesai']);
+        $this->assertSame(0, $sektor002['peratus']);
     }
 
     public function test_kemajuan_keseluruhan_dikira_daripada_peringkat_dicapai(): void
@@ -293,30 +481,114 @@ class Phase7DashboardTest extends TestCase
     }
 
     /**
-     * Kiraan laporan dikira daripada Kemajuan Analisis Entiti. Hanya jenis
-     * laporan yang aktif dikira — Risiko PQC dan Kesiapsiagaan masih "N/A"
-     * dalam versi ini, jadi ia tidak menokok sebarang kiraan.
+     * Kad "Entiti Selesai Pendaftaran" — peringkat 01 Selesai, mengikut
+     * takrifan yang sama seperti KemajuanAnalisisService::pendaftaranSelesai().
      */
-    public function test_kiraan_laporan_hanya_merangkumi_jenis_aktif(): void
+    public function test_peratus_pendaftaran_selesai_dikira_daripada_peringkat_01(): void
+    {
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        // Sektor 010 mempunyai tiga entiti; dua menyelesaikan pendaftaran.
+        $this->assertSame(3, $this->jumlahSenaraiInduk('010'));
+
+        foreach (['K100100', 'A100101'] as $kod) {
+            $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+        }
+
+        $statistik = $this->kira('010');
+
+        $this->assertSame(2, $statistik['pendaftaranSelesai']);
+        $this->assertSame(67, $statistik['peratusPendaftaranSelesai']); // 2/3
+    }
+
+    /**
+     * Entiti yang baris peringkatnya wujud tetapi BELUM Selesai tidak dikira —
+     * termasuk entiti yang telah ditetapkan semula oleh Ketua Bahagian.
+     */
+    public function test_pendaftaran_yang_ditetapkan_semula_tidak_dikira_selesai(): void
+    {
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        foreach (['K100100', 'A100101'] as $kod) {
+            $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+        }
+
+        $this->assertSame(2, $this->kira('010')['pendaftaranSelesai']);
+
+        $kemajuan->setSemula('A100101', $ppr, 'Data tidak lengkap.');
+
+        $selepas = $this->kira('010');
+
+        $this->assertSame(1, $selepas['pendaftaranSelesai']);
+        $this->assertSame(33, $selepas['peratusPendaftaranSelesai']); // 1/3
+    }
+
+    /**
+     * Hanya laporan yang TELAH diserahkan kepada NACSA dikira.
+     *
+     * Laporan yang masih dalam kitaran — termasuk yang telah disahkan KB
+     * tetapi belum ditekan "Hantar" pada peringkat 07 — tidak menokok kiraan.
+     */
+    public function test_kiraan_laporan_hanya_merangkumi_yang_diserahkan_kepada_nacsa(): void
     {
         $kemajuan = app(KemajuanAnalisisService::class);
         $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
         $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::BETA), $this->coordinator);
 
-        // ALPHA: inventori telah disahkan KB. Rekod "risiko" sengaja dicipta
-        // untuk membuktikan ia tetap diabaikan selagi jenis itu belum aktif.
-        $this->laporanSemakan(self::ALPHA, 'inventori', LaporanSemakan::SAH);
-        $this->laporanSemakan(self::ALPHA, 'risiko', LaporanSemakan::MENUNGGU_KB);
+        // BETA: laporan disahkan KB tetapi BELUM diserahkan. Rekod dapatan
+        // analisisnya juga wujud — kedua-duanya tetap tidak dikira.
+        $this->laporanSemakan(self::BETA, 'inventori', LaporanSemakan::SAH);
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti(self::BETA) + ['selesai' => true, 'user_id' => $this->analyst->id]
+        );
 
-        $statistik = $this->kira();
+        $this->assertSame(
+            ['inventori' => 0, 'risiko' => 0, 'kesiapsiagaan' => 0],
+            $this->kira()['jumlahLaporan'],
+        );
 
-        // 2 entiti × 1 jenis laporan aktif = 2 rekod dijangka.
-        $this->assertSame(2, $statistik['jumlahLaporan']);
-        $this->assertSame(1, $statistik['laporanSelesai']);
-        $this->assertSame(0, $statistik['laporanDalamSemakan']);
-        // BETA baru didaftarkan dan belum menghantar laporan.
-        $this->assertSame(1, $statistik['laporanDalamProses']);
-        $this->assertSame(0, $statistik['laporanBelum']);
+        // ALPHA menekan "Hantar" — barulah ia dikira.
+        $this->serahkanKepadaNacsa(self::ALPHA);
+
+        $this->assertSame(
+            ['inventori' => 1, 'risiko' => 0, 'kesiapsiagaan' => 0],
+            $this->kira()['jumlahLaporan'],
+        );
+    }
+
+    /**
+     * Jenis laporan diambil daripada metadata jejak penyerahan, jadi setiap
+     * jenis dikira dalam lajurnya sendiri.
+     */
+    public function test_kiraan_laporan_diasingkan_mengikut_jenis(): void
+    {
+        app(KemajuanAnalisisService::class)
+            ->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+
+        $this->serahkanKepadaNacsa(self::ALPHA, 'inventori');
+        $this->serahkanKepadaNacsa(self::ALPHA, 'risiko');
+
+        $this->assertSame(
+            ['inventori' => 1, 'risiko' => 1, 'kesiapsiagaan' => 0],
+            $this->kira()['jumlahLaporan'],
+        );
+    }
+
+    /**
+     * Menekan "Hantar" dua kali pada entiti yang sama tetap satu laporan.
+     */
+    public function test_penyerahan_berulang_dikira_sekali_sahaja(): void
+    {
+        app(KemajuanAnalisisService::class)
+            ->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+
+        $laporan = $this->serahkanKepadaNacsa(self::ALPHA);
+        app(LaporanSemakanService::class)->rekodPenyerahan($laporan, $this->coordinator);
+
+        $this->assertSame(2, ActivityLog::where('action', LaporanSemakanService::ACTION_DELIVERED)->count());
+        $this->assertSame(1, $this->kira()['jumlahLaporan']['inventori']);
     }
 
     public function test_jumlah_sektor_dikira_daripada_senarai_induk(): void
@@ -339,14 +611,58 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(1, $this->kira()['analisisSelesai']);
     }
 
-    public function test_papan_pemuka_kosong_tidak_membahagi_dengan_sifar(): void
+    public function test_papan_pemuka_tanpa_rekod_tidak_membahagi_dengan_sifar(): void
     {
         $statistik = $this->kira();
 
-        $this->assertSame(0, $statistik['jumlahEntiti']);
+        $this->assertSame($this->jumlahSenaraiInduk(), $statistik['jumlahEntiti']);
+        $this->assertSame(0, $statistik['jumlahDipantau']);
         $this->assertSame(0, $statistik['kemajuan']);
-        $this->assertSame(0, $statistik['jumlahLaporan']);
-        $this->assertSame(0, collect($statistik['taburanWorkflow'])->sum('peratus'));
+        $this->assertSame(0, $statistik['pendaftaranSelesai']);
+        $this->assertSame(0, $statistik['peratusPendaftaranSelesai']);
+        $this->assertSame(0, $statistik['peratusDalamProses']);
+        $this->assertSame(0, $statistik['peratusSelesai']);
+        $this->assertSame(['inventori' => 0, 'risiko' => 0, 'kesiapsiagaan' => 0], $statistik['jumlahLaporan']);
+
+        // Setiap sektor kekal disenaraikan, semuanya pada sifar selesai —
+        // tetapi hirisannya tetap bersaiz bilangan entiti sektor itu.
+        $this->assertCount(count(config('sektor')), $statistik['selesaiMengikutSektor']);
+        $this->assertSame(0, collect($statistik['selesaiMengikutSektor'])->sum('selesai'));
+        $this->assertSame(
+            $this->jumlahSenaraiInduk(),
+            collect($statistik['selesaiMengikutSektor'])->sum('jumlah'),
+        );
+    }
+
+    /**
+     * Penyebut sifar — pengguna tanpa satu pun entiti boleh diakses. Tiada
+     * peratusan boleh menjadi NaN atau Infinity.
+     */
+    public function test_pengguna_tanpa_entiti_tidak_membahagi_dengan_sifar(): void
+    {
+        $statistik = app(DashboardStatistikService::class)->kira($this->analyst);
+
+        $this->assertSame(0, $statistik['jumlahEntiti']);
+        $this->assertSame(0, $statistik['jumlahDipantau']);
+        $this->assertSame(0, $statistik['kemajuan']);
+        $this->assertSame(0, $statistik['peratusPendaftaranSelesai']);
+        $this->assertSame(0, $statistik['peratusDalamProses']);
+        $this->assertSame(0, $statistik['peratusSelesai']);
+        $this->assertSame(0, collect($statistik['kemajuanTaburan'])->sum('peratus'));
+    }
+
+    /**
+     * Papan pemuka kosong mesti dilukis tanpa ralat dan tanpa carta palsu.
+     */
+    public function test_papan_pemuka_kosong_memaparkan_keadaan_kosong(): void
+    {
+        $this->actingAs($this->coordinator)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Tiada entiti selesai')
+            ->assertSee('0 daripada ' . $this->jumlahSenaraiInduk() . ' entiti ·')
+            ->assertDontSee('NaN')
+            ->assertDontSee('INF');
     }
 
     /*
@@ -362,11 +678,13 @@ class Phase7DashboardTest extends TestCase
         $this->workflowSiap(self::DELTA);   // sektor 010
 
         $semua = $this->kira();
-        $this->assertSame(3, $semua['jumlahEntiti']);
+        $this->assertSame($this->jumlahSenaraiInduk(), $semua['jumlahEntiti']);
+        $this->assertSame(3, $semua['jumlahDipantau']);
         $this->assertSame(2, $semua['selesai']);
 
         $sektor010 = $this->kira('010');
-        $this->assertSame(1, $sektor010['jumlahEntiti']);
+        $this->assertSame($this->jumlahSenaraiInduk('010'), $sektor010['jumlahEntiti']);
+        $this->assertSame(1, $sektor010['jumlahDipantau']);
         $this->assertSame(1, $sektor010['selesai']);
         $this->assertSame(0, $sektor010['dalamProses']);
         $this->assertSame(1, $sektor010['jumlahSektor']);
@@ -379,7 +697,8 @@ class Phase7DashboardTest extends TestCase
 
         $statistik = $this->kira('SEKTOR-TIDAK-WUJUD');
 
-        $this->assertSame(1, $statistik['jumlahEntiti']);
+        $this->assertSame($this->jumlahSenaraiInduk(), $statistik['jumlahEntiti']);
+        $this->assertSame(1, $statistik['jumlahDipantau']);
         $this->assertNull($statistik['penapis']['sector_code']);
     }
 
@@ -391,16 +710,18 @@ class Phase7DashboardTest extends TestCase
         $julat = $this->kira(null, '2026-08-15', '2026-08-31');
 
         // Hanya entiti BETA (peringkat 5) berada dalam julat tarikh.
-        $this->assertSame(1, $julat['jumlahEntiti']);
-        $this->assertSame(1, collect($julat['taburanWorkflow'])->firstWhere('peringkat', 5)['bilangan']);
-        $this->assertSame(0, collect($julat['taburanWorkflow'])->firstWhere('peringkat', 3)['bilangan']);
+        // Penapis tarikh mengecilkan entiti DIPANTAU; jumlah entiti dalam
+        // senarai induk tidak berubah kerana entiti tidak hilang wujud.
+        $this->assertSame(1, $julat['jumlahDipantau']);
+        $this->assertSame(1, $julat['dalamProses']);
+        $this->assertSame($this->jumlahSenaraiInduk(), $julat['jumlahEntiti']);
     }
 
     public function test_penapis_tarikh_meliputi_sempadan_hari_penuh(): void
     {
         $this->workflow(self::ALPHA, 2, '2026-08-15 23:30:00');
 
-        $this->assertSame(1, $this->kira(null, '2026-08-15', '2026-08-15')['jumlahEntiti']);
+        $this->assertSame(1, $this->kira(null, '2026-08-15', '2026-08-15')['jumlahDipantau']);
     }
 
     public function test_julat_tarikh_terbalik_dibetulkan(): void
@@ -408,7 +729,7 @@ class Phase7DashboardTest extends TestCase
         $this->workflow(self::ALPHA, 2, '2026-08-10 12:00:00');
 
         // Dari dan hingga ditukar tempat.
-        $this->assertSame(1, $this->kira(null, '2026-08-20', '2026-08-01')['jumlahEntiti']);
+        $this->assertSame(1, $this->kira(null, '2026-08-20', '2026-08-01')['jumlahDipantau']);
     }
 
     public function test_penapis_sektor_dan_tarikh_boleh_digabungkan(): void
@@ -419,7 +740,8 @@ class Phase7DashboardTest extends TestCase
 
         $statistik = $this->kira('001', '2026-08-01', '2026-08-31');
 
-        $this->assertSame(1, $statistik['jumlahEntiti']);
+        $this->assertSame(1, $statistik['jumlahDipantau']);
+        $this->assertSame($this->jumlahSenaraiInduk('001'), $statistik['jumlahEntiti']);
         $this->assertTrue($statistik['penapis']['aktif']);
     }
 
@@ -429,27 +751,56 @@ class Phase7DashboardTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_papan_pemuka_memaparkan_kesemua_konsep_yang_diperlukan(): void
+    /**
+     * Lapan kad ringkasan — tidak lebih, tidak kurang — dan kedua-dua carta.
+     */
+    public function test_papan_pemuka_memaparkan_lapan_kad_dan_dua_carta(): void
     {
         $this->workflow(self::ALPHA, 2);
-        $this->workflow(self::BETA, 7);
+        $this->workflowSiap(self::BETA);
 
         $response = $this->actingAs($this->coordinator)->get(route('dashboard'))->assertOk();
 
-        $response->assertSee('Jumlah Sektor')
-            ->assertSee('Jumlah Entiti')
-            ->assertSee('Dalam Proses')
-            ->assertSee('Entiti Selesai')
-            ->assertSee('Jumlah Laporan')
-            ->assertSee('Laporan Selesai')
-            ->assertSee('Dalam Semakan')
-            ->assertSee('Kemajuan Keseluruhan')
-            ->assertSee('Taburan Kemajuan Analisis 7 Peringkat');
-
-        // Ketujuh-tujuh peringkat disenaraikan.
-        foreach (WorkflowStatus::WORKFLOW_STAGES as $nama) {
-            $response->assertSee($nama);
+        foreach ([
+            'Jumlah Sektor',
+            'Jumlah Entiti',
+            'Entiti Selesai Pendaftaran',
+            'Entiti Dalam Proses',
+            'Entiti Selesai',
+            'Jumlah Laporan Analisis Inventori Kriptografi',
+            'Jumlah Laporan Penilaian Risiko Migrasi PQC',
+            'Jumlah Laporan Kesiapsiagaan',
+        ] as $tajuk) {
+            $response->assertSee($tajuk);
         }
+
+        $response->assertSee('Entiti Selesai Kemajuan Analisis Mengikut Sektor')
+            ->assertSee('Kemajuan Keseluruhan')
+            ->assertSee('Aktiviti Terkini');
+
+        // Tepat lapan kad ringkasan.
+        $this->assertSame(8, substr_count($response->getContent(), 'class="metric-card"'));
+
+        // Nilai peratusan dilabel sebagai peratusan.
+        $response->assertSee('metric-card__unit', false);
+    }
+
+    /**
+     * Kedua-dua komponen yang digantikan tidak boleh berbaki di mana-mana.
+     */
+    public function test_komponen_lama_dibuang_daripada_papan_pemuka(): void
+    {
+        $this->workflow(self::ALPHA, 2);
+
+        $response = $this->actingAs($this->coordinator)->get(route('dashboard'))->assertOk();
+
+        // "Status 3 Laporan" kekal sebagai modulnya sendiri dalam bar sisi —
+        // yang dibuang ialah kad papan pemuka dan penanda gayanya.
+        $response->assertDontSee('Taburan Kemajuan Analisis 7 Peringkat')
+            ->assertDontSee('Laporan Selesai')
+            ->assertDontSee('workflow-taburan', false)
+            ->assertDontSee('status-pills', false)
+            ->assertDontSee('bar-chart', false);
     }
 
     public function test_papan_pemuka_memaparkan_penapis(): void
@@ -470,7 +821,7 @@ class Phase7DashboardTest extends TestCase
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('jumlahEntiti', 2)
+            ->assertViewHas('jumlahDipantau', 2)
             ->assertViewHas('selesai', 2)
             ->assertViewHas('kemajuan', 100);
 
@@ -480,7 +831,7 @@ class Phase7DashboardTest extends TestCase
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('jumlahEntiti', 3)
+            ->assertViewHas('jumlahDipantau', 3)
             ->assertViewHas('kemajuan', 71); // (7+7+1)/21
     }
 

@@ -103,12 +103,18 @@
 
 .metric-card__label {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.6rem;
+
+    // Ruang dua baris walaupun label muat pada satu: dengan itu nilai setiap
+    // kad dalam satu baris bermula pada garis yang sama, tanpa mengira
+    // panjang tajuknya.
+    min-height: 2.4em;
 
     color: $muted;
     font-size: 0.75rem;
     font-weight: 700;
+    line-height: 1.2;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -116,6 +122,7 @@
 .metric-card__dot {
     width: 10px;
     height: 10px;
+    margin-top: 0.25em;
     border-radius: 50%;
     flex-shrink: 0;
 }
@@ -127,7 +134,27 @@
     line-height: 1;
 }
 
+// Tanda peratus pada kad peratusan — lebih kecil daripada angka supaya
+// nilai kekal menonjol, tetapi sentiasa kelihatan sebagai unit.
+.metric-card__unit {
+    margin-left: 0.1rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: $muted;
+}
+
+// Baris kecil di bawah nilai — pembilang/penyebut sebenar bagi peratusan.
+.metric-card__nota {
+    margin-top: -0.3rem;
+    color: $muted;
+    font-size: 0.8rem;
+}
+
 .metric-card__bar {
+    // Kad dalam satu baris grid diregangkan sama tinggi; menolak bar ke bawah
+    // menjadikannya sejajar walaupun nota di atasnya berbeza bilangan baris.
+    margin-top: auto;
+
     width: 44px;
     height: 5px;
     border-radius: 99px;

@@ -37,6 +37,16 @@ class LaporanSemakanService
     public const JENIS_LALAI = 'inventori';
 
     /**
+     * Tindakan jejak audit bagi penyerahan laporan kepada NACSA.
+     *
+     * Inilah satu-satunya rekod bahawa butang "Hantar" peringkat 07 telah
+     * ditekan: penyerahan TIDAK mengubah `laporan_semakan.status` (laporan
+     * kekal Sah), jadi jejak inilah yang membezakan "disahkan KB" daripada
+     * "telah diserahkan kepada NACSA".
+     */
+    public const ACTION_DELIVERED = 'report_delivered';
+
+    /**
      * Kedudukan semakan bagi satu entiti, dicipta sebagai Draf jika belum ada.
      *
      * @param  array<string, string>  $entiti
@@ -214,7 +224,7 @@ class LaporanSemakanService
 
         $this->audit->rekod(
             ['agency_code' => $laporan->agency_code, 'agency_name' => $laporan->agency_name],
-            'report_delivered',
+            self::ACTION_DELIVERED,
             LaporanSemakan::SAH,
             LaporanSemakan::SAH,
             $user,

@@ -278,11 +278,13 @@ class Phase4AccessControlTest extends TestCase
 
         // Penyelaras melihat ketiga-tiga entiti dipantau: Alpha dan Beta
         // (mempunyai rekod) serta Gamma (mempunyai penugasan aktif sahaja —
-        // penugasan turut menjadikan entiti dipantau sejak Fasa 7).
+        // penugasan turut menjadikan entiti dipantau sejak Fasa 7), di atas
+        // keseluruhan senarai induk yang boleh diaksesnya.
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('jumlahEntiti', 3);
+            ->assertViewHas('jumlahDipantau', 3)
+            ->assertViewHas('jumlahEntiti', SektorDirectory::semuaEntiti()->count());
 
         // Pegawai Analisis ditolak daripada papan pemuka keseluruhan.
         $this->actingAs($this->analystA)

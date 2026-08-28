@@ -102,32 +102,6 @@ class StatusTigaLaporanService
     }
 
     /**
-     * Taburan label paparan bagi papan pemuka.
-     *
-     * Hanya jenis laporan yang aktif dikira; "N/A" tiada dalam taburan kerana
-     * ia bukan status dan tidak sepatutnya menokok sebarang peratusan.
-     *
-     * @param  Collection<string, array<string, array{status: string}>>  $semua
-     * @return array<string, int>
-     */
-    public function taburan(Collection $semua): array
-    {
-        $taburan = array_fill_keys(StatusLaporan::PAPARAN, 0);
-
-        foreach ($semua as $entiti) {
-            foreach ($entiti as $laporan) {
-                if ($laporan['status'] === StatusLaporan::PAPARAN_TIADA) {
-                    continue;
-                }
-
-                $taburan[$laporan['status']]++;
-            }
-        }
-
-        return $taburan;
-    }
-
-    /**
      * @param  Collection<int, LaporanSemakan>  $laporan
      * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
      * @return array<string, array{status: string, kelas: string, kemas_kini: Carbon|null}>

@@ -53,8 +53,21 @@
         </form>
     </div>
 
-    {{-- Baris metrik ringkas --}}
-    <div class="metric-row">
+    {{--
+        Baris metrik 1/2 — liputan dan kemajuan entiti.
+
+        Dua penyebut berbeza, dan setiap kad menyatakan miliknya dalam nota
+        di bawah nilai:
+
+        - Selesai Pendaftaran  : keseluruhan entiti dalam senarai induk —
+                                 ini soalan LIPUTAN.
+        - Dalam Proses/Selesai : entiti yang telah selesai pendaftaran —
+                                 ini soalan KEMAJUAN, dan entiti yang belum
+                                 melepasi peringkat 01 belum boleh bergerak.
+
+        Penyebut sifar memberi 0%, bukan NaN.
+    --}}
+    <div class="metric-row metric-row--kira">
 
         <div class="metric-card">
             <div class="metric-card__label">
@@ -74,12 +87,35 @@
             <div class="metric-card__bar is-cyan"></div>
         </div>
 
+        {{-- Peringkat 01 aliran kerja — pintu masuk kepada semua yang lain. --}}
+        <div class="metric-card">
+            <div class="metric-card__label">
+                <span class="metric-card__dot is-cyan"></span>
+                Entiti Selesai Pendaftaran
+            </div>
+            <div class="metric-card__value">
+                {{ \App\Support\Peratus::paparan($pendaftaranSelesai, $peratusPendaftaranSelesai, $jumlahEntiti) }}<span
+                    class="metric-card__unit">%</span>
+            </div>
+            <div class="metric-card__nota">
+                {{ $pendaftaranSelesai }} daripada {{ $jumlahEntiti }} entiti ·
+                {{ \App\Models\WorkflowStatus::getStageName(\App\Models\WorkflowStatus::STAGE_PENDAFTARAN) }}
+            </div>
+            <div class="metric-card__bar is-cyan"></div>
+        </div>
+
         <div class="metric-card">
             <div class="metric-card__label">
                 <span class="metric-card__dot is-warning"></span>
-                Dalam Proses
+                Entiti Dalam Proses
             </div>
-            <div class="metric-card__value">{{ $dalamProses }}</div>
+            <div class="metric-card__value">
+                {{ \App\Support\Peratus::paparan($dalamProses, $peratusDalamProses, $pendaftaranSelesai) }}<span
+                    class="metric-card__unit">%</span>
+            </div>
+            <div class="metric-card__nota">
+                {{ $dalamProses }} daripada {{ $pendaftaranSelesai }} entiti selesai pendaftaran
+            </div>
             <div class="metric-card__bar is-warning"></div>
         </div>
 
@@ -88,126 +124,121 @@
                 <span class="metric-card__dot is-success"></span>
                 Entiti Selesai
             </div>
-            <div class="metric-card__value">{{ $selesai }}</div>
+            <div class="metric-card__value">
+                {{ \App\Support\Peratus::paparan($selesai, $peratusSelesai, $pendaftaranSelesai) }}<span class="metric-card__unit">%</span>
+            </div>
+            <div class="metric-card__nota">
+                {{ $selesai }} daripada {{ $pendaftaranSelesai }} entiti selesai pendaftaran
+            </div>
             <div class="metric-card__bar is-success"></div>
+        </div>
+
+    </div>
+
+    {{--
+        Baris metrik 2/2 — bilangan laporan mengikut jenis (StatusLaporan::JENIS).
+
+        Hanya laporan yang telah diserahkan kepada NACSA dikira; laporan yang
+        masih dalam kitaran semakan belum menjadi laporan yang "ada" dalam
+        sistem. Nota di bawah setiap nilai menyatakannya supaya angka itu tidak
+        disalah anggap sebagai jumlah laporan yang sedang disediakan.
+    --}}
+    <div class="metric-row metric-row--laporan">
+
+        <div class="metric-card">
+            <div class="metric-card__label">
+                <span class="metric-card__dot is-primary"></span>
+                Jumlah Laporan Analisis Inventori Kriptografi
+            </div>
+            <div class="metric-card__value">{{ $jumlahLaporan['inventori'] }}</div>
+            <div class="metric-card__nota">Diserahkan kepada NACSA</div>
+            <div class="metric-card__bar is-primary"></div>
         </div>
 
         <div class="metric-card">
             <div class="metric-card__label">
                 <span class="metric-card__dot is-cyan"></span>
-                Jumlah Laporan
+                Jumlah Laporan Penilaian Risiko Migrasi PQC
             </div>
-            <div class="metric-card__value">{{ $jumlahLaporan }}</div>
+            <div class="metric-card__value">{{ $jumlahLaporan['risiko'] }}</div>
+            <div class="metric-card__nota">Diserahkan kepada NACSA</div>
             <div class="metric-card__bar is-cyan"></div>
         </div>
 
         <div class="metric-card">
             <div class="metric-card__label">
                 <span class="metric-card__dot is-success"></span>
-                Laporan Selesai
+                Jumlah Laporan Kesiapsiagaan
             </div>
-            <div class="metric-card__value">{{ $laporanSelesai }}</div>
+            <div class="metric-card__value">{{ $jumlahLaporan['kesiapsiagaan'] }}</div>
+            <div class="metric-card__nota">Diserahkan kepada NACSA</div>
             <div class="metric-card__bar is-success"></div>
         </div>
 
     </div>
 
-    {{-- Taburan entiti merentas 7 peringkat workflow (Fasa 7). --}}
-    <div class="dashboard-section">
-        <div class="report-card">
-            <h4 class="section-title">Taburan Kemajuan Analisis 7 Peringkat</h4>
-            <p class="text-secondary">
-                Kedudukan semasa setiap entiti yang telah didaftarkan dalam Kemajuan Analisis.
-                @if ($belumDidaftar > 0)
-                    {{ $belumDidaftar }} entiti belum didaftarkan dalam Kemajuan Analisis.
-                @endif
-            </p>
-
-            <div class="workflow-taburan">
-                @foreach ($taburanWorkflow as $peringkat)
-                    <div class="workflow-taburan__baris">
-                        <span class="workflow-stage-tag">{{ sprintf('%02d', $peringkat['peringkat']) }}</span>
-                        <span class="workflow-taburan__nama">{{ $peringkat['nama'] }}</span>
-                        <span class="status-pill-track">
-                            <span class="status-pill-fill status-pill-fill--proses"
-                                style="--fill: {{ max(2, $peringkat['peratus']) }}%"></span>
-                        </span>
-                        <span class="workflow-taburan__nilai">
-                            {{ $peringkat['bilangan'] }}
-                            <small class="text-secondary">({{ $peringkat['peratus'] }}%)</small>
-                        </span>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-
-    {{-- Baris carta: kemajuan sektor / status 3 laporan / kemajuan keseluruhan --}}
+    {{-- Baris carta: entiti selesai mengikut sektor / kemajuan keseluruhan --}}
     <div class="dashboard-section chart-row">
 
         <div class="chart-card">
-            <div class="chart-card__title">Entiti Selesai Mengikut Sektor</div>
+            <div class="chart-card__title">Entiti Selesai Kemajuan Analisis Mengikut Sektor</div>
 
-            @if (count($mengikutSektor))
+            @if ($selesai > 0)
                 @php
-                    $maxPeratus = max(
-                        1,
-                        ...array_map(
-                            fn($s) => $s['jumlah'] ? round(($s['selesai'] / $s['jumlah']) * 100) : 0,
-                            $mengikutSektor,
-                        ),
-                    );
+                    // Gelang membahagikan KESELURUHAN entiti kepada sektornya:
+                    // saiz setiap hirisan ialah bilangan entiti sektor itu, jadi
+                    // kesebelas-sebelas hirisan berjumlah 100% entiti. Legendanya
+                    // pula melaporkan berapa banyak antaranya telah Selesai.
+                    // Palet --pie-1 … --pie-11 ada dalam dashboard.scss.
+                    $segmenSektor = collect($selesaiMengikutSektor)
+                        ->values()
+                        ->map(
+                            fn($sektor, $i) => [
+                                'label' => $sektor['kod'] . ' — ' . $sektor['nama'],
+                                'labelPendek' => $sektor['kod'],
+                                'nilai' => $sektor['jumlah'],
+                                'paparBilangan' => $sektor['selesai'],
+                                'paparDaripada' => $sektor['jumlah'],
+                                'peratus' => $sektor['peratus'],
+                                'warna' => 'var(--pie-' . ($i % 11 + 1) . ')',
+                            ],
+                        )
+                        ->all();
                 @endphp
-                <div class="bar-chart">
-                    @foreach ($mengikutSektor as $sektor)
-                        @php $peratus = $sektor['jumlah'] ? round($sektor['selesai'] / $sektor['jumlah'] * 100) : 0; @endphp
-                        <div class="bar-chart__col"
-                            title="{{ $sektor['nama'] }}: {{ $sektor['selesai'] }}/{{ $sektor['jumlah'] }} entiti ({{ $peratus }}%)">
-                            <div class="bar-chart__bar"
-                                style="--bar-height: {{ max(6, round(($peratus / $maxPeratus) * 100)) }}%">
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="bar-chart__labels">
-                    @foreach ($mengikutSektor as $i => $sektor)
-                        <div class="bar-chart__label" title="{{ $sektor['nama'] }}">{{ $i + 1 }}</div>
-                    @endforeach
-                </div>
+
+                <x-pie-chart unit="entiti selesai" :segmen="$segmenSektor" :papar-kosong="true" :legenda-ringkas="true"
+                    :nilai-tengah="\App\Support\Peratus::paparan($selesai, $peratusSelesaiKeseluruhan, $jumlahEntiti) . '%'"
+                    label-tengah="Entiti Selesai" />
             @else
-                <p class="text-secondary">
-                    Belum ada entiti dipantau dalam skop penapis semasa. Entiti dikira dipantau
-                    setelah mempunyai rekod workflow, penugasan, analisis atau status laporan.
-                </p>
+                <x-empty-state icon="bi-pie-chart" title="Tiada entiti selesai">
+                    Carta ini muncul setelah sekurang-kurangnya satu entiti menamatkan kesemua
+                    tujuh peringkat Kemajuan Analisis dalam skop penapis semasa.
+                </x-empty-state>
             @endif
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-card__title">Status 3 Laporan</div>
-
-            <div class="status-pills">
-                @foreach ([['label' => 'Selesai', 'nilai' => $laporanSelesai, 'kelas' => 'siap'], ['label' => 'Dalam Semakan', 'nilai' => $laporanDalamSemakan, 'kelas' => 'proses'], ['label' => 'Dalam Proses', 'nilai' => $laporanDalamProses, 'kelas' => 'proses'], ['label' => 'Belum Bermula', 'nilai' => $laporanBelum, 'kelas' => 'belum']] as $baris)
-                    @php $lebar = $jumlahLaporan ? round($baris['nilai'] / $jumlahLaporan * 100) : 0; @endphp
-                    <div class="status-pill-row">
-                        <span class="status-pill status-pill--{{ $baris['kelas'] }}">{{ $baris['label'] }}</span>
-                        <span class="status-pill-track">
-                            <span class="status-pill-fill status-pill-fill--{{ $baris['kelas'] }}"
-                                style="--fill: {{ max(6, $lebar) }}%"></span>
-                        </span>
-                    </div>
-                @endforeach
-            </div>
         </div>
 
         <div class="chart-card">
             <div class="chart-card__title">Kemajuan Keseluruhan</div>
 
-            <div class="donut-wrap">
-                <div class="donut" style="--pct: {{ $kemajuan }}">
-                    <span class="donut__label">{{ $kemajuan }}%</span>
-                </div>
-                <div class="donut-caption">Peringkat workflow dicapai berbanding 7 peringkat</div>
-            </div>
+            @if ($jumlahEntiti > 0)
+                @php
+                    // Warna semantik: Siap hijau, Dalam Proses jingga, Belum Mula kelabu —
+                    // sama seperti badge status di modul Kemajuan Analisis.
+                    $segmenKemajuan = collect($kemajuanTaburan)
+                        ->map(fn($baris) => $baris + ['warna' => 'var(--pie-' . $baris['kunci'] . ')'])
+                        ->all();
+
+                @endphp
+
+                <x-pie-chart unit="entiti" :segmen="$segmenKemajuan"
+                    :nilai-tengah="\App\Support\Peratus::paparan($selesai, $peratusSelesaiKeseluruhan, $jumlahEntiti) . '%'"
+                    label-tengah="Selesai" />
+            @else
+                <x-empty-state icon="bi-pie-chart" title="Tiada entiti dipantau">
+                    Entiti dikira dipantau setelah mempunyai rekod workflow, penugasan,
+                    analisis, status laporan atau muat naik.
+                </x-empty-state>
+            @endif
         </div>
 
     </div>

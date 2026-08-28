@@ -23,37 +23,63 @@
 
 /*
 |--------------------------------------------------------------------------
-| Metric row (Jumlah Sektor / Entiti / Analisis Selesai / Laporan Siap)
+| Baris metrik — 8 kad ringkasan
 |--------------------------------------------------------------------------
+| Dua baris, 5 (liputan + kemajuan entiti) + 3 (bilangan laporan). Setiap
+| baris mengisi lebar penuh dengan sendirinya, jadi tiada kad tunggal
+| tergantung di hujung baris pada paparan desktop.
 */
 
 .metric-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
 }
 
-@media (max-width: 992px) {
-    .metric-row {
+.metric-row + .metric-row {
+    margin-top: 1.5rem;
+}
+
+.metric-row--kira {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.metric-row--laporan {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1500px) {
+    .metric-row--kira {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+    .metric-row--kira {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
+@media (max-width: 992px) {
+    .metric-row--laporan {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 576px) {
-    .metric-row {
+    .metric-row--kira {
         grid-template-columns: 1fr;
     }
 }
 
 /*
 |--------------------------------------------------------------------------
-| Chart row (bar chart / status 3 laporan / donut keseluruhan)
+| Baris carta (entiti selesai mengikut sektor / kemajuan keseluruhan)
 |--------------------------------------------------------------------------
 */
 
 .chart-row {
     display: grid;
-    grid-template-columns: 1.3fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     align-items: stretch;
 }
@@ -83,166 +109,186 @@
     margin-bottom: 1.5rem;
 }
 
-/* Bar chart — kemajuan analisis mengikut sektor */
+/*
+|--------------------------------------------------------------------------
+| Carta pai / donat — komponen <x-pie-chart>
+|--------------------------------------------------------------------------
+| Gelang dilukis sebagai SVG: satu <circle> bagi setiap hirisan, supaya
+| setiap hirisan boleh dihover dan membawa tooltipnya sendiri. Templat hanya
+| membekalkan geometri (dikira daripada rekod); paletnya kekal di sini supaya
+| warna papan pemuka tinggal di satu tempat sahaja.
+*/
 
-.bar-chart {
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-    gap: 1.25rem;
-    min-height: 160px;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid $border;
-}
+.pie-chart {
+    // Palet sektor — 11 warna, satu bagi setiap sektor senarai induk.
+    --pie-1: #{$secondary};
+    --pie-2: #{$accent-cyan-dark};
+    --pie-3: #{$success};
+    --pie-4: #{$warning};
+    --pie-5: #{$primary};
+    --pie-6: #{$accent-cyan};
+    --pie-7: #{lighten($secondary, 20%)};
+    --pie-8: #{mix($danger, $primary, 55%)};
+    --pie-9: #{lighten($accent-cyan-dark, 22%)};
+    --pie-10: #{lighten($primary, 28%)};
+    --pie-11: #{lighten($success, 20%)};
 
-.bar-chart__col {
-    flex: 1;
+    // Palet kemajuan — sepadan dengan badge status Kemajuan Analisis.
+    --pie-selesai: #{$success};
+    --pie-proses: #{$warning};
+    // Cukup gelap untuk kelihatan terhadap lubang donat yang putih, tetapi
+    // sengaja senyap: "Belum Mula" ialah baki, bukan amaran.
+    --pie-belum: #{darken($border, 10%)};
+
     display: flex;
-    flex-direction: column;
+    flex: 1;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-end;
-    height: 100%;
-    gap: 0.5rem;
-}
-
-.bar-chart__bar {
-    width: 60%;
-    min-width: 22px;
-    border-radius: 8px 8px 3px 3px;
-    background: linear-gradient(180deg, $primary, $secondary);
-    transition: $transition;
-
-    // Tinggi didorong data: templat menetapkan --bar-height sebagai peratusan.
-    height: var(--bar-height, 0%);
-}
-
-.bar-chart__col:hover .bar-chart__bar {
-    filter: brightness(1.1);
-    box-shadow: 0 6px 16px rgba($primary, 0.3);
-}
-
-.bar-chart__labels {
-    display: flex;
-    gap: 1.25rem;
-    margin-top: 0.75rem;
-}
-
-.bar-chart__label {
-    flex: 1;
-    text-align: center;
-    color: $muted;
-    font-size: 0.8rem;
-}
-
-/* Status pills — status 3 laporan */
-
-.status-pills {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    flex: 1;
     justify-content: center;
+    gap: 1.75rem;
 }
 
-.status-pill-row {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-}
-
-.status-pill {
-    flex: 1;
-    text-align: center;
-    padding: 0.7rem 1rem;
-    border-radius: 99px;
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 0.85rem;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-}
-
-.status-pill--siap {
-    background: $success;
-}
-
-.status-pill--proses {
-    background: $warning;
-}
-
-.status-pill--belum {
-    background: $border;
-    color: $muted;
-}
-
-.status-pill-track {
-    width: 90px;
-    height: 8px;
-    border-radius: 99px;
-    background: $border;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.status-pill-fill {
-    height: 100%;
-    border-radius: 99px;
-
-    // Lebar didorong data: templat menetapkan --fill sebagai peratusan.
-    width: var(--fill, 0%);
-}
-
-.status-pill-fill--siap {
-    background: $success;
-}
-
-.status-pill-fill--proses {
-    background: $warning;
-}
-
-.status-pill-fill--belum {
-    background: $muted;
-}
-
-/* Donut chart — kemajuan keseluruhan */
-
-.donut-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-}
-
-.donut {
+.pie-chart__graf {
     position: relative;
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
     flex-shrink: 0;
-    background: conic-gradient($primary calc(var(--pct) * 1%), $border 0);
+
+    // `min()` menghalangnya melimpah pada skrin sempit; aspect-ratio menjaga
+    // bulatan tanpa perlu mengulang tingginya.
+    width: min(340px, 100%);
+    aspect-ratio: 1;
 }
 
-.donut::before {
-    content: "";
-    position: absolute;
-    inset: 16px;
-    border-radius: 50%;
-    background: $surface;
+.pie-chart__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
-.donut__label {
+.pie-slice {
+    fill: none;
+    stroke-width: 18;
+    transition: stroke-width 0.15s ease, opacity 0.15s ease;
+}
+
+// Hirisan di bawah tetikus ditebalkan dan yang lain diredupkan, supaya
+// tooltip yang muncul jelas milik hirisan yang mana.
+.pie-chart__svg:hover .pie-slice {
+    opacity: 0.4;
+}
+
+.pie-chart__svg .pie-slice:hover {
+    opacity: 1;
+    stroke-width: 22;
+}
+
+.pie-chart__tengah {
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: $text;
+
+    // Tanpa ini, teks tengah menutupi gelang dan hover hirisan tidak berfungsi.
+    pointer-events: none;
 }
 
-.donut-caption {
+.pie-chart__nilai {
+    color: $text;
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.pie-chart__kapsyen {
+    // Kapsyen dihadkan kepada lebar lubang donat supaya ia membalut ke baris
+    // kedua dan bukan terkeluar melepasi gelang.
+    max-width: 140px;
+    margin-top: 0.3rem;
     color: $muted;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.pie-legend {
+    flex: 1;
+
+    // Lebar semula jadi satu baris legenda bernombor. Menyatakannya bermakna
+    // legenda TURUN ke bawah gelang apabila ruang tidak cukup, dan bukan
+    // dimampatkan sehingga namanya terpotong.
+    min-width: 240px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.pie-legend__baris {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.9rem;
+}
+
+// Legenda ringkas: warna dan kod sahaja — nama penuh dan angkanya ada pada
+// tooltip, baik pada baris legenda mahupun pada hirisan gelang.
+.pie-chart--ringkas .pie-legend {
+    // Tanpa ini legenda meregang mengisi baki lebar dan kod-kod pendek itu
+    // terapung jauh daripada gelang.
+    flex: 0 0 auto;
+    min-width: 0;
+    gap: 0.75rem;
+}
+
+.pie-chart--ringkas .pie-legend__baris {
+    grid-template-columns: 10px auto;
+    cursor: default;
+}
+
+.pie-chart--ringkas {
+    gap: 2rem;
+}
+
+// Kategori yang masih kosong kekal disenaraikan — legenda ini menyenaraikan
+// SETIAP sektor — tetapi diredupkan supaya sektor yang benar-benar mempunyai
+// entiti selesai menonjol daripada senarai.
+.pie-legend__baris.is-kosong {
+    opacity: 0.55;
+}
+
+.pie-legend__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.pie-legend__nama {
+    color: $text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pie-chart--ringkas .pie-legend__nama {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.pie-legend__nilai {
+    color: $text;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pie-legend__peratus {
+    color: $muted;
+    font-weight: 500;
 }

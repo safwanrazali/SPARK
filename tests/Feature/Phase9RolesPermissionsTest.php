@@ -270,7 +270,7 @@ class Phase9RolesPermissionsTest extends TestCase
         $response = $this->actingAs($this->pengguna($role))->get(route('dashboard'));
 
         if ($dibenarkan) {
-            $response->assertOk()->assertSee('Taburan Kemajuan Analisis 7 Peringkat');
+            $response->assertOk()->assertSee('Kemajuan Keseluruhan');
         } else {
             // Ditolak, bukan dialihkan: menyembunyikan pautan bukan kebenaran.
             $response->assertForbidden();

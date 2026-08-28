@@ -9,6 +9,7 @@ use App\Models\EntitiAssignment;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
+use App\Services\DashboardStatistikService;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Services\StatusTigaLaporanService;
@@ -485,12 +486,14 @@ class Phase12IntegrationTest extends TestCase
     {
         $this->actingAs($this->penyelaras);
 
-        WorkflowStatus::factory()->create(SektorDirectory::cariEntiti(self::ALPHA));
+        WorkflowStatus::factory()->create(
+            SektorDirectory::cariEntiti(self::ALPHA) + ['status' => DashboardStatistikService::STATUS_DALAM_PROSES]
+        );
         WorkflowStatus::factory()->siap()->create(SektorDirectory::cariEntiti(self::BETA));
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('jumlahEntiti', 2)
+            ->assertViewHas('jumlahDipantau', 2)
             ->assertViewHas('dalamProses', 1)
             ->assertViewHas('selesai', 1)
             // (1 + 7) / (2 × 7) = 57%
@@ -507,22 +510,27 @@ class Phase12IntegrationTest extends TestCase
             ->assertViewHas('kemajuan', 64);
     }
 
-    public function test_taburan_workflow_dashboard_mengikut_rekod_sebenar(): void
+    public function test_taburan_kemajuan_dashboard_mengikut_rekod_sebenar(): void
     {
-        WorkflowStatus::factory()->onStage(4)->create(SektorDirectory::cariEntiti(self::ALPHA));
-        WorkflowStatus::factory()->onStage(4)->create(SektorDirectory::cariEntiti(self::BETA));
+        WorkflowStatus::factory()->onStage(4)->create(
+            SektorDirectory::cariEntiti(self::ALPHA) + ['status' => DashboardStatistikService::STATUS_DALAM_PROSES]
+        );
+        WorkflowStatus::factory()->siap()->create(SektorDirectory::cariEntiti(self::BETA));
 
         $this->actingAs($this->penyelaras)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertViewHas('taburanWorkflow', function (array $taburan) {
-                $peringkat4 = collect($taburan)->firstWhere('peringkat', 4);
-                $peringkat1 = collect($taburan)->firstWhere('peringkat', 1);
+            ->assertViewHas('kemajuanTaburan', function (array $taburan) {
+                $mengikutKunci = collect($taburan)->keyBy('kunci');
 
-                return count($taburan) === WorkflowStatus::LAST_STAGE
-                    && $peringkat4['bilangan'] === 2
-                    && $peringkat4['peratus'] === 100
-                    && $peringkat1['bilangan'] === 0;
+                // Taburan meliputi KESELURUHAN senarai induk: dua entiti
+                // yang disentuh, dan bakinya kekal "Belum Mula".
+                $belumDisentuh = SektorDirectory::semuaEntiti()->count() - 2;
+
+                return count($taburan) === 3
+                    && $mengikutKunci['selesai']['nilai'] === 1
+                    && $mengikutKunci['proses']['nilai'] === 1
+                    && $mengikutKunci['belum']['nilai'] === $belumDisentuh;
             });
     }
 
