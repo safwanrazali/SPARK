@@ -13,17 +13,38 @@
         bersama dokumen. Memindahkannya ke resources/scss/ akan menghasilkan
         PDF tanpa gaya sama sekali.
 
-        KEKALKAN SELARAS dengan blok .laporan-rasmi dalam
-        resources/scss/laporan-print.scss — nilainya sepadan satu-satu
-        (12px asas, h1 15px, h2 13px, th/td 11px, sempadan #333, th #eff1f5).
-        Perbezaannya hanya pemilih: fail di sini menggunakan pemilih elemen
+        Warna, sempadan, lebar lajur dan pemisah halaman KEKAL SELARAS dengan
+        blok .laporan-rasmi dalam resources/scss/laporan-print.scss (sempadan
+        #333, th #eff1f5, biru #1f6091, kelabu #ededed).
+
+        TIPOGRAFI SENGAJA BERBEZA dan TIDAK boleh disalin balik ke SCSS:
+        PDF sahaja menggunakan Aptos (dibenamkan oleh laporan.pdf.fonts) pada
+        1rem untuk seluruh kandungan laporan dan 1.333rem untuk tiga baris
+        sepanduk tajuk. Paparan WebView kekal pada fon dan saiz sedia ada —
+        menukar laporan-print.scss akan mengubah pratonton skrin.
+
+        Perbezaan lain hanya pemilih: fail di sini menggunakan pemilih elemen
         kerana dokumen ini hanya mengandungi laporan, manakala SCSS mesti
         menyaringnya di bawah .laporan-rasmi supaya tidak bocor ke aplikasi.
     --}}
+
+    {{-- @font-face Aptos terbenam (base64). MESTI mendahului <style> di bawah
+         supaya fon telah diisytiharkan sebelum peraturan yang menggunakannya. --}}
+    @include('laporan.pdf.fonts')
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+            /* Aptos dibenamkan sebagai data URI oleh laporan.pdf.fonts; Arial
+               hanya sandaran jika fail fon hilang daripada public/fonts/aptos.
+               Diisytiharkan pada <body> sahaja supaya seluruh kandungan
+               laporan mewarisinya — kepala/kaki halaman ialah dokumen
+               berasingan (laporan.pdf.header / laporan.pdf.footer) yang
+               dilukis oleh Chrome dan TIDAK tersentuh oleh peraturan ini. */
+            font-family: 'Aptos', Arial, sans-serif;
+            /* 1rem = 16px (saiz akar lalai dokumen ini; tiada html{font-size}
+               diisytiharkan). Semua kandungan laporan 1rem; hanya tiga baris
+               sepanduk tajuk 1.333rem. */
+            font-size: 1rem;
             line-height: 1.6;
             color: #111;
             /* Jangan letak margin atas di sini: margin pada <body> hanya
@@ -36,14 +57,14 @@
         }
 
         h1 {
-            font-size: 15px;
+            font-size: 1rem;
             text-transform: uppercase;
             text-align: center;
             font-weight: 800;
         }
 
         h2 {
-            font-size: 13px;
+            font-size: 1rem;
             text-transform: uppercase;
             font-weight: 700;
             border-bottom: 2px solid #111;
@@ -66,7 +87,7 @@
             border: 1px solid #333;
             padding: 5px 8px;
             vertical-align: top;
-            font-size: 11px;
+            font-size: 1rem;
         }
 
         th {
@@ -76,13 +97,14 @@
 
         /* Kelas berikut menggantikan atribut gaya sebaris pada elemen di bawah. */
         .penafian {
-            font-size: 10px;
+            font-size: 1rem;
         }
 
         /* Pengenalan laporan — sepanduk tajuk + jadual maklumat laporan.
            SALINAN blok `.laporan-id` dalam resources/scss/laporan-print.scss;
-           kekalkan kedua-duanya selaras (biru #1f6091, kelabu #ededed,
-           sempadan putih, tajuk 17px, baris 14px, sel 11px).
+           kekalkan warna dan bentuk selaras (biru #1f6091, kelabu #ededed,
+           sempadan putih). SAIZ FON TIDAK diselaraskan: PDF menggunakan
+           1.333rem untuk tajuk dan baris sepanduk, 1rem untuk sel jadual.
 
            Setiap pemilih berkembar `.laporan-id` + kelas anak supaya ia
            mengatasi pemilih elemen h1/p/table/th/td di atas. */
@@ -110,12 +132,12 @@
         }
 
         .laporan-id .laporan-id__tajuk {
-            font-size: 17px;
+            font-size: 1.333rem;
         }
 
         .laporan-id .laporan-id__baris {
             margin-top: 6px;
-            font-size: 14px;
+            font-size: 1.333rem;
             font-weight: 700;
         }
 
@@ -136,7 +158,7 @@
             padding: 7px 10px;
             /* Tiada height tetap — sel meninggi mengikut teks. */
             vertical-align: middle;
-            font-size: 11px;
+            font-size: 1rem;
             overflow-wrap: break-word;
             word-wrap: break-word;
         }
@@ -158,7 +180,7 @@
 
         /* Seksyen bergaya templat baharu — bar tajuk biru muda + perenggan.
            SALINAN blok `.laporan-seksyen` dalam resources/scss/laporan-print.scss;
-           kekalkan kedua-duanya selaras (bar #deeaf6, teks #1f6091, tajuk 12px,
+           kekalkan warna selaras (bar #deeaf6, teks #1f6091; saiz fon PDF 1rem,
            perenggan line-height 1.55).
 
            Berkembar `.laporan-seksyen` + kelas anak supaya ia mengatasi pemilih
@@ -168,7 +190,7 @@
         .laporan-seksyen .laporan-seksyen__tajuk {
             background: #deeaf6;
             color: #1f6091;
-            font-size: 12px;
+            font-size: 1rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.08em;
@@ -221,7 +243,7 @@
             color: #ffffff;
             border: 1px solid #fff;
             padding: 7px 10px;
-            font-size: 11px;
+            font-size: 1rem;
             font-weight: 700;
             text-transform: uppercase;
             text-align: center;
@@ -233,7 +255,7 @@
         .laporan-seksyen .laporan-jadual__status {
             border: 1px solid #fff;
             padding: 8px 10px;
-            font-size: 11px;
+            font-size: 1rem;
             vertical-align: middle;
             overflow-wrap: break-word;
             word-wrap: break-word;
@@ -326,7 +348,7 @@
            kerana lajur Bil. di sini mengikut jalur baris biasa, bukan biru. */
         .laporan-seksyen .laporan-seksyen__subtajuk {
             margin: 14px 0 6px;
-            font-size: 12px;
+            font-size: 1rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.02em;
@@ -389,7 +411,7 @@
         .laporan-seksyen .laporan-jadual-ringkas td {
             border: 1px solid #fff;
             padding: 7px 10px;
-            font-size: 11px;
+            font-size: 1rem;
             /* Tiada height tetap — baris meninggi mengikut teks. */
             vertical-align: middle;
             overflow-wrap: break-word;
@@ -500,7 +522,7 @@
         .laporan-seksyen .laporan-jadual-vendor td {
             border: 1px solid #fff;
             padding: 7px 10px;
-            font-size: 11px;
+            font-size: 1rem;
 
             /* Tiada height tetap — sel meninggi mengikut teks. */
             vertical-align: middle;
@@ -676,7 +698,7 @@
         .laporan-seksyen .laporan-pengesahan td {
             border: 1px solid #fff;
             padding: 8px 10px;
-            font-size: 11px;
+            font-size: 1rem;
             vertical-align: middle;
             overflow-wrap: break-word;
             word-wrap: break-word;
