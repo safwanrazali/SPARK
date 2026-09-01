@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AliranKerja;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -270,8 +271,11 @@ class User extends Authenticatable
      *
      * Keterlihatan ini ialah kebenaran MELIHAT sahaja. Setiap tindakan
      * menulis mempunyai gate tersendiri (lihat AppServiceProvider), jadi
-     * peranan baca-sahaja seperti TPII, PPR dan PKD boleh membuka halaman
-     * tanpa boleh mengubah apa-apa padanya.
+     * peranan baca-sahaja seperti TPII dan PKD boleh membuka halaman tanpa
+     * boleh mengubah apa-apa padanya.
+     *
+     * PPR TIDAK disenaraikan di sini: keterlihatannya terhad kepada entiti
+     * yang telah memulakan Penerimaan Data (lihat kiraEntitiBolehDiakses).
      */
     public function hasFullEntityVisibility(): bool
     {
@@ -280,7 +284,6 @@ class User extends Authenticatable
             self::ROLE_COORDINATOR,
             self::ROLE_KETUA_BAHAGIAN,
             self::ROLE_TIMBALAN_PENGARAH_II,
-            self::ROLE_PENYELARAS_REKOD,
             self::ROLE_PEGAWAI_KAWALAN_DOKUMEN,
         ]);
     }
@@ -398,6 +401,28 @@ class User extends Authenticatable
             // Hanya entiti yang ditugaskan
             return $this->assignedEntities()
                 ->where('status', 'active')
+                ->pluck('agency_code')
+                ->toArray();
+        }
+
+        /*
+         * Pegawai Penyelaras Rekod melihat entiti yang telah MEMULAKAN
+         * Penerimaan Data sahaja, dan seterusnya.
+         *
+         * Kerjanya ialah merekod No. Rujukan borang FIZIKAL. Borang itu belum
+         * wujud sebelum pegawai peringkat berkenaan mengisi medannya, jadi
+         * entiti yang belum bermula bukan sekadar tiada kerja untuknya — ia
+         * tiada sebab untuk muncul kepadanya langsung.
+         *
+         * Peringkat 1.1 yang BUKAN "Belum Mula" ialah ujiannya: statusnya
+         * diterbitkan daripada datanya, jadi ia bergerak sebaik medan pertama
+         * direkod, dan kembali kepada Belum Mula apabila entiti ditetapkan
+         * semula.
+         */
+        if ($this->isPegawaiPenyelarasRekod()) {
+            return WorkflowStageStatus::query()
+                ->atStage(AliranKerja::PENERIMAAN_DATA)
+                ->where('status', '!=', WorkflowStageStatus::BELUM_MULA)
                 ->pluck('agency_code')
                 ->toArray();
         }

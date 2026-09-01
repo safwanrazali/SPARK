@@ -174,10 +174,11 @@ class Phase9RolesPermissionsTest extends TestCase
             ]],
             'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, [
                 'view-dashboard' => true,
-                'view-all-entities' => true,
                 // PPR tidak melaksanakan sebarang peringkat. Keseluruhan
                 // tanggungjawabnya — dan satu-satunya kuasa menulisnya —
-                // ialah memasukkan SETIAP No. Rujukan.
+                // ialah memasukkan SETIAP No. Rujukan. Keterlihatannya pun
+                // terhad kepada entiti yang telah memulakan Penerimaan Data.
+                'view-all-entities' => false,
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
@@ -322,9 +323,24 @@ class Phase9RolesPermissionsTest extends TestCase
             // Peranan baca-sahaja melihat semua entiti tetapi tidak boleh
             // mengubah apa-apa padanya (lihat matriksPeranan()).
             'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'semua'],
-            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'semua'],
+            // PPR melihat entiti yang telah MEMULAKAN Penerimaan Data sahaja:
+            // kerjanya ialah nombor rujukan borang yang sudah wujud.
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'bermula'],
             'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, 'semua'],
         ];
+    }
+
+    /**
+     * Mulakan peringkat 1.1 bagi satu entiti — itulah yang menjadikannya
+     * kelihatan kepada Pegawai Penyelaras Rekod.
+     */
+    private function mulakanPenerimaan(string $agencyCode = self::ALPHA): void
+    {
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
+            SektorDirectory::cariEntiti($agencyCode),
+            null,
+            ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai'],
+        );
     }
 
     #[DataProvider('keterlihatanEntiti')]
@@ -338,9 +354,15 @@ class Phase9RolesPermissionsTest extends TestCase
             $pengguna->refresh();
         }
 
+        if ($skop === 'bermula') {
+            $this->mulakanPenerimaan();
+            $pengguna->refresh();
+        }
+
         match ($skop) {
             'semua' => $this->assertNull($access->accessibleCodes($pengguna)),
             'ditugaskan' => $this->assertSame([self::ALPHA], $access->accessibleCodes($pengguna)),
+            'bermula' => $this->assertSame([self::ALPHA], $access->accessibleCodes($pengguna)),
             'tiada' => $this->assertSame([], $access->accessibleCodes($pengguna)),
         };
 
@@ -349,7 +371,7 @@ class Phase9RolesPermissionsTest extends TestCase
 
         match ($skop) {
             'semua' => $this->assertSame(count(config('sektor')), count($sektor)),
-            'ditugaskan' => $this->assertSame(1, count($sektor)),
+            'ditugaskan', 'bermula' => $this->assertSame(1, count($sektor)),
             'tiada' => $this->assertSame(0, count($sektor)),
         };
     }
@@ -363,11 +385,22 @@ class Phase9RolesPermissionsTest extends TestCase
             $this->tugaskan($pengguna);
         }
 
-        $response = $this->actingAs($pengguna)->get(route('entiti.show', self::ALPHA));
+        if ($skop === 'bermula') {
+            $this->mulakanPenerimaan();
+        }
+
+        $response = $this->actingAs($pengguna->fresh())->get(route('entiti.show', self::ALPHA));
 
         $skop === 'tiada'
             ? $response->assertForbidden()
             : $response->assertOk();
+
+        // Entiti yang BELUM memulakan Penerimaan Data kekal terlarang bagi PPR.
+        if ($skop === 'bermula') {
+            $this->actingAs($pengguna->fresh())
+                ->get(route('entiti.show', self::BETA))
+                ->assertForbidden();
+        }
 
         // Entiti yang tidak ditugaskan kekal terlarang bagi Pegawai Analisis.
         if ($skop === 'ditugaskan') {
@@ -508,11 +541,15 @@ class Phase9RolesPermissionsTest extends TestCase
             $this->tugaskan($pengguna);
         }
 
+        if ($skop === 'bermula') {
+            $this->mulakanPenerimaan();
+        }
+
         $analisis = AnalisisInventori::factory()->create(
             SektorDirectory::cariEntiti(self::ALPHA) + ['user_id' => $pengguna->id]
         );
 
-        $response = $this->actingAs($pengguna)->get(route('laporan.inventori', $analisis));
+        $response = $this->actingAs($pengguna->fresh())->get(route('laporan.inventori', $analisis));
 
         $skop === 'tiada'
             ? $response->assertForbidden()

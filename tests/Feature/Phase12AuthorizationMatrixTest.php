@@ -7,6 +7,7 @@ use App\Models\ApprovalLog;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Services\KemajuanAnalisisService;
 use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -193,10 +194,26 @@ class Phase12AuthorizationMatrixTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Mulakan peringkat 1.1 bagi satu entiti — itulah yang menjadikannya
+     * kelihatan kepada Pegawai Penyelaras Rekod.
+     */
+    private function mulakanPenerimaan(string $agencyCode): void
+    {
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
+            SektorDirectory::cariEntiti($agencyCode),
+            null,
+            ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai'],
+        );
+    }
+
     public function test_entiti_ditugaskan_boleh_dilihat_oleh_pegawai_yang_berkenaan(): void
     {
         // Semua peranan boleh MELIHAT; Pegawai Analisis hanya bagi entiti
-        // yang ditugaskan kepadanya (ALPHA ialah entiti tugasannya).
+        // yang ditugaskan kepadanya (ALPHA ialah entiti tugasannya), dan PPR
+        // hanya bagi entiti yang telah memulakan Penerimaan Data.
+        $this->mulakanPenerimaan(self::ALPHA);
+
         $semua = array_fill_keys(User::roles(), self::BENAR);
 
         $this->semakMatriks('GET', route('entiti.show', self::ALPHA), $semua);
@@ -206,7 +223,10 @@ class Phase12AuthorizationMatrixTest extends TestCase
     public function test_entiti_pegawai_lain_tidak_boleh_dilihat_oleh_pegawai_analisis(): void
     {
         // BETA bukan tugasan pegawai analisis dalam ujian ini — hanya dia
-        // yang ditolak; peranan lain melihat semua entiti.
+        // yang ditolak; peranan lain melihat semua entiti. PPR pula melihatnya
+        // hanya setelah Penerimaan Data bermula.
+        $this->mulakanPenerimaan(self::BETA);
+
         $kecualiPegawaiAnalisis = array_fill_keys(User::roles(), self::BENAR);
         unset($kecualiPegawaiAnalisis[User::ROLE_ANALYST]);
 
@@ -215,16 +235,20 @@ class Phase12AuthorizationMatrixTest extends TestCase
     }
 
     /**
-     * Peranan baca-sahaja (PKD dan PPR) boleh MELIHAT mana-mana entiti,
-     * tetapi tiada satu pun tindakan menulis terbuka kepada mereka.
+     * Peranan baca-sahaja (PKD dan PPR) boleh MELIHAT entiti tanpa satu pun
+     * tindakan menulis terbuka kepada mereka.
      *
-     * Melihat dan bertindak ialah dua kebenaran berasingan; ujian ini
-     * menegaskan kedua-duanya sekali gus.
+     * Skop penglihatan mereka berbeza: PKD melihat semua entiti, PPR hanya
+     * yang telah memulakan Penerimaan Data. Melihat dan bertindak ialah dua
+     * kebenaran berasingan; ujian ini menegaskan kedua-duanya sekali gus.
      */
     public function test_peranan_baca_sahaja_melihat_entiti_tanpa_kuasa_menulis(): void
     {
+        $this->mulakanPenerimaan(self::ALPHA);
+        $this->mulakanPenerimaan(self::BETA);
+
         foreach ([User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, User::ROLE_PENYELARAS_REKOD] as $peranan) {
-            $pengguna = $this->pengguna[$peranan];
+            $pengguna = $this->pengguna[$peranan]->fresh();
 
             foreach ([self::ALPHA, self::BETA] as $kod) {
                 $this->actingAs($pengguna)->get(route('entiti.show', $kod))->assertOk();

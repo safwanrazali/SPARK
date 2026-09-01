@@ -64,16 +64,17 @@
             </x-empty-state>
         @else
 
-        @php
-            /*
-             * Pegawai Penyelaras Rekod memerhati Kemajuan Analisis Entiti
-             * sahaja — tiada satu pun tindakan peringkat miliknya, jadi lajur
-             * Tindakan digugurkan sepenuhnya daripada paparannya. Ini keputusan
-             * paparan; kebenaran sebenar tetap dikuatkuasakan oleh gate dan
-             * middleware `entity.access` pada setiap route.
-             */
-            $adaTindakan = !auth()->user()->isPegawaiPenyelarasRekod();
-        @endphp
+        {{--
+            Lajur Tindakan dipaparkan kepada SETIAP peranan yang boleh membuka
+            skrin ini.
+
+            Pautan "Entiti" dan "Kemajuan" ialah navigasi, bukan tindakan:
+            keduanya membawa ke halaman yang peranan itu memang dibenarkan
+            melihat. Menyembunyikannya daripada mana-mana peranan hanya
+            memaksanya menaip URL untuk sampai ke tempat yang sama — dan
+            kebenaran sebenar tetap dikuatkuasakan oleh gate serta middleware
+            `entity.access` pada setiap route.
+        --}}
 
         <div class="table-responsive-custom">
             <table class="table-modern">
@@ -85,9 +86,7 @@
                         <th scope="col">Status Keseluruhan</th>
                         <th scope="col">Status Laporan</th>
                         <th scope="col">Kemajuan</th>
-                        @if ($adaTindakan)
-                            <th scope="col">Tindakan</th>
-                        @endif
+                        <th scope="col">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -165,20 +164,18 @@
                                 </div>
                                 <small class="text-secondary">{{ $e['bilanganSelesai'] }}/{{ $jumlahPeringkat }}</small>
                             </td>
-                            @if ($adaTindakan)
-                                <td class="text-nowrap">
-                                    <a class="btn btn-sm btn-primary" href="{{ route('entiti.show', $e['agency_code']) }}">
-                                        <i class="bi bi-building"></i> Entiti
-                                    </a>
-                                    <a class="btn btn-sm btn-outline-light"
-                                        href="{{ route('workflow.show', $e['agency_code']) }}">
-                                        <i class="bi bi-diagram-3"></i> Kemajuan
-                                    </a>
-                                </td>
-                            @endif
+                            <td class="text-nowrap">
+                                <a class="btn btn-sm btn-primary" href="{{ route('entiti.show', $e['agency_code']) }}">
+                                    <i class="bi bi-building"></i> Entiti
+                                </a>
+                                <a class="btn btn-sm btn-outline-light"
+                                    href="{{ route('workflow.show', $e['agency_code']) }}">
+                                    <i class="bi bi-diagram-3"></i> Kemajuan
+                                </a>
+                            </td>
                         </tr>
                     @empty
-                        <x-empty-state :colspan="$adaTindakan ? 7 : 6" icon="bi-diagram-3" title="Tiada entiti dalam sektor ini">
+                        <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti dalam sektor ini">
                             Sektor {{ $sectorCode }} tiada entiti yang boleh anda lihat.
                         </x-empty-state>
                     @endforelse

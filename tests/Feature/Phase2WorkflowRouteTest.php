@@ -75,28 +75,28 @@ class Phase2WorkflowRouteTest extends TestCase
     }
 
     /**
-     * Pegawai Penyelaras Rekod memerhati sahaja pada skrin ini, jadi lajur
-     * Tindakan tidak dipaparkan langsung kepadanya.
+     * Pautan "Entiti" dan "Kemajuan" ialah navigasi, bukan tindakan: SETIAP
+     * peranan yang boleh membuka skrin ini mendapatnya, termasuk Pegawai
+     * Penyelaras Rekod.
+     *
+     * Kebenaran sebenar tetap dikuatkuasakan pada halaman yang dituju —
+     * PPR hanya melihat entiti yang telah memulakan Penerimaan Data.
      */
-    public function test_ppr_tidak_melihat_lajur_tindakan(): void
+    public function test_setiap_peranan_melihat_pautan_entiti_dan_kemajuan(): void
     {
         $this->workflowPada(AliranKerja::PENYEDIAAN_DATA);
 
         $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
 
-        $this->actingAs($ppr)
-            ->get(route('workflow.index', ['sector_code' => '001']))
-            ->assertOk()
-            ->assertSee(self::ENTITI)
-            ->assertDontSee('Tindakan')
-            ->assertDontSee(route('workflow.show', self::ENTITI));
-
-        // Peranan lain kekal mempunyai pautan butiran.
-        $this->actingAs($this->coordinator())
-            ->get(route('workflow.index', ['sector_code' => '001']))
-            ->assertOk()
-            ->assertSee('Tindakan')
-            ->assertSee(route('workflow.show', self::ENTITI));
+        foreach ([$ppr, $this->coordinator()] as $pengguna) {
+            $this->actingAs($pengguna->fresh())
+                ->get(route('workflow.index', ['sector_code' => '001']))
+                ->assertOk()
+                ->assertSee(self::ENTITI)
+                ->assertSee('Tindakan')
+                ->assertSee(route('entiti.show', self::ENTITI), false)
+                ->assertSee(route('workflow.show', self::ENTITI), false);
+        }
     }
 
     public function test_senarai_boleh_ditapis_mengikut_sektor(): void
@@ -170,17 +170,26 @@ class Phase2WorkflowRouteTest extends TestCase
      */
     public function test_entiti_belum_didaftar_tiada_borang_bagi_peranan_lain(): void
     {
-        // PPR tidak memiliki peringkat 1.1, dan Pentadbir Sistem pun tidak.
-        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
-
-        $this->actingAs($ppr)
+        // Pentadbir Sistem melihat entiti tetapi tidak memiliki peringkat 1.1.
+        $this->actingAs($this->coordinator())
             ->get(route('workflow.show', self::ENTITI))
             ->assertOk()
             ->assertSee('Belum Memasuki Aliran Kerja')
             ->assertDontSee(route('kemajuan.simpan', [self::ENTITI, AliranKerja::PENERIMAAN_DATA]), false)
-            // No. Rujukan pun belum berkenaan: ia direkod pada baris peringkat,
-            // yang belum wujud.
             ->assertDontSee(route('kemajuan.rujukan', [self::ENTITI, AliranKerja::PENERIMAAN_DATA]), false);
+    }
+
+    /**
+     * PPR tidak melihat entiti yang belum memulakan Penerimaan Data langsung —
+     * bukan sekadar tanpa borang.
+     */
+    public function test_ppr_tidak_melihat_entiti_yang_belum_bermula(): void
+    {
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+
+        $this->actingAs($ppr)
+            ->get(route('workflow.show', self::ENTITI))
+            ->assertForbidden();
     }
 
     public function test_entiti_di_luar_senarai_induk_menghasilkan_404(): void

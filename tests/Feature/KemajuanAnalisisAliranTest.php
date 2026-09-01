@@ -293,13 +293,21 @@ class KemajuanAnalisisAliranTest extends TestCase
      * sebelum entiti memasuki aliran kerja — memasukkannya ialah tindakan
      * peringkat 1.1, bukan tindakan PPR.
      */
-    public function test_no_rujukan_ditolak_sebelum_entiti_memasuki_aliran(): void
+    /**
+     * Entiti yang belum memulakan Penerimaan Data langsung tidak kelihatan
+     * kepada PPR — capaian ditolak sebelum sampai ke borang No. Rujukan.
+     */
+    public function test_ppr_tidak_melihat_entiti_yang_belum_bermula(): void
     {
+        $this->actingAs($this->ppr)
+            ->get(route('workflow.show', self::BETA))
+            ->assertForbidden();
+
         $this->actingAs($this->ppr)
             ->post(route('kemajuan.rujukan', [self::BETA, AliranKerja::PENERIMAAN_DATA]), [
                 'no_rujukan' => 'BPD/2026/001',
             ])
-            ->assertSessionHasErrors('no_rujukan');
+            ->assertForbidden();
 
         $this->assertTrue(app(KemajuanAnalisisService::class)->peringkat(self::BETA)->isEmpty());
     }
