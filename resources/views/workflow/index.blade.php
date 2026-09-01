@@ -8,10 +8,14 @@
 
     <div class="report-card mb-4">
 
-        <h4 class="section-title">7 Peringkat Kemajuan Analisis</h4>
+        <h4 class="section-title">5 Peringkat Kemajuan Analisis</h4>
         <p class="text-secondary">
-            Setiap entiti dipantau melalui tujuh peringkat berturutan, daripada
-            Penerimaan &amp; Pendaftaran Data sehingga Penyerahan &amp; Penutupan.
+            Setiap entiti dipantau melalui lima peringkat utama, daripada
+            Penerimaan &amp; Semakan Awal Data sehingga Semakan, Kelulusan &amp;
+            Penyerahan Laporan. Peringkat 1 dan 3 mengandungi sub-peringkat.
+            Fasa semasa berakhir pada
+            <strong>{{ \App\Support\AliranKerja::labelPenuh(\App\Support\AliranKerja::TERAKHIR_SEMASA) }}</strong>;
+            peringkat selepasnya belum dibina.
         </p>
 
         <x-workflow-stepper class="mb-4" />
@@ -42,7 +46,7 @@
 
         <h4 class="section-title">Kedudukan Semasa Entiti</h4>
         <p class="text-secondary">
-            {{ $jumlahDidaftar }} entiti telah didaftarkan dalam Kemajuan Analisis.
+            {{ $jumlahDidaftar }} entiti telah memasuki aliran kerja Kemajuan Analisis.
             @if (!$sectorCode)
                 Pilih sektor di atas untuk melihat keseluruhan entiti dalam sektor tersebut.
             @endif
@@ -76,9 +80,13 @@
                 </thead>
                 <tbody>
                     @php
-                        $jumlahPeringkat = count(\App\Models\WorkflowStatus::WORKFLOW_STAGES);
-
                         $kemajuanServis = app(\App\Services\KemajuanAnalisisService::class);
+
+                        // Penyebut kemajuan ialah peringkat FASA SEMASA
+                        // (1.1 hingga 3.1). Peringkat 3.2, 4 dan 5 belum
+                        // dibina, jadi ia tidak boleh dikira sebagai kerja
+                        // yang tertunggak.
+                        $jumlahPeringkat = $kemajuanServis->jumlahPeringkatSemasa();
 
                         $laporanBerkenaan = fn(?\Illuminate\Support\Collection $peringkat): bool
                             => $kemajuanServis->statusLaporanBerkenaan($peringkat);
@@ -92,11 +100,11 @@
 
                     @forelse ($entiti as $e)
                         @php
-                            // "Berdaftar" bermaksud peringkat 01 Selesai —
+                            // "Berdaftar" bermaksud peringkat 1.1 Selesai —
                             // bukan sekadar mempunyai baris peringkat, yang
                             // kekal walaupun selepas Ketua Bahagian menetapkan
                             // semula entiti.
-                            $didaftar = $e['peringkat']?->get(\App\Models\WorkflowStatus::STAGE_PENDAFTARAN)?->isSelesai() ?? false;
+                            $didaftar = $kemajuanServis->dalamAliranKerja($e['peringkat']);
                             $peratus = $didaftar ? round(($e['bilanganSelesai'] / $jumlahPeringkat) * 100) : 0;
                         @endphp
                         <tr>
@@ -113,8 +121,8 @@
                             </td>
                             <td>
                                 @if ($didaftar)
-                                    <span class="workflow-stage-tag">{{ sprintf('%02d', $e['peringkatSemasa']) }}</span>
-                                    {{ \App\Models\WorkflowStatus::getStageName($e['peringkatSemasa']) }}
+                                    <span class="workflow-stage-tag">{{ $e['peringkatSemasa'] }}</span>
+                                    {{ \App\Support\AliranKerja::label($e['peringkatSemasa']) }}
                                 @else
                                     <span class="text-secondary">Belum Didaftarkan</span>
                                 @endif
@@ -126,8 +134,8 @@
                             </td>
                             <td>
                                 {{-- Lajur tidak boleh hilang bagi satu baris
-                                     sahaja, jadi entiti yang belum sampai ke
-                                     peringkat 05 memaparkan sengkang dan bukan
+                                     sahaja, jadi entiti yang belum menyelesaikan
+                                     peringkat 3.1 memaparkan sengkang dan bukan
                                      status laporan yang belum berkenaan. --}}
                                 @if ($laporanBerkenaan($e['peringkat']))
                                     <span

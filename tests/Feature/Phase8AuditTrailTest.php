@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\AuditTrailService;
 use App\Services\EntityAssignmentService;
-use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
 use App\Services\WorkflowTransitionService;
 use App\Support\SektorDirectory;
@@ -17,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Tests\Concerns\MelaluiAliranKerja;
 use Tests\TestCase;
 
 /**
@@ -28,7 +28,7 @@ use Tests\TestCase;
  */
 class Phase8AuditTrailTest extends TestCase
 {
-    use RefreshDatabase;
+    use MelaluiAliranKerja, RefreshDatabase;
 
     private const ALPHA = 'A010101';
 
@@ -82,7 +82,7 @@ class Phase8AuditTrailTest extends TestCase
         $this->assertSame('2', $log->new_value);
         $this->assertSame($this->coordinator->id, $log->changed_by_user_id);
         $this->assertSame('2026-08-20 14:30:00', $log->changed_at->format('Y-m-d H:i:s'));
-        $this->assertSame('Semakan Awal Data', $log->metadata['to_stage_name']);
+        $this->assertSame('Penyediaan & Pengesahan Data', $log->metadata['to_stage_name']);
     }
 
     public function test_perubahan_status_dalam_peringkat_menghasilkan_rekod_audit(): void
@@ -155,17 +155,17 @@ class Phase8AuditTrailTest extends TestCase
      * ia bergerak hanya melalui kitaran semakan Kemajuan Analisis Entiti.
      * Jejak audit mesti merekod setiap langkah kitaran itu.
      */
+    /**
+     * Kitaran semakan laporan milik peringkat 4 dan 5, yang belum dibina —
+     * tiada route memanggilnya. Servisnya kekal dan jejak auditnya kekal
+     * berfungsi, jadi ujian ini memanggilnya terus supaya perbendaharaan
+     * jejak itu tidak reput sebelum peringkat berkenaan dibina.
+     */
     public function test_kitaran_semakan_laporan_menghasilkan_rekod_audit(): void
     {
         $entiti = SektorDirectory::cariEntiti(self::ALPHA);
 
-        $kemajuan = app(KemajuanAnalisisService::class);
-        $kemajuan->lengkapkanPendaftaran($entiti, $this->coordinator);
-
-        // Peringkat 2–4 mesti Selesai sebelum laporan boleh dihantar.
-        foreach ([2, 3, 4] as $peringkat) {
-            $kemajuan->tandakanSelesai(self::ALPHA, $peringkat, $this->analyst);
-        }
+        $this->lengkapkanFasaSemasa(self::ALPHA, $this->analyst);
 
         $semakan = app(LaporanSemakanService::class);
         $laporan = $semakan->mulakan($entiti);

@@ -1,5 +1,38 @@
 # SENARAI SEMAK UJIAN PENERIMAAN PENGGUNA (UAT)
 
+> ## ⚠️ RESTRUKTUR ALIRAN KERJA — 7 PERINGKAT → 5 PERINGKAT
+>
+> Aliran kerja sistem telah distruktur semula daripada **7 peringkat rata**
+> kepada **5 peringkat utama dengan sub-peringkat**. Struktur rasmi kini:
+>
+> | Peringkat | Proses                                     | Peranan  | Fasa         |
+> | --------- | ------------------------------------------ | -------- | ------------ |
+> | 1         | Penerimaan & Semakan Awal Data             |          |              |
+> | 1.1       | Penerimaan Data                            | KB / PPA | Semasa       |
+> | 1.2       | Pendaftaran Data                           | PPA      | Semasa       |
+> | 1.3       | Semakan Awal Data                          | PA       | Semasa       |
+> | 2         | Penyediaan & Pengesahan Data               | PA       | Semasa       |
+> | 3         | Analisis Data                              |          |              |
+> | 3.1       | Analisis Inventori Kriptografi             | PA       | Semasa       |
+> | 3.2       | Analisis Risiko Migrasi PQC                | —        | Akan datang  |
+> | 4         | Penjanaan Laporan                          | —        | Akan datang  |
+> | 5         | Semakan, Kelulusan & Penyerahan Laporan    | —        | Akan datang  |
+>
+> **No. Rujukan Borang** bagi peringkat 1.1, 1.2 dan 1.3 dimasukkan oleh
+> **Pegawai Penyelaras Rekod (PPR)**, walaupun peringkat itu dilaksanakan oleh
+> KB, PPA dan PA. **No. Rujukan Laporan** peringkat 3.1 dimasukkan oleh PA.
+>
+> **Fasa semasa berakhir pada peringkat 3.1.** Peringkat 3.2, 4 dan 5 telah
+> ditakrifkan dalam struktur tetapi prosesnya belum ditentukan; ia tidak
+> menerima sebarang tindakan.
+>
+> Takrifan tunggal struktur ini ialah `app/Support/AliranKerja.php`.
+>
+> **Bahagian di bawah yang masih menerangkan aliran 7 peringkat sudah lapuk dan
+> perlu ditulis semula bersama spesifikasi peringkat 4 dan 5.**
+
+> **Kesan kepada UAT**: senario yang menguji peringkat 5, 6 dan 7 aliran lama (termasuk senario 16–18) tidak lagi terpakai — route dan butangnya telah ditanggalkan bersama penangguhan peringkat 4 dan 5. Senario gantiannya perlu ditulis apabila proses peringkat tersebut ditetapkan.
+
 ## Sistem Pemantauan & Pelaporan Analisis Data Migrasi PQC — V1.0-RC1
 
 | Perkara                 | Butiran                                                   |

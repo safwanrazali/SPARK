@@ -61,7 +61,7 @@
                 <div class="stat-title">Peringkat Semasa</div>
                 <div class="workflow-meta__value">
                     @if ($workflow)
-                        {{ sprintf('%02d', $workflow->current_stage) }} — {{ $workflow->stage_name }}
+                        {{ $workflow->currentStageLabel() }}
                     @else
                         <span class="text-secondary">Belum Didaftarkan</span>
                     @endif
@@ -97,9 +97,18 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
             <h4 class="section-title mb-0">Kemajuan Analisis</h4>
             @if ($workflow)
+                @php
+                    // Kemajuan diukur terhadap peringkat FASA SEMASA, bukan
+                    // kelima-lima peringkat utama: peringkat 4 dan 5 belum
+                    // dibina, jadi mengukur terhadapnya memaparkan kerja
+                    // siap sebagai kekurangan yang tiada siapa boleh tutup.
+                    $kemajuanServis = app(\App\Services\KemajuanAnalisisService::class);
+                    $jumlahFasa = $kemajuanServis->jumlahPeringkatSemasa();
+                    $siapFasa = $kemajuanServis->bilanganSelesai($peringkat);
+                @endphp
                 <span class="text-secondary">
-                    Peringkat {{ $workflow->current_stage }} daripada {{ \App\Models\WorkflowStatus::LAST_STAGE }}
-                    ({{ $workflow->progressPercentage() }}%)
+                    {{ $siapFasa }} daripada {{ $jumlahFasa }} peringkat fasa semasa
+                    ({{ $jumlahFasa ? round(($siapFasa / $jumlahFasa) * 100) : 0 }}%)
                 </span>
             @endif
         </div>
@@ -115,7 +124,7 @@
             </p>
         @else
             <p class="text-secondary mb-0">
-                Entiti ini belum didaftarkan dalam workflow 7 peringkat.
+                Entiti ini belum memasuki aliran kerja lima peringkat.
             </p>
         @endif
 

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
+use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
+use App\Support\AliranKerja;
 use App\Support\BorangAnalisis;
 use App\Support\Halaman;
 use App\Support\TeksBerformat;
@@ -46,14 +48,26 @@ class LaporanController extends Controller
     {
         $this->authorize('generateReport', $analisis);
 
-        // Carta aliran bahagian 12: hanya laporan yang telah disahkan Ketua
-        // Bahagian (status Sah) boleh dimuat turun.
-        $semakan = app(LaporanSemakanService::class)->untuk($analisis->agency_code);
+        /*
+         * Syarat muat turun: peringkat 3.1 "Analisis Inventori Kriptografi"
+         * mesti Selesai.
+         *
+         * Dahulu syaratnya ialah laporan telah disahkan Ketua Bahagian.
+         * Pengesahan itu milik peringkat 5, yang belum dibina — mengekalkan
+         * syarat lama bermakna laporan tidak akan pernah boleh dimuat turun
+         * dalam fasa ini. Peringkat 3.1 ialah titik terakhir aliran kerja
+         * fasa semasa, jadi ia syarat yang betul buat masa ini.
+         *
+         * Apabila peringkat 4 dan 5 dibina, syarat kelulusan boleh
+         * ditambah semula di sini.
+         */
+        $peringkat = app(KemajuanAnalisisService::class)->peringkat($analisis->agency_code);
 
         abort_unless(
-            $semakan !== null && $semakan->isSah(),
+            $peringkat->get(AliranKerja::ANALISIS_INVENTORI)?->isSelesai() ?? false,
             403,
-            'Laporan ini belum disahkan. Hanya laporan berstatus Sah boleh dimuat turun.',
+            'Laporan ini belum boleh dimuat turun. Peringkat 3.1 — Analisis Inventori '
+            .'Kriptografi perlu Selesai terlebih dahulu.',
         );
 
         $viewData = $this->siapkanData($analisis);

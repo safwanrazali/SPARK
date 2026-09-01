@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
+use App\Support\AliranKerja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -14,15 +15,19 @@ use Illuminate\Support\Facades\DB;
 /**
  * Satu-satunya tempat status peringkat Kemajuan Analisis Entiti boleh berubah.
  *
- * Peraturan yang dikuatkuasakan di sini (aliran kerja bahagian 5–11):
- * - Setiap entiti memiliki tujuh baris peringkat; tiada baris bermakna entiti
- *   belum didaftarkan langsung.
+ * Peraturan yang dikuatkuasakan di sini:
+ * - Setiap entiti memiliki satu baris bagi SETIAP peringkat yang ditakrifkan
+ *   dalam AliranKerja (termasuk peringkat fasa akan datang); tiada baris
+ *   bermakna entiti belum memasuki aliran kerja langsung.
  * - Satu peringkat hanya boleh ditandakan Selesai apabila peringkat
- *   sebelumnya telah Selesai. Tiada peringkat boleh dilangkau.
- * - Keseluruhan entiti hanya menjadi 'Siap' apabila KESEMUA tujuh peringkat
- *   Selesai — tidak sekali-kali lebih awal.
+ *   sebelumnya dalam turutan telah Selesai. Tiada peringkat boleh dilangkau.
+ * - Peringkat fasa akan datang (3.2, 4, 5) TIDAK menerima sebarang tindakan.
+ *   Ia wujud supaya strukturnya lengkap dan modulnya boleh ditambah kemudian.
+ * - Keseluruhan entiti menjadi 'Siap' apabila kesemua peringkat FASA SEMASA
+ *   Selesai — iaitu 1.1 hingga 3.1. Mengukurnya terhadap peringkat yang
+ *   belum dibina akan menjadikan 'Siap' mustahil dicapai.
  * - `workflow_status` (kedudukan semasa) diselaraskan pada setiap perubahan,
- *   supaya stepper dan papan pemuka sedia ada kekal tepat.
+ *   supaya stepper dan papan pemuka kekal tepat.
  *
  * Kebenaran peranan TIDAK disemak di sini; ia dikawal oleh gate pada lapisan
  * route/controller mengikut seni bina sedia ada.
@@ -35,6 +40,10 @@ class KemajuanAnalisisService
     ) {}
 
     public const ACTION_STAGE_STATUS_CHANGED = 'stage_status_changed';
+
+    public const ACTION_STAGE_DATA_SAVED = 'stage_data_saved';
+
+    public const ACTION_STAGE_REFERENCE_SAVED = 'stage_reference_saved';
 
     public const ACTION_REGISTRATION_COMPLETED = 'registration_completed';
 
@@ -50,13 +59,15 @@ class KemajuanAnalisisService
     public const KESELURUHAN_SIAP = 'Siap';
 
     /**
-     * Cipta tujuh baris peringkat bagi satu entiti, semuanya 'Belum Mula'.
+     * Cipta baris bagi setiap peringkat aliran kerja, semuanya 'Belum Mula'.
      *
      * Selamat dipanggil berulang kali: baris sedia ada tidak disentuh, jadi
-     * pendaftaran semula tidak memadam kemajuan yang telah dicapai.
+     * pemasukan semula tidak memadam kemajuan yang telah dicapai. Ia juga
+     * menambah baris bagi peringkat yang BAHARU ditakrifkan — itulah cara
+     * peringkat fasa akan datang muncul pada entiti yang telah lama wujud.
      *
      * @param  array<string, string>  $entiti  sector_code, sector_name, agency_code, agency_name
-     * @return Collection<int, WorkflowStageStatus> dikunci mengikut nombor peringkat
+     * @return Collection<string, WorkflowStageStatus> dikunci mengikut kunci peringkat
      */
     public function sediakan(array $entiti): Collection
     {
@@ -65,7 +76,7 @@ class KemajuanAnalisisService
         // audit dengan tindakan yang sama seperti sebelum ini.
         $this->workflow->initialize($entiti);
 
-        foreach (array_keys(WorkflowStatus::WORKFLOW_STAGES) as $stage) {
+        foreach (AliranKerja::kekunci() as $stage) {
             WorkflowStageStatus::firstOrCreate(
                 ['agency_code' => $entiti['agency_code'], 'stage' => $stage],
                 [
@@ -81,17 +92,19 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Status setiap peringkat bagi satu entiti, dikunci mengikut nombor peringkat.
+     * Status setiap peringkat bagi satu entiti, dikunci mengikut kunci
+     * peringkat dan disusun mengikut turutan aliran.
      *
-     * @return Collection<int, WorkflowStageStatus>
+     * Susunan dibuat dalam PHP dan bukan melalui `orderBy('stage')`: kunci
+     * ialah string, dan susunan abjadnya salah ('1.10' sebelum '1.2').
+     *
+     * @return Collection<string, WorkflowStageStatus>
      */
     public function peringkat(string $agencyCode): Collection
     {
-        return WorkflowStageStatus::query()
-            ->forAgency($agencyCode)
-            ->orderBy('stage')
-            ->get()
-            ->keyBy('stage');
+        return $this->susun(
+            WorkflowStageStatus::query()->forAgency($agencyCode)->get()
+        );
     }
 
     /**
@@ -101,7 +114,7 @@ class KemajuanAnalisisService
      * mengeluarkan satu query sendiri.
      *
      * @param  array<int, string>  $agencyCodes
-     * @return Collection<string, Collection<int, WorkflowStageStatus>>
+     * @return Collection<string, Collection<string, WorkflowStageStatus>>
      */
     public function peringkatUntukBanyak(array $agencyCodes): Collection
     {
@@ -111,73 +124,82 @@ class KemajuanAnalisisService
 
         return WorkflowStageStatus::query()
             ->whereIn('agency_code', $agencyCodes)
-            ->orderBy('stage')
             ->get()
             ->groupBy('agency_code')
-            ->map(fn (Collection $peringkat) => $peringkat->keyBy('stage'));
+            ->map(fn (Collection $peringkat) => $this->susun($peringkat));
     }
 
     /**
-     * Adakah entiti telah didaftarkan (peringkat 1 Selesai)?
+     * @param  Collection<int, WorkflowStageStatus>  $peringkat
+     * @return Collection<string, WorkflowStageStatus>
+     */
+    private function susun(Collection $peringkat): Collection
+    {
+        return $peringkat
+            ->sortBy(fn (WorkflowStageStatus $p): int => AliranKerja::ordinal($p->stage) ?? PHP_INT_MAX)
+            ->keyBy('stage');
+    }
+
+    /**
+     * Adakah entiti telah memasuki aliran kerja (peringkat 1.1 Selesai)?
      *
      * Ini ialah pintu masuk kepada keseluruhan aliran: sebelum ia benar,
      * entiti tidak muncul kepada PPA dan tidak boleh ditugaskan.
      */
-    public function pendaftaranSelesai(string $agencyCode): bool
+    public function penerimaanSelesai(string $agencyCode): bool
     {
         return WorkflowStageStatus::query()
             ->forAgency($agencyCode)
-            ->atStage(WorkflowStatus::STAGE_PENDAFTARAN)
+            ->atStage(AliranKerja::PENERIMAAN_DATA)
             ->selesai()
             ->exists();
     }
 
     /**
-     * Adakah entiti ini berdaftar, dijawab daripada peringkat yang telah
-     * dimuatkan — versi tanpa query bagi pendaftaranSelesai().
+     * Adakah entiti ini berada dalam aliran kerja, dijawab daripada peringkat
+     * yang telah dimuatkan — versi tanpa query bagi penerimaanSelesai().
      *
      * Senarai TIDAK boleh menggunakan "ada baris peringkat" sebagai ganti:
-     * setSemula() mengekalkan ketujuh-tujuh baris dan hanya mengembalikan
-     * statusnya kepada Belum Mula, jadi entiti yang telah ditetapkan semula
-     * oleh Ketua Bahagian tetap mempunyai baris peringkat. Peringkat 1
-     * Selesai ialah satu-satunya ujian yang betul.
+     * setSemula() mengekalkan semua baris dan hanya mengembalikan statusnya
+     * kepada Belum Mula, jadi entiti yang telah ditetapkan semula oleh Ketua
+     * Bahagian tetap mempunyai baris peringkat. Peringkat 1.1 Selesai ialah
+     * satu-satunya ujian yang betul.
      *
-     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
-    public function didaftarkanDaripada(?Collection $peringkat): bool
+    public function dalamAliranKerja(?Collection $peringkat): bool
     {
-        return $peringkat?->get(WorkflowStatus::STAGE_PENDAFTARAN)?->isSelesai() ?? false;
+        return $peringkat?->get(AliranKerja::PENERIMAAN_DATA)?->isSelesai() ?? false;
     }
 
     /**
      * Adakah "Status Laporan" berkenaan bagi entiti ini?
      *
-     * Laporan hanya mula wujud pada peringkat 05 (Jana Laporan), iaitu
-     * sebaik "Analisis Data" Selesai. Memaparkan statusnya lebih awal
-     * membacanya sebagai kerja yang tertunggak — "Belum Lengkap" pada
-     * peringkat 03 menuduh Pegawai Analisis kerana borang yang gilirannya
-     * belum pun tiba.
+     * Laporan Analisis Inventori Kriptografi baru bermakna setelah peringkat
+     * 3.1 Selesai. Memaparkan statusnya lebih awal membacanya sebagai kerja
+     * yang tertunggak — "Belum Lengkap" pada peringkat 2 menuduh Pegawai
+     * Analisis kerana borang yang gilirannya belum pun tiba.
      *
-     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function statusLaporanBerkenaan(?Collection $peringkat): bool
     {
-        return $peringkat?->get(WorkflowStatus::STAGE_ANALISIS)?->isSelesai() ?? false;
+        return $peringkat?->get(AliranKerja::ANALISIS_INVENTORI)?->isSelesai() ?? false;
     }
 
     /**
-     * Kod entiti yang telah menyelesaikan pendaftaran.
+     * Kod entiti yang telah memasuki aliran kerja.
      *
      * Entiti yang ditetapkan semula oleh Ketua Bahagian tidak termasuk —
-     * peringkat 1-nya kembali kepada Belum Mula.
+     * peringkat 1.1-nya kembali kepada Belum Mula.
      *
      * @return array<int, string>
      */
-    public function kodPendaftaranSelesai(?User $pengguna = null): array
+    public function kodPenerimaanSelesai(?User $pengguna = null): array
     {
         return WorkflowStageStatus::query()
             ->when($pengguna !== null, fn ($query) => $query->accessibleBy($pengguna))
-            ->atStage(WorkflowStatus::STAGE_PENDAFTARAN)
+            ->atStage(AliranKerja::PENERIMAAN_DATA)
             ->selesai()
             ->pluck('agency_code')
             ->all();
@@ -192,19 +214,24 @@ class KemajuanAnalisisService
      * - Menandakan SELESAI menuntut pendahulunya telah Selesai. Inilah yang
      *   menghalang peringkat dilangkau.
      * - Menandakan DALAM PROSES hanya menuntut pendahulunya telah bermula.
-     *   Ini diperlukan oleh carta aliran itu sendiri: "Semakan & Kelulusan"
-     *   bermula sebaik laporan dihantar, sedangkan "Jana Laporan" sengaja
-     *   kekal Dalam Proses sehingga Ketua Bahagian mengesahkannya.
      *
-     * Peringkat pertama ialah tanggungjawab PPR dan mempunyai skrinnya sendiri.
+     * Peringkat fasa akan datang ditolak terus: modulnya belum dibina, jadi
+     * tiada tindakan padanya yang boleh bermakna.
      */
     public function ralatPeringkat(
         string $agencyCode,
-        int $stage,
+        string $stage,
         string $status = WorkflowStageStatus::SELESAI,
     ): ?string {
-        if (! WorkflowStatus::isValidStage($stage)) {
-            return sprintf('Peringkat %d tidak sah.', $stage);
+        if (! AliranKerja::wujud($stage)) {
+            return sprintf('Peringkat %s tidak sah.', $stage);
+        }
+
+        if (AliranKerja::adalahAkanDatang($stage)) {
+            return sprintf(
+                'Peringkat %s belum dibina. Ia dikhaskan untuk fasa akan datang.',
+                AliranKerja::labelPenuh($stage),
+            );
         }
 
         $peringkat = $this->peringkat($agencyCode);
@@ -213,18 +240,19 @@ class KemajuanAnalisisService
             return 'Entiti ini belum didaftarkan dalam Kemajuan Analisis Entiti.';
         }
 
-        if ($stage === WorkflowStatus::FIRST_STAGE) {
+        $sebelumKunci = AliranKerja::sebelum($stage);
+
+        if ($sebelumKunci === null) {
             return null;
         }
 
-        $sebelum = $peringkat->get($stage - 1);
+        $sebelum = $peringkat->get($sebelumKunci);
 
         if ($status === WorkflowStageStatus::SELESAI) {
             if ($sebelum === null || ! $sebelum->isSelesai()) {
                 return sprintf(
-                    'Peringkat %d — %s mesti Selesai terlebih dahulu.',
-                    $stage - 1,
-                    WorkflowStatus::getStageName($stage - 1),
+                    'Peringkat %s mesti Selesai terlebih dahulu.',
+                    AliranKerja::labelPenuh($sebelumKunci),
                 );
             }
 
@@ -233,9 +261,8 @@ class KemajuanAnalisisService
 
         if ($sebelum === null || $sebelum->isBelumMula()) {
             return sprintf(
-                'Peringkat %d — %s mesti bermula terlebih dahulu.',
-                $stage - 1,
-                WorkflowStatus::getStageName($stage - 1),
+                'Peringkat %s mesti bermula terlebih dahulu.',
+                AliranKerja::labelPenuh($sebelumKunci),
             );
         }
 
@@ -245,7 +272,7 @@ class KemajuanAnalisisService
     /**
      * Bolehkah peringkat ini ditandakan Selesai sekarang?
      */
-    public function bolehTandakan(string $agencyCode, int $stage): bool
+    public function bolehTandakan(string $agencyCode, string $stage): bool
     {
         return $this->ralatPeringkat($agencyCode, $stage) === null;
     }
@@ -257,7 +284,7 @@ class KemajuanAnalisisService
      */
     public function tetapkanStatus(
         string $agencyCode,
-        int $stage,
+        string $stage,
         string $status,
         ?User $user = null,
         ?string $notes = null,
@@ -319,9 +346,137 @@ class KemajuanAnalisisService
                 $user,
                 [
                     'stage' => $stage,
-                    'stage_name' => WorkflowStatus::getStageName($stage),
+                    'stage_name' => AliranKerja::labelPenuh($stage),
                     'keseluruhan' => $this->keseluruhan($agencyCode),
                     'notes' => $notes,
+                ],
+            );
+
+            return $rekod;
+        });
+    }
+
+    /**
+     * Simpan data tangkapan satu peringkat (Tarikh, Status Borang, Nama Fail).
+     *
+     * Hanya medan yang ditakrifkan bagi peringkat itu dalam AliranKerja
+     * diterima — borang tidak boleh menulis lajur peringkat lain. No. Rujukan
+     * TIDAK disimpan di sini: ia mempunyai laluannya sendiri kerana pada
+     * peringkat 1.1–1.3 ia dimasukkan oleh PPR dan bukan oleh pegawai
+     * peringkat berkenaan (@see simpanRujukan).
+     *
+     * @param  array<string, mixed>  $data  lajur => nilai
+     *
+     * @throws InvalidWorkflowTransitionException
+     */
+    public function simpanData(
+        string $agencyCode,
+        string $stage,
+        array $data,
+        ?User $user = null,
+    ): WorkflowStageStatus {
+        if (! AliranKerja::wujud($stage) || AliranKerja::adalahAkanDatang($stage)) {
+            throw new InvalidWorkflowTransitionException(sprintf(
+                'Peringkat %s tidak menerima data dalam fasa ini.',
+                $stage,
+            ));
+        }
+
+        $dibenarkan = array_keys(AliranKerja::medan($stage));
+        $data = array_intersect_key($data, array_flip($dibenarkan));
+
+        return DB::transaction(function () use ($agencyCode, $stage, $data, $user) {
+            $rekod = WorkflowStageStatus::query()
+                ->forAgency($agencyCode)
+                ->atStage($stage)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $sebelum = $rekod->only(array_keys($data));
+
+            $rekod->fill($data);
+            $rekod->updated_by_user_id = $user?->id;
+
+            // Merekod data peringkat bermakna kerjanya telah bermula. Peringkat
+            // yang telah Selesai tidak diundurkan.
+            if ($rekod->status === WorkflowStageStatus::BELUM_MULA
+                && $this->ralatPeringkat($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES) === null) {
+                $rekod->status = WorkflowStageStatus::DALAM_PROSES;
+                $rekod->started_at ??= now();
+            }
+
+            $rekod->save();
+
+            $this->selaraskanKedudukan($agencyCode, $user);
+
+            $this->audit->rekod(
+                ['agency_code' => $rekod->agency_code, 'agency_name' => $rekod->agency_name],
+                self::ACTION_STAGE_DATA_SAVED,
+                null,
+                AliranKerja::labelPenuh($stage),
+                $user,
+                [
+                    'stage' => $stage,
+                    'stage_name' => AliranKerja::labelPenuh($stage),
+                    'medan' => array_keys($data),
+                    'sebelum' => $sebelum,
+                ],
+            );
+
+            return $rekod;
+        });
+    }
+
+    /**
+     * Simpan No. Rujukan satu peringkat.
+     *
+     * Diasingkan daripada simpanData() kerana pemiliknya berbeza: No. Rujukan
+     * Borang Penerimaan / Pendaftaran / Semakan Awal Data dimasukkan oleh
+     * Pegawai Penyelaras Rekod, walaupun peringkatnya milik KB, PPA atau PA.
+     * Siapa memasukkannya direkodkan pada baris itu sendiri.
+     *
+     * @throws InvalidWorkflowTransitionException
+     */
+    public function simpanRujukan(
+        string $agencyCode,
+        string $stage,
+        ?string $noRujukan,
+        ?User $user = null,
+    ): WorkflowStageStatus {
+        if (AliranKerja::labelRujukan($stage) === null) {
+            throw new InvalidWorkflowTransitionException(sprintf(
+                'Peringkat %s tidak mempunyai No. Rujukan.',
+                $stage,
+            ));
+        }
+
+        $noRujukan = is_string($noRujukan) ? trim($noRujukan) : null;
+        $noRujukan = $noRujukan === '' ? null : $noRujukan;
+
+        return DB::transaction(function () use ($agencyCode, $stage, $noRujukan, $user) {
+            $rekod = WorkflowStageStatus::query()
+                ->forAgency($agencyCode)
+                ->atStage($stage)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $sebelum = $rekod->no_rujukan;
+
+            $rekod->no_rujukan = $noRujukan;
+            $rekod->no_rujukan_oleh_user_id = $user?->id;
+            $rekod->no_rujukan_pada = $noRujukan === null ? null : now();
+            $rekod->save();
+
+            $this->audit->rekod(
+                ['agency_code' => $rekod->agency_code, 'agency_name' => $rekod->agency_name],
+                self::ACTION_STAGE_REFERENCE_SAVED,
+                $sebelum,
+                $noRujukan,
+                $user,
+                [
+                    'stage' => $stage,
+                    'stage_name' => AliranKerja::labelPenuh($stage),
+                    'label' => AliranKerja::labelRujukan($stage),
                 ],
             );
 
@@ -334,7 +489,7 @@ class KemajuanAnalisisService
      *
      * @throws InvalidWorkflowTransitionException
      */
-    public function tandakanSelesai(string $agencyCode, int $stage, ?User $user = null, ?string $notes = null): WorkflowStageStatus
+    public function tandakanSelesai(string $agencyCode, string $stage, ?User $user = null, ?string $notes = null): WorkflowStageStatus
     {
         return $this->tetapkanStatus($agencyCode, $stage, WorkflowStageStatus::SELESAI, $user, $notes);
     }
@@ -348,7 +503,7 @@ class KemajuanAnalisisService
      * jadi memanggilnya lebih awal adalah selamat dan tidak melompat
      * peringkat.
      */
-    public function tandakanDalamProses(string $agencyCode, int $stage, ?User $user = null): ?WorkflowStageStatus
+    public function tandakanDalamProses(string $agencyCode, string $stage, ?User $user = null): ?WorkflowStageStatus
     {
         $rekod = WorkflowStageStatus::query()
             ->forAgency($agencyCode)
@@ -369,24 +524,29 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Lengkapkan "Penerimaan & Pendaftaran Data" bagi satu entiti.
+     * Lengkapkan peringkat 1.1 "Penerimaan Data" bagi satu entiti.
      *
      * Ini ialah pintu masuk aliran kerja: entiti dicipta dalam kemajuan,
-     * peringkat 1 ditandakan Selesai, dan sejak itu ia dikunci daripada PPR
-     * sehingga Ketua Bahagian menetapkannya semula.
+     * peringkat 1.1 ditandakan Selesai, dan sejak itu ia dikunci sehingga
+     * Ketua Bahagian menetapkannya semula.
      *
      * @param  array<string, string>  $entiti
+     * @param  array<string, mixed>  $data  data tangkapan peringkat 1.1
      *
      * @throws InvalidWorkflowTransitionException
      */
-    public function lengkapkanPendaftaran(array $entiti, ?User $user = null): WorkflowStageStatus
+    public function lengkapkanPenerimaan(array $entiti, ?User $user = null, array $data = []): WorkflowStageStatus
     {
-        return DB::transaction(function () use ($entiti, $user) {
+        return DB::transaction(function () use ($entiti, $user, $data) {
             $this->sediakan($entiti);
+
+            if ($data !== []) {
+                $this->simpanData($entiti['agency_code'], AliranKerja::PENERIMAAN_DATA, $data, $user);
+            }
 
             $rekod = $this->tandakanSelesai(
                 $entiti['agency_code'],
-                WorkflowStatus::STAGE_PENDAFTARAN,
+                AliranKerja::PENERIMAAN_DATA,
                 $user,
             );
 
@@ -396,7 +556,7 @@ class KemajuanAnalisisService
                 WorkflowStageStatus::BELUM_MULA,
                 WorkflowStageStatus::SELESAI,
                 $user,
-                ['stage' => WorkflowStatus::STAGE_PENDAFTARAN, 'dikunci' => true],
+                ['stage' => AliranKerja::PENERIMAAN_DATA, 'dikunci' => true],
             );
 
             return $rekod;
@@ -406,8 +566,7 @@ class KemajuanAnalisisService
     /**
      * Status keseluruhan entiti — dikira, tidak pernah disimpan.
      *
-     * 'Siap' hanya apabila kesemua tujuh peringkat Selesai; itulah jaminan
-     * bahawa entiti tidak boleh ditandakan siap lebih awal.
+     * 'Siap' hanya apabila kesemua peringkat FASA SEMASA Selesai.
      */
     public function keseluruhan(string $agencyCode): string
     {
@@ -417,7 +576,7 @@ class KemajuanAnalisisService
     /**
      * Versi tanpa query — untuk senarai yang telah memuatkan peringkatnya.
      *
-     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function keseluruhanDaripada(?Collection $peringkat): string
     {
@@ -425,49 +584,61 @@ class KemajuanAnalisisService
             return self::KESELURUHAN_BELUM_MULA;
         }
 
-        $jumlah = count(WorkflowStatus::WORKFLOW_STAGES);
-        $selesai = $peringkat->where('status', WorkflowStageStatus::SELESAI)->count();
+        $semasa = $this->fasaSemasaSahaja($peringkat);
+
+        $jumlah = count(AliranKerja::semasa());
+        $selesai = $semasa->where('status', WorkflowStageStatus::SELESAI)->count();
 
         if ($selesai >= $jumlah) {
             return self::KESELURUHAN_SIAP;
         }
 
         $adaKemajuan = $selesai > 0
-            || $peringkat->where('status', WorkflowStageStatus::DALAM_PROSES)->isNotEmpty();
+            || $semasa->where('status', WorkflowStageStatus::DALAM_PROSES)->isNotEmpty();
 
         return $adaKemajuan ? self::KESELURUHAN_DALAM_PROSES : self::KESELURUHAN_BELUM_MULA;
     }
 
     /**
-     * Bilangan peringkat yang telah Selesai — untuk bar kemajuan.
+     * Bilangan peringkat fasa semasa yang telah Selesai — untuk bar kemajuan.
      *
-     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function bilanganSelesai(?Collection $peringkat): int
     {
         return $peringkat === null
             ? 0
-            : $peringkat->where('status', WorkflowStageStatus::SELESAI)->count();
+            : $this->fasaSemasaSahaja($peringkat)->where('status', WorkflowStageStatus::SELESAI)->count();
     }
 
     /**
-     * Peringkat yang sedang dikerjakan — peringkat pertama yang belum Selesai.
-     *
-     * @param  Collection<int, WorkflowStageStatus>|null  $peringkat
+     * Bilangan peringkat yang boleh disiapkan dalam fasa ini — penyebut
+     * setiap bar kemajuan.
      */
-    public function peringkatSemasa(?Collection $peringkat): int
+    public function jumlahPeringkatSemasa(): int
+    {
+        return count(AliranKerja::semasa());
+    }
+
+    /**
+     * Peringkat yang sedang dikerjakan — peringkat fasa semasa yang pertama
+     * belum Selesai, atau peringkat terakhir fasa ini jika semuanya selesai.
+     *
+     * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
+     */
+    public function peringkatSemasa(?Collection $peringkat): string
     {
         if ($peringkat === null || $peringkat->isEmpty()) {
-            return WorkflowStatus::FIRST_STAGE;
+            return AliranKerja::PERTAMA;
         }
 
-        foreach (array_keys(WorkflowStatus::WORKFLOW_STAGES) as $stage) {
+        foreach (AliranKerja::semasa() as $stage) {
             if (! ($peringkat->get($stage)?->isSelesai() ?? false)) {
                 return $stage;
             }
         }
 
-        return WorkflowStatus::LAST_STAGE;
+        return AliranKerja::TERAKHIR_SEMASA;
     }
 
     /**
@@ -485,7 +656,9 @@ class KemajuanAnalisisService
      * Kosongkan kemajuan entiti — digunakan oleh "Set Semula" KB.
      *
      * Baris peringkat dikekalkan (bukan dipadam) supaya entiti terus dikenali
-     * sebagai berdaftar dalam sistem dan jejak auditnya kekal bermakna.
+     * dalam sistem dan jejak auditnya kekal bermakna. Data tangkapan turut
+     * dikosongkan: entiti keluar semula daripada aliran kerja, jadi tarikh
+     * dan nombor rujukan pusingan sebelumnya tidak lagi terpakai.
      */
     public function setSemula(string $agencyCode, ?User $user = null, ?string $reason = null): void
     {
@@ -502,6 +675,15 @@ class KemajuanAnalisisService
                     'status' => WorkflowStageStatus::BELUM_MULA,
                     'started_at' => null,
                     'completed_at' => null,
+                    'tarikh_terima' => null,
+                    'tarikh_semakan' => null,
+                    'tarikh_mula' => null,
+                    'tarikh_tamat' => null,
+                    'status_borang' => null,
+                    'nama_fail' => null,
+                    'no_rujukan' => null,
+                    'no_rujukan_oleh_user_id' => null,
+                    'no_rujukan_pada' => null,
                     'updated_by_user_id' => $user?->id,
                     'notes' => $reason,
                     'updated_at' => now(),
@@ -518,6 +700,21 @@ class KemajuanAnalisisService
                 ['reason' => $reason, 'dikunci' => false],
             );
         });
+    }
+
+    /**
+     * Peringkat fasa semasa sahaja.
+     *
+     * @param  Collection<string, WorkflowStageStatus>  $peringkat
+     * @return Collection<string, WorkflowStageStatus>
+     */
+    private function fasaSemasaSahaja(Collection $peringkat): Collection
+    {
+        $semasa = AliranKerja::semasa();
+
+        return $peringkat->filter(
+            fn (WorkflowStageStatus $p): bool => in_array($p->stage, $semasa, true)
+        );
     }
 
     /**
@@ -538,6 +735,7 @@ class KemajuanAnalisisService
         $contoh = $peringkat->first();
         $semasa = $this->peringkatSemasa($peringkat);
         $keseluruhan = $this->keseluruhanDaripada($peringkat);
+        $utama = AliranKerja::utamaBagi($semasa) ?? AliranKerja::UTAMA_PERTAMA;
 
         // Perbendaharaan `workflow_status` ialah kitaran StatusLaporan
         // ('Belum Bermula' / 'Dalam Proses' / 'Siap'); petakan ke situ supaya
@@ -554,8 +752,9 @@ class KemajuanAnalisisService
                 'agency_name' => $contoh->agency_name,
                 'sector_code' => $contoh->sector_code,
                 'sector_name' => $contoh->sector_name,
-                'current_stage' => $semasa,
-                'stage_name' => WorkflowStatus::getStageName($semasa),
+                'current_stage' => $utama,
+                'current_stage_key' => $semasa,
+                'stage_name' => AliranKerja::labelUtama($utama),
                 'status' => $status,
                 'status_since' => now(),
                 'updated_by_user_id' => $user?->id,
@@ -569,13 +768,12 @@ class KemajuanAnalisisService
      * Tiga kumpulan, dan ketiga-tiganya diperlukan supaya "Sejarah Peringkat"
      * benar-benar sampai ke kedudukan semasa:
      *
-     * 1. Aliran Kemajuan Analisis semasa — pendaftaran dan setiap perubahan
-     *    status peringkat.
-     * 2. Kitaran laporan — peringkat 05 hingga 07 digerakkan oleh penghantaran,
-     *    semakan, pengembalian dan pengesahan laporan, bukan oleh perubahan
-     *    status peringkat secara langsung.
-     * 3. Perbendaharaan workflow lama — dikekalkan supaya rekod sejarah yang
-     *    ditulis sebelum aliran semasa tidak lenyap daripada paparan.
+     * 1. Aliran semasa — kemasukan entiti, setiap perubahan status peringkat,
+     *    dan data yang direkodkan pada peringkat.
+     * 2. Kitaran laporan — dikekalkan supaya rekod sejarah yang ditulis
+     *    sebelum restruktur tidak lenyap daripada paparan. Kitaran itu
+     *    sendiri milik peringkat 4 dan 5, yang belum dibina.
+     * 3. Perbendaharaan workflow lama — dikekalkan atas sebab yang sama.
      *
      * @var list<string>
      */
@@ -583,6 +781,8 @@ class KemajuanAnalisisService
         self::ACTION_REGISTRATION_COMPLETED,
         self::ACTION_REGISTRATION_RESET,
         self::ACTION_STAGE_STATUS_CHANGED,
+        self::ACTION_STAGE_DATA_SAVED,
+        self::ACTION_STAGE_REFERENCE_SAVED,
 
         'report_generated',
         'report_submitted',

@@ -35,7 +35,7 @@ class PenomboranHalamanTest extends TestCase
         return [
             'senarai pengguna' => ['administration.users.index', 'users', User::ROLE_ADMINISTRATOR],
             'Kemajuan Analisis' => ['workflow.index', 'entiti', User::ROLE_COORDINATOR],
-            'penetapan entiti — pendaftaran' => ['penugasan.index', 'pendaftaran', User::ROLE_PENYELARAS_REKOD],
+            'penetapan entiti — penerimaan data' => ['penugasan.index', 'pendaftaran', User::ROLE_KETUA_BAHAGIAN],
             'penetapan entiti — penugasan' => ['penugasan.index', 'entiti', User::ROLE_COORDINATOR],
             'Analisis Inventori Kriptografi' => ['analisis.index', 'rekod', User::ROLE_COORDINATOR],
             'jejak audit' => ['audit.index', 'rekod', User::ROLE_COORDINATOR],

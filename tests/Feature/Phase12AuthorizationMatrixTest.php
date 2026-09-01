@@ -7,6 +7,7 @@ use App\Models\ApprovalLog;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -147,13 +148,12 @@ class Phase12AuthorizationMatrixTest extends TestCase
 
     public function test_penetapan_entiti_dikongsi_mengikut_panel_peranan(): void
     {
-        // Skrin "Penetapan Entiti" kini memegang dua panel: pendaftaran
-        // (peringkat 1) milik Pegawai Penyelaras Rekod, dibuka semula oleh
-        // Ketua Bahagian; penugasan milik Pegawai Penyelaras Analisis.
-        // Setiap panel disediakan hanya untuk peranan yang berhak.
+        // Skrin "Penetapan Entiti" memegang dua panel: peringkat 1.1
+        // Penerimaan Data milik KB/PPA (dan dibuka semula oleh KB); penugasan
+        // milik PPA. PPR tiada tindakan di sini sejak restruktur —
+        // tanggungjawabnya ialah No. Rujukan Borang pada halaman kemajuan.
         $this->semakMatriks('GET', route('penugasan.index'), [
             User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_PENYELARAS_REKOD => self::BENAR,
             User::ROLE_KETUA_BAHAGIAN => self::BENAR,
         ]);
 
@@ -287,8 +287,8 @@ class Phase12AuthorizationMatrixTest extends TestCase
                 'agency_code' => self::BETA,
                 'status_laporan' => 'Selesai',
             ]],
-            ['POST', route('kemajuan.selesai', [self::BETA, 2]), []],
-            ['POST', route('kemajuan.hantar', self::BETA), []],
+            ['POST', route('kemajuan.selesai', [self::BETA, AliranKerja::SEMAKAN_AWAL_DATA]), []],
+            ['POST', route('kemajuan.simpan', [self::BETA, AliranKerja::SEMAKAN_AWAL_DATA]), []],
             ['POST', route('penugasan.simpan', self::BETA), ['assigned_to_user_id' => $analyst->id]],
             ['POST', route('penugasan.tarik', self::BETA), []],
         ];

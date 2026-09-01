@@ -46,13 +46,13 @@ class AppServiceProvider extends ServiceProvider
         | ----------------------------------|----|------|----|-----|-----|-----|----
         | Papan Pemuka                      | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✗
         | Penetapan Entiti — Set Semula     | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✗  | ✗
-        | Penetapan Entiti — Tanda/Kemaskini| ✗  |  ✗   | ✗  |  ✓  |  ✗  |  ✗  | ✗
+        | Penetapan Entiti — Tanda/Kemaskini| ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✓  | ✗
         | Penetapan Entiti — Tugaskan PA    | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✓  | ✗
         | Kemajuan Analisis — Lihat         | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
-        | Kemajuan Analisis — Kemas Kini    | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
-        | Kemajuan Analisis — Semak         | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✓  | ✗
-        | Kemajuan Analisis — Sahkan        | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✗  | ✗
-        | Kemajuan Analisis — Hantar NACSA  | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✗  | ✗
+        | Peringkat 1.1 Penerimaan Data     | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✓  | ✗
+        | Peringkat 1.2 Pendaftaran Data    | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✓  | ✗
+        | Peringkat 1.3 / 2 / 3.1           | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
+        | No. Rujukan Borang (1.1–1.3)      | ✗  |  ✗   | ✗  |  ✓  |  ✗  |  ✗  | ✗
         | Analisis Inventori Kriptografi — Lihat        | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
         | Analisis Inventori Kriptografi — Input/Sunting| ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
         | Analisis Inventori Kriptografi — Jana Laporan | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
@@ -106,7 +106,10 @@ class AppServiceProvider extends ServiceProvider
         | gate sendiri supaya satu peranan tidak boleh melakukan kerja
         | peranan yang lain.
         */
-        Gate::define('register-entity-data', fn (User $user) => $user->hasAnyRole($ppr));
+        // Peringkat 1.1 "Penerimaan Data" — Ketua Bahagian atau PPA. Skrin
+        // Penetapan Entiti ialah tempat peringkat ini dilaksanakan secara
+        // pukal, jadi gate yang sama melindungi kedua-duanya.
+        Gate::define('register-entity-data', fn (User $user) => $user->hasAnyRole([...$kb, ...$ppa]));
 
         Gate::define('reset-entity-registration', fn (User $user) => $user->hasAnyRole($kb));
 
@@ -118,24 +121,61 @@ class AppServiceProvider extends ServiceProvider
         |------------------------------------------------------------------
         */
 
-        // Memajukan peringkat — Pegawai Analisis sahaja, dan hanya bagi
+        /*
+        | Setiap peringkat aliran kerja mempunyai peranannya sendiri. Gate di
+        | bawah memetakan lajur "Peranan Bertanggungjawab" takrifan aliran
+        | kerja; AliranKerja::gate() menamakan gate mana melindungi peringkat
+        | mana, supaya tiada pemetaan kedua yang boleh terpesong daripadanya.
+        |
+        |   1.1 Penerimaan Data                  KB / PPA
+        |   1.2 Pendaftaran Data                 PPA
+        |   1.3 Semakan Awal Data                PA
+        |   2   Penyediaan & Pengesahan Data     PA
+        |   3.1 Analisis Inventori Kriptografi   PA
+        |   3.2 / 4 / 5                          fasa akan datang — tiada gate
+        */
+
+        // Peringkat 1.1 — dikongsi dengan skrin Penetapan Entiti di atas.
+        Gate::define('manage-stage-penerimaan', fn (User $user) => $user->hasAnyRole([...$kb, ...$ppa]));
+
+        // Peringkat 1.2 — Pegawai Penyelaras Analisis.
+        Gate::define('manage-stage-pendaftaran', fn (User $user) => $user->hasAnyRole($ppa));
+
+        // Peringkat 1.3, 2 dan 3.1 — Pegawai Analisis sahaja, dan hanya bagi
         // entiti yang ditugaskan kepadanya (dikuatkuasakan berasingan oleh
         // middleware `entity.access`).
         Gate::define('advance-analysis-stage', fn (User $user) => $user->hasAnyRole($pa));
 
-        // Semakan laporan: PPA menyemak sebelum Ketua Bahagian, dan Ketua
-        // Bahagian turut boleh mengembalikan laporan yang berada padanya.
+        /*
+        | No. Rujukan Borang — Pegawai Penyelaras Rekod SAHAJA.
+        |
+        | Sengaja berasingan daripada gate peringkat di atas: PPR memasukkan
+        | No. Rujukan Borang Penerimaan, Pendaftaran dan Semakan Awal Data
+        | walaupun ketiga-tiga peringkat itu dilaksanakan oleh KB, PPA dan PA.
+        | Menyatukannya akan memberi PPR kuasa menggerakkan peringkat, atau
+        | memberi pemilik peringkat kuasa menetapkan nombor rujukan — kedua-
+        | duanya bukan tanggungjawab mereka.
+        */
+        Gate::define('record-stage-reference', fn (User $user) => $user->hasAnyRole($ppr));
+
+        /*
+        |------------------------------------------------------------------
+        | Peringkat 5 — Semakan, Kelulusan & Penyerahan Laporan
+        |------------------------------------------------------------------
+        | FASA AKAN DATANG. Ketiga-tiga gate di bawah DIKEKALKAN supaya
+        | tanggungjawab yang telah pun dipersetujui tidak hilang, tetapi
+        | TIADA route atau butang menggunakannya dalam fasa ini: proses
+        | semakan, kelulusan dan penyerahan peringkat 5 belum ditentukan.
+        |
+        | Jangan sambungkannya kepada tindakan baharu tanpa spesifikasi
+        | peringkat 5 — itu bermakna mereka-reka proses yang belum diberikan.
+        */
         Gate::define('review-report', fn (User $user) => $user->hasAnyRole([...$kb, ...$ppa]));
 
-        // Pengesahan laporan — Ketua Bahagian sahaja.
         Gate::define('approve-report', fn (User $user) => $user->hasAnyRole($kb));
 
-        // Penyerahan laporan yang telah disahkan kepada NACSA.
-        //
         // NEEDS CONFIRMATION: pengurusan belum memuktamadkan sama ada
         // tanggungjawab ini milik Ketua Bahagian atau Timbalan Pengarah II.
-        // Matriks semasa memberikannya kepada Ketua Bahagian; tambah
-        // `...$tpii` di sini apabila keputusan disahkan.
         Gate::define('submit-to-nacsa', fn (User $user) => $user->hasAnyRole($kb));
 
         /*

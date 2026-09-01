@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\AnalisisInventori;
 use App\Models\StatusLaporan;
-use App\Models\WorkflowStatus;
 use App\Services\AnalisisDraftService;
 use App\Services\AuditTrailService;
 use App\Services\EntityAccessService;
 use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
+use App\Support\AliranKerja;
 use App\Support\BorangAnalisis;
 use App\Support\Halaman;
 use App\Support\SeksyenAnalisis;
@@ -78,13 +77,13 @@ class AnalisisInventoriController extends Controller
                 ->withErrors(['agency_code' => $terkunci]);
         }
 
-        // Membuka borang bermakna kerja peringkat 05 telah bermula, jadi
-        // "Jana Laporan" menjadi Dalam Proses. Panggilan ini tidak berkesan
-        // jika peringkat itu belum terbuka (Analisis Data belum Selesai)
-        // atau telah pun Selesai, jadi ia selamat dipanggil di sini.
+        // Membuka borang bermakna kerja peringkat 3.1 telah bermula, jadi
+        // "Analisis Inventori Kriptografi" menjadi Dalam Proses. Panggilan
+        // ini tidak berkesan jika peringkat itu belum terbuka (peringkat 2
+        // belum Selesai) atau telah pun Selesai, jadi ia selamat di sini.
         $this->kemajuan->tandakanDalamProses(
             $agensi['code'],
-            WorkflowStatus::STAGE_JANA_LAPORAN,
+            AliranKerja::ANALISIS_INVENTORI,
             $request->user(),
         );
 
@@ -277,70 +276,26 @@ class AnalisisInventoriController extends Controller
             ],
         );
 
-        return $this->serahkanKepadaPPA($request, $agensi + ['sector_code' => $sah['sector_code'], 'sector_name' => $sektor['name']]);
-    }
-
-    /**
-     * Serahkan laporan yang baru dimuktamadkan kepada PPA.
-     *
-     * Penyerahan dipisahkan daripada penyimpanan kerana kedua-duanya boleh
-     * berlaku secara berasingan: borang ini turut boleh dicapai melalui modul
-     * Analisis Inventori Kriptografi bagi entiti yang belum sampai ke
-     * peringkat 05. Dalam keadaan itu dapatan tetap disimpan — cuma tiada
-     * apa untuk diserahkan lagi, dan sebabnya dinyatakan kepada pengguna
-     * dan bukan disenyapkan.
-     *
-     * @param  array<string, string>  $agensi
-     */
-    private function serahkanKepadaPPA(Request $request, array $agensi)
-    {
-        $agencyCode = $agensi['code'];
-
-        $entiti = [
-            'agency_code' => $agencyCode,
-            'agency_name' => $agensi['name'],
-            'sector_code' => $agensi['sector_code'],
-            'sector_name' => $agensi['sector_name'],
-        ];
-
-        $analisisSelesai = $this->kemajuan
-            ->peringkat($agencyCode)
-            ->get(WorkflowStatus::STAGE_ANALISIS)?->isSelesai() ?? false;
-
-        if (! $analisisSelesai) {
-            return redirect()
-                ->route('analisis.index')
-                ->with('success', sprintf(
-                    'Dapatan analisis bagi %s telah disimpan. Laporan belum diserahkan kerana '
-                    .'peringkat 04 — Analisis Data belum Selesai.',
-                    $agensi['name'],
-                ));
-        }
-
-        try {
-            $this->semakan->hantarKepadaPPA($this->semakan->mulakan($entiti), $request->user());
-        } catch (InvalidWorkflowTransitionException $e) {
-            return redirect()
-                ->route('workflow.show', $agencyCode)
-                ->withErrors(['laporan' => $e->getMessage()]);
-        }
-
+        // Dahulu simpanan muktamad turut MENYERAHKAN laporan kepada PPA.
+        // Penyerahan itu milik peringkat 4 dan 5, yang belum dibina — jadi
+        // borang kini hanya menyimpan dapatan, dan peringkat 3.1 ditutup
+        // melalui tindakan "Selesai" pada halaman Kemajuan Analisis Entiti.
         return redirect()
-            ->route('workflow.show', $agencyCode)
+            ->route('workflow.show', $agensi['code'])
             ->with('success', sprintf(
-                'Laporan bagi %s telah dihantar kepada Pegawai Penyelaras Analisis untuk semakan.',
-                $agensi['code'],
+                'Dapatan Analisis Inventori Kriptografi bagi %s telah disimpan.',
+                $agensi['name'],
             ));
     }
 
     /**
      * Sebab borang dikunci daripada Pegawai Analisis, atau null jika terbuka.
      *
-     * Aliran kerja bahagian 8 dan 11: sebaik laporan dihantar, ia berada di
-     * tangan PPA atau Ketua Bahagian dan PA tidak boleh mengubahnya lagi.
-     * Laporan yang telah disahkan kekal terkunci selama-lamanya. Laporan
-     * yang DIKEMBALIKAN sengaja tidak dikunci — itulah caranya PA
-     * membetulkan dan menghantar semula.
+     * Kitaran semakan laporan (peringkat 4 dan 5) belum dibina, jadi tiada
+     * rekod baharu dicipta dan semakan ini melepasi setiap entiti dalam
+     * fasa semasa. Ia DIKEKALKAN kerana rekod semakan yang dicipta SEBELUM
+     * restruktur masih wujud: borang bagi entiti tersebut mesti terus
+     * dikunci, bukan dibuka semula secara senyap.
      *
      * Disemak di pelayan, bukan sekadar disembunyikan pada antara muka,
      * supaya borang yang dihantar terus turut ditolak.

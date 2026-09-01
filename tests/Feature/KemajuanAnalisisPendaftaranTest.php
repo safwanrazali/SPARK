@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
-use App\Models\WorkflowStatus;
 use App\Services\KemajuanAnalisisService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -48,25 +48,37 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
 
     private function daftarkan(string $agencyCode): void
     {
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti($agencyCode),
-            $this->ppr,
+            $this->ppa,
         );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Senario A — PPR melengkapkan Penerimaan & Pendaftaran Data
+    | Senario A — KB/PPA melengkapkan peringkat 1.1 Penerimaan Data
     |--------------------------------------------------------------------------
     */
 
-    public function test_ppr_boleh_membuka_skrin_penetapan_entiti(): void
+    public function test_ppa_boleh_membuka_skrin_penetapan_entiti(): void
+    {
+        $this->actingAs($this->ppa)
+            ->get(route('penugasan.index', ['sector_code' => '001']))
+            ->assertOk()
+            ->assertSee('1.1 Penerimaan Data')
+            ->assertSee('Kemas Kini');
+    }
+
+    /**
+     * PPR tidak lagi memiliki sebarang tindakan pada skrin ini: peringkat 1.1
+     * kini milik KB/PPA, dan tanggungjawab PPR ialah No. Rujukan Borang, yang
+     * dimasukkan pada halaman Kemajuan Analisis Entiti.
+     */
+    public function test_ppr_tidak_lagi_memiliki_skrin_penetapan_entiti(): void
     {
         $this->actingAs($this->ppr)
             ->get(route('penugasan.index', ['sector_code' => '001']))
-            ->assertOk()
-            ->assertSee('Penerimaan &amp; Pendaftaran Data', false)
-            ->assertSee('Kemas Kini');
+            ->assertForbidden();
     }
 
     /**
@@ -78,7 +90,7 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
     {
         $this->daftarkan(self::ALPHA);
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->ppa)
             ->get(route('penugasan.index'))
             ->assertOk()
             ->assertSee(self::ALPHA)
@@ -88,28 +100,22 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
     }
 
     /**
-     * Kotak semak ialah alat Pegawai Penyelaras Rekod. Ketua Bahagian hadir
-     * pada panel ini untuk "Set Semula" sahaja, jadi ia melihat ikon keadaan
-     * dan bukan kawalan yang tidak boleh digunakannya.
+     * Kotak semak peringkat 1.1 kini dilihat oleh KB dan PPA, iaitu peranan
+     * yang benar-benar memilikinya.
      */
-    public function test_hanya_ppr_melihat_kotak_semak(): void
+    public function test_kb_dan_ppa_melihat_kotak_semak(): void
     {
-        $this->actingAs($this->ppr)
-            ->get(route('penugasan.index', ['sector_code' => '001']))
-            ->assertOk()
-            ->assertSee('name="agency_codes[]"', false);
-
-        $this->actingAs($this->kb)
-            ->get(route('penugasan.index', ['sector_code' => '001']))
-            ->assertOk()
-            ->assertSee(self::ALPHA)
-            ->assertDontSee('name="agency_codes[]"', false)
-            ->assertSee('bi-unlock', false);
+        foreach ([$this->ppa, $this->kb] as $pemilik) {
+            $this->actingAs($pemilik)
+                ->get(route('penugasan.index', ['sector_code' => '001']))
+                ->assertOk()
+                ->assertSee('name="agency_codes[]"', false);
+        }
     }
 
     public function test_kemas_kini_menandakan_peringkat_satu_selesai_dan_mengunci_entiti(): void
     {
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->ppa)
             ->post(route('penugasan.pendaftaran.kemas-kini'), [
                 'agency_codes' => [self::ALPHA],
             ])
@@ -117,36 +123,37 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
 
         $peringkat = app(KemajuanAnalisisService::class)->peringkat(self::ALPHA);
 
-        // Kesemua tujuh peringkat dicipta, bukan hanya yang pertama.
-        $this->assertCount(count(WorkflowStatus::WORKFLOW_STAGES), $peringkat);
+        // Baris dicipta bagi SETIAP peringkat yang ditakrifkan — termasuk
+        // yang belum dibina — bukan hanya yang pertama.
+        $this->assertCount(count(AliranKerja::kekunci()), $peringkat);
 
         $this->assertSame(
             WorkflowStageStatus::SELESAI,
-            $peringkat[WorkflowStatus::STAGE_PENDAFTARAN]->status,
+            $peringkat[AliranKerja::PENERIMAAN_DATA]->status,
         );
 
         $this->assertSame(
             WorkflowStageStatus::BELUM_MULA,
-            $peringkat[WorkflowStatus::STAGE_SEMAKAN_AWAL]->status,
+            $peringkat[AliranKerja::SEMAKAN_AWAL_DATA]->status,
         );
 
-        $this->assertTrue(app(KemajuanAnalisisService::class)->pendaftaranSelesai(self::ALPHA));
+        $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
     }
 
-    public function test_entiti_yang_dikunci_tidak_boleh_ditanda_semula_oleh_ppr(): void
+    public function test_entiti_yang_dikunci_tidak_boleh_ditanda_semula(): void
     {
         $this->daftarkan(self::ALPHA);
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->ppa)
             ->post(route('penugasan.pendaftaran.kemas-kini'), [
                 'agency_codes' => [self::ALPHA],
             ])
             ->assertSessionHasErrors('agency_codes');
     }
 
-    public function test_peranan_lain_tidak_boleh_melengkapkan_pendaftaran(): void
+    public function test_peranan_lain_tidak_boleh_melengkapkan_penerimaan(): void
     {
-        foreach ([$this->ppa, $this->pa, $this->kb] as $pengguna) {
+        foreach ([$this->ppr, $this->pa] as $pengguna) {
             $this->actingAs($pengguna)
                 ->post(route('penugasan.pendaftaran.kemas-kini'), [
                     'agency_codes' => [self::ALPHA],
@@ -154,7 +161,7 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
                 ->assertForbidden();
         }
 
-        $this->assertFalse(app(KemajuanAnalisisService::class)->pendaftaranSelesai(self::ALPHA));
+        $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
     }
 
     public function test_entiti_yang_didaftarkan_muncul_kepada_ppa(): void
@@ -199,11 +206,11 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertFalse(app(KemajuanAnalisisService::class)->pendaftaranSelesai(self::ALPHA));
+        $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
 
         $this->assertSame(
             WorkflowStageStatus::BELUM_MULA,
-            app(KemajuanAnalisisService::class)->peringkat(self::ALPHA)[WorkflowStatus::STAGE_PENDAFTARAN]->status,
+            app(KemajuanAnalisisService::class)->peringkat(self::ALPHA)[AliranKerja::PENERIMAAN_DATA]->status,
         );
     }
 
@@ -211,10 +218,10 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
      * Entiti yang ditetapkan semula telah keluar daripada aliran kerja, jadi
      * ia tidak boleh kekal dalam senarai "Kedudukan Semasa Entiti".
      *
-     * setSemula() mengekalkan ketujuh-tujuh baris peringkat (supaya jejak
+     * setSemula() mengekalkan SEMUA baris peringkat (supaya jejak
      * auditnya kekal bermakna) dan hanya mengembalikan statusnya kepada
      * Belum Mula. Senarai yang menguji "ada baris peringkat" akan terus
-     * memaparkan entiti itu; peringkat 01 Selesai ialah ujian yang betul.
+     * memaparkan entiti itu; peringkat 1.1 Selesai ialah ujian yang betul.
      */
     public function test_entiti_yang_ditetapkan_semula_tidak_disenaraikan_dalam_kemajuan_analisis(): void
     {
@@ -226,7 +233,7 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->assertOk()
             ->assertSee(route('workflow.show', self::ALPHA), false)
             ->assertSee(route('workflow.show', self::BETA), false)
-            ->assertSee('2 entiti telah didaftarkan');
+            ->assertSee('2 entiti telah memasuki aliran kerja');
 
         $this->actingAs($this->kb)
             ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data perlu dihantar semula.'])
@@ -239,12 +246,12 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->assertOk()
             ->assertDontSee(route('workflow.show', self::ALPHA), false)
             ->assertSee(route('workflow.show', self::BETA), false)
-            ->assertSee('1 entiti telah didaftarkan');
+            ->assertSee('1 entiti telah memasuki aliran kerja');
     }
 
     /**
-     * Punca pepijat, diuji secara langsung: setSemula() mengekalkan
-     * ketujuh-tujuh baris peringkat, jadi "ada baris peringkat" tidak boleh
+     * Punca pepijat, diuji secara langsung: setSemula() mengekalkan SEMUA
+     * baris peringkat, jadi "ada baris peringkat" tidak boleh
      * digunakan sebagai ujian "entiti berdaftar".
      */
     public function test_baris_peringkat_kekal_selepas_set_semula_tetapi_entiti_tidak_lagi_berdaftar(): void
@@ -253,8 +260,8 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
 
         $kemajuan = app(KemajuanAnalisisService::class);
 
-        $this->assertTrue($kemajuan->didaftarkanDaripada($kemajuan->peringkat(self::ALPHA)));
-        $this->assertContains(self::ALPHA, $kemajuan->kodPendaftaranSelesai());
+        $this->assertTrue($kemajuan->dalamAliranKerja($kemajuan->peringkat(self::ALPHA)));
+        $this->assertContains(self::ALPHA, $kemajuan->kodPenerimaanSelesai());
 
         $this->actingAs($this->kb)
             ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data perlu dihantar semula.']);
@@ -262,11 +269,11 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
         $peringkat = $kemajuan->peringkat(self::ALPHA);
 
         // Baris kekal — jejak auditnya masih bermakna...
-        $this->assertCount(count(WorkflowStatus::WORKFLOW_STAGES), $peringkat);
+        $this->assertCount(count(AliranKerja::kekunci()), $peringkat);
 
         // ...tetapi entiti itu telah keluar daripada aliran kerja.
-        $this->assertFalse($kemajuan->didaftarkanDaripada($peringkat));
-        $this->assertNotContains(self::ALPHA, $kemajuan->kodPendaftaranSelesai());
+        $this->assertFalse($kemajuan->dalamAliranKerja($peringkat));
+        $this->assertNotContains(self::ALPHA, $kemajuan->kodPenerimaanSelesai());
     }
 
     /**
@@ -299,7 +306,7 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Cuba buka semula.'])
             ->assertForbidden();
 
-        $this->assertTrue(app(KemajuanAnalisisService::class)->pendaftaranSelesai(self::ALPHA));
+        $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
     }
 
     public function test_set_semula_menarik_balik_penugasan_dan_menyembunyikan_entiti_daripada_ppa(): void

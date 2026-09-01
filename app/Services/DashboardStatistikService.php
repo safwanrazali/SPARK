@@ -10,6 +10,7 @@ use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -80,16 +81,16 @@ class DashboardStatistikService
         // entiti.
         $jumlahEntiti = $this->semuaEntiti($pengguna, $sectorCode)->count();
 
-        // Peringkat 01 dibaca SEKALI sahaja: baris yang sama menjawab
+        // Peringkat 1.1 dibaca SEKALI sahaja: baris yang sama menjawab
         // "siapa telah selesai mendaftar" dan "siapa telah ditetapkan semula".
         $pendaftaran = $this->peringkatPendaftaran();
 
         $entiti = $this->entitiDipantau($pengguna, $sectorCode, $dari, $hingga, $pendaftaran);
         $jumlahDipantau = $entiti->count();
 
-        // "Penerimaan & Pendaftaran Data" selesai — takrifan yang sama
-        // digunakan oleh KemajuanAnalisisService::pendaftaranSelesai():
-        // baris peringkat 01 berstatus Selesai, dan bukan sekadar wujud.
+        // Peringkat 1.1 "Penerimaan Data" selesai — takrifan yang sama
+        // digunakan oleh KemajuanAnalisisService::penerimaanSelesai():
+        // baris peringkat 1.1 berstatus Selesai, dan bukan sekadar wujud.
         $pendaftaranSelesai = $pendaftaran
             ->where('status', WorkflowStageStatus::SELESAI)
             ->pluck('agency_code')
@@ -98,8 +99,8 @@ class DashboardStatistikService
 
         $workflow = $this->workflowDalamSkop($pengguna, $entiti);
 
-        // "Selesai" bermakna KESEMUA tujuh peringkat telah Selesai, bukan
-        // sekadar berada pada peringkat terakhir. KemajuanAnalisisService
+        // "Selesai" bermakna KESEMUA peringkat fasa semasa telah Selesai,
+        // bukan sekadar berada pada peringkat terakhir. KemajuanAnalisisService
         // menetapkan status 'Siap' pada baris ini hanya apabila syarat itu
         // dipenuhi, jadi entiti tidak boleh dikira siap lebih awal.
         $selesai = $workflow->where('status', self::STATUS_SIAP)->count();
@@ -134,7 +135,7 @@ class DashboardStatistikService
             'peratusPendaftaranSelesai' => $this->peratus($pendaftaranSelesai, $jumlahEntiti),
 
             // Kemajuan pula diukur terhadap entiti yang TELAH selesai
-            // "Penerimaan & Pendaftaran Data": entiti yang belum melepasi
+            // peringkat 1.1 "Penerimaan Data": entiti yang belum melepasi
             // pintu masuk itu belum boleh bergerak langsung, jadi
             // memasukkannya hanya mencairkan ukuran kemajuan sebenar.
             'peratusDalamProses' => $this->peratus($dalamProses, $pendaftaranSelesai),
@@ -183,7 +184,7 @@ class DashboardStatistikService
     /**
      * Entiti yang dipantau dalam skop penapis semasa.
      *
-     * @param  Collection<int, WorkflowStageStatus>  $pendaftaran  baris peringkat 01
+     * @param  Collection<int, WorkflowStageStatus>  $pendaftaran  baris peringkat 1.1
      * @return Collection<int, string>
      */
     private function entitiDipantau(
@@ -234,12 +235,12 @@ class DashboardStatistikService
      * Proses" — angka papan pemuka tidak akan turun selepas Set Semula.
      *
      * Baris peringkat hanya wujud melalui pendaftaran (lihat
-     * KemajuanAnalisisService::sediakan), jadi baris peringkat 01 yang BUKAN
+     * KemajuanAnalisisService::sediakan), jadi baris peringkat 1.1 yang BUKAN
      * Selesai bermakna satu perkara sahaja: entiti itu telah ditetapkan
      * semula. Entiti yang tidak pernah didaftarkan langsung tiada baris
      * peringkat, jadi ia tidak tersentuh dan kekal dikira "belum didaftar".
      *
-     * @param  Collection<int, WorkflowStageStatus>  $pendaftaran  baris peringkat 01
+     * @param  Collection<int, WorkflowStageStatus>  $pendaftaran  baris peringkat 1.1
      * @return Collection<int, string>
      */
     private function kodDitetapkanSemula(Collection $pendaftaran): Collection
@@ -250,8 +251,8 @@ class DashboardStatistikService
     }
 
     /**
-     * Baris peringkat 01 ("Penerimaan & Pendaftaran Data") bagi setiap entiti
-     * yang pernah didaftarkan.
+     * Baris peringkat 1.1 ("Penerimaan Data") bagi setiap entiti yang pernah
+     * memasuki aliran kerja.
      *
      * TIDAK ditapis mengikut capaian: senarai entiti yang ditetapkan semula
      * ialah penyingkiran global yang kemudiannya dipotong dengan set entiti
@@ -263,7 +264,7 @@ class DashboardStatistikService
     private function peringkatPendaftaran(): Collection
     {
         return WorkflowStageStatus::query()
-            ->atStage(WorkflowStatus::STAGE_PENDAFTARAN)
+            ->atStage(AliranKerja::PENERIMAAN_DATA)
             ->get(['agency_code', 'status']);
     }
 
@@ -308,7 +309,9 @@ class DashboardStatistikService
      *
      * Laporan yang masih dalam kitaran — draf, menunggu PPA/KB, malah yang
      * telah disahkan KB — TIDAK dikira. Hanya laporan yang telah melepasi
-     * butang "Hantar" pada peringkat 07 (Penyerahan & Penutupan) diambil kira.
+     * penyerahan diambil kira. Penyerahan itu milik peringkat 5, yang belum
+     * dibina, jadi kiraan ini kekal sifar sehingga modulnya tersedia; jejak
+     * lama sebelum restruktur terus dikira supaya sejarah tidak hilang.
      *
      * Penyerahan tidak mengubah sebarang lajur status: `laporan_semakan.status`
      * kekal 'Sah' selepasnya (lihat LaporanSemakanService::rekodPenyerahan).
@@ -367,9 +370,18 @@ class DashboardStatistikService
             return 0;
         }
 
-        $maksimum = $jumlahDipantau * WorkflowStatus::LAST_STAGE;
+        // Penyebutnya ialah bilangan peringkat FASA SEMASA, bukan kelima-lima
+        // peringkat utama: peringkat 4 dan 5 belum dibina, jadi mengukur
+        // terhadapnya menjadikan kemajuan penuh mustahil dipaparkan.
+        $maksimum = $jumlahDipantau * count(AliranKerja::semasa());
 
-        return (int) round(($workflow->sum('current_stage') / $maksimum) * 100);
+        $dicapai = WorkflowStageStatus::query()
+            ->whereIn('agency_code', $workflow->pluck('agency_code'))
+            ->fasaSemasa()
+            ->selesai()
+            ->count();
+
+        return $maksimum === 0 ? 0 : (int) round(($dicapai / $maksimum) * 100);
     }
 
     /**

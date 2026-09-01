@@ -3,15 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\AnalisisInventori;
-use App\Models\LaporanSemakan;
 use App\Models\User;
-use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
-use App\Services\LaporanSemakanService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\MelaluiAliranKerja;
 use Tests\TestCase;
 
 /**
@@ -24,7 +23,7 @@ use Tests\TestCase;
  */
 class RbacMatriksTest extends TestCase
 {
-    use RefreshDatabase;
+    use MelaluiAliranKerja, RefreshDatabase;
 
     private const ALPHA = 'A010101';
 
@@ -48,13 +47,17 @@ class RbacMatriksTest extends TestCase
     }
 
     /**
-     * Entiti ALPHA didaftarkan dan ditugaskan kepada Pegawai Analisis.
+     * Entiti ALPHA memasuki aliran kerja dan ditugaskan kepada Pegawai Analisis.
+     *
+     * Peringkat 1.1 dan 1.2 (milik KB/PPA) ditandakan Selesai supaya peringkat
+     * 1.3 — peringkat PA yang pertama — benar-benar terbuka untuk diuji.
      */
     private function sediakanEntiti(): void
     {
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
-            SektorDirectory::cariEntiti(self::ALPHA),
-            $this->pengguna[User::ROLE_PENYELARAS_REKOD],
+        $this->lengkapkanHingga(
+            self::ALPHA,
+            AliranKerja::SEMAKAN_AWAL_DATA,
+            $this->pengguna[User::ROLE_COORDINATOR],
         );
 
         app(EntityAssignmentService::class)->assign(
@@ -91,10 +94,11 @@ class RbacMatriksTest extends TestCase
             // Papan Pemuka: semua kecuali PA.
             'Papan Pemuka' => ['dashboard', $tanpa([User::ROLE_ANALYST])],
 
-            // Penetapan Entiti: tiga peranan tindakan sahaja.
+            // Penetapan Entiti: peringkat 1.1 (KB/PPA) dan penugasan (PPA).
+            // PPR tiada tindakan di sini sejak restruktur — tanggungjawabnya
+            // ialah No. Rujukan Borang pada halaman Kemajuan Analisis Entiti.
             'Penetapan Entiti' => ['penugasan.index', [
                 User::ROLE_KETUA_BAHAGIAN,
-                User::ROLE_PENYELARAS_REKOD,
                 User::ROLE_COORDINATOR,
             ]],
 
@@ -141,18 +145,84 @@ class RbacMatriksTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_tandakan_pendaftaran_hanya_ppr(): void
+    public function test_tandakan_penerimaan_data_hanya_kb_dan_ppa(): void
     {
-        foreach (User::roles() as $role) {
-            $respons = $this->actingAs($this->sebagai($role))
-                ->post(route('penugasan.pendaftaran.kemas-kini'), ['agency_codes' => [self::BETA]]);
+        $pemilik = [User::ROLE_KETUA_BAHAGIAN, User::ROLE_COORDINATOR];
 
-            if ($role === User::ROLE_PENYELARAS_REKOD) {
-                $respons->assertSessionHasNoErrors();
-            } else {
-                $respons->assertForbidden();
+        foreach (User::roles() as $role) {
+            if (in_array($role, $pemilik, true)) {
+                continue;
             }
+
+            $this->actingAs($this->sebagai($role))
+                ->post(route('penugasan.pendaftaran.kemas-kini'), ['agency_codes' => [self::BETA]])
+                ->assertForbidden();
         }
+
+        // Enam peranan telah mencuba; peringkat 1.1 kekal belum ditandakan.
+        $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::BETA));
+
+        $this->actingAs($this->sebagai(User::ROLE_COORDINATOR))
+            ->post(route('penugasan.pendaftaran.kemas-kini'), ['agency_codes' => [self::BETA]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::BETA));
+    }
+
+    /**
+     * Peringkat 1.2 Pendaftaran Data ialah milik PPA SAHAJA — bukan KB, yang
+     * berkongsi peringkat 1.1 dengannya.
+     */
+    public function test_peringkat_pendaftaran_data_hanya_ppa(): void
+    {
+        $this->masukkanKeAliran(self::ALPHA, $this->pengguna[User::ROLE_COORDINATOR]);
+
+        foreach (User::roles() as $role) {
+            if ($role === User::ROLE_COORDINATOR) {
+                continue;
+            }
+
+            $this->actingAs($this->sebagai($role))
+                ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]))
+                ->assertForbidden();
+        }
+
+        $this->actingAs($this->sebagai(User::ROLE_COORDINATOR))
+            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]))
+            ->assertSessionHasNoErrors();
+    }
+
+    /**
+     * No. Rujukan Borang ialah milik PPR SAHAJA, walaupun peringkatnya bukan
+     * miliknya. Inilah pemisahan yang paling mudah hilang.
+     */
+    public function test_no_rujukan_borang_hanya_ppr(): void
+    {
+        $this->sediakanEntiti();
+
+        foreach (User::roles() as $role) {
+            if ($role === User::ROLE_PENYELARAS_REKOD) {
+                continue;
+            }
+
+            $this->actingAs($this->sebagai($role))
+                ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
+                    'no_rujukan' => 'CUBAAN/2026/001',
+                ])
+                ->assertForbidden();
+        }
+
+        $this->actingAs($this->sebagai(User::ROLE_PENYELARAS_REKOD))
+            ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
+                'no_rujukan' => 'BPD/2026/001',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            'BPD/2026/001',
+            app(KemajuanAnalisisService::class)
+                ->peringkat(self::ALPHA)[AliranKerja::PENERIMAAN_DATA]->no_rujukan,
+        );
     }
 
     public function test_set_semula_hanya_kb(): void
@@ -170,13 +240,13 @@ class RbacMatriksTest extends TestCase
         }
 
         // Peringkat 1 kekal Selesai selepas setiap percubaan yang ditolak.
-        $this->assertTrue(app(KemajuanAnalisisService::class)->pendaftaranSelesai(self::ALPHA));
+        $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
 
         $this->actingAs($this->sebagai(User::ROLE_KETUA_BAHAGIAN))
             ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data tidak lengkap.'])
             ->assertSessionHasNoErrors();
 
-        $this->assertFalse(app(KemajuanAnalisisService::class)->pendaftaranSelesai(self::ALPHA));
+        $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
     }
 
     public function test_tugaskan_pa_hanya_ppa(): void
@@ -212,89 +282,51 @@ class RbacMatriksTest extends TestCase
             }
 
             $this->actingAs($this->sebagai($role))
-                ->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]))
+                ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]))
                 ->assertForbidden();
         }
 
         // Peringkat kekal Belum Mula walaupun enam peranan telah mencuba.
         $this->assertSame(
             'Belum Mula',
-            app(KemajuanAnalisisService::class)->peringkat(self::ALPHA)[WorkflowStatus::STAGE_SEMAKAN_AWAL]->status,
+            app(KemajuanAnalisisService::class)->peringkat(self::ALPHA)[AliranKerja::SEMAKAN_AWAL_DATA]->status,
         );
 
         $this->actingAs($this->sebagai(User::ROLE_ANALYST))
-            ->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]))
+            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]))
             ->assertSessionHasNoErrors();
     }
 
-    public function test_semak_laporan_hanya_ppa_dan_kb(): void
+    /**
+     * Kitaran semakan, kelulusan dan penyerahan laporan milik peringkat 4 dan
+     * 5, yang prosesnya BELUM DITENTUKAN. Tiada route mutasinya wujud, jadi
+     * tiada peranan — termasuk yang memegang gate-nya — boleh mencapainya.
+     */
+    public function test_tiada_route_kitaran_laporan_dalam_fasa_ini(): void
     {
-        $this->bawaLaporanKepadaPPA();
-
-        foreach (User::roles() as $role) {
-            if (in_array($role, [User::ROLE_COORDINATOR, User::ROLE_KETUA_BAHAGIAN], true)) {
-                continue;
-            }
-
-            $this->actingAs($this->sebagai($role))
-                ->post(route('kemajuan.semak', self::ALPHA))
-                ->assertForbidden();
+        foreach (['kemajuan.hantar', 'kemajuan.semak', 'kemajuan.kembalikan', 'kemajuan.sahkan', 'kemajuan.serah'] as $nama) {
+            $this->assertNull(
+                app('router')->getRoutes()->getByName($nama),
+                "Route {$nama} sepatutnya tiada dalam fasa ini.",
+            );
         }
-
-        $this->assertDatabaseHas('laporan_semakan', [
-            'agency_code' => self::ALPHA,
-            'status' => LaporanSemakan::MENUNGGU_PPA,
-        ]);
     }
 
-    public function test_sahkan_laporan_hanya_kb(): void
+    /**
+     * Peringkat fasa akan datang tidak menerima tindakan daripada MANA-MANA
+     * peranan — bukan sekadar disembunyikan daripada antara muka.
+     */
+    public function test_peringkat_fasa_akan_datang_ditolak_bagi_setiap_peranan(): void
     {
-        $this->bawaLaporanKepadaPPA();
+        $this->sediakanEntiti();
 
-        $this->actingAs($this->sebagai(User::ROLE_COORDINATOR))
-            ->post(route('kemajuan.semak', self::ALPHA));
-
-        foreach (User::roles() as $role) {
-            if ($role === User::ROLE_KETUA_BAHAGIAN) {
-                continue;
+        foreach (AliranKerja::akanDatang() as $kunci) {
+            foreach (User::roles() as $role) {
+                $this->actingAs($this->sebagai($role))
+                    ->post(route('kemajuan.selesai', [self::ALPHA, $kunci]))
+                    ->assertNotFound();
             }
-
-            $this->actingAs($this->sebagai($role))
-                ->post(route('kemajuan.sahkan', self::ALPHA))
-                ->assertForbidden();
         }
-
-        $this->assertDatabaseHas('laporan_semakan', [
-            'agency_code' => self::ALPHA,
-            'status' => LaporanSemakan::MENUNGGU_KB,
-        ]);
-
-        $this->actingAs($this->sebagai(User::ROLE_KETUA_BAHAGIAN))
-            ->post(route('kemajuan.sahkan', self::ALPHA))
-            ->assertSessionHasNoErrors();
-    }
-
-    public function test_hantar_nacsa_hanya_kb(): void
-    {
-        $this->bawaLaporanKepadaPPA();
-
-        $this->actingAs($this->sebagai(User::ROLE_COORDINATOR))->post(route('kemajuan.semak', self::ALPHA));
-        $this->actingAs($this->sebagai(User::ROLE_KETUA_BAHAGIAN))->post(route('kemajuan.sahkan', self::ALPHA));
-
-        foreach (User::roles() as $role) {
-            if ($role === User::ROLE_KETUA_BAHAGIAN) {
-                continue;
-            }
-
-            $this->actingAs($this->sebagai($role))
-                ->post(route('kemajuan.serah', self::ALPHA))
-                ->assertForbidden();
-        }
-
-        $this->assertNotSame(
-            KemajuanAnalisisService::KESELURUHAN_SIAP,
-            app(KemajuanAnalisisService::class)->keseluruhan(self::ALPHA),
-        );
     }
 
     /*
@@ -343,31 +375,17 @@ class RbacMatriksTest extends TestCase
         $this->assertDatabaseCount('analisis_inventori', 0);
     }
 
-    public function test_hantar_laporan_kepada_ppa_hanya_pa(): void
+    /**
+     * Muat turun laporan bergantung pada peringkat 3.1 Selesai — bukan pada
+     * kelulusan Ketua Bahagian, yang milik peringkat 5 dan belum dibina.
+     */
+    public function test_muat_turun_ditolak_sebelum_peringkat_analisis_selesai(): void
     {
         $this->sediakanEntiti();
         $this->bawaAnalisisSelesai();
 
-        foreach (User::roles() as $role) {
-            if ($role === User::ROLE_ANALYST) {
-                continue;
-            }
-
-            $this->actingAs($this->sebagai($role))
-                ->post(route('kemajuan.hantar', self::ALPHA))
-                ->assertForbidden();
-        }
-
-        $this->assertDatabaseCount('laporan_semakan', 0);
-    }
-
-    public function test_muat_turun_hanya_selepas_laporan_disahkan(): void
-    {
-        $this->bawaLaporanKepadaPPA();
-
         $analisis = AnalisisInventori::where('agency_code', self::ALPHA)->firstOrFail();
 
-        // Belum disahkan — ditolak walaupun bagi peranan yang boleh melihat.
         foreach ([User::ROLE_KETUA_BAHAGIAN, User::ROLE_COORDINATOR, User::ROLE_ANALYST] as $role) {
             $this->actingAs($this->sebagai($role))
                 ->get(route('laporan.unduh', $analisis))
@@ -396,27 +414,30 @@ class RbacMatriksTest extends TestCase
 
     public function test_ps_tidak_boleh_melakukan_sebarang_tindakan_kemajuan(): void
     {
-        $this->bawaLaporanKepadaPPA();
+        $this->sediakanEntiti();
 
         $ps = $this->sebagai(User::ROLE_ADMINISTRATOR);
 
-        // Setiap tindakan yang menggerakkan Kemajuan Analisis Entiti ditolak.
+        // Setiap tindakan yang menggerakkan Kemajuan Analisis Entiti ditolak,
+        // pada setiap peringkat fasa semasa.
+        foreach (AliranKerja::semasa() as $kunci) {
+            $this->actingAs($ps)
+                ->post(route('kemajuan.selesai', [self::ALPHA, $kunci]))
+                ->assertForbidden();
+
+            $this->actingAs($ps)
+                ->post(route('kemajuan.simpan', [self::ALPHA, $kunci]))
+                ->assertForbidden();
+        }
+
+        // No. Rujukan Borang turut tertutup kepadanya.
         $this->actingAs($ps)
-            ->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_JANA_LAPORAN]))
+            ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
+                'no_rujukan' => 'CUBAAN/2026/001',
+            ])
             ->assertForbidden();
 
-        $this->actingAs($ps)->post(route('kemajuan.hantar', self::ALPHA))->assertForbidden();
-        $this->actingAs($ps)->post(route('kemajuan.semak', self::ALPHA))->assertForbidden();
-        $this->actingAs($ps)->post(route('kemajuan.kembalikan', self::ALPHA), ['catatan' => 'Cuba.'])->assertForbidden();
-        $this->actingAs($ps)->post(route('kemajuan.sahkan', self::ALPHA))->assertForbidden();
-        $this->actingAs($ps)->post(route('kemajuan.serah', self::ALPHA))->assertForbidden();
-
         // Kedudukan entiti tidak berubah walau satu pun.
-        $this->assertDatabaseHas('laporan_semakan', [
-            'agency_code' => self::ALPHA,
-            'status' => LaporanSemakan::MENUNGGU_PPA,
-        ]);
-
         $this->assertNotSame(
             KemajuanAnalisisService::KESELURUHAN_SIAP,
             app(KemajuanAnalisisService::class)->keseluruhan(self::ALPHA),
@@ -446,7 +467,8 @@ class RbacMatriksTest extends TestCase
             ->assertDontSee('Kawalan Penyeliaan')
             ->assertDontSee('Majukan Peringkat')
             ->assertDontSee('Kembalikan Peringkat')
-            ->assertDontSee(route('kemajuan.hantar', self::ALPHA));
+            ->assertDontSee(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), false)
+            ->assertDontSee(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), false);
     }
 
     /*
@@ -462,7 +484,7 @@ class RbacMatriksTest extends TestCase
         // BETA didaftarkan dan ditugaskan kepada pegawai analisis KEDUA.
         $paLain = User::factory()->create(['role' => User::ROLE_ANALYST]);
 
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti(self::BETA),
             $this->pengguna[User::ROLE_PENYELARAS_REKOD],
         );
@@ -496,14 +518,14 @@ class RbacMatriksTest extends TestCase
 
         // Memajukan peringkat entiti pegawai lain.
         $this->actingAs($pa)
-            ->post(route('kemajuan.selesai', [self::BETA, WorkflowStatus::STAGE_SEMAKAN_AWAL]))
+            ->post(route('kemajuan.selesai', [self::BETA, AliranKerja::SEMAKAN_AWAL_DATA]))
             ->assertForbidden();
 
         $this->assertDatabaseMissing('analisis_inventori', ['agency_code' => self::BETA]);
 
         $this->assertSame(
             'Belum Mula',
-            app(KemajuanAnalisisService::class)->peringkat(self::BETA)[WorkflowStatus::STAGE_SEMAKAN_AWAL]->status,
+            app(KemajuanAnalisisService::class)->peringkat(self::BETA)[AliranKerja::SEMAKAN_AWAL_DATA]->status,
         );
     }
 
@@ -517,8 +539,12 @@ class RbacMatriksTest extends TestCase
         $this->actingAs($pa)->getJson(route('dashboard'))->assertForbidden();
         $this->actingAs($pa)->getJson(route('penugasan.index'))->assertForbidden();
         $this->actingAs($pa)->getJson(route('administration.users.index'))->assertForbidden();
-        $this->actingAs($pa)->postJson(route('kemajuan.sahkan', self::ALPHA))->assertForbidden();
-        $this->actingAs($pa)->postJson(route('kemajuan.serah', self::ALPHA))->assertForbidden();
+        $this->actingAs($pa)
+            ->postJson(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]))
+            ->assertForbidden();
+        $this->actingAs($pa)
+            ->postJson(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), ['no_rujukan' => 'X'])
+            ->assertForbidden();
 
         $ps = $this->sebagai(User::ROLE_ADMINISTRATOR);
         $this->actingAs($ps)->getJson(route('status.index'))->assertForbidden();
@@ -581,13 +607,14 @@ class RbacMatriksTest extends TestCase
             ->where('action', KemajuanAnalisisService::ACTION_REGISTRATION_COMPLETED)
             ->firstOrFail();
 
+        // Peringkat 1.1 kini milik KB/PPA; fikstur menggunakan PPA.
         $this->assertSame(
-            $this->pengguna[User::ROLE_PENYELARAS_REKOD]->id,
+            $this->pengguna[User::ROLE_COORDINATOR]->id,
             $log->changed_by_user_id,
         );
 
-        $this->assertSame([User::ROLE_PENYELARAS_REKOD], $log->metadata['peranan']);
-        $this->assertSame('Pegawai Penyelaras Rekod', $log->metadata['peranan_label']);
+        $this->assertSame([User::ROLE_COORDINATOR], $log->metadata['peranan']);
+        $this->assertSame('Pegawai Penyelaras Analisis', $log->metadata['peranan_label']);
         $this->assertNotNull($log->changed_at);
     }
 
@@ -597,30 +624,21 @@ class RbacMatriksTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Bawa entiti sehingga borang Analisis Inventori disimpan sebagai
+     * Lengkap, tetapi peringkat 3.1 BELUM ditandakan Selesai.
+     */
     private function bawaAnalisisSelesai(): void
     {
         $pa = $this->sebagai(User::ROLE_ANALYST);
 
         $this->actingAs($pa);
-        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_SEMAKAN_AWAL]));
-        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_PENYEDIAAN]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]));
+        $this->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENYEDIAAN_DATA]));
         $this->post(route('analisis.simpan'), [
             'sector_code' => '001',
             'agency_code' => self::ALPHA,
             'status_laporan' => 'Selesai',
-            'selesai' => '1',
         ]);
-        $this->post(route('kemajuan.selesai', [self::ALPHA, WorkflowStatus::STAGE_ANALISIS]));
-    }
-
-    private function bawaLaporanKepadaPPA(): void
-    {
-        $this->sediakanEntiti();
-        $this->bawaAnalisisSelesai();
-
-        $this->actingAs($this->sebagai(User::ROLE_ANALYST));
-        $this->post(route('kemajuan.hantar', self::ALPHA));
-
-        $this->assertNotNull(app(LaporanSemakanService::class)->untuk(self::ALPHA));
     }
 }

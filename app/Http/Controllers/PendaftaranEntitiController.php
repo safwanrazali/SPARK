@@ -10,12 +10,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Peringkat 1 aliran kerja — "Penerimaan & Pendaftaran Data".
+ * Peringkat 1.1 aliran kerja — "Penerimaan Data".
  *
- * Pegawai Penyelaras Rekod menanda entiti yang datanya telah diterima dan
- * didaftarkan, kemudian menekan "Kemas Kini". Entiti yang dikemas kini
- * dikunci: PPR tidak boleh mengubahnya lagi, dan ia mula kelihatan kepada
- * Pegawai Penyelaras Analisis untuk ditugaskan.
+ * Ketua Bahagian atau Pegawai Penyelaras Analisis menanda entiti yang
+ * datanya telah diterima, kemudian menekan "Kemas Kini". Entiti yang
+ * dikemas kini dikunci dan mula kelihatan kepada PPA untuk ditugaskan.
+ *
+ * Peringkat 1.2 (Pendaftaran Data) dan 1.3 (Semakan Awal Data) dilakukan
+ * seterusnya pada halaman Kemajuan Analisis Entiti, bersama data tangkapan
+ * masing-masing — bukan di sini, kerana ia kerja setiap entiti dan bukan
+ * penandaan pukal.
  *
  * Nota carta aliran menyatakan hanya Ketua Bahagian boleh membuka semula
  * entiti yang telah dikunci — itulah tindakan "Set Semula" di bawah.
@@ -31,7 +35,7 @@ class PendaftaranEntitiController extends Controller
     ) {}
 
     /**
-     * Tandakan "Penerimaan & Pendaftaran Data" Selesai bagi entiti dipilih.
+     * Tandakan peringkat 1.1 "Penerimaan Data" Selesai bagi entiti dipilih.
      */
     public function kemasKini(Request $request)
     {
@@ -59,14 +63,14 @@ class PendaftaranEntitiController extends Controller
             // Entiti yang telah dikunci tidak boleh ditanda semula — semakan
             // ini menghalang borang lama atau permintaan langsung daripada
             // memintas kunci tersebut.
-            if ($this->kemajuan->pendaftaranSelesai($agencyCode)) {
+            if ($this->kemajuan->penerimaanSelesai($agencyCode)) {
                 $dilangkau++;
 
                 continue;
             }
 
             try {
-                $this->kemajuan->lengkapkanPendaftaran($entiti, $request->user());
+                $this->kemajuan->lengkapkanPenerimaan($entiti, $request->user());
                 $dikemasKini++;
             } catch (InvalidWorkflowTransitionException $e) {
                 return back()->withErrors(['agency_codes' => $e->getMessage()]);
@@ -106,7 +110,7 @@ class PendaftaranEntitiController extends Controller
 
         abort_if($entiti === null, 404, 'Entiti tidak ditemui dalam senarai induk sektor.');
 
-        if (! $this->kemajuan->pendaftaranSelesai($agencyCode)) {
+        if (! $this->kemajuan->penerimaanSelesai($agencyCode)) {
             return back()->withErrors([
                 'reason' => sprintf('%s belum dikunci, jadi tiada apa untuk ditetapkan semula.', $entiti['agency_code']),
             ]);
@@ -125,7 +129,7 @@ class PendaftaranEntitiController extends Controller
         }
 
         return back()->with('success', sprintf(
-            'Penerimaan & Pendaftaran Data bagi %s ditetapkan semula kepada Belum Mula.',
+            'Peringkat 1.1 Penerimaan Data bagi %s ditetapkan semula kepada Belum Mula.',
             $entiti['agency_code'],
         ));
     }

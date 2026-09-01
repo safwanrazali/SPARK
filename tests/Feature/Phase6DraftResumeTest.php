@@ -216,7 +216,10 @@ class Phase6DraftResumeTest extends TestCase
                 'protokol' => [['nama' => 'TLS', 'versi' => '1.2', 'bilangan' => '4']],
                 'selesai' => '1',
             ]))
-            ->assertRedirect(route('analisis.index'))
+            // Simpanan muktamad kini kembali ke halaman kemajuan entiti:
+            // peringkat 3.1 ialah pemilik borang ini, dan tindakan
+            // "Selesai"-nya berada di sana.
+            ->assertRedirect(route('workflow.show', self::ENTITI))
             ->assertSessionHas('success');
 
         Carbon::setTestNow();

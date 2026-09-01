@@ -24,9 +24,14 @@ use Illuminate\Support\Collection;
  *   Sah (KB telah menekan "Sahkan")          →  Selesai
  *
  * Bagi jenis laporan yang belum mempunyai kitaran semakannya sendiri, status
- * mengikut kemajuan tujuh peringkat entiti itu (Belum Mula / Dalam Proses /
- * Siap). Dengan itu setiap lajur tetap bergerak mengikut Kemajuan Analisis
- * Entiti dan bukan mengikut tindakan berasingan pada halaman paparan.
+ * mengikut kemajuan peringkat FASA SEMASA entiti itu (Belum Mula / Dalam
+ * Proses / Siap). Dengan itu setiap lajur tetap bergerak mengikut Kemajuan
+ * Analisis Entiti dan bukan mengikut tindakan berasingan pada halaman paparan.
+ *
+ * Kitaran semakan laporan (laporan_semakan) milik peringkat 4 dan 5, yang
+ * belum dibina — jadi dalam fasa ini setiap status datang daripada kemajuan
+ * peringkat. Pemetaan daripada kitaran itu DIKEKALKAN kerana rekod yang
+ * dicipta sebelum restruktur masih wujud dan mesti terus dibaca dengan betul.
  */
 class StatusTigaLaporanService
 {

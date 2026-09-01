@@ -1,5 +1,37 @@
 # PANDUAN PENGGUNA
 
+> ## ⚠️ RESTRUKTUR ALIRAN KERJA — 7 PERINGKAT → 5 PERINGKAT
+>
+> Aliran kerja sistem telah distruktur semula daripada **7 peringkat rata**
+> kepada **5 peringkat utama dengan sub-peringkat**. Struktur rasmi kini:
+>
+> | Peringkat | Proses                                     | Peranan  | Fasa         |
+> | --------- | ------------------------------------------ | -------- | ------------ |
+> | 1         | Penerimaan & Semakan Awal Data             |          |              |
+> | 1.1       | Penerimaan Data                            | KB / PPA | Semasa       |
+> | 1.2       | Pendaftaran Data                           | PPA      | Semasa       |
+> | 1.3       | Semakan Awal Data                          | PA       | Semasa       |
+> | 2         | Penyediaan & Pengesahan Data               | PA       | Semasa       |
+> | 3         | Analisis Data                              |          |              |
+> | 3.1       | Analisis Inventori Kriptografi             | PA       | Semasa       |
+> | 3.2       | Analisis Risiko Migrasi PQC                | —        | Akan datang  |
+> | 4         | Penjanaan Laporan                          | —        | Akan datang  |
+> | 5         | Semakan, Kelulusan & Penyerahan Laporan    | —        | Akan datang  |
+>
+> **No. Rujukan Borang** bagi peringkat 1.1, 1.2 dan 1.3 dimasukkan oleh
+> **Pegawai Penyelaras Rekod (PPR)**, walaupun peringkat itu dilaksanakan oleh
+> KB, PPA dan PA. **No. Rujukan Laporan** peringkat 3.1 dimasukkan oleh PA.
+>
+> **Fasa semasa berakhir pada peringkat 3.1.** Peringkat 3.2, 4 dan 5 telah
+> ditakrifkan dalam struktur tetapi prosesnya belum ditentukan; ia tidak
+> menerima sebarang tindakan.
+>
+> Takrifan tunggal struktur ini ialah `app/Support/AliranKerja.php`.
+>
+> **Bahagian di bawah yang masih menerangkan aliran 7 peringkat sudah lapuk dan
+> perlu ditulis semula bersama spesifikasi peringkat 4 dan 5.**
+
+
 ## Sistem Pemantauan & Pelaporan Analisis Data Migrasi PQC — V1.0-RC1
 
 ---
@@ -11,7 +43,7 @@ penjanaan laporan** hasil analisis tersebut.
 
 | Sistem ini **melakukan**                                   | Sistem ini **tidak** melakukan                  |
 | ---------------------------------------------------------- | ----------------------------------------------- |
-| Merekod kedudukan setiap entiti dalam 7 peringkat workflow | Menjalankan analisis PQC secara automatik       |
+| Merekod kedudukan setiap entiti dalam 5 peringkat aliran kerja | Menjalankan analisis PQC secara automatik   |
 | Menyimpan penugasan entiti kepada Pegawai Analisis         | Membaca atau mentafsir dokumen secara automatik |
 | Menerima dapatan analisis melalui borang berstruktur       | Mengira risiko PQC secara automatik             |
 | Menyimpan draf supaya kerja tidak hilang                   | Memerlukan muat naik Buku Kerja Migrasi PQC     |
@@ -76,7 +108,7 @@ Menu **Papan Pemuka** memaparkan gambaran keseluruhan:
 - Jumlah Sektor, Jumlah Entiti, Dalam Proses, Selesai
 - Jumlah Laporan dan Laporan Siap
 - Kemajuan Keseluruhan (%)
-- Taburan entiti merentas 7 peringkat workflow
+- Taburan entiti merentas peringkat aliran kerja
 - Aktiviti terkini
 
 Semua angka **dikira daripada rekod sebenar** setiap kali halaman dibuka.
@@ -104,29 +136,48 @@ berkenaan akan kehilangan akses kepada entiti tersebut serta-merta.
 
 Buka **Pemantauan → Kemajuan Analisis**, pilih entiti.
 
-1. Klik **Daftar dalam workflow** untuk memulakan pada peringkat 1.
-2. Gunakan **Kemas Kini Peringkat** untuk maju **satu peringkat pada satu masa**.
-3. Gunakan **Kemas Kini Status** untuk menukar status dalam peringkat semasa
-   (Belum Bermula / Dalam Proses / Siap) tanpa menukar peringkat.
+Entiti memasuki aliran kerja melalui **Penetapan Entiti**, apabila KB atau PPA
+menandakan peringkat **1.1 Penerimaan Data**. Selepas itu setiap peringkat
+dikendalikan pada halaman Kemajuan Analisis Entiti oleh peranan yang
+memilikinya.
 
-**7 peringkat**
+**5 peringkat utama**
 
-| #   | Peringkat                     |
-| --- | ----------------------------- |
-| 1   | Penerimaan & Pendaftaran Data |
-| 2   | Semakan Awal Data             |
-| 3   | Penyediaan & Pengesahan Data  |
-| 4   | Pelaksanaan Analisis          |
-| 5   | Penjanaan Laporan             |
-| 6   | Semakan & Kelulusan           |
-| 7   | Penyerahan & Penutupan        |
+| #   | Peringkat                               | Peranan  | Fasa        |
+| --- | --------------------------------------- | -------- | ----------- |
+| 1   | Penerimaan & Semakan Awal Data          |          |             |
+| 1.1 | Penerimaan Data                         | KB / PPA | Semasa      |
+| 1.2 | Pendaftaran Data                        | PPA      | Semasa      |
+| 1.3 | Semakan Awal Data                       | PA       | Semasa      |
+| 2   | Penyediaan & Pengesahan Data            | PA       | Semasa      |
+| 3   | Analisis Data                           |          |             |
+| 3.1 | Analisis Inventori Kriptografi          | PA       | Semasa      |
+| 3.2 | Analisis Risiko Migrasi PQC             | —        | Akan datang |
+| 4   | Penjanaan Laporan                       | —        | Akan datang |
+| 5   | Semakan, Kelulusan & Penyerahan Laporan | —        | Akan datang |
 
-**Peraturan peralihan**
+**Maklumat yang direkod pada setiap peringkat**
 
-- Peringkat mesti dilalui **berturutan** — melompat (contoh 2 → 5) ditolak.
-- **Mengundur** ke peringkat sebelumnya dibenarkan, tetapi **sebab wajib
-  diberikan** dan direkodkan dalam jejak audit.
-- Setiap perubahan menyimpan tarikh status dan nama pegawai yang mengemas kini.
+| Peringkat | Medan                                                                         |
+| --------- | ----------------------------------------------------------------------------- |
+| 1.1       | Tarikh Terima · Status Borang Penerimaan Data · No. Rujukan Borang (PPR)       |
+| 1.2       | Tarikh Terima · Status Borang Pendaftaran Data · No. Rujukan Borang (PPR)      |
+| 1.3       | Tarikh Semakan · Status Borang Semakan Awal Data · No. Rujukan Borang (PPR)    |
+| 2         | Tarikh Mula · Tarikh Tamat · Status Mastertable · Nama Fail                    |
+| 3.1       | Tarikh Mula · Tarikh Tamat · Status Laporan Inventori · No. Rujukan Laporan    |
+
+**Peraturan peringkat**
+
+- Peringkat mesti dilalui **berturutan**, termasuk sub-peringkat: 1.1 → 1.2 →
+  1.3 → 2 → 3.1. Melangkau mana-mana satu ditolak.
+- Peringkat hanya boleh ditandakan **Selesai** oleh peranan yang memilikinya.
+- **No. Rujukan Borang** peringkat 1.1–1.3 dimasukkan oleh **PPR sahaja**, dan
+  tidak menunggu giliran peringkat — borang fizikal boleh didaftarkan bila-bila
+  masa. **No. Rujukan Laporan** peringkat 3.1 dimasukkan oleh PA.
+- Kemajuan diukur terhadap peringkat **fasa semasa** (1.1 hingga 3.1). Entiti
+  menjadi **Siap** apabila kelima-limanya Selesai.
+- Peringkat 3.2, 4 dan 5 **tidak menerima sebarang tindakan** dalam fasa ini.
+- Setiap perubahan menyimpan tarikh dan nama pegawai dalam jejak audit.
 
 ### 4.4 Status Tiga Laporan
 
@@ -273,8 +324,8 @@ betulkan dan simpan semula.
 - **Laporan Inventori** — pratonton dan muat turun laporan mana-mana entiti.
 - **Jejak Audit** — rekod penuh perubahan.
 
-> Dalam V1.0-RC1, tindakan **semakan dan kelulusan laporan** belum tersedia
-> (lihat Bahagian 8). Peringkat 6 workflow digerakkan oleh Pegawai Penyelaras.
+> Tindakan **semakan, kelulusan dan penyerahan laporan** belum tersedia: ia
+> milik peringkat 4 dan 5, yang prosesnya belum ditentukan (lihat Bahagian 8).
 
 ---
 
@@ -309,10 +360,12 @@ Untuk tugas pemasangan, sandaran dan penyelenggaraan, rujuk
 | Notifikasi e-mel                         | Tidak dalam skop                      |
 | Muat naik dokumen dalam aliran pelaporan | Tidak diperlukan mengikut reka bentuk |
 
-Semasa menunggu Fasa 10, peringkat **6 — Semakan & Kelulusan** dikendalikan
-sebagai peringkat workflow biasa: Pegawai Penyelaras memajukan entiti ke
-peringkat 6, dan mengundurkannya ke peringkat 5 **berserta sebab** jika laporan
-perlu dibetulkan.
+Aliran kerja fasa semasa berakhir pada peringkat **3.1 — Analisis Inventori
+Kriptografi**. Peringkat **3.2**, **4** dan **5** wujud dalam struktur tetapi
+tidak menerima sebarang tindakan sehingga prosesnya ditetapkan.
+
+Laporan **Analisis Inventori Kriptografi** boleh dimuat turun sebagai PDF sebaik
+peringkat 3.1 ditandakan Selesai.
 
 ---
 

@@ -46,14 +46,14 @@
     </div>
 
     {{--
-        Panel 1 — Penerimaan & Pendaftaran Data (peringkat 01).
-        Milik Pegawai Penyelaras Rekod; Ketua Bahagian membuka semula entiti
-        yang telah dikunci melalui "Set Semula".
+        Panel 1 — Penerimaan Data (peringkat 1.1).
+        Milik Ketua Bahagian dan Pegawai Penyelaras Analisis; Ketua Bahagian
+        membuka semula entiti yang telah dikunci melalui "Set Semula".
     --}}
     @if ($bolehDaftar)
         <div class="report-card mb-4">
 
-            <h4 class="section-title">Penerimaan &amp; Pendaftaran Data</h4>
+            <h4 class="section-title">1.1 Penerimaan Data</h4>
             <p class="text-secondary">
                 {{ $jumlahDidaftar }} entiti telah dikunci dan tersedia kepada Pegawai Penyelaras Analisis.
                 Entiti yang telah dikunci tidak boleh diubah lagi di sini.

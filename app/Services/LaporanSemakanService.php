@@ -6,21 +6,28 @@ use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\ApprovalLog;
 use App\Models\LaporanSemakan;
 use App\Models\User;
-use App\Models\WorkflowStageStatus;
-use App\Models\WorkflowStatus;
+use App\Support\AliranKerja;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Satu-satunya tempat kedudukan semakan dan kelulusan laporan boleh berubah.
  *
- * Aliran (carta aliran bahagian 7–9):
- *
  *   PA  "Hantar kepada PPA" → Draf, lalu Dihantar kepada PPA
  *   PPA "Hantar"        → Dihantar kepada KB
  *   PPA/KB "Kembalikan" → Dikembalikan   (Catatan WAJIB)
- *   KB  "Sahkan"        → Sah            (Catatan pilihan; peringkat 5 dan 6
- *                                         menjadi Selesai)
+ *   KB  "Sahkan"        → Sah            (Catatan pilihan)
+ *
+ * FASA AKAN DATANG — kitaran ini milik peringkat 4 (Penjanaan Laporan) dan
+ * peringkat 5 (Semakan, Kelulusan & Penyerahan Laporan), yang PROSESNYA
+ * BELUM DITENTUKAN. Servis, model dan jadualnya DIKEKALKAN sepenuhnya
+ * supaya kerja sedia ada dan rekod sedia ada tidak hilang, tetapi TIADA
+ * route atau butang memanggilnya dalam fasa ini.
+ *
+ * Pautan kepada status peringkat telah DIBUANG dengan sengaja: peringkat 4
+ * dan 5 tidak menerima sebarang tindakan sehingga prosesnya ditetapkan, dan
+ * menyambungkannya semula tanpa spesifikasi bermakna mereka-reka proses itu.
+ * Sambungkan semula di sini apabila spesifikasi peringkat 4 dan 5 tiba.
  *
  * Setiap peralihan disemak terhadap LaporanSemakan::ALIRAN, jadi keadaan
  * tidak boleh dilangkau walaupun borang dihantar terus tanpa melalui UI.
@@ -29,9 +36,12 @@ use Illuminate\Support\Facades\DB;
  */
 class LaporanSemakanService
 {
+    // Servis ini TIDAK lagi bergantung kepada KemajuanAnalisisService:
+    // pautannya kepada status peringkat dibuang bersama peringkat 4 dan 5
+    // (lihat nota kelas). Ia akan kembali apabila proses peringkat itu
+    // ditetapkan.
     public function __construct(
         private readonly AuditTrailService $audit,
-        private readonly KemajuanAnalisisService $kemajuan,
     ) {}
 
     public const JENIS_LALAI = 'inventori';
@@ -39,8 +49,8 @@ class LaporanSemakanService
     /**
      * Tindakan jejak audit bagi penyerahan laporan kepada NACSA.
      *
-     * Inilah satu-satunya rekod bahawa butang "Hantar" peringkat 07 telah
-     * ditekan: penyerahan TIDAK mengubah `laporan_semakan.status` (laporan
+     * Inilah satu-satunya rekod bahawa penyerahan telah berlaku:
+     * penyerahan TIDAK mengubah `laporan_semakan.status` (laporan
      * kekal Sah), jadi jejak inilah yang membezakan "disahkan KB" daripada
      * "telah diserahkan kepada NACSA".
      */
@@ -104,22 +114,10 @@ class LaporanSemakanService
             $l->catatan = null;
         });
 
-        // Penghantaran kepada PPA — dan BUKAN penyiapan borang — inilah yang
-        // menggerakkan kedua-dua peringkat kepada Dalam Proses. Dilakukan di
-        // sini, bukan dalam controller, supaya kedudukan laporan dan status
-        // peringkat tidak boleh terpisah apabila salah satu gagal.
-        //
-        // Kedua-duanya kekal Dalam Proses sehingga KB mengesahkan laporan;
-        // tiada tindakan PA atau PPA boleh menjadikannya Selesai.
-        foreach ([WorkflowStatus::STAGE_JANA_LAPORAN, WorkflowStatus::STAGE_SEMAKAN_KELULUSAN] as $stage) {
-            $this->kemajuan->tetapkanStatus(
-                $laporan->agency_code,
-                $stage,
-                WorkflowStageStatus::DALAM_PROSES,
-                $user,
-            );
-        }
-
+        // FASA AKAN DATANG: dahulu penghantaran ini turut menggerakkan
+        // peringkat "Jana Laporan" dan "Semakan & Kelulusan" aliran kerja
+        // lama. Peringkat 4 dan 5 baharu belum ditakrifkan prosesnya, jadi
+        // tiada status peringkat disentuh di sini sehingga ia ditetapkan.
         return $laporan;
     }
 
@@ -159,25 +157,14 @@ class LaporanSemakanService
             $l->catatan = $catatan;
         });
 
-        // Laporan kembali ke tangan PA untuk dibetulkan. Kedua-dua peringkat
-        // kekal Dalam Proses — pengembalian ialah sebahagian daripada kitaran
-        // semakan, bukan pengunduran daripadanya (aliran kerja bahagian 10).
-        $this->kemajuan->tetapkanStatus(
-            $laporan->agency_code,
-            WorkflowStatus::STAGE_JANA_LAPORAN,
-            WorkflowStageStatus::DALAM_PROSES,
-            $user,
-            $catatan,
-        );
-
+        // FASA AKAN DATANG: status peringkat tidak disentuh — lihat nota
+        // kelas. Pengembalian ialah sebahagian daripada kitaran semakan
+        // peringkat 5, yang prosesnya belum ditetapkan.
         return $laporan;
     }
 
     /**
      * KB menekan "Sahkan".
-     *
-     * Hanya di sini "Jana Laporan" menjadi Selesai — bukan semasa laporan
-     * dijana atau dihantar (carta aliran bahagian 7).
      *
      * Catatan adalah PILIHAN di sini (berbeza daripada "Kembalikan", yang
      * mewajibkannya). Ia direkodkan dalam approval_logs dan jejak audit —
@@ -199,9 +186,8 @@ class LaporanSemakanService
             $l->catatan = $catatan;
         });
 
-        $this->kemajuan->tandakanSelesai($laporan->agency_code, WorkflowStatus::STAGE_JANA_LAPORAN, $user);
-        $this->kemajuan->tandakanSelesai($laporan->agency_code, WorkflowStatus::STAGE_SEMAKAN_KELULUSAN, $user);
-
+        // FASA AKAN DATANG: peringkat 4 dan 5 tidak ditandakan Selesai di
+        // sini — lihat nota kelas.
         return $laporan;
     }
 
@@ -228,7 +214,7 @@ class LaporanSemakanService
             LaporanSemakan::SAH,
             LaporanSemakan::SAH,
             $user,
-            ['report_type' => $laporan->report_type, 'stage' => WorkflowStatus::STAGE_PENYERAHAN],
+            ['report_type' => $laporan->report_type, 'stage' => AliranKerja::SEMAKAN_KELULUSAN],
         );
     }
 

@@ -123,6 +123,9 @@ class Phase9RolesPermissionsTest extends TestCase
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
+                'manage-stage-penerimaan' => false,
+                'manage-stage-pendaftaran' => false,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => false,
@@ -138,6 +141,9 @@ class Phase9RolesPermissionsTest extends TestCase
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
+                'manage-stage-penerimaan' => false,
+                'manage-stage-pendaftaran' => false,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => false,
@@ -150,9 +156,13 @@ class Phase9RolesPermissionsTest extends TestCase
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
-                'register-entity-data' => false,
+                // Peringkat 1.1 Penerimaan Data — KB atau PPA.
+                'register-entity-data' => true,
                 'reset-entity-registration' => true,
                 'manage-assignment' => false,
+                'manage-stage-penerimaan' => true,
+                'manage-stage-pendaftaran' => false,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => true,
@@ -165,9 +175,14 @@ class Phase9RolesPermissionsTest extends TestCase
             'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
-                'register-entity-data' => true,
+                // PPR tidak lagi melaksanakan peringkat 1.1; tanggungjawabnya
+                // ialah memasukkan No. Rujukan Borang (record-stage-reference).
+                'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
+                'manage-stage-penerimaan' => false,
+                'manage-stage-pendaftaran' => false,
+                'record-stage-reference' => true,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => false,
@@ -183,6 +198,9 @@ class Phase9RolesPermissionsTest extends TestCase
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
+                'manage-stage-penerimaan' => false,
+                'manage-stage-pendaftaran' => false,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => false,
@@ -195,9 +213,13 @@ class Phase9RolesPermissionsTest extends TestCase
             'Pegawai Penyelaras Analisis' => [User::ROLE_COORDINATOR, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
-                'register-entity-data' => false,
+                // Peringkat 1.1 Penerimaan Data — KB atau PPA.
+                'register-entity-data' => true,
                 'reset-entity-registration' => false,
                 'manage-assignment' => true,
+                'manage-stage-penerimaan' => true,
+                'manage-stage-pendaftaran' => true,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => true,
@@ -213,6 +235,9 @@ class Phase9RolesPermissionsTest extends TestCase
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
+                'manage-stage-penerimaan' => false,
+                'manage-stage-pendaftaran' => false,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => true,
                 'manage-analysis' => true,
                 'review-report' => false,
@@ -386,9 +411,11 @@ class Phase9RolesPermissionsTest extends TestCase
     /**
      * Peranan yang boleh MEMBUKA skrin Penetapan Entiti.
      *
-     * Skrin ini memegang tiga tindakan milik tiga peranan: PPR menanda,
+     * Skrin ini memegang tiga tindakan: KB/PPA menanda peringkat 1.1,
      * KB menetapkan semula, PPA menugaskan. Peranan yang tidak memiliki
-     * satu pun daripadanya — termasuk Pentadbir Sistem — ditolak.
+     * satu pun daripadanya ditolak — termasuk Pentadbir Sistem dan, sejak
+     * restruktur, PPR: tanggungjawabnya kini ialah No. Rujukan Borang, yang
+     * dimasukkan pada halaman Kemajuan Analisis Entiti.
      *
      * @return array<string, array{0: string, 1: bool}>
      */
@@ -397,7 +424,7 @@ class Phase9RolesPermissionsTest extends TestCase
         return [
             'Penyelaras' => [User::ROLE_COORDINATOR, true],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, true],
-            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, true],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, false],
             'Pentadbir' => [User::ROLE_ADMINISTRATOR, false],
             'Pegawai Analisis' => [User::ROLE_ANALYST, false],
             'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, false],
@@ -420,7 +447,7 @@ class Phase9RolesPermissionsTest extends TestCase
 
         // Prasyarat aliran kerja: entiti hanya boleh ditugaskan selepas
         // "Penerimaan & Pendaftaran Data" Selesai.
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti(self::ALPHA),
             $this->pengguna(User::ROLE_ADMINISTRATOR),
         );
@@ -555,15 +582,21 @@ class Phase9RolesPermissionsTest extends TestCase
         $this->assertFalse($boleh(User::ROLE_ANALYST, 'submit-to-nacsa'));
     }
 
-    public function test_setiap_route_semakan_dan_kelulusan_dilindungi_gate(): void
+    /**
+     * Peringkat 4 dan 5 (Penjanaan Laporan; Semakan, Kelulusan & Penyerahan
+     * Laporan) ialah fasa akan datang: prosesnya belum ditentukan, jadi TIADA
+     * route mutasinya wujud.
+     *
+     * Gate-nya sengaja DIKEKALKAN supaya tanggungjawab yang telah dipersetujui
+     * tidak hilang — tetapi tiada route boleh menggunakannya lagi, dan ujian
+     * ini yang menghalangnya kembali secara senyap.
+     */
+    public function test_tiada_route_bagi_peringkat_fasa_akan_datang(): void
     {
-        // Aliran semakan dan kelulusan kini wujud. Setiap route mutasinya
-        // mesti menolak peranan yang tidak berkenaan — disemak sepenuhnya
-        // dalam RbacMatriksTest.
-        foreach (['kemajuan.semak', 'kemajuan.sahkan', 'kemajuan.serah'] as $nama) {
-            $this->assertNotNull(
+        foreach (['kemajuan.hantar', 'kemajuan.semak', 'kemajuan.kembalikan', 'kemajuan.sahkan', 'kemajuan.serah'] as $nama) {
+            $this->assertNull(
                 app('router')->getRoutes()->getByName($nama),
-                "Route {$nama} tidak wujud.",
+                "Route {$nama} sepatutnya tiada dalam fasa ini.",
             );
         }
 

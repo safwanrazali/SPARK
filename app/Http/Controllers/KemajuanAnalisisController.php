@@ -3,12 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidWorkflowTransitionException;
-use App\Models\AnalisisInventori;
-use App\Models\LaporanSemakan;
-use App\Models\WorkflowStatus;
-use App\Services\EntityAccessService;
 use App\Services\KemajuanAnalisisService;
-use App\Services\LaporanSemakanService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -16,18 +12,24 @@ use Illuminate\Support\Facades\Gate;
 /**
  * Tindakan pada halaman "Kemajuan Analisis Entiti".
  *
- * Setiap tindakan milik satu peranan pada satu peringkat tertentu:
+ * Tiga tindakan sahaja, dan kesemuanya bekerja pada KUNCI peringkat
+ * ('1.1', '2', '3.1') dan bukan nombor rata:
  *
- *   Peringkat 2, 3, 4  "Selesai"           → Pegawai Analisis
- *   Peringkat 5        "Hantar kepada PPA" → Pegawai Analisis
- *   Peringkat 6        "Hantar kepada KB"  → PPA
- *                      "Kembalikan"        → PPA atau KB (Catatan wajib)
- *                      "Sahkan"            → Ketua Bahagian
- *   Peringkat 7        "Hantar"            → gate submit-to-nacsa
+ *   simpan()   rekod data tangkapan peringkat        pemilik peringkat
+ *   selesai()  tandakan peringkat Selesai            pemilik peringkat
+ *   rujukan()  masukkan No. Rujukan Borang           PPR
  *
- * Peringkat 5 dan 6 tiada tindakan "Selesai" — kedua-duanya hanya menjadi
- * Selesai apabila Ketua Bahagian mengesahkan laporan. Tiada route memberikan
- * mana-mana peranan jalan pintas ke situ.
+ * Siapa "pemilik peringkat" ditentukan oleh AliranKerja, bukan oleh senarai
+ * berasingan di sini — jadi menukar tanggungjawab satu peringkat ialah satu
+ * perubahan pada takrifan, bukan pada setiap tempat yang menyemaknya.
+ *
+ * `rujukan()` diasingkan kerana pemiliknya memang berbeza: PPR memasukkan
+ * No. Rujukan Borang bagi peringkat 1.1–1.3 walaupun peringkat itu miliknya
+ * KB, PPA dan PA.
+ *
+ * FASA SEMASA: peringkat 3.2, 4 dan 5 belum dibina. Permintaan terhadapnya
+ * ditolak di sini dan sekali lagi di dalam servis, jadi tiada borang yang
+ * dihantar terus boleh memintasnya.
  *
  * Kawalan akses entiti dikuatkuasakan oleh middleware `entity.access` pada
  * setiap route, jadi Pegawai Analisis tidak boleh menyentuh entiti pegawai
@@ -35,254 +37,195 @@ use Illuminate\Support\Facades\Gate;
  */
 class KemajuanAnalisisController extends Controller
 {
-    /**
-     * Peringkat yang ditandakan Selesai oleh Pegawai Analisis melalui
-     * butang "Selesai" pada halaman kemajuan.
-     */
-    private const PERINGKAT_PA = [
-        WorkflowStatus::STAGE_SEMAKAN_AWAL,
-        WorkflowStatus::STAGE_PENYEDIAAN,
-        WorkflowStatus::STAGE_ANALISIS,
-    ];
-
     public function __construct(
         private readonly KemajuanAnalisisService $kemajuan,
-        private readonly LaporanSemakanService $semakan,
-        private readonly EntityAccessService $access,
     ) {}
 
     /**
-     * Tandakan peringkat 2, 3 atau 4 sebagai Selesai.
-     */
-    public function selesai(Request $request, string $agencyCode, int $stage)
-    {
-        Gate::authorize('advance-analysis-stage');
-
-        $entiti = $this->entitiAtauGagal($agencyCode);
-
-        // Hanya peringkat 2, 3 dan 4 boleh ditandakan Selesai secara terus.
-        // Peringkat 5 dan 6 sengaja tiada di sini: permintaan yang cuba
-        // menandakannya Selesai ditolak sebelum sampai ke servis.
-        abort_unless(in_array($stage, self::PERINGKAT_PA, true), 404);
-
-        try {
-            $this->kemajuan->tandakanSelesai($agencyCode, $stage, $request->user());
-        } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withErrors(['stage' => $e->getMessage()]);
-        }
-
-        return back()->with('success', sprintf(
-            'Peringkat %02d — %s bagi %s ditandakan Selesai.',
-            $stage,
-            WorkflowStatus::getStageName($stage),
-            $entiti['agency_code'],
-        ));
-    }
-
-    /**
-     * "Hantar kepada PPA" — peringkat 5 bermula.
+     * Rekod data tangkapan satu peringkat tanpa menandakannya Selesai.
      *
-     * Ini satu-satunya laluan masuk kepada kitaran semakan. Peringkat 5 dan 6
-     * menjadi Dalam Proses di sini, BUKAN Selesai: laporan hanya selesai
-     * setelah Ketua Bahagian mengesahkannya (aliran kerja bahagian 15).
+     * Memisahkan "simpan" daripada "selesai" bermakna tarikh dan status
+     * borang boleh direkodkan semasa kerja masih berjalan — dan peringkat
+     * tidak tertutup sebelum masanya semata-mata kerana satu medan diisi.
      */
-    public function hantar(Request $request, string $agencyCode)
+    public function simpan(Request $request, string $agencyCode, string $stage)
     {
-        Gate::authorize('advance-analysis-stage');
+        $entiti = $this->peringkatAtauGagal($agencyCode, $stage);
 
-        $entiti = $this->entitiAtauGagal($agencyCode);
+        $this->benarkanPeringkat($stage);
 
-        // Dua syarat, kedua-duanya disemak di pelayan supaya butang yang
-        // dilumpuhkan pada antara muka bukan satu-satunya halangan:
-        //
-        // 1. Peringkat "Analisis Data" mesti Selesai (bahagian 21).
-        // 2. Borang Input Analisis Inventori Kriptografi mesti Lengkap —
-        //    draf separa siap tidak memadai (bahagian 7).
-        if (! $this->kemajuan->peringkat($agencyCode)->get(WorkflowStatus::STAGE_ANALISIS)?->isSelesai()) {
-            return back()->withErrors([
-                'laporan' => 'Peringkat 04 — Analisis Data perlu Selesai sebelum laporan boleh dihantar.',
-            ]);
-        }
-
-        if (! $this->analisisLengkap($agencyCode)) {
-            return back()->withErrors([
-                'laporan' => 'Borang Input Analisis Inventori Kriptografi perlu Lengkap sebelum laporan boleh dihantar.',
-            ]);
-        }
-
-        // Laporan dicipta pada penghantaran pertama; penghantaran semula
-        // selepas dikembalikan menggunakan rekod yang sama.
-        $laporan = $this->semakan->mulakan($entiti);
-
-        try {
-            $this->semakan->hantarKepadaPPA($laporan, $request->user());
-        } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withErrors(['laporan' => $e->getMessage()]);
-        }
-
-        return back()->with('success', sprintf(
-            'Laporan bagi %s telah dihantar kepada Pegawai Penyelaras Analisis.',
-            $entiti['agency_code'],
-        ));
-    }
-
-    /**
-     * "Hantar" oleh PPA — laporan diserahkan kepada Ketua Bahagian.
-     */
-    public function semak(Request $request, string $agencyCode)
-    {
-        Gate::authorize('review-report');
-
-        $entiti = $this->entitiAtauGagal($agencyCode);
-        $laporan = $this->laporanAtauGagal($agencyCode);
-
-        try {
-            $this->semakan->hantarKepadaKB($laporan, $request->user());
-        } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withErrors(['laporan' => $e->getMessage()]);
-        }
-
-        return back()->with('success', sprintf(
-            'Laporan bagi %s telah dihantar kepada Ketua Bahagian.',
-            $entiti['agency_code'],
-        ));
-    }
-
-    /**
-     * "Kembalikan" oleh PPA atau Ketua Bahagian — Catatan wajib.
-     */
-    public function kembalikan(Request $request, string $agencyCode)
-    {
-        $entiti = $this->entitiAtauGagal($agencyCode);
-        $laporan = $this->laporanAtauGagal($agencyCode);
-
-        // Siapa yang boleh mengembalikan bergantung kepada di tangan siapa
-        // laporan itu berada sekarang.
-        Gate::authorize(
-            $laporan->status === LaporanSemakan::MENUNGGU_KB ? 'approve-report' : 'review-report'
+        $data = $request->validate(
+            $this->peraturanMedan($stage),
+            [],
+            $this->namaMedan($stage),
         );
 
-        $data = $request->validate([
-            'catatan' => ['required', 'string', 'max:2000'],
-        ], [
-            'catatan.required' => 'Catatan wajib diisi sebelum laporan boleh dikembalikan.',
-        ], [
-            'catatan' => 'catatan',
-        ]);
-
         try {
-            $this->semakan->kembalikan($laporan, $request->user(), $data['catatan']);
+            $this->kemajuan->simpanData($agencyCode, $stage, $data, $request->user());
         } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withInput()->withErrors(['catatan' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['stage' => $e->getMessage()]);
         }
 
         return back()->with('success', sprintf(
-            'Laporan bagi %s telah dikembalikan kepada Pegawai Analisis.',
+            'Maklumat peringkat %s bagi %s telah disimpan.',
+            AliranKerja::labelPenuh($stage),
             $entiti['agency_code'],
         ));
     }
 
     /**
-     * "Sahkan" oleh Ketua Bahagian — peringkat 5 dan 6 menjadi Selesai.
+     * Tandakan satu peringkat Selesai.
      *
-     * Catatan di sini adalah PILIHAN, tidak seperti "Kembalikan". Ia
-     * direkodkan pada jejak entiti sahaja dan tidak muncul dalam laporan.
+     * Data tangkapan yang dihantar bersama borang disimpan dahulu, supaya
+     * pegawai tidak perlu menekan "Simpan" kemudian "Selesai" secara
+     * berasingan untuk maklumat yang sama.
      */
-    public function sahkan(Request $request, string $agencyCode)
+    public function selesai(Request $request, string $agencyCode, string $stage)
     {
-        Gate::authorize('approve-report');
+        $entiti = $this->peringkatAtauGagal($agencyCode, $stage);
 
-        $entiti = $this->entitiAtauGagal($agencyCode);
-        $laporan = $this->laporanAtauGagal($agencyCode);
+        $this->benarkanPeringkat($stage);
+
+        $data = $request->validate(
+            $this->peraturanMedan($stage),
+            [],
+            $this->namaMedan($stage),
+        );
+
+        try {
+            if ($data !== []) {
+                $this->kemajuan->simpanData($agencyCode, $stage, $data, $request->user());
+            }
+
+            $this->kemajuan->tandakanSelesai($agencyCode, $stage, $request->user());
+        } catch (InvalidWorkflowTransitionException $e) {
+            return back()->withInput()->withErrors(['stage' => $e->getMessage()]);
+        }
+
+        return back()->with('success', sprintf(
+            'Peringkat %s bagi %s ditandakan Selesai.',
+            AliranKerja::labelPenuh($stage),
+            $entiti['agency_code'],
+        ));
+    }
+
+    /**
+     * Masukkan No. Rujukan peringkat.
+     *
+     * Pemiliknya berbeza mengikut peringkat, jadi gate diambil daripada
+     * takrifan aliran kerja dan bukan ditulis tetap di sini:
+     *
+     *   1.1–1.3  No. Rujukan Borang    Pegawai Penyelaras Rekod
+     *   3.1      No. Rujukan Laporan   pegawai peringkat itu (PA)
+     *
+     * Tiada semakan status peringkat di sini dengan sengaja: nombor rujukan
+     * boleh direkodkan sepanjang peringkat itu berjalan, bukan hanya selepas
+     * ia ditandakan Selesai.
+     */
+    public function rujukan(Request $request, string $agencyCode, string $stage)
+    {
+        $entiti = $this->peringkatAtauGagal($agencyCode, $stage);
+
+        $gate = AliranKerja::gateRujukan($stage);
+
+        abort_if($gate === null, 404);
+
+        Gate::authorize($gate);
 
         $data = $request->validate([
-            'catatan' => ['nullable', 'string', 'max:2000'],
+            'no_rujukan' => ['nullable', 'string', 'max:255'],
         ], [], [
-            'catatan' => 'catatan',
+            'no_rujukan' => AliranKerja::labelRujukan($stage),
         ]);
 
         try {
-            $this->semakan->sahkan($laporan, $request->user(), $data['catatan'] ?? null);
+            $this->kemajuan->simpanRujukan($agencyCode, $stage, $data['no_rujukan'] ?? null, $request->user());
         } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withErrors(['laporan' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['no_rujukan' => $e->getMessage()]);
         }
 
         return back()->with('success', sprintf(
-            'Laporan bagi %s telah disahkan. Jana Laporan dan Semakan & Kelulusan kini Selesai.',
+            '%s bagi %s telah dikemas kini.',
+            AliranKerja::labelRujukan($stage),
             $entiti['agency_code'],
         ));
     }
 
     /**
-     * "Hantar" pada peringkat 7 — penyerahan laporan yang telah disahkan
-     * kepada NACSA, dan penutupan entiti.
+     * Kebenaran melaksanakan peringkat ini, mengikut gate yang dinamakan
+     * oleh takrifan aliran kerja.
      */
-    public function serah(Request $request, string $agencyCode)
+    private function benarkanPeringkat(string $stage): void
     {
-        Gate::authorize('submit-to-nacsa');
+        $gate = AliranKerja::gate($stage);
 
-        $entiti = $this->entitiAtauGagal($agencyCode);
-        $laporan = $this->semakan->untuk($agencyCode);
+        // Peringkat fasa akan datang tiada gate kerana ia tiada tindakan.
+        abort_if($gate === null, 404);
 
-        // Hanya laporan yang telah disahkan boleh diserahkan.
-        if ($laporan === null || ! $laporan->isSah()) {
-            return back()->withErrors([
-                'stage' => 'Laporan perlu berstatus Sah sebelum boleh diserahkan kepada NACSA.',
-            ]);
-        }
-
-        try {
-            $this->kemajuan->tandakanSelesai(
-                $agencyCode,
-                WorkflowStatus::STAGE_PENYERAHAN,
-                $request->user(),
-            );
-
-            $this->semakan->rekodPenyerahan($laporan, $request->user());
-        } catch (InvalidWorkflowTransitionException $e) {
-            return back()->withErrors(['stage' => $e->getMessage()]);
-        }
-
-        return back()->with('success', sprintf(
-            'Laporan bagi %s telah diserahkan kepada NACSA. Kemajuan Analisis Entiti kini %s.',
-            $entiti['agency_code'],
-            $this->kemajuan->keseluruhan($agencyCode),
-        ));
+        Gate::authorize($gate);
     }
 
     /**
-     * Adakah Borang Input Analisis Inventori Kriptografi telah disimpan
-     * sebagai Lengkap?
+     * Peraturan pengesahan bagi medan peringkat ini.
      *
-     * Draf sengaja tidak dikira — itulah beza antara "Simpan Draf" dan
-     * "Simpan Dapatan" (aliran kerja bahagian 7).
+     * Hanya medan yang ditakrifkan bagi peringkat berkenaan diterima; borang
+     * tidak boleh menulis medan peringkat lain walaupun ia dihantar.
+     *
+     * `status_borang` tiada senarai nilai: perbendaharaannya belum
+     * ditetapkan, jadi tiada nilai direka di sini.
+     *
+     * @return array<string, array<int, mixed>>
      */
-    private function analisisLengkap(string $agencyCode): bool
+    private function peraturanMedan(string $stage): array
     {
-        return AnalisisInventori::query()
-            ->where('agency_code', $agencyCode)
-            ->where('selesai', true)
-            ->exists();
+        $peraturan = [];
+
+        foreach (array_keys(AliranKerja::medan($stage)) as $medan) {
+            $peraturan[$medan] = in_array($medan, AliranKerja::MEDAN_TARIKH, true)
+                ? ['nullable', 'date']
+                : ['nullable', 'string', 'max:255'];
+        }
+
+        // Tarikh Tamat tidak boleh mendahului Tarikh Mula — satu-satunya
+        // peraturan silang medan, dan ia datang daripada makna medan itu
+        // sendiri, bukan daripada proses perniagaan yang belum ditetapkan.
+        if (isset($peraturan[AliranKerja::MEDAN_TARIKH_TAMAT], $peraturan[AliranKerja::MEDAN_TARIKH_MULA])) {
+            $peraturan[AliranKerja::MEDAN_TARIKH_TAMAT][] = 'after_or_equal:'.AliranKerja::MEDAN_TARIKH_MULA;
+        }
+
+        return $peraturan;
     }
 
     /**
+     * Label medan untuk mesej ralat — diambil daripada takrifan aliran kerja
+     * supaya borang dan mesej ralat menggunakan perkataan yang sama.
+     *
      * @return array<string, string>
      */
-    private function entitiAtauGagal(string $agencyCode): array
+    private function namaMedan(string $stage): array
     {
+        return AliranKerja::medan($stage);
+    }
+
+    /**
+     * Entiti mesti wujud dan peringkat mesti sah sebelum apa-apa dilakukan.
+     *
+     * @return array<string, string>
+     */
+    private function peringkatAtauGagal(string $agencyCode, string $stage): array
+    {
+        abort_unless(AliranKerja::wujud($stage), 404, 'Peringkat aliran kerja tidak dikenali.');
+
+        // Peringkat fasa akan datang tidak menerima sebarang permintaan.
+        abort_if(AliranKerja::adalahAkanDatang($stage), 404, sprintf(
+            'Peringkat %s belum dibina.',
+            AliranKerja::labelPenuh($stage),
+        ));
+
         $entiti = SektorDirectory::cariEntiti($agencyCode);
 
         abort_if($entiti === null, 404, 'Entiti tidak ditemui dalam senarai induk sektor.');
 
         return $entiti;
-    }
-
-    private function laporanAtauGagal(string $agencyCode): LaporanSemakan
-    {
-        $laporan = $this->semakan->untuk($agencyCode);
-
-        abort_if($laporan === null, 404, 'Laporan bagi entiti ini belum dijana.');
-
-        return $laporan;
     }
 }

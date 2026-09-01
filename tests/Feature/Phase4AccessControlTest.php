@@ -85,7 +85,7 @@ class Phase4AccessControlTest extends TestCase
 
         // Baris peringkat: tanpa peringkat 01 Selesai entiti tidak dikira
         // berada dalam aliran kerja, jadi ia tidak akan tersenarai langsung.
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran($entiti, $this->coordinator);
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan($entiti, $this->coordinator);
 
         return AnalisisInventori::factory()->create($entiti + [
             'user_id' => $this->analystA->id,

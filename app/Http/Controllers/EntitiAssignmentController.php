@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Exceptions\InvalidAssignmentException;
 use App\Models\EntitiAssignment;
 use App\Models\User;
-use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
+use App\Support\AliranKerja;
 use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
@@ -59,7 +59,7 @@ class EntitiAssignmentController extends Controller
             'entiti' => $bolehTugas ? $this->senaraiPenugasan($request, $sectorCode) : null,
             'analysts' => $bolehTugas ? $this->assignments->analystsAvailable() : collect(),
             'jumlahAktif' => $bolehTugas ? EntitiAssignment::query()->active()->count() : 0,
-            'jumlahDidaftar' => count($this->kemajuan->kodPendaftaranSelesai()),
+            'jumlahDidaftar' => count($this->kemajuan->kodPenerimaanSelesai()),
         ]);
     }
 
@@ -75,7 +75,7 @@ class EntitiAssignmentController extends Controller
     {
         $entiti = $sectorCode !== null
             ? SektorDirectory::entitiDalamSektor($sectorCode)
-            : collect($this->kemajuan->kodPendaftaranSelesai())
+            : collect($this->kemajuan->kodPenerimaanSelesai())
                 ->map(fn (string $kod) => SektorDirectory::cariEntiti($kod))
                 ->filter()
                 ->values();
@@ -87,7 +87,7 @@ class EntitiAssignmentController extends Controller
                 $rekod = $peringkat->get($e['agency_code']);
 
                 return $e + [
-                    'pendaftaran' => $rekod?->get(WorkflowStatus::STAGE_PENDAFTARAN),
+                    'pendaftaran' => $rekod?->get(AliranKerja::PENERIMAAN_DATA),
                     'keseluruhan' => $this->kemajuan->keseluruhanDaripada($rekod),
                 ];
             })
@@ -107,7 +107,7 @@ class EntitiAssignmentController extends Controller
      */
     private function senaraiPenugasan(Request $request, ?string $sectorCode): LengthAwarePaginator
     {
-        $entiti = collect($this->kemajuan->kodPendaftaranSelesai())
+        $entiti = collect($this->kemajuan->kodPenerimaanSelesai())
             ->map(fn (string $kod) => SektorDirectory::cariEntiti($kod))
             ->filter()
             ->when($sectorCode !== null, fn (Collection $e) => $e->where('sector_code', $sectorCode))
@@ -161,10 +161,10 @@ class EntitiAssignmentController extends Controller
         // Entiti hanya tersedia kepada PPA selepas "Penerimaan & Pendaftaran
         // Data" Selesai. Senarai sudah menapisnya; semakan ini menutup
         // laluan permintaan langsung.
-        if (! $this->kemajuan->pendaftaranSelesai($agencyCode)) {
+        if (! $this->kemajuan->penerimaanSelesai($agencyCode)) {
             return back()->withErrors([
                 'assigned_to_user_id' => sprintf(
-                    '%s belum menyelesaikan Penerimaan & Pendaftaran Data, jadi ia belum boleh ditugaskan.',
+                    '%s belum menyelesaikan peringkat 1.1 Penerimaan Data, jadi ia belum boleh ditugaskan.',
                     $entiti['agency_code'],
                 ),
             ]);

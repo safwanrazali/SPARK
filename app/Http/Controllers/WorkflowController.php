@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 /**
- * FASA 2 — pemantauan kedudukan setiap entiti dalam 7 peringkat workflow.
+ * Pemantauan kedudukan setiap entiti dalam aliran kerja lima peringkat.
  *
  * FASA 4 — setiap senarai ditapis melalui accessibleBy() dan setiap route
  * bagi satu entiti dilindungi middleware `entity.access`. Pegawai Analisis
@@ -76,7 +76,7 @@ class WorkflowController extends Controller
         // ditandakan "Belum Didaftarkan" pada paparan.
         if ($sectorCode === null) {
             $entiti = $entiti
-                ->filter(fn (array $e) => $this->kemajuan->didaftarkanDaripada($peringkat->get($e['agency_code'])))
+                ->filter(fn (array $e) => $this->kemajuan->dalamAliranKerja($peringkat->get($e['agency_code'])))
                 ->values();
         }
 
@@ -107,10 +107,10 @@ class WorkflowController extends Controller
         return view('workflow.index', [
             'entiti' => Halaman::daripada($request, $senarai),
             'sectorCode' => $sectorCode,
-            // Dikira daripada peringkat 1, bukan daripada bilangan baris
+            // Dikira daripada peringkat 1.1, bukan daripada bilangan baris
             // workflow_status: baris itu kekal selepas entiti ditetapkan
             // semula, jadi ia akan melaporkan entiti yang tidak lagi berdaftar.
-            'jumlahDidaftar' => count($this->kemajuan->kodPendaftaranSelesai($pengguna)),
+            'jumlahDidaftar' => count($this->kemajuan->kodPenerimaanSelesai($pengguna)),
             'sektor' => $this->access->sektorFor($pengguna),
         ]);
     }

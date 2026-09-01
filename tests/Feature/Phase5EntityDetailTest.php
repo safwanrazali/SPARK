@@ -7,11 +7,12 @@ use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAssignmentService;
-use App\Services\KemajuanAnalisisService;
 use App\Services\WorkflowTransitionService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Tests\Concerns\MelaluiAliranKerja;
 use Tests\TestCase;
 
 /**
@@ -22,7 +23,7 @@ use Tests\TestCase;
  */
 class Phase5EntityDetailTest extends TestCase
 {
-    use RefreshDatabase;
+    use MelaluiAliranKerja, RefreshDatabase;
 
     /** Entiti yang ditugaskan kepada Pegawai A. */
     private const ALPHA = 'A010101';
@@ -69,13 +70,11 @@ class Phase5EntityDetailTest extends TestCase
         $transitions->advance($workflow, $this->coordinator);
         $transitions->advance($workflow, $this->coordinator, 'Dalam Proses');
 
-        // Baris peringkat sebenar: 01 dan 02 Selesai, jadi peringkat semasa
-        // ialah 03 — stepper mempunyai peringkat selesai dan semasa. Ini
-        // dijalankan SELEPAS advance() kerana penyelarasan kedudukan mengira
-        // peringkat semasa daripada baris peringkat, bukan sebaliknya.
-        $kemajuan = app(KemajuanAnalisisService::class);
-        $kemajuan->lengkapkanPendaftaran($entiti, $this->coordinator);
-        $kemajuan->tandakanSelesai($agencyCode, WorkflowStatus::STAGE_SEMAKAN_AWAL, $this->coordinator);
+        // Baris peringkat sebenar: 1.1 hingga 1.3 Selesai, jadi peringkat
+        // semasa ialah 2 — stepper mempunyai peringkat selesai dan semasa.
+        // Ini dijalankan SELEPAS advance() kerana penyelarasan kedudukan
+        // mengira peringkat semasa daripada baris peringkat, bukan sebaliknya.
+        $this->lengkapkanHingga($agencyCode, AliranKerja::PENYEDIAAN_DATA, $this->coordinator);
 
         AnalisisInventori::factory()->create($entiti + [
             'user_id' => $this->analystA->id,
@@ -145,7 +144,7 @@ class Phase5EntityDetailTest extends TestCase
             ->assertSee('20/08/2026 14:30');
     }
 
-    public function test_halaman_memaparkan_stepper_workflow_tujuh_peringkat(): void
+    public function test_halaman_memaparkan_stepper_lima_peringkat_utama(): void
     {
         $this->buatRekodLengkap();
 
@@ -157,10 +156,14 @@ class Phase5EntityDetailTest extends TestCase
             $response->assertSee($nama);
         }
 
-        // Peringkat 3 daripada 7 — ada peringkat selesai dan peringkat semasa.
-        $response->assertSee('workflow-step--selesai', false)
+        // Sub-peringkat dipaparkan DI DALAM kumpulan peringkat utamanya.
+        $response->assertSee('workflow-utama', false)
+            ->assertSee('workflow-step--selesai', false)
             ->assertSee('workflow-step--semasa', false)
-            ->assertSee('Peringkat 3 daripada 7');
+            // Peringkat fasa akan datang ditandakan, bukan disembunyikan.
+            ->assertSee('workflow-step--akan-datang', false)
+            // 1.1, 1.2 dan 1.3 Selesai daripada lima peringkat fasa semasa.
+            ->assertSee('3 daripada 5 peringkat fasa semasa');
     }
 
     public function test_halaman_memaparkan_status_ketiga_tiga_laporan(): void

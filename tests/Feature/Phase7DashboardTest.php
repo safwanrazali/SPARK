@@ -12,6 +12,7 @@ use App\Services\DashboardStatistikService;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -123,15 +124,18 @@ class Phase7DashboardTest extends TestCase
      */
     private function daftarkan(string $agencyCode): void
     {
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti($agencyCode),
             $this->coordinator,
         );
     }
 
     /**
-     * Daftarkan entiti dan tandakan KESEMUA tujuh peringkat Selesai —
+     * Daftarkan entiti dan tandakan KESEMUA peringkat fasa semasa Selesai —
      * satu-satunya cara entiti benar-benar menjadi 'Siap'.
+     *
+     * Peringkat 3.2, 4 dan 5 sengaja tidak disentuh: ia belum dibina, jadi
+     * menuntutnya akan menjadikan 'Siap' mustahil dicapai.
      */
     private function siapkanSemuaPeringkat(string $agencyCode): void
     {
@@ -139,7 +143,25 @@ class Phase7DashboardTest extends TestCase
 
         $this->daftarkan($agencyCode);
 
-        foreach (array_keys(WorkflowStatus::WORKFLOW_STAGES) as $stage) {
+        foreach (AliranKerja::semasa() as $stage) {
+            $kemajuan->tandakanSelesai($agencyCode, $stage, $this->coordinator);
+        }
+    }
+
+    /**
+     * Tandakan peringkat fasa semasa Selesai sehingga $hingga (eksklusif).
+     */
+    private function peringkatHingga(string $agencyCode, string $hingga): void
+    {
+        $kemajuan = app(KemajuanAnalisisService::class);
+
+        $this->daftarkan($agencyCode);
+
+        foreach (AliranKerja::semasa() as $stage) {
+            if ($stage === $hingga) {
+                return;
+            }
+
             $kemajuan->tandakanSelesai($agencyCode, $stage, $this->coordinator);
         }
     }
@@ -265,7 +287,7 @@ class Phase7DashboardTest extends TestCase
         $kemajuan = app(KemajuanAnalisisService::class);
 
         foreach ([self::ALPHA, self::BETA, self::GAMMA] as $kod) {
-            $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr);
             $this->serahkanKepadaNacsa($kod);
         }
 
@@ -302,7 +324,7 @@ class Phase7DashboardTest extends TestCase
         $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
 
         app(KemajuanAnalisisService::class)
-            ->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $ppr);
+            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $ppr);
 
         // Dipantau melalui status laporan sahaja — tiada baris peringkat.
         $this->statusLaporan(self::BETA, 'inventori', 'Dalam Proses');
@@ -464,18 +486,24 @@ class Phase7DashboardTest extends TestCase
 
     public function test_kemajuan_keseluruhan_dikira_daripada_peringkat_dicapai(): void
     {
-        // Peringkat 7 + 7 = 14 daripada maksimum 2 × 7 = 14 → 100%.
-        $this->workflowSiap(self::ALPHA);
-        $this->workflowSiap(self::BETA);
+        // 5 + 5 peringkat fasa semasa Selesai daripada maksimum 2 × 5 → 100%.
+        $this->siapkanSemuaPeringkat(self::ALPHA);
+        $this->siapkanSemuaPeringkat(self::BETA);
 
         $this->assertSame(100, $this->kira()['kemajuan']);
     }
 
     public function test_kemajuan_keseluruhan_separa(): void
     {
-        // Peringkat 1 + 6 = 7 daripada 2 × 7 = 14 → 50%.
-        $this->workflow(self::ALPHA, 1);
-        $this->workflow(self::BETA, 6);
+        // Kemajuan dikira daripada PERINGKAT yang Selesai, bukan daripada
+        // nombor peringkat utama semasa: dengan sub-peringkat, satu nombor
+        // peringkat tidak lagi memberitahu berapa banyak kerja telah siap.
+        //
+        // ALPHA: 1.1 sahaja                          = 1
+        // BETA : 1.1, 1.2, 1.3, 2                    = 4
+        // Jumlah 5 daripada maksimum 2 × 5 = 10      → 50%.
+        $this->daftarkan(self::ALPHA);
+        $this->peringkatHingga(self::BETA, AliranKerja::ANALISIS_INVENTORI);
 
         $this->assertSame(50, $this->kira()['kemajuan']);
     }
@@ -493,7 +521,7 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(3, $this->jumlahSenaraiInduk('010'));
 
         foreach (['K100100', 'A100101'] as $kod) {
-            $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr);
         }
 
         $statistik = $this->kira('010');
@@ -512,7 +540,7 @@ class Phase7DashboardTest extends TestCase
         $kemajuan = app(KemajuanAnalisisService::class);
 
         foreach (['K100100', 'A100101'] as $kod) {
-            $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti($kod), $ppr);
+            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr);
         }
 
         $this->assertSame(2, $this->kira('010')['pendaftaranSelesai']);
@@ -534,8 +562,8 @@ class Phase7DashboardTest extends TestCase
     public function test_kiraan_laporan_hanya_merangkumi_yang_diserahkan_kepada_nacsa(): void
     {
         $kemajuan = app(KemajuanAnalisisService::class);
-        $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
-        $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::BETA), $this->coordinator);
+        $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+        $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::BETA), $this->coordinator);
 
         // BETA: laporan disahkan KB tetapi BELUM diserahkan. Rekod dapatan
         // analisisnya juga wujud — kedua-duanya tetap tidak dikira.
@@ -565,7 +593,7 @@ class Phase7DashboardTest extends TestCase
     public function test_kiraan_laporan_diasingkan_mengikut_jenis(): void
     {
         app(KemajuanAnalisisService::class)
-            ->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
 
         $this->serahkanKepadaNacsa(self::ALPHA, 'inventori');
         $this->serahkanKepadaNacsa(self::ALPHA, 'risiko');
@@ -582,7 +610,7 @@ class Phase7DashboardTest extends TestCase
     public function test_penyerahan_berulang_dikira_sekali_sahaja(): void
     {
         app(KemajuanAnalisisService::class)
-            ->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
 
         $laporan = $this->serahkanKepadaNacsa(self::ALPHA);
         app(LaporanSemakanService::class)->rekodPenyerahan($laporan, $this->coordinator);
@@ -815,8 +843,8 @@ class Phase7DashboardTest extends TestCase
 
     public function test_papan_pemuka_memaparkan_nilai_dikira_bukan_nilai_tetap(): void
     {
-        $this->workflowSiap(self::ALPHA);
-        $this->workflowSiap(self::BETA);
+        $this->siapkanSemuaPeringkat(self::ALPHA);
+        $this->siapkanSemuaPeringkat(self::BETA);
 
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
@@ -825,14 +853,15 @@ class Phase7DashboardTest extends TestCase
             ->assertViewHas('selesai', 2)
             ->assertViewHas('kemajuan', 100);
 
-        // Rekod ketiga pada peringkat awal menurunkan kemajuan secara automatik.
-        $this->workflow(self::GAMMA, 0 + 1);
+        // Entiti ketiga yang baru memasuki aliran menurunkan kemajuan
+        // secara automatik: (5 + 5 + 1) / (3 × 5) = 73%.
+        $this->daftarkan(self::GAMMA);
 
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertViewHas('jumlahDipantau', 3)
-            ->assertViewHas('kemajuan', 71); // (7+7+1)/21
+            ->assertViewHas('kemajuan', 73);
     }
 
     public function test_aktiviti_terkini_dipaparkan_daripada_log(): void

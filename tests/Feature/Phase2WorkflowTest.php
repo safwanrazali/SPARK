@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\WorkflowTransitionService;
+use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -48,24 +49,22 @@ class Phase2WorkflowTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | Definisi 7 peringkat
+    | Definisi 5 peringkat utama
     |--------------------------------------------------------------------------
     */
 
-    public function test_tujuh_peringkat_workflow_ditakrifkan_mengikut_spesifikasi(): void
+    public function test_lima_peringkat_utama_ditakrifkan_mengikut_spesifikasi(): void
     {
         $this->assertSame([
-            1 => 'Penerimaan & Pendaftaran Data',
-            2 => 'Semakan Awal Data',
-            3 => 'Penyediaan & Pengesahan Data',
-            4 => 'Analisis Data',
-            5 => 'Jana Laporan',
-            6 => 'Semakan & Kelulusan',
-            7 => 'Penyerahan & Penutupan',
+            1 => 'Penerimaan & Semakan Awal Data',
+            2 => 'Penyediaan & Pengesahan Data',
+            3 => 'Analisis Data',
+            4 => 'Penjanaan Laporan',
+            5 => 'Semakan, Kelulusan & Penyerahan Laporan',
         ], WorkflowStatus::WORKFLOW_STAGES);
 
         $this->assertSame(1, WorkflowStatus::FIRST_STAGE);
-        $this->assertSame(7, WorkflowStatus::LAST_STAGE);
+        $this->assertSame(5, WorkflowStatus::LAST_STAGE);
     }
 
     public function test_entiti_didaftarkan_bermula_pada_peringkat_satu(): void
@@ -74,10 +73,12 @@ class Phase2WorkflowTest extends TestCase
 
         $workflow = $this->service->initialize($entiti, $this->coordinator);
 
+        // Kedudukan bermula pada peringkat utama 1, sub-peringkat 1.1.
         $this->assertDatabaseHas('workflow_status', [
             'agency_code' => 'A010101',
             'current_stage' => 1,
-            'stage_name' => 'Penerimaan & Pendaftaran Data',
+            'current_stage_key' => AliranKerja::PENERIMAAN_DATA,
+            'stage_name' => 'Penerimaan & Semakan Awal Data',
             'status' => 'Belum Bermula',
             'updated_by_user_id' => $this->coordinator->id,
         ]);
@@ -99,7 +100,7 @@ class Phase2WorkflowTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | Peralihan sah: 1→2, 2→3, 3→4, 4→5, 5→6, 6→7
+    | Peralihan sah antara peringkat UTAMA: 1→2, 2→3, 3→4, 4→5
     |--------------------------------------------------------------------------
     */
 
@@ -131,16 +132,14 @@ class Phase2WorkflowTest extends TestCase
             'peringkat 2 ke 3' => [2, 3],
             'peringkat 3 ke 4' => [3, 4],
             'peringkat 4 ke 5' => [4, 5],
-            'peringkat 5 ke 6' => [5, 6],
-            'peringkat 6 ke 7' => [6, 7],
         ];
     }
 
-    public function test_entiti_boleh_melalui_kesemua_tujuh_peringkat_secara_berturutan(): void
+    public function test_entiti_boleh_melalui_kesemua_peringkat_utama_secara_berturutan(): void
     {
         $workflow = $this->workflowPada(1);
 
-        for ($peringkat = 2; $peringkat <= 7; $peringkat++) {
+        for ($peringkat = 2; $peringkat <= WorkflowStatus::LAST_STAGE; $peringkat++) {
             $this->service->advance($workflow, $this->coordinator);
 
             $this->assertSame($peringkat, $workflow->current_stage);
@@ -149,8 +148,8 @@ class Phase2WorkflowTest extends TestCase
         $this->assertTrue($workflow->isComplete());
         $this->assertSame(100, $workflow->progressPercentage());
 
-        // Satu rekod bagi setiap peralihan 1→2 … 6→7.
-        $this->assertSame(6, ActivityLog::where('agency_code', 'A010101')
+        // Satu rekod bagi setiap peralihan 1→2 … 4→5.
+        $this->assertSame(4, ActivityLog::where('agency_code', 'A010101')
             ->where('action', WorkflowTransitionService::ACTION_STAGE_CHANGED)
             ->count());
     }
@@ -195,7 +194,7 @@ class Phase2WorkflowTest extends TestCase
         $workflow = $this->workflowPada(2);
 
         try {
-            $this->service->transitionTo($workflow, 6, $this->coordinator);
+            $this->service->transitionTo($workflow, 5, $this->coordinator);
         } catch (InvalidWorkflowTransitionException) {
             // dijangka
         }
@@ -360,7 +359,7 @@ class Phase2WorkflowTest extends TestCase
 
         $this->assertSame('2026-08-18 16:45:00', $dariDatabase->status_since->format('Y-m-d H:i:s'));
         $this->assertSame(2, $dariDatabase->current_stage);
-        $this->assertSame('Semakan Awal Data', $dariDatabase->stage_name);
+        $this->assertSame('Penyediaan & Pengesahan Data', $dariDatabase->stage_name);
         $this->assertSame($this->coordinator->id, $dariDatabase->updated_by_user_id);
     }
 
@@ -398,8 +397,8 @@ class Phase2WorkflowTest extends TestCase
         $this->assertSame('2', $log->new_value);
         $this->assertSame($this->coordinator->id, $log->changed_by_user_id);
         $this->assertSame('2026-08-20 14:30:00', $log->changed_at->format('Y-m-d H:i:s'));
-        $this->assertSame('Penerimaan & Pendaftaran Data', $log->metadata['from_stage_name']);
-        $this->assertSame('Semakan Awal Data', $log->metadata['to_stage_name']);
+        $this->assertSame('Penerimaan & Semakan Awal Data', $log->metadata['from_stage_name']);
+        $this->assertSame('Penyediaan & Pengesahan Data', $log->metadata['to_stage_name']);
         $this->assertSame('forward', $log->metadata['direction']);
         $this->assertSame('Peringkat Workflow Berubah', $log->getActionLabel());
 

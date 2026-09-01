@@ -63,7 +63,7 @@
                                  ini soalan LIPUTAN.
         - Dalam Proses/Selesai : entiti yang telah selesai pendaftaran —
                                  ini soalan KEMAJUAN, dan entiti yang belum
-                                 melepasi peringkat 01 belum boleh bergerak.
+                                 melepasi peringkat 1.1 belum boleh bergerak.
 
         Penyebut sifar memberi 0%, bukan NaN.
     --}}
@@ -87,7 +87,7 @@
             <div class="metric-card__bar is-cyan"></div>
         </div>
 
-        {{-- Peringkat 01 aliran kerja — pintu masuk kepada semua yang lain. --}}
+        {{-- Peringkat 1.1 aliran kerja — pintu masuk kepada semua yang lain. --}}
         <div class="metric-card">
             <div class="metric-card__label">
                 <span class="metric-card__dot is-cyan"></span>
@@ -99,7 +99,7 @@
             </div>
             <div class="metric-card__nota">
                 {{ $pendaftaranSelesai }} daripada {{ $jumlahEntiti }} entiti ·
-                {{ \App\Models\WorkflowStatus::getStageName(\App\Models\WorkflowStatus::STAGE_PENDAFTARAN) }}
+                {{ \App\Support\AliranKerja::labelPenuh(\App\Support\AliranKerja::PENERIMAAN_DATA) }}
             </div>
             <div class="metric-card__bar is-cyan"></div>
         </div>
@@ -212,7 +212,7 @@
             @else
                 <x-empty-state icon="bi-pie-chart" title="Tiada entiti selesai">
                     Carta ini muncul setelah sekurang-kurangnya satu entiti menamatkan kesemua
-                    tujuh peringkat Kemajuan Analisis dalam skop penapis semasa.
+                    peringkat fasa semasa Kemajuan Analisis dalam skop penapis semasa.
                 </x-empty-state>
             @endif
         </div>

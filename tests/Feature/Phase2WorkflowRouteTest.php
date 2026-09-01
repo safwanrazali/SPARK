@@ -4,11 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\WorkflowStatus;
-use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Services\WorkflowTransitionService;
-use App\Support\SektorDirectory;
+use App\Support\AliranKerja;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\MelaluiAliranKerja;
 use Tests\TestCase;
 
 /**
@@ -16,7 +16,7 @@ use Tests\TestCase;
  */
 class Phase2WorkflowRouteTest extends TestCase
 {
-    use RefreshDatabase;
+    use MelaluiAliranKerja, RefreshDatabase;
 
     private const ENTITI = 'A010101';
 
@@ -35,22 +35,16 @@ class Phase2WorkflowRouteTest extends TestCase
     }
 
     /**
-     * Bawa entiti ke peringkat $stage melalui pendaftaran sebenar.
+     * Bawa entiti sehingga peringkat $kunci (eksklusif) melalui aliran sebenar.
      *
      * Baris `workflow_status` sahaja TIDAK memadai: aplikasi sentiasa
      * mencipta baris peringkat serentak dengannya (lihat
-     * KemajuanAnalisisService::sediakan), dan senarai menguji peringkat 01
+     * KemajuanAnalisisService::sediakan), dan senarai menguji peringkat 1.1
      * Selesai untuk memutuskan sama ada entiti berada dalam aliran kerja.
      */
-    private function workflowPada(int $stage): WorkflowStatus
+    private function workflowPada(string $kunci): WorkflowStatus
     {
-        $kemajuan = app(KemajuanAnalisisService::class);
-
-        $kemajuan->lengkapkanPendaftaran(SektorDirectory::cariEntiti(self::ENTITI), $this->coordinator());
-
-        for ($peringkat = WorkflowStatus::FIRST_STAGE + 1; $peringkat < $stage; $peringkat++) {
-            $kemajuan->tandakanSelesai(self::ENTITI, $peringkat);
-        }
+        $this->lengkapkanHingga(self::ENTITI, $kunci, $this->coordinator());
 
         return WorkflowStatus::where('agency_code', self::ENTITI)->firstOrFail();
     }
@@ -69,7 +63,7 @@ class Phase2WorkflowRouteTest extends TestCase
 
     public function test_senarai_workflow_dipaparkan(): void
     {
-        $this->workflowPada(3);
+        $this->workflowPada(AliranKerja::PENYEDIAAN_DATA);
 
         $this->actingAs($this->coordinator())
             ->get(route('workflow.index'))
@@ -84,7 +78,7 @@ class Phase2WorkflowRouteTest extends TestCase
      */
     public function test_ppr_tidak_melihat_lajur_tindakan(): void
     {
-        $this->workflowPada(3);
+        $this->workflowPada(AliranKerja::PENYEDIAAN_DATA);
 
         $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
 
@@ -107,7 +101,7 @@ class Phase2WorkflowRouteTest extends TestCase
     {
         // Entiti sektor 001 mempunyai rekod workflow; penapis sektor 010
         // hendaklah memaparkan entiti sektor tersebut sahaja.
-        $this->workflowPada(3);
+        $this->workflowPada(AliranKerja::PENYEDIAAN_DATA);
 
         $response = $this->actingAs($this->coordinator())
             ->get(route('workflow.index', ['sector_code' => '010']));
@@ -119,9 +113,9 @@ class Phase2WorkflowRouteTest extends TestCase
             ->assertDontSee('A010101');
     }
 
-    public function test_halaman_entiti_memaparkan_stepper_tujuh_peringkat(): void
+    public function test_halaman_entiti_memaparkan_stepper_lima_peringkat_utama(): void
     {
-        $this->workflowPada(2);
+        $this->workflowPada(AliranKerja::SEMAKAN_AWAL_DATA);
 
         $response = $this->actingAs($this->coordinator())
             ->get(route('workflow.show', self::ENTITI));
@@ -132,19 +126,26 @@ class Phase2WorkflowRouteTest extends TestCase
             $response->assertSee($nama);
         }
 
+        // Sub-peringkat berada DI DALAM kumpulan peringkat utamanya.
+        $response->assertSee('workflow-utama', false);
         $response->assertSee('workflow-step--semasa', false);
         $response->assertSee('workflow-step--selesai', false);
+
+        foreach (AliranKerja::kekunci() as $kunci) {
+            $response->assertSee(AliranKerja::label($kunci));
+        }
     }
 
     public function test_entiti_belum_didaftar_menerangkan_langkah_seterusnya(): void
     {
         // Tiada butang pendaftaran manual lagi: halaman ini kini menerangkan
-        // bahawa Pegawai Penyelaras Rekod perlu menandakannya pada skrin
-        // Penetapan Entiti.
+        // bahawa peringkat 1.1 Penerimaan Data perlu ditandakan pada skrin
+        // Penetapan Entiti terlebih dahulu.
         $this->actingAs($this->coordinator())
             ->get(route('workflow.show', self::ENTITI))
             ->assertOk()
-            ->assertSee('belum didaftarkan dalam workflow', false)
+            ->assertSee('Belum Memasuki Aliran Kerja')
+            ->assertSee('1.1 Penerimaan Data')
             ->assertSee('Penetapan Entiti')
             ->assertSee('Tiada perubahan peringkat')
             ->assertDontSee('Daftar Dalam Workflow');

@@ -123,7 +123,7 @@ class Phase1DatabaseFoundationTest extends TestCase
         ]);
 
         $this->assertEquals(2, $workflow->current_stage);
-        $this->assertEquals('Semakan Awal Data', $workflow->stage_name);
+        $this->assertEquals('Penyediaan & Pengesahan Data', $workflow->stage_name);
     }
 
     public function test_workflow_completion_check(): void
@@ -133,8 +133,8 @@ class Phase1DatabaseFoundationTest extends TestCase
             'agency_name' => 'SPR',
             'sector_code' => '001',
             'sector_name' => 'Kerajaan',
-            'current_stage' => 7,
-            'stage_name' => WorkflowStatus::WORKFLOW_STAGES[7],
+            'current_stage' => WorkflowStatus::LAST_STAGE,
+            'stage_name' => WorkflowStatus::WORKFLOW_STAGES[WorkflowStatus::LAST_STAGE],
         ]);
 
         $this->assertTrue($workflow->isComplete());

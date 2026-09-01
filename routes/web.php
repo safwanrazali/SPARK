@@ -127,8 +127,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Workflow 7 Peringkat — kedudukan semasa setiap entiti (Fasa 2)
+    | Aliran Kerja 5 Peringkat — kedudukan semasa setiap entiti
     |----------------------------------------------------------------------
+    | Struktur peringkat (termasuk sub-peringkat) ditakrifkan dalam
+    | App\Support\AliranKerja.
     */
     Route::get('/workflow', [WorkflowController::class, 'index'])
         ->name('workflow.index');
@@ -141,26 +143,34 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     |----------------------------------------------------------------------
     | Kemajuan Analisis Entiti — tindakan setiap peringkat
     |----------------------------------------------------------------------
+    | `{stage}` ialah KUNCI peringkat ('1.1', '2', '3.1'), bukan nombor —
+    | corak di bawah membenarkan nombor utama dengan sub-peringkat pilihan,
+    | dan AliranKerja menolak apa-apa yang tidak wujud dalam takrifan.
+    |
     | Kebenaran peranan disemak dalam controller kerana ia berbeza bagi
-    | setiap tindakan; `entity.access` di sini memastikan Pegawai Analisis
+    | setiap peringkat; `entity.access` di sini memastikan Pegawai Analisis
     | tidak boleh menyentuh entiti yang bukan miliknya.
+    |
+    | TIADA route bagi peringkat 4 dan 5 (Penjanaan Laporan; Semakan,
+    | Kelulusan & Penyerahan Laporan). Prosesnya belum ditentukan, jadi
+    | tiada tindakan direka untuknya dalam fasa ini.
     */
     Route::middleware('entity.access')
         ->prefix('workflow/{agencyCode}')
         ->name('kemajuan.')
         ->group(function () {
+            Route::post('/peringkat/{stage}/simpan', [KemajuanAnalisisController::class, 'simpan'])
+                ->where('stage', '[0-9]+(\.[0-9]+)?')
+                ->name('simpan');
+
             Route::post('/peringkat/{stage}/selesai', [KemajuanAnalisisController::class, 'selesai'])
-                ->whereNumber('stage')
+                ->where('stage', '[0-9]+(\.[0-9]+)?')
                 ->name('selesai');
 
-            // Tiada route "jana laporan" berasingan: peringkat 5 bermula
-            // apabila laporan dihantar kepada PPA, dan hanya kelulusan KB
-            // boleh menjadikannya Selesai.
-            Route::post('/hantar', [KemajuanAnalisisController::class, 'hantar'])->name('hantar');
-            Route::post('/semak', [KemajuanAnalisisController::class, 'semak'])->name('semak');
-            Route::post('/kembalikan', [KemajuanAnalisisController::class, 'kembalikan'])->name('kembalikan');
-            Route::post('/sahkan', [KemajuanAnalisisController::class, 'sahkan'])->name('sahkan');
-            Route::post('/serah', [KemajuanAnalisisController::class, 'serah'])->name('serah');
+            // No. Rujukan Borang — milik PPR, bukan pemilik peringkat.
+            Route::post('/peringkat/{stage}/rujukan', [KemajuanAnalisisController::class, 'rujukan'])
+                ->where('stage', '[0-9]+(\.[0-9]+)?')
+                ->name('rujukan');
         });
 
     /*

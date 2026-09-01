@@ -402,12 +402,11 @@ class Phase13ReleaseReadinessTest extends TestCase
             'entiti.show',
             'kata-laluan.simpan',
             'kata-laluan.tukar',
-            'kemajuan.hantar',
-            'kemajuan.kembalikan',
-            'kemajuan.sahkan',
+            // Peringkat 4 dan 5 belum dibina, jadi route kitaran laporan
+            // (hantar/semak/kembalikan/sahkan/serah) sengaja TIADA.
+            'kemajuan.rujukan',
             'kemajuan.selesai',
-            'kemajuan.semak',
-            'kemajuan.serah',
+            'kemajuan.simpan',
             'laporan.index',
             'laporan.inventori',
             'laporan.unduh',

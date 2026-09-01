@@ -3,27 +3,29 @@
 namespace App\Models;
 
 use App\Models\Concerns\FiltersByEntityAccess;
+use App\Support\AliranKerja;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Model untuk melacak peringkat workflow semasa setiap entiti.
+ * Kedudukan SEMASA satu entiti dalam aliran kerja lima peringkat.
  *
- * Setiap entiti melalui 7 peringkat workflow:
- * 1. Penerimaan & Pendaftaran Data
- * 2. Semakan Awal Data
- * 3. Penyediaan & Pengesahan Data
- * 4. Analisis Data
- * 5. Jana Laporan
- * 6. Semakan & Kelulusan
- * 7. Penyerahan & Penutupan
+ * Kedudukan itu ada dua bahagian, kerana peringkat utama boleh mengandungi
+ * sub-peringkat:
  *
- * FASA 2 — model ini turut memegang peraturan peralihan peringkat.
+ *   `current_stage`      nombor peringkat UTAMA (1–5)
+ *   `current_stage_key`  kunci sub-peringkat sebenar ('1.2', '3.1', …)
+ *
+ * Struktur peringkat itu sendiri TIDAK ditakrifkan di sini — ia milik
+ * App\Support\AliranKerja, supaya satu-satunya tempat "berapa peringkat dan
+ * apa namanya" dijawab ialah takrifan itu.
+ *
+ * Model ini turut memegang peraturan peralihan antara peringkat UTAMA.
  * Perubahan sebenar (simpan + rekod audit) dilakukan melalui
- * App\Services\WorkflowTransitionService supaya setiap peralihan
- * sentiasa direkodkan.
+ * App\Services\WorkflowTransitionService supaya setiap peralihan sentiasa
+ * direkodkan.
  */
 class WorkflowStatus extends Model
 {
@@ -37,6 +39,7 @@ class WorkflowStatus extends Model
         'sector_code',
         'sector_name',
         'current_stage',
+        'current_stage_key',
         'stage_name',
         'status',
         'status_since',
@@ -50,40 +53,17 @@ class WorkflowStatus extends Model
     ];
 
     /**
-     * Definisi 7 peringkat workflow.
+     * Lima peringkat utama — dibaca daripada takrifan aliran kerja.
+     *
+     * Dikekalkan sebagai pemalar dengan nama yang sama supaya paparan dan
+     * ujian sedia ada yang mengulanginya tidak perlu tahu dari mana ia
+     * datang; nilainya kini LIMA, bukan tujuh.
      */
-    public const WORKFLOW_STAGES = [
-        1 => 'Penerimaan & Pendaftaran Data',
-        2 => 'Semakan Awal Data',
-        3 => 'Penyediaan & Pengesahan Data',
-        4 => 'Analisis Data',
-        5 => 'Jana Laporan',
-        6 => 'Semakan & Kelulusan',
-        7 => 'Penyerahan & Penutupan',
-    ];
+    public const WORKFLOW_STAGES = AliranKerja::UTAMA;
 
-    /**
-     * Nombor peringkat yang dirujuk secara langsung oleh aliran kerja
-     * Kemajuan Analisis Entiti. Nombor bertaburan dalam kod menjadikan
-     * perubahan susunan peringkat berisiko; namakan sekali di sini.
-     */
-    public const STAGE_PENDAFTARAN = 1;
+    public const FIRST_STAGE = AliranKerja::UTAMA_PERTAMA;
 
-    public const STAGE_SEMAKAN_AWAL = 2;
-
-    public const STAGE_PENYEDIAAN = 3;
-
-    public const STAGE_ANALISIS = 4;
-
-    public const STAGE_JANA_LAPORAN = 5;
-
-    public const STAGE_SEMAKAN_KELULUSAN = 6;
-
-    public const STAGE_PENYERAHAN = 7;
-
-    public const FIRST_STAGE = 1;
-
-    public const LAST_STAGE = 7;
+    public const LAST_STAGE = AliranKerja::UTAMA_TERAKHIR;
 
     /**
      * Status kerja di dalam peringkat semasa.
@@ -105,7 +85,7 @@ class WorkflowStatus extends Model
 
     /**
      * Sejarah peringkat bagi entiti ini — dicatat dalam activity_log
-     * supaya jejak audit (Fasa 8) menggunakan sumber yang sama.
+     * supaya jejak audit menggunakan sumber yang sama.
      */
     public function activityLogs(): HasMany
     {
@@ -128,19 +108,30 @@ class WorkflowStatus extends Model
     }
 
     /**
-     * Dapatkan nama peringkat untuk stage yang diberikan.
+     * Nama peringkat UTAMA yang diberikan.
      */
     public static function getStageName($stage)
     {
-        return self::WORKFLOW_STAGES[$stage] ?? 'Unknown Stage';
+        return AliranKerja::labelUtama((int) $stage);
     }
 
     /**
-     * Adakah nombor peringkat sah (1–7)?
+     * Nama penuh kedudukan semasa, termasuk sub-peringkat jika ada.
+     * Contoh: "1.2 Pendaftaran Data".
+     */
+    public function currentStageLabel(): string
+    {
+        return AliranKerja::wujud($this->current_stage_key)
+            ? AliranKerja::labelPenuh($this->current_stage_key)
+            : sprintf('%d %s', $this->current_stage, self::getStageName($this->current_stage));
+    }
+
+    /**
+     * Adakah nombor peringkat utama sah (1–5)?
      */
     public static function isValidStage($stage): bool
     {
-        return is_numeric($stage) && array_key_exists((int) $stage, self::WORKFLOW_STAGES);
+        return is_numeric($stage) && array_key_exists((int) $stage, AliranKerja::UTAMA);
     }
 
     /**
@@ -152,7 +143,7 @@ class WorkflowStatus extends Model
     }
 
     /**
-     * Dapatkan peringkat seterusnya.
+     * Dapatkan peringkat utama seterusnya.
      */
     public function getNextStage()
     {
@@ -170,13 +161,10 @@ class WorkflowStatus extends Model
     }
 
     /**
-     * Adakah peralihan ke peringkat $stage dibenarkan?
+     * Adakah peralihan ke peringkat utama $stage dibenarkan?
      *
-     * Peraturan (spesifikasi bahagian 12):
-     * - Ke hadapan: hanya satu peringkat pada satu masa (01 → 02 → … → 07).
-     *   Lompatan rawak (cth 1 → 3) tidak dibenarkan.
+     * - Ke hadapan: hanya satu peringkat utama pada satu masa (1 → 2 → … → 5).
      * - Ke belakang: dibenarkan tetapi mesti disertakan sebab dan direkodkan.
-     * - Peringkat mesti berada dalam julat 1–7.
      */
     public function canTransitionTo($stage): bool
     {
@@ -224,7 +212,7 @@ class WorkflowStatus extends Model
     }
 
     /**
-     * Adakah peringkat $stage telah dilalui?
+     * Adakah peringkat utama $stage telah dilalui?
      */
     public function isStageCompleted($stage): bool
     {
@@ -232,7 +220,7 @@ class WorkflowStatus extends Model
     }
 
     /**
-     * Adakah $stage merupakan peringkat semasa?
+     * Adakah $stage merupakan peringkat utama semasa?
      */
     public function isCurrentStage($stage): bool
     {
@@ -267,7 +255,7 @@ class WorkflowStatus extends Model
     }
 
     /**
-     * Scope untuk menyeleksi berdasarkan peringkat.
+     * Scope untuk menyeleksi berdasarkan peringkat utama.
      */
     public function scopeInStage($query, $stage)
     {

@@ -50,7 +50,7 @@ class Phase3AssignmentRouteTest extends TestCase
      */
     private function daftarkan(string $agencyCode = self::ENTITI): void
     {
-        app(KemajuanAnalisisService::class)->lengkapkanPendaftaran(
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti($agencyCode),
             $this->coordinator,
         );
@@ -129,12 +129,21 @@ class Phase3AssignmentRouteTest extends TestCase
             ->assertSee('Pegawai A');
     }
 
-    public function test_entiti_belum_didaftarkan_tidak_dipaparkan_kepada_penyelaras(): void
+    /**
+     * Entiti yang belum menyelesaikan peringkat 1.1 tidak boleh ditugaskan.
+     *
+     * Diuji melalui KETIADAAN pautan penugasannya dan bukan melalui ketiadaan
+     * kod entiti pada halaman: PPA kini turut memiliki peringkat 1.1, jadi
+     * entiti yang sama memang muncul pada panel Penerimaan Data di skrin yang
+     * sama. Yang mesti tiada ialah jalan untuk menugaskannya.
+     */
+    public function test_entiti_belum_didaftarkan_tidak_boleh_ditugaskan(): void
     {
         $this->actingAs($this->coordinator)
             ->get(route('penugasan.index', ['sector_code' => '010']))
             ->assertOk()
-            ->assertDontSee('A100101');
+            ->assertDontSee(route('penugasan.show', 'A100101'), false)
+            ->assertDontSee(route('penugasan.simpan', 'A100101'), false);
     }
 
     public function test_paparan_lalai_menunjukkan_entiti_yang_telah_ditugaskan(): void
