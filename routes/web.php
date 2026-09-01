@@ -191,10 +191,14 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         ->group(function () {
             Route::get('/', [EntitiAssignmentController::class, 'index'])->name('index');
 
-            Route::post('/pendaftaran', [PendaftaranEntitiController::class, 'kemasKini'])
-                ->middleware('can:register-entity-data')
-                ->name('pendaftaran.kemas-kini');
-
+            /*
+            | TIADA laluan menyiapkan peringkat 1.1 buat masa ini.
+            |
+            | Laluan kemas kini pukal (kotak semak) telah dibuang bersama UI-nya:
+            | peringkat 1.1 tidak lagi ditentukan dengan menanda sekumpulan
+            | entiti. Pencetus gantinya belum ditetapkan, jadi tiada laluan
+            | baharu direka di sini sehingga ia diberikan.
+            */
             Route::post('/pendaftaran/{agencyCode}/set-semula', [PendaftaranEntitiController::class, 'setSemula'])
                 ->middleware('can:reset-entity-registration')
                 ->name('pendaftaran.set-semula');

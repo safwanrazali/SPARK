@@ -145,28 +145,21 @@ class RbacMatriksTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_tandakan_penerimaan_data_hanya_kb_dan_ppa(): void
+    /**
+     * Peringkat 1.1 tidak lagi disiapkan melalui kotak semak pukal, dan
+     * pencetus gantinya belum ditetapkan — jadi TIADA laluan menyiapkannya
+     * pada masa ini, bagi mana-mana peranan sekalipun.
+     */
+    public function test_tiada_laluan_menyiapkan_peringkat_satu(): void
     {
-        $pemilik = [User::ROLE_KETUA_BAHAGIAN, User::ROLE_COORDINATOR];
+        $this->assertNull(
+            app('router')->getRoutes()->getByName('penugasan.pendaftaran.kemas-kini'),
+            'Laluan kemas kini pukal sepatutnya telah dibuang.',
+        );
 
-        foreach (User::roles() as $role) {
-            if (in_array($role, $pemilik, true)) {
-                continue;
-            }
-
-            $this->actingAs($this->sebagai($role))
-                ->post(route('penugasan.pendaftaran.kemas-kini'), ['agency_codes' => [self::BETA]])
-                ->assertForbidden();
-        }
-
-        // Enam peranan telah mencuba; peringkat 1.1 kekal belum ditandakan.
+        // Peringkat 1.1 juga tiada laluan peringkat biasa: ia bukan sebahagian
+        // daripada tindakan Kemajuan Analisis Entiti.
         $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::BETA));
-
-        $this->actingAs($this->sebagai(User::ROLE_COORDINATOR))
-            ->post(route('penugasan.pendaftaran.kemas-kini'), ['agency_codes' => [self::BETA]])
-            ->assertSessionHasNoErrors();
-
-        $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::BETA));
     }
 
     /**

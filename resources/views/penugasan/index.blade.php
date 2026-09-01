@@ -12,13 +12,12 @@
         <p class="text-secondary">
             @if ($bolehDaftar && $bolehTugas)
                 Entiti disusun mengikut sektor. Pilih satu sektor untuk memaparkan
-                kesemua entiti di bawahnya dan menandakan peringkat 1.1 Penerimaan Data;
-                entiti yang telah dikunci kekal disenaraikan di bawah untuk ditugaskan
-                kepada Pegawai Analisis.
+                kesemua entiti di bawahnya beserta keadaan peringkat 1.1 Penerimaan
+                Data; entiti yang telah dikunci kekal disenaraikan di bawah untuk
+                ditugaskan kepada Pegawai Analisis.
             @elseif ($bolehDaftar)
                 Entiti disusun mengikut sektor. Pilih satu sektor untuk memaparkan
-                kesemua entiti di bawahnya, kemudian tandakan entiti yang telah
-                menyelesaikan peringkat 1.1 Penerimaan Data.
+                kesemua entiti di bawahnya beserta keadaan peringkat 1.1 Penerimaan Data.
             @else
                 Entiti muncul di sini setelah peringkat 1.1 Penerimaan Data selesai.
                 Setiap entiti hanya boleh mempunyai satu penugasan aktif pada satu masa.
@@ -60,28 +59,15 @@
             <h4 class="section-title">1.1 Penerimaan Data</h4>
             <p class="text-secondary">
                 {{ $jumlahDidaftar }} entiti telah dikunci dan tersedia kepada Pegawai Penyelaras Analisis.
-                Entiti yang telah dikunci tidak boleh diubah lagi di sini.
 
                 @if (!$sectorCode)
                     Senarai di bawah memaparkan entiti yang telah dikunci sahaja —
                     <strong>pilih sektor di atas</strong> untuk memaparkan kesemua entiti
-                    di bawahnya dan menandakan entiti baharu.
+                    di bawahnya.
                 @endif
             </p>
 
             @php
-                // Ketua Bahagian melihat panel ini untuk "Set Semula" sahaja;
-                // hanya PPR (dan Pentadbir) boleh menanda entiti.
-                $bolehTanda = auth()->user()->can('register-entity-data');
-
-                // Tanpa penapis sektor, senarai ini hanya mengandungi entiti
-                // yang telah dikunci — tiada apa yang boleh dikemas kini, jadi
-                // borangnya disembunyikan sepenuhnya. Perkara sama berlaku pada
-                // mana-mana halaman sektor yang kebetulan terkunci semuanya.
-                $adaUntukDitanda = $bolehTanda && $pendaftaran->contains(
-                    fn (array $e) => ! ($e['pendaftaran']?->isSelesai() ?? false)
-                );
-
                 $badgeKeseluruhan = fn (string $keseluruhan): string => match ($keseluruhan) {
                     \App\Services\KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
                     \App\Services\KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
@@ -89,27 +75,26 @@
                 };
             @endphp
 
-            <form action="{{ route('penugasan.pendaftaran.kemas-kini') }}" method="POST">
-                @csrf
+            {{--
+                TIADA tindakan menyiapkan peringkat 1.1 pada panel ini.
 
-                @if ($adaUntukDitanda)
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check2-square"></i> Kemas Kini
-                        </button>
-                        <span class="text-secondary">
-                            Entiti yang ditanda akan bertukar kepada Selesai dan dikunci.
-                        </span>
-                    </div>
-                @endif
+                Kotak semak pukal telah dibuang: menandakan sekumpulan entiti
+                Selesai sekali gus bukan lagi cara peringkat ini ditentukan.
+                Apa yang menggantikannya BELUM DITETAPKAN, jadi panel ini kini
+                memaparkan keadaan sahaja — tiada mekanisme baharu direka di
+                sini sementara menunggu keputusan itu.
 
+                Operasi domainnya kekal utuh dalam
+                KemajuanAnalisisService::lengkapkanPenerimaan(); yang hilang
+                hanyalah pencetusnya.
+            --}}
                 <div class="table-responsive-custom">
                     <table class="table-modern">
                         <thead>
                             <tr>
-                                <th scope="col" class="text-nowrap">Selesai</th>
+                                <th scope="col" class="text-nowrap">Keadaan</th>
                                 <th scope="col">Entiti</th>
-                                <th scope="col">Penerimaan &amp; Pendaftaran Data</th>
+                                <th scope="col">1.1 Penerimaan Data</th>
                                 <th scope="col">Kemajuan Keseluruhan</th>
                                 <th scope="col">Tindakan</th>
                             </tr>
@@ -121,38 +106,20 @@
                                     $dikunci = $daftar?->isSelesai() ?? false;
                                 @endphp
                                 <tr>
-                                    {{--
-                                        Kotak semak hanya milik Pegawai Penyelaras Rekod. Peranan lain
-                                        (contohnya Ketua Bahagian, yang hadir untuk "Set Semula" sahaja)
-                                        melihat ikon keadaan: berkunci atau terbuka.
-                                    --}}
                                     <td>
                                         @if ($dikunci)
                                             <i class="bi bi-lock-fill text-secondary"
-                                                title="Dikunci — Penerimaan &amp; Pendaftaran Data telah selesai"
+                                                title="Dikunci — peringkat 1.1 Penerimaan Data telah Selesai"
                                                 aria-label="{{ $e['agency_code'] }} telah dikunci"></i>
-                                        @elseif ($bolehTanda)
-                                            <input type="checkbox" class="form-check-input"
-                                                name="agency_codes[]" value="{{ $e['agency_code'] }}"
-                                                id="daftar-{{ $e['agency_code'] }}"
-                                                aria-label="Tandakan {{ $e['agency_code'] }} selesai">
                                         @else
                                             <i class="bi bi-unlock text-secondary"
-                                                title="Belum dikunci — menunggu Pegawai Penyelaras Rekod"
+                                                title="Belum dikunci — peringkat 1.1 Penerimaan Data belum Selesai"
                                                 aria-label="{{ $e['agency_code'] }} belum dikunci"></i>
                                         @endif
                                     </td>
                                     <td>
-                                        {{-- Label diikat hanya apabila kotak semaknya benar-benar wujud. --}}
-                                        @if (! $dikunci && $bolehTanda)
-                                            <label class="mb-0" for="daftar-{{ $e['agency_code'] }}">
-                                                <strong>{{ $e['agency_code'] }}</strong><br>
-                                                <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
-                                            </label>
-                                        @else
-                                            <strong>{{ $e['agency_code'] }}</strong><br>
-                                            <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
-                                        @endif
+                                        <strong>{{ $e['agency_code'] }}</strong><br>
+                                        <span class="text-secondary text-nowrap">Sektor {{ $e['sector_code'] }}</span>
                                     </td>
                                     <td>
                                         <span
@@ -183,33 +150,19 @@
                                 </tr>
                             @empty
                                 <x-empty-state colspan="5" icon="bi-inbox" title="Tiada entiti dipaparkan">
-                                    Pilih sektor di atas untuk memaparkan entiti dan menandakan
-                                    Penerimaan &amp; Pendaftaran Data.
+                                    Pilih sektor di atas untuk memaparkan entiti dalam sektor tersebut.
                                 </x-empty-state>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                @if ($adaUntukDitanda)
-                    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check2-square"></i> Kemas Kini
-                        </button>
-                        <span class="text-secondary">
-                            Entiti yang ditanda akan bertukar kepada Selesai dan dikunci.
-                        </span>
-                    </div>
-                @endif
-
-            </form>
-
             <div class="mt-3">{{ $pendaftaran->links() }}</div>
 
         </div>
 
-        {{-- Borang "Set Semula" diasingkan daripada borang Kemas Kini di atas
-             kerana borang HTML tidak boleh bersarang. --}}
+        {{-- Setiap "Set Semula" ialah borangnya sendiri, dalam modalnya
+             sendiri — borang HTML tidak boleh bersarang. --}}
         @can('reset-entity-registration')
             @foreach ($pendaftaran as $e)
                 @continue(! ($e['pendaftaran']?->isSelesai() ?? false))

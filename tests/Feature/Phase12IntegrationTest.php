@@ -165,13 +165,13 @@ class Phase12IntegrationTest extends TestCase
 
         $this->get(route('dashboard'))->assertOk();
 
-        // 1b ── Peringkat 1.1: PPA menandakan Penerimaan Data.
-        //       Sebelum langkah ini entiti langsung tidak boleh ditugaskan.
-        $this->actingAs($this->penyelaras)
-            ->post(route('penugasan.pendaftaran.kemas-kini'), [
-                'agency_codes' => [self::ALPHA],
-            ])
-            ->assertSessionHasNoErrors();
+        // 1b ── Peringkat 1.1 Penerimaan Data disiapkan. Sebelum langkah ini
+        //       entiti langsung tidak boleh ditugaskan.
+        //
+        //       Dipanggil melalui servis kerana pencetus antara mukanya belum
+        //       ditetapkan: kotak semak pukal telah dibuang, dan penggantinya
+        //       masih menunggu keputusan.
+        $this->daftarkan(self::ALPHA);
 
         $this->actingAs($this->penyelaras);
 

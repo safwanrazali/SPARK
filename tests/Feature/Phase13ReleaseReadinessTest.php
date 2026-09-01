@@ -419,7 +419,6 @@ class Phase13ReleaseReadinessTest extends TestCase
             'muat-naik.preview',
             'muat-naik.store',
             'penugasan.index',
-            'penugasan.pendaftaran.kemas-kini',
             'penugasan.pendaftaran.set-semula',
             'penugasan.show',
             'penugasan.simpan',

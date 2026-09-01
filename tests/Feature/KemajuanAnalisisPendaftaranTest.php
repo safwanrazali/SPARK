@@ -65,8 +65,7 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
         $this->actingAs($this->ppa)
             ->get(route('penugasan.index', ['sector_code' => '001']))
             ->assertOk()
-            ->assertSee('1.1 Penerimaan Data')
-            ->assertSee('Kemas Kini');
+            ->assertSee('1.1 Penerimaan Data');
     }
 
     /**
@@ -82,11 +81,10 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
     }
 
     /**
-     * Tanpa penapis sektor, senarai hanya memaparkan entiti yang telah dikunci.
-     * Tiada apa yang boleh ditanda di situ, jadi borangnya tidak dipaparkan
-     * langsung — bukan sekadar dilumpuhkan.
+     * Senarai memaparkan KEADAAN peringkat 1.1 sahaja — entiti yang telah
+     * dikunci ditandakan dengan ikon kunci.
      */
-    public function test_senarai_entiti_berdaftar_tiada_borang_kemas_kini(): void
+    public function test_senarai_memaparkan_keadaan_entiti_berdaftar(): void
     {
         $this->daftarkan(self::ALPHA);
 
@@ -94,32 +92,41 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->get(route('penugasan.index'))
             ->assertOk()
             ->assertSee(self::ALPHA)
-            ->assertDontSee('Kemas Kini')
-            ->assertDontSee('name="agency_codes[]"', false)
             ->assertSee('bi-lock-fill', false);
     }
 
     /**
-     * Kotak semak peringkat 1.1 kini dilihat oleh KB dan PPA, iaitu peranan
-     * yang benar-benar memilikinya.
+     * Kotak semak pukal telah DIBUANG: peringkat 1.1 tidak lagi ditentukan
+     * dengan menanda sekumpulan entiti Selesai sekali gus.
+     *
+     * Pencetus gantinya belum ditetapkan, jadi panel ini tidak sepatutnya
+     * menawarkan sebarang mekanisme menyiapkan peringkat — kepada KB mahupun
+     * PPA. Ujian ini yang menghalang satu daripadanya kembali tanpa disedari.
      */
-    public function test_kb_dan_ppa_melihat_kotak_semak(): void
+    public function test_panel_tiada_mekanisme_menyiapkan_peringkat_satu(): void
     {
         foreach ([$this->ppa, $this->kb] as $pemilik) {
             $this->actingAs($pemilik)
                 ->get(route('penugasan.index', ['sector_code' => '001']))
                 ->assertOk()
-                ->assertSee('name="agency_codes[]"', false);
+                ->assertDontSee('name="agency_codes[]"', false)
+                ->assertDontSee('Kemas Kini');
         }
+
+        $this->assertNull(
+            app('router')->getRoutes()->getByName('penugasan.pendaftaran.kemas-kini'),
+            'Laluan kemas kini pukal sepatutnya telah dibuang.',
+        );
     }
 
-    public function test_kemas_kini_menandakan_peringkat_satu_selesai_dan_mengunci_entiti(): void
+    /**
+     * Operasi domain menyiapkan peringkat 1.1 kekal utuh walaupun pencetus
+     * antara mukanya telah dibuang — itulah yang akan disambungkan semula
+     * apabila pencetus baharu ditetapkan.
+     */
+    public function test_melengkapkan_penerimaan_menyiapkan_peringkat_satu_dan_mengunci_entiti(): void
     {
-        $this->actingAs($this->ppa)
-            ->post(route('penugasan.pendaftaran.kemas-kini'), [
-                'agency_codes' => [self::ALPHA],
-            ])
-            ->assertRedirect();
+        $this->daftarkan(self::ALPHA);
 
         $peringkat = app(KemajuanAnalisisService::class)->peringkat(self::ALPHA);
 
@@ -138,30 +145,6 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
         );
 
         $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
-    }
-
-    public function test_entiti_yang_dikunci_tidak_boleh_ditanda_semula(): void
-    {
-        $this->daftarkan(self::ALPHA);
-
-        $this->actingAs($this->ppa)
-            ->post(route('penugasan.pendaftaran.kemas-kini'), [
-                'agency_codes' => [self::ALPHA],
-            ])
-            ->assertSessionHasErrors('agency_codes');
-    }
-
-    public function test_peranan_lain_tidak_boleh_melengkapkan_penerimaan(): void
-    {
-        foreach ([$this->ppr, $this->pa] as $pengguna) {
-            $this->actingAs($pengguna)
-                ->post(route('penugasan.pendaftaran.kemas-kini'), [
-                    'agency_codes' => [self::ALPHA],
-                ])
-                ->assertForbidden();
-        }
-
-        $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
     }
 
     public function test_entiti_yang_didaftarkan_muncul_kepada_ppa(): void
