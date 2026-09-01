@@ -61,6 +61,8 @@ class KemajuanAnalisisController extends Controller
             $this->namaMedan($stage),
         );
 
+        $this->pastikanDalamAliran($entiti, $stage);
+
         try {
             $this->kemajuan->simpanData($agencyCode, $stage, $data, $request->user());
         } catch (InvalidWorkflowTransitionException $e) {
@@ -85,13 +87,27 @@ class KemajuanAnalisisController extends Controller
     {
         $entiti = $this->peringkatAtauGagal($agencyCode, $stage);
 
+        // Kebenaran DAHULU: peranan yang tidak memiliki peringkat ini mesti
+        // menerima 403 yang sama seperti peringkat lain, bukan 404 yang
+        // menerangkan bentuk tindakan peringkat itu.
         $this->benarkanPeringkat($stage);
+
+        // Peringkat berderivasi tiada tindakan "Selesai": statusnya ialah
+        // jawapan kepada kelengkapan datanya, jadi ia disiapkan dengan
+        // merekod medannya melalui simpan(). Menawarkan laluan kedua ke
+        // status yang sama hanya mencipta cara memintas syaratnya.
+        abort_if(AliranKerja::statusDiterbitkan($stage), 404, sprintf(
+            'Peringkat %s disiapkan dengan merekod datanya, bukan dengan menandakannya Selesai.',
+            AliranKerja::labelPenuh($stage),
+        ));
 
         $data = $request->validate(
             $this->peraturanMedan($stage),
             [],
             $this->namaMedan($stage),
         );
+
+        $this->pastikanDalamAliran($entiti, $stage);
 
         try {
             if ($data !== []) {
@@ -137,6 +153,19 @@ class KemajuanAnalisisController extends Controller
             'no_rujukan' => AliranKerja::labelRujukan($stage),
         ]);
 
+        // No. Rujukan direkodkan PADA baris peringkat, jadi entiti mesti
+        // sudah berada dalam aliran kerja. Memasukkannya ke dalam aliran
+        // ialah tindakan peringkat 1.1 — bukan tindakan PPR.
+        if ($this->kemajuan->peringkat($agencyCode)->isEmpty()) {
+            return back()->withErrors([
+                'no_rujukan' => sprintf(
+                    '%s belum memasuki aliran kerja. Peringkat %s perlu direkodkan terlebih dahulu.',
+                    $entiti['agency_code'],
+                    AliranKerja::labelPenuh(AliranKerja::PERTAMA),
+                ),
+            ]);
+        }
+
         try {
             $this->kemajuan->simpanRujukan($agencyCode, $stage, $data['no_rujukan'] ?? null, $request->user());
         } catch (InvalidWorkflowTransitionException $e) {
@@ -148,6 +177,28 @@ class KemajuanAnalisisController extends Controller
             AliranKerja::labelRujukan($stage),
             $entiti['agency_code'],
         ));
+    }
+
+    /**
+     * Peringkat PERTAMA ialah pintu masuk aliran kerja: melaksanakannya pada
+     * entiti yang belum mempunyai baris peringkat MEMASUKKAN entiti itu ke
+     * dalam aliran.
+     *
+     * Inilah yang menggantikan penandaan pukal skrin Penetapan Entiti: KB
+     * atau PPA membuka halaman Kemajuan entiti, merekod Tarikh Terima dan
+     * Status Borang Penerimaan Data, dan entiti itu masuk ke dalam aliran.
+     *
+     * Peringkat lain TIDAK memasukkan entiti: ia mesti sudah berada di dalam
+     * aliran, dan servis menolaknya jika tidak.
+     *
+     * @param  array<string, string>  $entiti
+     */
+    private function pastikanDalamAliran(array $entiti, string $stage): void
+    {
+        if ($stage === AliranKerja::PERTAMA) {
+            // Selamat dipanggil berulang kali: baris sedia ada tidak disentuh.
+            $this->kemajuan->sediakan($entiti);
+        }
     }
 
     /**

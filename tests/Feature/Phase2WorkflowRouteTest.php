@@ -138,21 +138,49 @@ class Phase2WorkflowRouteTest extends TestCase
         }
     }
 
-    public function test_entiti_belum_didaftar_menerangkan_langkah_seterusnya(): void
+    /**
+     * Entiti yang belum memasuki aliran kerja menerangkan langkah seterusnya
+     * DAN menawarkannya: peringkat 1.1 ialah pintu masuk, dan PPA memilikinya.
+     */
+    public function test_entiti_belum_didaftar_menawarkan_peringkat_pertama(): void
     {
-        // Tiada butang pendaftaran manual lagi: halaman ini kini menerangkan
-        // bahawa peringkat 1.1 Penerimaan Data perlu ditandakan pada skrin
-        // Penetapan Entiti terlebih dahulu.
-        $this->actingAs($this->coordinator())
+        // Peringkat 1.1 milik KB dan PPA. `coordinator()` di dalam fail ini
+        // menghasilkan Pentadbir Sistem (nama warisan fasa terdahulu), jadi
+        // PPA sebenar dicipta di sini.
+        $ppa = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
+
+        $this->actingAs($ppa)
             ->get(route('workflow.show', self::ENTITI))
             ->assertOk()
             ->assertSee('Belum Memasuki Aliran Kerja')
             ->assertSee('1.1 Penerimaan Data')
-            ->assertSee('Penetapan Entiti')
             ->assertSee('Tiada perubahan peringkat')
-            ->assertDontSee('Daftar Dalam Workflow');
+            // Borang peringkat 1.1 tersedia di sini — itulah gantian kepada
+            // penandaan pukal skrin Penetapan Entiti yang telah dibuang.
+            // Peringkat berderivasi disiapkan melalui `simpan`, bukan `selesai`.
+            ->assertSee(route('kemajuan.simpan', [self::ENTITI, AliranKerja::PENERIMAAN_DATA]), false)
+            ->assertSee('Tarikh Terima');
 
+        // Membuka halaman sahaja TIDAK memasukkan entiti ke dalam aliran.
         $this->assertDatabaseMissing('workflow_status', ['agency_code' => self::ENTITI]);
+    }
+
+    /**
+     * Peranan yang tidak memiliki peringkat 1.1 tidak ditawarkan borangnya.
+     */
+    public function test_entiti_belum_didaftar_tiada_borang_bagi_peranan_lain(): void
+    {
+        // PPR tidak memiliki peringkat 1.1, dan Pentadbir Sistem pun tidak.
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+
+        $this->actingAs($ppr)
+            ->get(route('workflow.show', self::ENTITI))
+            ->assertOk()
+            ->assertSee('Belum Memasuki Aliran Kerja')
+            ->assertDontSee(route('kemajuan.simpan', [self::ENTITI, AliranKerja::PENERIMAAN_DATA]), false)
+            // No. Rujukan pun belum berkenaan: ia direkod pada baris peringkat,
+            // yang belum wujud.
+            ->assertDontSee(route('kemajuan.rujukan', [self::ENTITI, AliranKerja::PENERIMAAN_DATA]), false);
     }
 
     public function test_entiti_di_luar_senarai_induk_menghasilkan_404(): void

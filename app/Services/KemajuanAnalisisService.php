@@ -249,14 +249,7 @@ class KemajuanAnalisisService
         $sebelum = $peringkat->get($sebelumKunci);
 
         if ($status === WorkflowStageStatus::SELESAI) {
-            if ($sebelum === null || ! $sebelum->isSelesai()) {
-                return sprintf(
-                    'Peringkat %s mesti Selesai terlebih dahulu.',
-                    AliranKerja::labelPenuh($sebelumKunci),
-                );
-            }
-
-            return null;
+            return $this->ralatPendahulu($sebelum, $sebelumKunci);
         }
 
         if ($sebelum === null || $sebelum->isBelumMula()) {
@@ -278,6 +271,145 @@ class KemajuanAnalisisService
     }
 
     /**
+     * Adakah pendahulu membenarkan peringkat berikutnya dimulakan?
+     *
+     * DUA peraturan, dan perbezaannya disengajakan:
+     *
+     * - Peringkat dengan `syarat_lanjut`: cukup medan tersebut ADA. Peringkat
+     *   itu tidak semestinya Selesai. Peringkat 1.1 memerlukannya kerana No.
+     *   Rujukan miliknya dimasukkan oleh PPR, dan kerja peringkat 1.2 tidak
+     *   sepatutnya tertahan menunggu pegawai lain.
+     * - Peringkat lain: peraturan lalai — mesti benar-benar Selesai.
+     */
+    private function ralatPendahulu(?WorkflowStageStatus $sebelum, string $sebelumKunci): ?string
+    {
+        $syarat = AliranKerja::syaratLanjut($sebelumKunci);
+
+        if ($syarat === []) {
+            return $sebelum === null || ! $sebelum->isSelesai()
+                ? sprintf('Peringkat %s mesti Selesai terlebih dahulu.', AliranKerja::labelPenuh($sebelumKunci))
+                : null;
+        }
+
+        $tiada = $sebelum === null
+            ? $syarat
+            : array_values(array_filter($syarat, fn (string $lajur) => $this->kosong($sebelum->{$lajur})));
+
+        if ($tiada === []) {
+            return null;
+        }
+
+        return sprintf(
+            'Peringkat %s memerlukan %s terlebih dahulu.',
+            AliranKerja::labelPenuh($sebelumKunci),
+            implode(' dan ', array_map(
+                fn (string $lajur) => AliranKerja::labelMedan($sebelumKunci, $lajur),
+                $tiada,
+            )),
+        );
+    }
+
+    /**
+     * Medan dianggap "tiada" apabila null atau rentetan kosong.
+     */
+    private function kosong(mixed $nilai): bool
+    {
+        return $nilai === null || (is_string($nilai) && trim($nilai) === '');
+    }
+
+    /**
+     * Medan `syarat_selesai` yang MASIH TIADA pada peringkat ini.
+     *
+     * @return array<int, string>
+     */
+    public function medanBelumLengkap(?WorkflowStageStatus $rekod, string $stage): array
+    {
+        $syarat = AliranKerja::syaratSelesai($stage);
+
+        if ($syarat === [] || $rekod === null) {
+            return $syarat;
+        }
+
+        return array_values(array_filter(
+            $syarat,
+            fn (string $lajur) => $this->kosong($rekod->{$lajur}),
+        ));
+    }
+
+    /**
+     * Terbitkan semula status satu peringkat daripada datanya.
+     *
+     * Hanya terpakai pada peringkat yang mempunyai `syarat_selesai`. Bagi
+     * peringkat itu, status BUKAN sesuatu yang ditetapkan oleh butang — ia
+     * jawapan kepada "adakah datanya lengkap":
+     *
+     *   semua medan ada      → Selesai
+     *   sebahagian ada       → Dalam Proses
+     *   tiada satu pun       → Belum Mula
+     *
+     * Dipanggil setiap kali data atau No. Rujukan peringkat itu berubah,
+     * supaya status tidak pernah terpisah daripada datanya.
+     */
+    private function terbitkanStatus(string $agencyCode, string $stage, ?User $user = null): void
+    {
+        if (! AliranKerja::statusDiterbitkan($stage)) {
+            return;
+        }
+
+        $rekod = WorkflowStageStatus::query()
+            ->forAgency($agencyCode)
+            ->atStage($stage)
+            ->first();
+
+        if ($rekod === null) {
+            return;
+        }
+
+        $syarat = AliranKerja::syaratSelesai($stage);
+        $tiada = $this->medanBelumLengkap($rekod, $stage);
+
+        $baharu = match (true) {
+            $tiada === [] => WorkflowStageStatus::SELESAI,
+            count($tiada) < count($syarat) => WorkflowStageStatus::DALAM_PROSES,
+            default => WorkflowStageStatus::BELUM_MULA,
+        };
+
+        if ($rekod->status === $baharu) {
+            return;
+        }
+
+        $sebelum = $rekod->status;
+
+        $rekod->status = $baharu;
+
+        if ($baharu === WorkflowStageStatus::BELUM_MULA) {
+            $rekod->started_at = null;
+            $rekod->completed_at = null;
+        } else {
+            $rekod->started_at ??= now();
+            $rekod->completed_at = $baharu === WorkflowStageStatus::SELESAI ? now() : null;
+        }
+
+        $rekod->save();
+
+        $this->selaraskanKedudukan($agencyCode, $user);
+
+        $this->audit->rekod(
+            ['agency_code' => $rekod->agency_code, 'agency_name' => $rekod->agency_name],
+            self::ACTION_STAGE_STATUS_CHANGED,
+            $sebelum,
+            $baharu,
+            $user,
+            [
+                'stage' => $stage,
+                'stage_name' => AliranKerja::labelPenuh($stage),
+                'diterbitkan' => true,
+                'keseluruhan' => $this->keseluruhan($agencyCode),
+            ],
+        );
+    }
+
+    /**
      * Tetapkan status satu peringkat.
      *
      * @throws InvalidWorkflowTransitionException
@@ -294,6 +426,22 @@ class KemajuanAnalisisService
                 'Status "%s" tidak sah. Status yang dibenarkan: %s.',
                 $status,
                 implode(', ', WorkflowStageStatus::STATUSES),
+            ));
+        }
+
+        // Peringkat berderivasi tiada status yang boleh "ditetapkan": statusnya
+        // ialah jawapan kepada kelengkapan datanya. Membenarkan penetapan
+        // manual akan mencipta sumber kebenaran kedua yang boleh bercanggah
+        // dengan data pada baris yang sama.
+        if (AliranKerja::statusDiterbitkan($stage)) {
+            throw new InvalidWorkflowTransitionException(sprintf(
+                'Status peringkat %s diterbitkan daripada datanya dan tidak boleh ditetapkan terus. '
+                .'Lengkapkan %s.',
+                AliranKerja::labelPenuh($stage),
+                implode(', ', array_map(
+                    fn (string $lajur) => AliranKerja::labelMedan($stage, $lajur),
+                    AliranKerja::syaratSelesai($stage),
+                )),
             ));
         }
 
@@ -398,14 +546,18 @@ class KemajuanAnalisisService
             $rekod->updated_by_user_id = $user?->id;
 
             // Merekod data peringkat bermakna kerjanya telah bermula. Peringkat
-            // yang telah Selesai tidak diundurkan.
-            if ($rekod->status === WorkflowStageStatus::BELUM_MULA
+            // yang telah Selesai tidak diundurkan, dan peringkat berderivasi
+            // menetapkan statusnya sendiri di bawah.
+            if (! AliranKerja::statusDiterbitkan($stage)
+                && $rekod->status === WorkflowStageStatus::BELUM_MULA
                 && $this->ralatPeringkat($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES) === null) {
                 $rekod->status = WorkflowStageStatus::DALAM_PROSES;
                 $rekod->started_at ??= now();
             }
 
             $rekod->save();
+
+            $this->terbitkanStatus($agencyCode, $stage, $user);
 
             $this->selaraskanKedudukan($agencyCode, $user);
 
@@ -467,6 +619,11 @@ class KemajuanAnalisisService
             $rekod->no_rujukan_pada = $noRujukan === null ? null : now();
             $rekod->save();
 
+            // No. Rujukan ialah salah satu syarat Selesai peringkat 1.1, jadi
+            // merekodnya boleh menyiapkan peringkat itu — dan memadamnya boleh
+            // membukanya semula.
+            $this->terbitkanStatus($agencyCode, $stage, $user);
+
             $this->audit->rekod(
                 ['agency_code' => $rekod->agency_code, 'agency_name' => $rekod->agency_name],
                 self::ACTION_STAGE_REFERENCE_SAVED,
@@ -524,11 +681,13 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Lengkapkan peringkat 1.1 "Penerimaan Data" bagi satu entiti.
+     * Masukkan entiti ke dalam aliran kerja dengan merekod peringkat 1.1.
      *
-     * Ini ialah pintu masuk aliran kerja: entiti dicipta dalam kemajuan,
-     * peringkat 1.1 ditandakan Selesai, dan sejak itu ia dikunci sehingga
-     * Ketua Bahagian menetapkannya semula.
+     * Status peringkat 1.1 DITERBITKAN daripada datanya, jadi kaedah ini tidak
+     * "menanda" apa-apa: ia menyimpan data yang diberi, dan peringkat itu
+     * menjadi Selesai apabila ketiga-tiga medannya ada. Memanggilnya tanpa
+     * data memasukkan entiti ke dalam aliran tetapi meninggalkan peringkat 1.1
+     * Belum Mula — itulah maksudnya.
      *
      * @param  array<string, string>  $entiti
      * @param  array<string, mixed>  $data  data tangkapan peringkat 1.1
@@ -540,23 +699,26 @@ class KemajuanAnalisisService
         return DB::transaction(function () use ($entiti, $user, $data) {
             $this->sediakan($entiti);
 
+            $rujukan = $data[AliranKerja::MEDAN_NO_RUJUKAN] ?? null;
+            unset($data[AliranKerja::MEDAN_NO_RUJUKAN]);
+
             if ($data !== []) {
                 $this->simpanData($entiti['agency_code'], AliranKerja::PENERIMAAN_DATA, $data, $user);
             }
 
-            $rekod = $this->tandakanSelesai(
-                $entiti['agency_code'],
-                AliranKerja::PENERIMAAN_DATA,
-                $user,
-            );
+            if ($rujukan !== null) {
+                $this->simpanRujukan($entiti['agency_code'], AliranKerja::PENERIMAAN_DATA, $rujukan, $user);
+            }
+
+            $rekod = $this->peringkat($entiti['agency_code'])->get(AliranKerja::PENERIMAAN_DATA);
 
             $this->audit->rekod(
                 ['agency_code' => $entiti['agency_code'], 'agency_name' => $entiti['agency_name']],
                 self::ACTION_REGISTRATION_COMPLETED,
                 WorkflowStageStatus::BELUM_MULA,
-                WorkflowStageStatus::SELESAI,
+                $rekod->status,
                 $user,
-                ['stage' => AliranKerja::PENERIMAAN_DATA, 'dikunci' => true],
+                ['stage' => AliranKerja::PENERIMAAN_DATA, 'dikunci' => $rekod->isSelesai()],
             );
 
             return $rekod;

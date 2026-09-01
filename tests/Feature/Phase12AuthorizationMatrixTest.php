@@ -146,23 +146,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
         ]);
     }
 
-    public function test_penetapan_entiti_dikongsi_mengikut_panel_peranan(): void
-    {
-        // Skrin "Penetapan Entiti" memegang dua panel: peringkat 1.1
-        // Penerimaan Data milik KB/PPA (dan dibuka semula oleh KB); penugasan
-        // milik PPA. PPR tiada tindakan di sini sejak restruktur —
-        // tanggungjawabnya ialah No. Rujukan Borang pada halaman kemajuan.
-        $this->semakMatriks('GET', route('penugasan.index'), [
-            User::ROLE_COORDINATOR => self::BENAR,
-            User::ROLE_KETUA_BAHAGIAN => self::BENAR,
-        ]);
-
-        // Sejarah penugasan satu entiti kekal milik modul penugasan sahaja.
-        $this->semakMatriks('GET', route('penugasan.show', self::ALPHA), [
-            User::ROLE_COORDINATOR => self::BENAR,
-        ]);
-    }
-
     public function test_jejak_audit_berpusat_terbuka_kepada_semua_peranan(): void
     {
         // Kandungan tetap ditapis mengikut entiti yang boleh diakses, dan
@@ -289,8 +272,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
             ]],
             ['POST', route('kemajuan.selesai', [self::BETA, AliranKerja::SEMAKAN_AWAL_DATA]), []],
             ['POST', route('kemajuan.simpan', [self::BETA, AliranKerja::SEMAKAN_AWAL_DATA]), []],
-            ['POST', route('penugasan.simpan', self::BETA), ['assigned_to_user_id' => $analyst->id]],
-            ['POST', route('penugasan.tarik', self::BETA), []],
         ];
 
         foreach ($capaian as [$kaedah, $url, $data]) {
@@ -324,7 +305,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
         $ditolak = [
             ['getJson', route('workflow.show', self::BETA), null],
             ['getJson', route('entiti.show', self::BETA), null],
-            ['getJson', route('penugasan.index'), null],
             ['postJson', route('analisis.draf'), ['sector_code' => '001', 'agency_code' => self::BETA]],
             ['postJson', route('kemajuan.selesai', [self::BETA, 2]), []],
         ];

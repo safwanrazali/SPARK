@@ -157,7 +157,6 @@ class Phase12AuthenticationTest extends TestCase
         foreach ([
             route('dashboard'),
             route('workflow.index'),
-            route('penugasan.index'),
             route('analisis.index'),
             route('laporan.index'),
             route('status.index'),

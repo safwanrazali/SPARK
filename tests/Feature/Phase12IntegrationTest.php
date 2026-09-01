@@ -85,6 +85,22 @@ class Phase12IntegrationTest extends TestCase
     }
 
     /**
+     * Tugaskan entiti kepada seorang Pegawai Analisis.
+     *
+     * Melalui servis kerana skrin Penetapan Entiti telah dibuang; penugasan
+     * yang telah direkodkan tetap menentukan akses PA.
+     */
+    private function tugaskan(string $agencyCode, User $pa, ?string $notes = null): void
+    {
+        app(EntityAssignmentService::class)->assign(
+            SektorDirectory::cariEntiti($agencyCode),
+            $pa,
+            $this->penyelaras,
+            $notes,
+        );
+    }
+
+    /**
      * Peringkat 1.1 aliran kerja — prasyarat sebelum entiti boleh ditugaskan.
      *
      * Ujian yang memberi tumpuan kepada langkah kemudian memanggil servis
@@ -95,6 +111,7 @@ class Phase12IntegrationTest extends TestCase
         app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti($agencyCode),
             $this->penyelaras,
+            ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1'],
         );
     }
 
@@ -175,21 +192,11 @@ class Phase12IntegrationTest extends TestCase
 
         $this->actingAs($this->penyelaras);
 
-        // 2 ── Sektor → Entiti → pilih entiti (spesifikasi bahagian 7).
-        //      Senarai PPA memaparkan entiti yang telah didaftarkan sahaja.
-        $this->get(route('penugasan.index', ['sector_code' => self::SEKTOR]))
-            ->assertOk()
-            ->assertViewHas('entiti', fn ($senarai) => $senarai->total() === 1);
-
-        $this->get(route('penugasan.show', self::ALPHA))
-            ->assertOk()
-            ->assertSee(self::ALPHA);
-
-        // 3 ── Assignment: entiti ditugaskan kepada Pegawai Analisis A.
-        $this->post(route('penugasan.simpan', self::ALPHA), [
-            'assigned_to_user_id' => $this->analystA->id,
-            'notes' => 'Kelompok pertama.',
-        ])->assertRedirect();
+        // 2 ── Assignment: entiti ditugaskan kepada Pegawai Analisis A.
+        //
+        //      Dipanggil melalui servis: skrin Penetapan Entiti telah dibuang,
+        //      tetapi penugasan yang direkodkan tetap menentukan akses PA.
+        $this->tugaskan(self::ALPHA, $this->analystA, 'Kelompok pertama.');
 
         $this->assertDatabaseHas('entiti_assignment', [
             'agency_code' => self::ALPHA,
@@ -304,7 +311,7 @@ class Phase12IntegrationTest extends TestCase
         $kemajuan = app(KemajuanAnalisisService::class);
 
         foreach (AliranKerja::semasa() as $peringkat) {
-            $kemajuan->tandakanSelesai(self::ALPHA, $peringkat, $this->penyelia);
+            $this->siapkanPeringkat(self::ALPHA, $peringkat, $this->penyelia);
         }
 
         $workflow->refresh();
@@ -413,8 +420,7 @@ class Phase12IntegrationTest extends TestCase
     {
         $this->daftarkan(self::ALPHA);
 
-        $this->actingAs($this->penyelaras)
-            ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
+        $this->tugaskan(self::ALPHA, $this->analystA);
 
         // Pegawai A menyimpan draf.
         $this->actingAs($this->analystA)
@@ -426,9 +432,7 @@ class Phase12IntegrationTest extends TestCase
             ])->assertRedirect();
 
         // Penyelaras menukar ganti kepada Pegawai B.
-        $this->actingAs($this->penyelaras)
-            ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystB->id])
-            ->assertRedirect();
+        $this->tugaskan(self::ALPHA, $this->analystB);
 
         // Akses Pegawai A ditarik serta-merta — termasuk kerja yang dia mulakan.
         $this->actingAs($this->analystA->fresh())
@@ -456,16 +460,17 @@ class Phase12IntegrationTest extends TestCase
     {
         $this->daftarkan(self::ALPHA);
 
-        $this->actingAs($this->penyelaras)
-            ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
+        $this->tugaskan(self::ALPHA, $this->analystA);
 
         $this->actingAs($this->analystA->fresh())
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk();
 
-        $this->actingAs($this->penyelaras)
-            ->post(route('penugasan.tarik', self::ALPHA), ['reason' => 'Pegawai bertukar bahagian.'])
-            ->assertRedirect();
+        app(EntityAssignmentService::class)->unassign(
+            self::ALPHA,
+            $this->penyelaras,
+            'Pegawai bertukar bahagian.',
+        );
 
         $this->actingAs($this->analystA->fresh())
             ->get(route('entiti.show', self::ALPHA))
@@ -574,7 +579,7 @@ class Phase12IntegrationTest extends TestCase
 
         $this->actingAs($this->penyelaras);
 
-        $this->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analystA->id]);
+        $this->tugaskan(self::ALPHA, $this->analystA);
 
         // Entiti yang telah melepasi peringkat 1.1 berada pada sub-peringkat
         // 1.2, di dalam peringkat utama 1. Kemajuan dipacu oleh status setiap

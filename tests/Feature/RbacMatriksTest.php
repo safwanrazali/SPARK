@@ -94,14 +94,6 @@ class RbacMatriksTest extends TestCase
             // Papan Pemuka: semua kecuali PA.
             'Papan Pemuka' => ['dashboard', $tanpa([User::ROLE_ANALYST])],
 
-            // Penetapan Entiti: peringkat 1.1 (KB/PPA) dan penugasan (PPA).
-            // PPR tiada tindakan di sini sejak restruktur — tanggungjawabnya
-            // ialah No. Rujukan Borang pada halaman Kemajuan Analisis Entiti.
-            'Penetapan Entiti' => ['penugasan.index', [
-                User::ROLE_KETUA_BAHAGIAN,
-                User::ROLE_COORDINATOR,
-            ]],
-
             // Kemajuan Analisis Entiti: semua peranan boleh melihat.
             'Kemajuan Analisis Entiti' => ['workflow.index', $semua],
 
@@ -218,44 +210,33 @@ class RbacMatriksTest extends TestCase
         );
     }
 
-    public function test_set_semula_hanya_kb(): void
+    /**
+     * "Set Semula" ialah hak Ketua Bahagian, tetapi skrin yang menghosnya
+     * (Penetapan Entiti) telah dibuang — jadi tiada laluan menjalankannya.
+     * Gate-nya kekal merakam tanggungjawab itu.
+     */
+    public function test_set_semula_tiada_laluan_tetapi_kekal_hak_kb(): void
     {
-        $this->sediakanEntiti();
+        $this->assertNull(
+            app('router')->getRoutes()->getByName('penugasan.pendaftaran.set-semula'),
+            'Laluan Set Semula sepatutnya telah dibuang bersama modulnya.',
+        );
+
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Gate::forUser($this->sebagai(User::ROLE_KETUA_BAHAGIAN))
+                ->allows('reset-entity-registration'),
+        );
 
         foreach (User::roles() as $role) {
             if ($role === User::ROLE_KETUA_BAHAGIAN) {
                 continue;
             }
 
-            $this->actingAs($this->sebagai($role))
-                ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Cuba.'])
-                ->assertForbidden();
-        }
-
-        // Peringkat 1 kekal Selesai selepas setiap percubaan yang ditolak.
-        $this->assertTrue(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
-
-        $this->actingAs($this->sebagai(User::ROLE_KETUA_BAHAGIAN))
-            ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data tidak lengkap.'])
-            ->assertSessionHasNoErrors();
-
-        $this->assertFalse(app(KemajuanAnalisisService::class)->penerimaanSelesai(self::ALPHA));
-    }
-
-    public function test_tugaskan_pa_hanya_ppa(): void
-    {
-        $this->sediakanEntiti();
-
-        $pa = $this->pengguna[User::ROLE_ANALYST];
-
-        foreach (User::roles() as $role) {
-            if ($role === User::ROLE_COORDINATOR) {
-                continue;
-            }
-
-            $this->actingAs($this->sebagai($role))
-                ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $pa->id])
-                ->assertForbidden();
+            $this->assertFalse(
+                \Illuminate\Support\Facades\Gate::forUser($this->sebagai($role))
+                    ->allows('reset-entity-registration'),
+                $role,
+            );
         }
     }
 
@@ -530,7 +511,6 @@ class RbacMatriksTest extends TestCase
 
         // Memanggil API secara manual tidak memintas apa-apa.
         $this->actingAs($pa)->getJson(route('dashboard'))->assertForbidden();
-        $this->actingAs($pa)->getJson(route('penugasan.index'))->assertForbidden();
         $this->actingAs($pa)->getJson(route('administration.users.index'))->assertForbidden();
         $this->actingAs($pa)
             ->postJson(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]))

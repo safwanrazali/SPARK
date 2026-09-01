@@ -8,7 +8,7 @@
 
     // Navlink induk ialah label kumpulan statik — ia menyerlah apabila salah
     // satu SubNavlink di bawahnya ialah halaman semasa.
-    $pemantauanAktif = request()->routeIs('penugasan.*', 'workflow.*');
+    $pemantauanAktif = request()->routeIs('workflow.*');
     $laporanAktif = request()->routeIs('analisis.*', 'status.*');
     $pentadbiranAktif = request()->routeIs('administration.*');
 
@@ -55,19 +55,9 @@
             </a>
 
             <ul class="sidebar-submenu" aria-labelledby="navPemantauanEntiti">
-                {{-- 2.1 Penetapan Entiti — satu skrin, tiga tindakan berlainan
-                     peranan. Cukup satu daripadanya untuk melayakkan pautan. --}}
-                @canany(['register-entity-data', 'reset-entity-registration', 'manage-assignment'])
-                    <li>
-                        <a href="{{ route('penugasan.index') }}" class="{{ $pautan('penugasan.*') }}"
-                            title="Penetapan Entiti" @if (request()->routeIs('penugasan.*')) aria-current="page" @endif>
-                            <i class="bi bi-person-check" aria-hidden="true"></i>
-                            <span class="menu-text">Penetapan Entiti</span>
-                        </a>
-                    </li>
-                @endcanany
+                {{-- Penetapan Entiti telah dibuang; lihat routes/web.php. --}}
 
-                {{-- 2.2 Kemajuan Analisis Entiti --}}
+                {{-- 2.1 Kemajuan Analisis Entiti --}}
                 <li>
                     <a href="{{ route('workflow.index') }}" class="{{ $pautan('workflow.*') }}"
                         title="Kemajuan Analisis Entiti" @if (request()->routeIs('workflow.*')) aria-current="page" @endif>

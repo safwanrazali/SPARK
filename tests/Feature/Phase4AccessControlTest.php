@@ -85,7 +85,7 @@ class Phase4AccessControlTest extends TestCase
 
         // Baris peringkat: tanpa peringkat 01 Selesai entiti tidak dikira
         // berada dalam aliran kerja, jadi ia tidak akan tersenarai langsung.
-        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan($entiti, $this->coordinator);
+        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan($entiti, $this->coordinator, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
 
         return AnalisisInventori::factory()->create($entiti + [
             'user_id' => $this->analystA->id,
@@ -511,7 +511,7 @@ class Phase4AccessControlTest extends TestCase
             ->assertOk();
 
         $this->actingAs($this->coordinator)
-            ->get(route('penugasan.show', self::BETA))
+            ->get(route('entiti.show', self::BETA))
             ->assertOk();
     }
 
@@ -531,10 +531,11 @@ class Phase4AccessControlTest extends TestCase
             ->get(route('analisis.borang', ['sector_code' => '001', 'agency_code' => self::ALPHA]))
             ->assertForbidden();
 
-        // Pegawai Analisis tetap tiada kebenaran penugasan.
-        $this->actingAs($this->analystA)
-            ->get(route('penugasan.index'))
-            ->assertForbidden();
+        // Pegawai Analisis tetap tiada kebenaran penugasan — modul
+        // Penetapan Entiti telah dibuang, tetapi gate-nya kekal menolaknya.
+        $this->assertFalse(
+            \Illuminate\Support\Facades\Gate::forUser($this->analystA)->allows('manage-assignment'),
+        );
 
         // Status Tiga Laporan kini paparan sahaja bagi SEMUA peranan: tiada
         // route kemas kini wujud lagi, jadi tiada siapa boleh menetapkannya.

@@ -101,15 +101,22 @@ class AppServiceProvider extends ServiceProvider
 
         /*
         |------------------------------------------------------------------
-        | Penetapan Entiti — tiga tindakan, tiga peranan berlainan
+        | Penetapan Entiti — modul DIBUANG
         |------------------------------------------------------------------
-        | Skrin dikongsi, tetapi setiap panel dan setiap route mempunyai
-        | gate sendiri supaya satu peranan tidak boleh melakukan kerja
-        | peranan yang lain.
+        | Skrin, laluan dan controllernya telah dibuang. Ketiga-tiga gate ini
+        | DIKEKALKAN kerana ia merakam tanggungjawab yang telah dipersetujui,
+        | dan kerana `manage-assignment` masih menentukan siapa melihat
+        | maklumat penugasan pada skrin lain — tetapi TIADA laluan lagi yang
+        | membenarkan sesiapa menanda peringkat 1.1, menetapkannya semula,
+        | atau membuat penugasan baharu.
+        |
+        | Penugasan yang TELAH direkodkan kekal berkuat kuasa: ia yang
+        | menentukan entiti mana boleh dicapai oleh setiap Pegawai Analisis
+        | (lihat User::getAccessibleEntities()).
+        |
+        | Jangan sambungkan gate ini kepada laluan baharu tanpa spesifikasi
+        | pengganti modul tersebut.
         */
-        // Peringkat 1.1 "Penerimaan Data" — Ketua Bahagian atau PPA. Skrin
-        // Penetapan Entiti ialah tempat peringkat ini dilaksanakan secara
-        // pukal, jadi gate yang sama melindungi kedua-duanya.
         Gate::define('register-entity-data', fn (User $user) => $user->hasAnyRole([...$kb, ...$ppa]));
 
         Gate::define('reset-entity-registration', fn (User $user) => $user->hasAnyRole($kb));

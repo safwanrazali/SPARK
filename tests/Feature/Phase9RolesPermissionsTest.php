@@ -433,40 +433,6 @@ class Phase9RolesPermissionsTest extends TestCase
         ];
     }
 
-    #[DataProvider('aksesPenetapanEntiti')]
-    public function test_akses_modul_penugasan_mengikut_peranan(string $role, bool $dibenarkan): void
-    {
-        $response = $this->actingAs($this->pengguna($role))->get(route('penugasan.index'));
-
-        $dibenarkan ? $response->assertOk() : $response->assertForbidden();
-    }
-
-    #[DataProvider('aksesPenugasan')]
-    public function test_membuat_penugasan_mengikut_peranan(string $role, bool $dibenarkan): void
-    {
-        $analyst = $this->pengguna(User::ROLE_ANALYST);
-
-        // Prasyarat aliran kerja: entiti hanya boleh ditugaskan selepas
-        // "Penerimaan & Pendaftaran Data" Selesai.
-        app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
-            SektorDirectory::cariEntiti(self::ALPHA),
-            $this->pengguna(User::ROLE_ADMINISTRATOR),
-        );
-
-        $response = $this->actingAs($this->pengguna($role))
-            ->post(route('penugasan.simpan', self::ALPHA), [
-                'assigned_to_user_id' => $analyst->id,
-            ]);
-
-        if ($dibenarkan) {
-            $response->assertSessionHasNoErrors();
-            $this->assertDatabaseHas('entiti_assignment', ['agency_code' => self::ALPHA]);
-        } else {
-            $response->assertForbidden();
-            $this->assertDatabaseCount('entiti_assignment', 0);
-        }
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Laporan & input analisis
@@ -663,29 +629,27 @@ class Phase9RolesPermissionsTest extends TestCase
 
     public function test_menu_sisi_ketua_bahagian_mengikut_kebenaran(): void
     {
-        // Ketua Bahagian memiliki "Set Semula" pada Penetapan Entiti, jadi
-        // pautan itu KELIHATAN — tetapi Pengguna tidak.
+        // Menu sisi tidak lagi mengandungi Penetapan Entiti: modul itu telah
+        // dibuang. Yang kekal ialah modul pemantauan dan laporan.
         $this->actingAs($this->pengguna(User::ROLE_KETUA_BAHAGIAN))
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Papan Pemuka')
             ->assertSee('Log Audit')
             ->assertSee(route('status.index'))
-            ->assertSee(route('penugasan.index'))
             ->assertDontSee('Pengguna');
     }
 
     public function test_menu_sisi_pegawai_kawalan_dokumen_baca_sahaja(): void
     {
         // PKD melihat modul baca-sahaja, tetapi tiada satu pun skrin
-        // tindakan: Penetapan Entiti dan Pengguna tidak dipaparkan.
+        // tindakan: Pengguna tidak dipaparkan.
         $this->actingAs($this->pengguna(User::ROLE_PEGAWAI_KAWALAN_DOKUMEN))
             ->get(route('analisis.index'))
             ->assertOk()
             ->assertSee('Papan Pemuka')
             ->assertSee('Log Audit')
             ->assertSee(route('status.index'))
-            ->assertDontSee(route('penugasan.index'))
             ->assertDontSee('Pengguna');
     }
 
@@ -698,8 +662,7 @@ class Phase9RolesPermissionsTest extends TestCase
             ->assertOk()
             ->assertSee('Papan Pemuka')
             ->assertSee('Pengguna')
-            ->assertDontSee(route('status.index'))
-            ->assertDontSee(route('penugasan.index'));
+            ->assertDontSee(route('status.index'));
     }
 
     public function test_menu_sisi_pegawai_analisis_tanpa_papan_pemuka(): void
@@ -714,7 +677,6 @@ class Phase9RolesPermissionsTest extends TestCase
             ->assertSee(route('status.index'))
             ->assertSee('Log Audit')
             ->assertDontSee('Papan Pemuka')
-            ->assertDontSee(route('penugasan.index'))
             ->assertDontSee('Pengguna');
     }
 }

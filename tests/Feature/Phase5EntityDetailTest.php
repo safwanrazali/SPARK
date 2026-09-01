@@ -301,22 +301,6 @@ class Phase5EntityDetailTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_pegawai_analisis_tidak_melihat_tindakan_penugasan(): void
-    {
-        $this->actingAs($this->analystA)
-            ->get(route('entiti.show', self::ALPHA))
-            ->assertOk()
-            ->assertDontSee(route('penugasan.show', self::ALPHA));
-    }
-
-    public function test_penyelaras_melihat_tindakan_penugasan(): void
-    {
-        $this->actingAs($this->coordinator)
-            ->get(route('entiti.show', self::ALPHA))
-            ->assertOk()
-            ->assertSee(route('penugasan.show', self::ALPHA));
-    }
-
     public function test_penyelaras_tidak_melihat_tindakan_borang_analisis(): void
     {
         // Gate manage-analysis sedia ada: Pentadbir + Pegawai Analisis sahaja.

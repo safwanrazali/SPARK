@@ -186,6 +186,20 @@ final class AliranKerja
      * `medan`        lajur data yang ditangkap, dengan labelnya
      * `rujukan`      label No. Rujukan bagi peringkat ini, jika ada
      *
+     * `syarat_selesai` medan yang mesti ADA sebelum peringkat ini Selesai
+     * `syarat_lanjut`  medan yang mesti ADA sebelum peringkat SETERUSNYA boleh
+     *                  dimulakan
+     *
+     * Kedua-duanya SENGAJA berasingan, dan senarai kedua boleh lebih pendek
+     * daripada yang pertama. Pada peringkat 1.1, No. Rujukan diperlukan untuk
+     * Selesai tetapi TIDAK untuk meneruskan kerja — kerana nombor itu
+     * dimasukkan oleh PPR, dan kerja peringkat 1.2 tidak sepatutnya tertahan
+     * menunggu pegawai lain.
+     *
+     * Peringkat dengan `syarat_selesai` kosong kekal ditandakan Selesai secara
+     * eksplisit oleh pegawainya (butang "Selesai"), dan peringkat seterusnya
+     * hanya terbuka setelah ia benar-benar Selesai.
+     *
      * SIAPA memasukkan No. Rujukan tidak ditakrifkan di sini: setiap No.
      * Rujukan dimasukkan oleh PPR tanpa mengira siapa memiliki peringkatnya
      * (lihat self::PERANAN_RUJUKAN).
@@ -206,6 +220,19 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Borang Penerimaan Data',
                 ],
                 'rujukan' => 'No. Rujukan Borang Penerimaan Data',
+
+                // Selesai menuntut ketiga-tiganya; meneruskan ke peringkat 1.2
+                // menuntut dua sahaja — No. Rujukan milik PPR dan tidak
+                // sepatutnya menahan kerja peringkat berikutnya.
+                'syarat_selesai' => [
+                    self::MEDAN_TARIKH_TERIMA,
+                    self::MEDAN_STATUS_BORANG,
+                    self::MEDAN_NO_RUJUKAN,
+                ],
+                'syarat_lanjut' => [
+                    self::MEDAN_TARIKH_TERIMA,
+                    self::MEDAN_STATUS_BORANG,
+                ],
             ],
 
             self::PENDAFTARAN_DATA => [
@@ -513,6 +540,54 @@ final class AliranKerja
     public static function labelRujukan(mixed $key): ?string
     {
         return self::def($key)['rujukan'] ?? null;
+    }
+
+    /**
+     * Medan yang mesti ada sebelum peringkat ini boleh menjadi Selesai.
+     *
+     * Senarai kosong bermakna peringkat itu TIDAK diterbitkan daripada data:
+     * pegawainya menandakannya Selesai secara eksplisit.
+     *
+     * @return array<int, string>
+     */
+    public static function syaratSelesai(mixed $key): array
+    {
+        return self::def($key)['syarat_selesai'] ?? [];
+    }
+
+    /**
+     * Medan yang mesti ada sebelum peringkat SETERUSNYA boleh dimulakan.
+     *
+     * Senarai kosong bermakna peraturan lalai terpakai: peringkat seterusnya
+     * hanya terbuka setelah peringkat ini benar-benar Selesai.
+     *
+     * @return array<int, string>
+     */
+    public static function syaratLanjut(mixed $key): array
+    {
+        return self::def($key)['syarat_lanjut'] ?? [];
+    }
+
+    /**
+     * Adakah status peringkat ini DITERBITKAN daripada datanya, dan bukan
+     * ditetapkan oleh butang?
+     */
+    public static function statusDiterbitkan(mixed $key): bool
+    {
+        return self::syaratSelesai($key) !== [];
+    }
+
+    /**
+     * Label bagi satu lajur data peringkat — termasuk No. Rujukan, yang
+     * labelnya disimpan berasingan daripada senarai medan.
+     */
+    public static function labelMedan(mixed $key, string $lajur): string
+    {
+        if ($lajur === self::MEDAN_NO_RUJUKAN) {
+            return self::labelRujukan($key) ?? $lajur;
+        }
+
+        return self::medan($key)[$lajur] ?? $lajur;
     }
 
     /**

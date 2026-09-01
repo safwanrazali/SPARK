@@ -6,12 +6,10 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\TukarKataLaluanController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EntitiAssignmentController;
 use App\Http\Controllers\EntitiController;
 use App\Http\Controllers\KemajuanAnalisisController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MuatNaikController;
-use App\Http\Controllers\PendaftaranEntitiController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\StatusLaporanController;
 use App\Http\Controllers\WorkflowController;
@@ -175,40 +173,18 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Penetapan Entiti — satu skrin, dua panel mengikut peranan
+    | Penetapan Entiti — DIBUANG
     |----------------------------------------------------------------------
-    | Panel pendaftaran (peringkat 1) milik Pegawai Penyelaras Rekod dan
-    | Ketua Bahagian; panel penugasan milik Pegawai Penyelaras Analisis.
-    | Kerana itu gate `manage-assignment` tidak lagi boleh melindungi
-    | keseluruhan kumpulan — ia dipindahkan ke setiap route penugasan.
+    | Skrin, laluan dan controllernya telah dibuang sepenuhnya.
     |
-    | Route `pendaftaran` mesti didaftarkan SEBELUM `{agencyCode}`, jika
-    | tidak POST /penugasan/pendaftaran akan dipadankan sebagai penugasan
-    | bagi entiti bernama "pendaftaran".
+    | DATANYA KEKAL: jadual `entiti_assignment`, modelnya dan
+    | App\Services\EntityAssignmentService tidak disentuh, jadi penugasan
+    | yang telah direkodkan TERUS menentukan entiti mana yang boleh dicapai
+    | oleh setiap Pegawai Analisis (lihat User::getAccessibleEntities()).
+    |
+    | Kesannya: tiada penugasan BAHARU boleh dibuat dan tiada entiti baharu
+    | boleh dimasukkan ke dalam aliran kerja sehingga penggantinya ditetapkan.
     */
-    Route::prefix('penugasan')
-        ->name('penugasan.')
-        ->group(function () {
-            Route::get('/', [EntitiAssignmentController::class, 'index'])->name('index');
-
-            /*
-            | TIADA laluan menyiapkan peringkat 1.1 buat masa ini.
-            |
-            | Laluan kemas kini pukal (kotak semak) telah dibuang bersama UI-nya:
-            | peringkat 1.1 tidak lagi ditentukan dengan menanda sekumpulan
-            | entiti. Pencetus gantinya belum ditetapkan, jadi tiada laluan
-            | baharu direka di sini sehingga ia diberikan.
-            */
-            Route::post('/pendaftaran/{agencyCode}/set-semula', [PendaftaranEntitiController::class, 'setSemula'])
-                ->middleware('can:reset-entity-registration')
-                ->name('pendaftaran.set-semula');
-
-            Route::middleware(['can:manage-assignment', 'entity.access'])->group(function () {
-                Route::get('/{agencyCode}', [EntitiAssignmentController::class, 'show'])->name('show');
-                Route::post('/{agencyCode}', [EntitiAssignmentController::class, 'simpan'])->name('simpan');
-                Route::post('/{agencyCode}/tarik', [EntitiAssignmentController::class, 'tarik'])->name('tarik');
-            });
-        });
 
     /*
     |----------------------------------------------------------------------

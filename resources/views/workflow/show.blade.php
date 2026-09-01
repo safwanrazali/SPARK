@@ -64,13 +64,20 @@
             default => 'status-tinggi',
         };
 
-        // Peringkat fasa semasa yang mempunyai tindakan terbuka kepada
-        // pengguna ini — sama ada tindakan peringkat atau No. Rujukan.
+        /*
+        | Peringkat fasa semasa yang mempunyai tindakan terbuka kepada
+        | pengguna ini — sama ada tindakan peringkat atau No. Rujukan.
+        |
+        | No. Rujukan direkodkan PADA baris peringkat, jadi ia hanya berkenaan
+        | setelah entiti berada dalam aliran kerja. Tindakan peringkat 1.1
+        | pula BERKENAAN sebelum itu: ia yang memasukkan entiti ke dalam
+        | aliran.
+        */
         $peringkatBertindak = collect(AliranKerja::semasa())->filter(
-            fn(string $kunci) => $bolehKendali($kunci) || $bolehRujukan($kunci),
+            fn(string $kunci) => $bolehKendali($kunci) || ($didaftar && $bolehRujukan($kunci)),
         );
 
-        $adaTindakan = $didaftar && $peringkatBertindak->isNotEmpty();
+        $adaTindakan = $peringkatBertindak->isNotEmpty();
 
         $analisisLengkap = (bool) $analisis?->selesai;
 
@@ -196,16 +203,53 @@
                                 </div>
 
                                 <div class="peringkat-tindakan__butang mt-2">
-                                    <button type="submit" class="btn btn-sm btn-outline-light">
+                                    {{--
+                                        Peringkat berderivasi tiada butang
+                                        "Selesai": statusnya ialah jawapan
+                                        kepada kelengkapan datanya, bukan
+                                        sesuatu yang ditekan. Menyimpan medan
+                                        terakhir yang tinggal itulah yang
+                                        menyiapkannya.
+                                    --}}
+                                    <button type="submit" class="btn btn-sm btn-primary">
                                         <i class="bi bi-save"></i> Simpan
                                     </button>
 
-                                    {{-- Simpan + tandakan Selesai dalam satu hantaran. --}}
-                                    <button type="submit" class="btn btn-sm btn-primary"
-                                        formaction="{{ route('kemajuan.selesai', [$entiti['agency_code'], $kunci]) }}">
-                                        <i class="bi bi-check2-circle"></i> Selesai
-                                    </button>
+                                    @unless (AliranKerja::statusDiterbitkan($kunci))
+                                        {{-- Simpan + tandakan Selesai dalam satu hantaran. --}}
+                                        <button type="submit" class="btn btn-sm btn-primary"
+                                            formaction="{{ route('kemajuan.selesai', [$entiti['agency_code'], $kunci]) }}">
+                                            <i class="bi bi-check2-circle"></i> Selesai
+                                        </button>
+                                    @endunless
                                 </div>
+
+                                @if (AliranKerja::statusDiterbitkan($kunci))
+                                    @php
+                                        $belumLengkap = app(KemajuanAnalisisService::class)
+                                            ->medanBelumLengkap($rekod, $kunci);
+                                        $syaratLanjut = AliranKerja::syaratLanjut($kunci);
+                                        $tertunggakLanjut = array_intersect($belumLengkap, $syaratLanjut);
+                                    @endphp
+
+                                    <small class="peringkat-tindakan__nota d-block mt-2">
+                                        @if ($belumLengkap === [])
+                                            Peringkat ini Selesai — kesemua medannya telah direkod.
+                                        @else
+                                            Peringkat ini menjadi <strong>Selesai</strong> apabila
+                                            {{ implode(', ', array_map(fn($l) => AliranKerja::labelMedan($kunci, $l), $belumLengkap)) }}
+                                            direkod.
+
+                                            @if ($tertunggakLanjut === [])
+                                                Peringkat seterusnya sudah pun terbuka.
+                                            @else
+                                                Peringkat seterusnya terbuka sebaik
+                                                {{ implode(' dan ', array_map(fn($l) => AliranKerja::labelMedan($kunci, $l), $tertunggakLanjut)) }}
+                                                direkod.
+                                            @endif
+                                        @endif
+                                    </small>
+                                @endif
                             </form>
                         @elseif ($milikSaya)
                             <div class="peringkat-tindakan__butang">
@@ -292,9 +336,16 @@
             <p class="text-secondary mb-0">
                 Entiti ini belum memasuki aliran kerja kerana peringkat
                 <strong>1.1 Penerimaan Data</strong> belum Selesai.
-                Ketua Bahagian atau Pegawai Penyelaras Analisis perlu
-                menandakannya melalui skrin Penetapan Entiti sebelum kemajuan
-                analisis boleh bermula.
+
+                @if ($bolehKendali(AliranKerja::PERTAMA))
+                    Rekodkan Tarikh Terima dan Status Borang Penerimaan Data di
+                    atas, kemudian tandakan peringkat itu Selesai — entiti akan
+                    memasuki aliran kerja dan peringkat
+                    <strong>1.2 Pendaftaran Data</strong> terbuka.
+                @else
+                    Ketua Bahagian atau Pegawai Penyelaras Analisis perlu
+                    merekodkan peringkat tersebut terlebih dahulu.
+                @endif
             </p>
         </div>
     @else

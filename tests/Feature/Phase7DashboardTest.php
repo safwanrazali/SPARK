@@ -15,6 +15,7 @@ use App\Services\LaporanSemakanService;
 use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\MelaluiAliranKerja;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
@@ -26,7 +27,7 @@ use Tests\TestCase;
  */
 class Phase7DashboardTest extends TestCase
 {
-    use RefreshDatabase;
+    use MelaluiAliranKerja, RefreshDatabase;
 
     /** Entiti sektor 001 (Kerajaan). */
     private const ALPHA = 'A010101';
@@ -127,6 +128,7 @@ class Phase7DashboardTest extends TestCase
         app(KemajuanAnalisisService::class)->lengkapkanPenerimaan(
             SektorDirectory::cariEntiti($agencyCode),
             $this->coordinator,
+            ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1'],
         );
     }
 
@@ -139,12 +141,10 @@ class Phase7DashboardTest extends TestCase
      */
     private function siapkanSemuaPeringkat(string $agencyCode): void
     {
-        $kemajuan = app(KemajuanAnalisisService::class);
-
         $this->daftarkan($agencyCode);
 
         foreach (AliranKerja::semasa() as $stage) {
-            $kemajuan->tandakanSelesai($agencyCode, $stage, $this->coordinator);
+            $this->siapkanPeringkat($agencyCode, $stage, $this->coordinator);
         }
     }
 
@@ -153,8 +153,6 @@ class Phase7DashboardTest extends TestCase
      */
     private function peringkatHingga(string $agencyCode, string $hingga): void
     {
-        $kemajuan = app(KemajuanAnalisisService::class);
-
         $this->daftarkan($agencyCode);
 
         foreach (AliranKerja::semasa() as $stage) {
@@ -162,7 +160,7 @@ class Phase7DashboardTest extends TestCase
                 return;
             }
 
-            $kemajuan->tandakanSelesai($agencyCode, $stage, $this->coordinator);
+            $this->siapkanPeringkat($agencyCode, $stage, $this->coordinator);
         }
     }
 
@@ -287,7 +285,7 @@ class Phase7DashboardTest extends TestCase
         $kemajuan = app(KemajuanAnalisisService::class);
 
         foreach ([self::ALPHA, self::BETA, self::GAMMA] as $kod) {
-            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr);
+            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
             $this->serahkanKepadaNacsa($kod);
         }
 
@@ -298,9 +296,9 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(0, $sebelum['selesai']);
         $this->assertSame(3, $sebelum['jumlahLaporan']['inventori']);
 
-        $this->actingAs($kb)
-            ->post(route('penugasan.pendaftaran.set-semula', self::GAMMA), ['reason' => 'Data tidak lengkap.'])
-            ->assertSessionHasNoErrors();
+        // Set Semula dipanggil melalui servis: skrin Penetapan Entiti yang
+        // menghosnya telah dibuang, tetapi operasi domainnya kekal.
+        app(KemajuanAnalisisService::class)->setSemula(self::GAMMA, $kb, 'Data tidak lengkap.');
 
         $selepas = $this->kira();
 
@@ -324,7 +322,7 @@ class Phase7DashboardTest extends TestCase
         $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
 
         app(KemajuanAnalisisService::class)
-            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $ppr);
+            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $ppr, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
 
         // Dipantau melalui status laporan sahaja — tiada baris peringkat.
         $this->statusLaporan(self::BETA, 'inventori', 'Dalam Proses');
@@ -521,7 +519,7 @@ class Phase7DashboardTest extends TestCase
         $this->assertSame(3, $this->jumlahSenaraiInduk('010'));
 
         foreach (['K100100', 'A100101'] as $kod) {
-            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr);
+            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
         }
 
         $statistik = $this->kira('010');
@@ -540,7 +538,7 @@ class Phase7DashboardTest extends TestCase
         $kemajuan = app(KemajuanAnalisisService::class);
 
         foreach (['K100100', 'A100101'] as $kod) {
-            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr);
+            $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti($kod), $ppr, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
         }
 
         $this->assertSame(2, $this->kira('010')['pendaftaranSelesai']);
@@ -562,8 +560,8 @@ class Phase7DashboardTest extends TestCase
     public function test_kiraan_laporan_hanya_merangkumi_yang_diserahkan_kepada_nacsa(): void
     {
         $kemajuan = app(KemajuanAnalisisService::class);
-        $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
-        $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::BETA), $this->coordinator);
+        $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
+        $kemajuan->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::BETA), $this->coordinator, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
 
         // BETA: laporan disahkan KB tetapi BELUM diserahkan. Rekod dapatan
         // analisisnya juga wujud — kedua-duanya tetap tidak dikira.
@@ -593,7 +591,7 @@ class Phase7DashboardTest extends TestCase
     public function test_kiraan_laporan_diasingkan_mengikut_jenis(): void
     {
         app(KemajuanAnalisisService::class)
-            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
 
         $this->serahkanKepadaNacsa(self::ALPHA, 'inventori');
         $this->serahkanKepadaNacsa(self::ALPHA, 'risiko');
@@ -610,7 +608,7 @@ class Phase7DashboardTest extends TestCase
     public function test_penyerahan_berulang_dikira_sekali_sahaja(): void
     {
         app(KemajuanAnalisisService::class)
-            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator);
+            ->lengkapkanPenerimaan(SektorDirectory::cariEntiti(self::ALPHA), $this->coordinator, ['tarikh_terima' => '2026-08-14', 'status_borang' => 'Selesai', 'no_rujukan' => 'FIKSTUR/1.1']);
 
         $laporan = $this->serahkanKepadaNacsa(self::ALPHA);
         app(LaporanSemakanService::class)->rekodPenyerahan($laporan, $this->coordinator);

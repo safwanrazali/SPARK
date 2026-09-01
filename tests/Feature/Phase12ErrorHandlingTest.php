@@ -295,7 +295,7 @@ class Phase12ErrorHandlingTest extends TestCase
             ->assertNotFound();
 
         $this->actingAs($this->penyelaras)
-            ->get(route('penugasan.show', 'KOD-TIADA'))
+            ->get(route('entiti.show', 'KOD-TIADA'))
             ->assertNotFound();
     }
 
@@ -304,61 +304,6 @@ class Phase12ErrorHandlingTest extends TestCase
     | Peraturan penugasan (spesifikasi bahagian 8)
     |--------------------------------------------------------------------------
     */
-
-    public function test_penugasan_kepada_bukan_pegawai_analisis_ditolak(): void
-    {
-        $ketua = User::factory()->create(['role' => User::ROLE_KETUA_BAHAGIAN]);
-
-        $this->actingAs($this->penyelaras)
-            ->from(route('penugasan.show', self::BETA))
-            ->post(route('penugasan.simpan', self::BETA), ['assigned_to_user_id' => $ketua->id])
-            ->assertSessionHasErrors('assigned_to_user_id');
-
-        $this->assertDatabaseMissing('entiti_assignment', ['agency_code' => self::BETA]);
-    }
-
-    public function test_penugasan_pendua_kepada_pegawai_yang_sama_ditolak(): void
-    {
-        $this->actingAs($this->penyelaras)
-            ->from(route('penugasan.show', self::ALPHA))
-            ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $this->analyst->id])
-            ->assertSessionHasErrors('assigned_to_user_id');
-
-        $this->assertSame(
-            1,
-            EntitiAssignment::where('agency_code', self::ALPHA)->count(),
-        );
-    }
-
-    public function test_penugasan_kepada_pengguna_tidak_wujud_ditolak(): void
-    {
-        $this->actingAs($this->penyelaras)
-            ->from(route('penugasan.show', self::BETA))
-            ->post(route('penugasan.simpan', self::BETA), ['assigned_to_user_id' => 999999])
-            ->assertSessionHasErrors('assigned_to_user_id');
-    }
-
-    public function test_penarikan_penugasan_yang_tiada_ditolak_dengan_mesej(): void
-    {
-        $this->actingAs($this->penyelaras)
-            ->from(route('penugasan.show', self::BETA))
-            ->post(route('penugasan.tarik', self::BETA))
-            ->assertSessionHasErrors('assigned_to_user_id');
-    }
-
-    public function test_satu_entiti_hanya_ada_satu_penugasan_aktif(): void
-    {
-        $analystB = User::factory()->create(['role' => User::ROLE_ANALYST]);
-
-        $this->actingAs($this->penyelaras)
-            ->post(route('penugasan.simpan', self::ALPHA), ['assigned_to_user_id' => $analystB->id])
-            ->assertRedirect();
-
-        $this->assertSame(
-            1,
-            EntitiAssignment::where('agency_code', self::ALPHA)->active()->count(),
-        );
-    }
 
     /*
     |--------------------------------------------------------------------------

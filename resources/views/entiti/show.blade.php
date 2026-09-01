@@ -24,12 +24,6 @@
                     <i class="bi bi-diagram-3"></i> Kemajuan
                 </a>
 
-                @can('manage-assignment')
-                    <a href="{{ route('penugasan.show', $entiti['agency_code']) }}" class="btn btn-sm btn-outline-light">
-                        <i class="bi bi-person-check"></i> Penugasan
-                    </a>
-                @endcan
-
                 @can('manage-analysis')
                     <a href="{{ route('analisis.borang', [
                         'sector_code' => $entiti['sector_code'],
