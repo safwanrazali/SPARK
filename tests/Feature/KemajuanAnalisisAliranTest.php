@@ -296,7 +296,7 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->actingAs($this->ppa)
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
                 'tarikh_terima' => '2026-08-14',
-                'status_borang' => 'Diterima Lengkap',
+                'status_borang' => 'Dalam Semakan',
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
@@ -306,7 +306,7 @@ class KemajuanAnalisisAliranTest extends TestCase
             ->get(AliranKerja::PENDAFTARAN_DATA);
 
         $this->assertSame('2026-08-14', $rekod->tarikh_terima->format('Y-m-d'));
-        $this->assertSame('Diterima Lengkap', $rekod->status_borang);
+        $this->assertSame('Dalam Semakan', $rekod->status_borang);
 
         // Merekod data bermakna kerja peringkat itu telah bermula.
         $this->assertSame(WorkflowStageStatus::DALAM_PROSES, $rekod->status);
@@ -320,7 +320,7 @@ class KemajuanAnalisisAliranTest extends TestCase
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENYEDIAAN_DATA]), [
                 'tarikh_mula' => '2026-08-01',
                 'tarikh_tamat' => '2026-08-20',
-                'status_borang' => 'Disahkan',
+                'status_borang' => 'Selesai',
                 'nama_fail' => 'mastertable-A010101.xlsx',
             ])
             ->assertRedirect();
@@ -331,8 +331,69 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->assertSame('2026-08-01', $rekod->tarikh_mula->format('Y-m-d'));
         $this->assertSame('2026-08-20', $rekod->tarikh_tamat->format('Y-m-d'));
-        $this->assertSame('Disahkan', $rekod->status_borang);
+        $this->assertSame('Selesai', $rekod->status_borang);
         $this->assertSame('mastertable-A010101.xlsx', $rekod->nama_fail);
+    }
+
+    /**
+     * Status Borang ialah senarai TERTUTUP: nilai di luar perbendaharaan
+     * ditolak walaupun borang dihantar terus tanpa melalui antara muka.
+     */
+    public function test_status_borang_di_luar_perbendaharaan_ditolak(): void
+    {
+        $this->lalui(AliranKerja::PENDAFTARAN_DATA);
+
+        $this->actingAs($this->ppa)
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
+                'status_borang' => 'Diterima Lengkap',
+            ])
+            ->assertSessionHasErrors('status_borang');
+
+        $this->assertNull(
+            app(KemajuanAnalisisService::class)
+                ->peringkat(self::ALPHA)
+                ->get(AliranKerja::PENDAFTARAN_DATA)->status_borang,
+        );
+    }
+
+    /**
+     * Setiap nilai perbendaharaan mesti benar-benar boleh disimpan — senarai
+     * yang ditolak separuh oleh pengesahan lebih buruk daripada tiada senarai.
+     */
+    public function test_setiap_nilai_status_borang_diterima(): void
+    {
+        $this->lalui(AliranKerja::PENDAFTARAN_DATA);
+
+        foreach (AliranKerja::STATUS_BORANG as $status) {
+            $this->actingAs($this->ppa)
+                ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
+                    'status_borang' => $status,
+                ])
+                ->assertSessionHasNoErrors();
+
+            $this->assertSame(
+                $status,
+                app(KemajuanAnalisisService::class)
+                    ->peringkat(self::ALPHA)
+                    ->get(AliranKerja::PENDAFTARAN_DATA)->status_borang,
+            );
+        }
+    }
+
+    /**
+     * Borang menawarkan kesemua tujuh pilihan — bukan medan teks bebas.
+     */
+    public function test_borang_menawarkan_kesemua_pilihan_status_borang(): void
+    {
+        $this->lalui(AliranKerja::PENDAFTARAN_DATA);
+
+        $paparan = $this->actingAs($this->ppa)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk();
+
+        foreach (AliranKerja::STATUS_BORANG as $status) {
+            $paparan->assertSee(sprintf('<option value="%s"', $status), false);
+        }
     }
 
     public function test_tarikh_tamat_tidak_boleh_mendahului_tarikh_mula(): void
@@ -377,7 +438,7 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->actingAs($this->pa)
             ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]), [
                 'tarikh_semakan' => '2026-08-18',
-                'status_borang' => 'Lengkap',
+                'status_borang' => 'Selesai',
             ])
             ->assertRedirect();
 
@@ -387,7 +448,7 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->assertSame(WorkflowStageStatus::SELESAI, $rekod->status);
         $this->assertSame('2026-08-18', $rekod->tarikh_semakan->format('Y-m-d'));
-        $this->assertSame('Lengkap', $rekod->status_borang);
+        $this->assertSame('Selesai', $rekod->status_borang);
     }
 
     /*
@@ -727,13 +788,13 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->actingAs($this->ppa)
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
-                'status_borang' => 'Diterima Lengkap',
+                'status_borang' => 'Tidak Boleh Diteruskan',
             ]);
 
         $this->actingAs($this->ppa)
             ->get(route('workflow.show', self::ALPHA))
             ->assertOk()
-            ->assertSee('Diterima Lengkap');
+            ->assertSee('Tidak Boleh Diteruskan');
     }
 
     /*

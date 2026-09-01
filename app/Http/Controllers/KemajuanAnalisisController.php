@@ -8,6 +8,7 @@ use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 /**
  * Tindakan pada halaman "Kemajuan Analisis Entiti".
@@ -171,8 +172,9 @@ class KemajuanAnalisisController extends Controller
      * Hanya medan yang ditakrifkan bagi peringkat berkenaan diterima; borang
      * tidak boleh menulis medan peringkat lain walaupun ia dihantar.
      *
-     * `status_borang` tiada senarai nilai: perbendaharaannya belum
-     * ditetapkan, jadi tiada nilai direka di sini.
+     * `status_borang` disahkan terhadap perbendaharaan rasminya
+     * (AliranKerja::STATUS_BORANG), jadi nilai di luar senarai itu ditolak
+     * walaupun borang dihantar terus tanpa melalui antara muka.
      *
      * @return array<string, array<int, mixed>>
      */
@@ -181,9 +183,14 @@ class KemajuanAnalisisController extends Controller
         $peraturan = [];
 
         foreach (array_keys(AliranKerja::medan($stage)) as $medan) {
-            $peraturan[$medan] = in_array($medan, AliranKerja::MEDAN_TARIKH, true)
-                ? ['nullable', 'date']
-                : ['nullable', 'string', 'max:255'];
+            $peraturan[$medan] = match (true) {
+                in_array($medan, AliranKerja::MEDAN_TARIKH, true) => ['nullable', 'date'],
+                $medan === AliranKerja::MEDAN_STATUS_BORANG => [
+                    'nullable',
+                    Rule::in(AliranKerja::statusBorang($stage)),
+                ],
+                default => ['nullable', 'string', 'max:255'],
+            };
         }
 
         // Tarikh Tamat tidak boleh mendahului Tarikh Mula — satu-satunya

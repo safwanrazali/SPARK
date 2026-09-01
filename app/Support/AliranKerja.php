@@ -112,6 +112,39 @@ final class AliranKerja
     public const MEDAN_NO_RUJUKAN = 'no_rujukan';
 
     /**
+     * Perbendaharaan "Status Borang" — SATU senarai, dikongsi oleh setiap
+     * peringkat yang menangkapnya:
+     *
+     *   Status Borang Penerimaan Data          (1.1)
+     *   Status Borang Pendaftaran Data         (1.2)
+     *   Status Borang Semakan Awal Data        (1.3)
+     *   Status Mastertable                     (2)
+     *   Status Laporan Inventori Kriptografi   (3.1)
+     *
+     * Label medan berbeza mengikut peringkat, tetapi nilainya sama — jadi ia
+     * ditakrifkan sekali di sini dan bukan diulang pada setiap peringkat.
+     *
+     * PERBENDAHARAAN INI BERASINGAN daripada WorkflowStageStatus::STATUSES.
+     * Yang itu ialah kedudukan PERINGKAT dalam aliran kerja (Belum Mula /
+     * Dalam Proses / Selesai); yang ini ialah status BORANG yang direkodkan
+     * pada peringkat itu. Kedua-duanya berkongsi beberapa perkataan yang sama
+     * tetapi menjawab soalan yang berlainan, dan menggabungkannya akan
+     * menghilangkan keadaan seperti "Tidak Berkaitan" yang hanya bermakna
+     * bagi borang.
+     *
+     * @var array<int, string>
+     */
+    public const STATUS_BORANG = [
+        'Belum Mula',
+        'Dalam Proses',
+        'Dalam Semakan',
+        'Selesai',
+        'Tidak Boleh Diteruskan',
+        'Tidak Berkaitan',
+        'Telah Diserah',
+    ];
+
+    /**
      * Medan bertarikh — dipisahkan kerana pengesahannya berbeza.
      *
      * @var array<int, string>
@@ -525,6 +558,23 @@ final class AliranKerja
         $peranan = self::peranan($key);
 
         return $user !== null && $peranan !== [] && $user->hasAnyRole($peranan);
+    }
+
+    /**
+     * Nilai "Status Borang" yang sah bagi peringkat ini, atau senarai kosong
+     * jika peringkat itu tidak menangkap status borang langsung.
+     *
+     * Dipanggil dan bukan dibaca terus daripada STATUS_BORANG, supaya satu
+     * peringkat boleh diberi senarai tersendiri kelak tanpa mengubah setiap
+     * tempat yang memaparkannya.
+     *
+     * @return array<int, string>
+     */
+    public static function statusBorang(mixed $key): array
+    {
+        return array_key_exists(self::MEDAN_STATUS_BORANG, self::medan($key))
+            ? self::STATUS_BORANG
+            : [];
     }
 
     /**

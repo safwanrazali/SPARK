@@ -160,15 +160,37 @@
 
                                 <div class="row g-2">
                                     @foreach ($medan as $lajur => $label)
+                                        @php
+                                            $bertarikh = in_array($lajur, AliranKerja::MEDAN_TARIKH, true);
+                                            $nilai = old($lajur, $bertarikh ? $rekod?->{$lajur}?->format('Y-m-d') : $rekod?->{$lajur});
+                                        @endphp
                                         <div class="col-md-3">
                                             <label class="form-label"
                                                 for="{{ $kunci }}-{{ $lajur }}">{{ $label }}</label>
-                                            <input
-                                                type="{{ in_array($lajur, AliranKerja::MEDAN_TARIKH, true) ? 'date' : 'text' }}"
-                                                class="form-control @error($lajur) is-invalid @enderror"
-                                                id="{{ $kunci }}-{{ $lajur }}" name="{{ $lajur }}"
-                                                value="{{ old($lajur, in_array($lajur, AliranKerja::MEDAN_TARIKH, true) ? $rekod?->{$lajur}?->format('Y-m-d') : $rekod?->{$lajur}) }}"
-                                                maxlength="255">
+
+                                            {{--
+                                                Status Borang ialah senarai
+                                                tertutup, jadi ia dipilih dan
+                                                bukan ditaip: nilai di luar
+                                                perbendaharaan tidak sepatutnya
+                                                boleh masuk langsung.
+                                            --}}
+                                            @if ($lajur === AliranKerja::MEDAN_STATUS_BORANG)
+                                                <select class="form-select @error($lajur) is-invalid @enderror"
+                                                    id="{{ $kunci }}-{{ $lajur }}" name="{{ $lajur }}">
+                                                    <option value="">— Pilih —</option>
+                                                    @foreach (AliranKerja::statusBorang($kunci) as $pilihan)
+                                                        <option value="{{ $pilihan }}" @selected($nilai === $pilihan)>
+                                                            {{ $pilihan }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            @else
+                                                <input type="{{ $bertarikh ? 'date' : 'text' }}"
+                                                    class="form-control @error($lajur) is-invalid @enderror"
+                                                    id="{{ $kunci }}-{{ $lajur }}" name="{{ $lajur }}"
+                                                    value="{{ $nilai }}" maxlength="255">
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>

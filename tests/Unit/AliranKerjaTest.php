@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\User;
+use App\Models\WorkflowStageStatus;
 use App\Support\AliranKerja;
 use Tests\TestCase;
 
@@ -190,6 +191,54 @@ class AliranKerjaTest extends TestCase
             'tarikh_tamat' => 'Tarikh Tamat',
             'status_borang' => 'Status Laporan Inventori Kriptografi',
         ], AliranKerja::medan('3.1'));
+    }
+
+    /**
+     * Perbendaharaan Status Borang — satu senarai dikongsi oleh kelima-lima
+     * peringkat yang menangkapnya.
+     */
+    public function test_perbendaharaan_status_borang(): void
+    {
+        $this->assertSame([
+            'Belum Mula',
+            'Dalam Proses',
+            'Dalam Semakan',
+            'Selesai',
+            'Tidak Boleh Diteruskan',
+            'Tidak Berkaitan',
+            'Telah Diserah',
+        ], AliranKerja::STATUS_BORANG);
+
+        foreach (['1.1', '1.2', '1.3', '2', '3.1'] as $kunci) {
+            $this->assertSame(AliranKerja::STATUS_BORANG, AliranKerja::statusBorang($kunci));
+        }
+    }
+
+    /**
+     * Peringkat yang tidak menangkap Status Borang tidak menawarkan senarainya.
+     */
+    public function test_peringkat_tanpa_status_borang_tiada_pilihan(): void
+    {
+        foreach (AliranKerja::akanDatang() as $kunci) {
+            $this->assertSame([], AliranKerja::statusBorang($kunci));
+        }
+
+        $this->assertSame([], AliranKerja::statusBorang('9.9'));
+    }
+
+    /**
+     * Status BORANG dan status PERINGKAT ialah dua perbendaharaan berasingan.
+     * Menggabungkannya akan menghilangkan keadaan yang hanya wujud pada salah
+     * satu daripadanya.
+     */
+    public function test_status_borang_berasingan_daripada_status_peringkat(): void
+    {
+        $this->assertNotSame(WorkflowStageStatus::STATUSES, AliranKerja::STATUS_BORANG);
+
+        foreach (['Dalam Semakan', 'Tidak Boleh Diteruskan', 'Tidak Berkaitan', 'Telah Diserah'] as $hanyaBorang) {
+            $this->assertContains($hanyaBorang, AliranKerja::STATUS_BORANG);
+            $this->assertNotContains($hanyaBorang, WorkflowStageStatus::STATUSES);
+        }
     }
 
     public function test_turutan_sebelum_dan_selepas(): void

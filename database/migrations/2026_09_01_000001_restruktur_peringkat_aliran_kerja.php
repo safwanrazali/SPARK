@@ -185,8 +185,10 @@ return new class extends Migration
              * peringkat baharu (3.2, 4, 5) boleh ditambah tanpa migrasi
              * skema lagi selagi ia menangkap medan yang sama bentuknya.
              *
-             * `status_borang` sengaja string bebas: perbendaharaan status
-             * borang belum ditetapkan, jadi tiada senarai nilai direka di sini.
+             * `status_borang` disimpan sebagai string dan bukan enum pangkalan
+             * data: perbendaharaannya (AliranKerja::STATUS_BORANG) dikuatkuasakan
+             * pada lapisan pengesahan, supaya menambah satu nilai baharu tidak
+             * memerlukan migrasi skema.
              */
             $table->date('tarikh_terima')->nullable();
             $table->date('tarikh_semakan')->nullable();
