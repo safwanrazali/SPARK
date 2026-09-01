@@ -1,12 +1,32 @@
 /*
 |--------------------------------------------------------------------------
-| Fasa 2 — visualisasi workflow 7 peringkat
+| Visualisasi aliran kerja LIMA peringkat utama dengan sub-peringkat.
+|
+| Struktur peringkat ditakrifkan dalam App\Support\AliranKerja; fail ini
+| hanya melukisnya.
 |--------------------------------------------------------------------------
 */
 
+/*
+| Grid DUA BARIS: tajuk kumpulan pada baris pertama, bulatan pada baris kedua.
+|
+| Ini bukan pilihan gaya. Tajuk kumpulan mempunyai bilangan baris teks yang
+| berbeza-beza — "Penyediaan & Pengesahan Data" membalut kepada dua baris,
+| "Analisis Data" tidak — dan dengan susunan flex setiap kumpulan menolak
+| bulatannya ke bawah mengikut panjang tajuknya sendiri, jadi baris bulatan
+| menjadi bengkok. Dengan grid, SEMUA tajuk berkongsi satu baris yang
+| tingginya ditentukan oleh tajuk terpanjang, jadi baris bulatan sentiasa
+| lurus tanpa mengira panjang mana-mana tajuk.
+|
+| --kolum dijana oleh komponen: setiap kumpulan mendapat lebar mengikut
+| bilangan sub-peringkatnya, supaya setiap bulatan sama luas.
+*/
 .workflow-stepper {
-    display: flex;
-    align-items: flex-start;
+    display: grid;
+    grid-template-rows: auto auto;
+    grid-auto-flow: column;
+    grid-template-columns: var(--kolum, repeat(5, minmax(120px, 1fr)));
+    row-gap: 0.6rem;
     overflow-x: auto;
     padding: 0.5rem 0 0.25rem;
 }
@@ -15,17 +35,20 @@
 | Satu kumpulan peringkat UTAMA. Sub-peringkat berada DI DALAMNYA, jadi
 | pengguna melihat lima kumpulan dan bukan lapan langkah rata.
 |
-| --sub ialah bilangan sub-peringkat kumpulan ini; ia menjadi faktor
-| pertumbuhan supaya setiap bulatan sama luas merentas keseluruhan baris
-| walaupun kumpulan mempunyai bilangan sub-peringkat yang berbeza.
+| `display: contents` melarutkan kotak kumpulan supaya tajuk dan baris
+| bulatannya menjadi item grid bekas secara terus — itulah yang meletakkan
+| setiap tajuk pada baris 1 dan setiap baris bulatan pada baris 2 (lihat
+| grid-auto-flow: column di atas). Kumpulan ini kekal dalam DOM sebagai
+| pembawa kelas keadaan dan sebagai pengumpul semantik.
 */
 .workflow-utama {
-    flex: var(--sub, 1) 1 0;
-    min-width: calc(var(--sub, 1) * 120px);
+    display: contents;
 }
 
 .workflow-utama__label {
-    margin-bottom: 0.6rem;
+    // Tajuk dilekatkan ke BAWAH baris pertama, jadi ia sentiasa duduk
+    // rapat di atas bulatannya walaupun tajuk kumpulan lain lebih panjang.
+    align-self: end;
     padding: 0 0.35rem;
     color: $text;
     font-size: 0.82rem;
@@ -67,20 +90,27 @@
 .workflow-utama__langkah {
     display: flex;
     align-items: flex-start;
+    align-self: start;
 }
 
+/*
+| Satu langkah: bulatan, nama, lencana status — setiap satu pada barisnya
+| sendiri.
+|
+| Susunan lajur (dan bukan aliran teks biasa) diperlukan kerana langkah
+| bagi peringkat tanpa sub-peringkat TIDAK mempunyai nama di bawah
+| bulatannya: tanpa lajur, lencana statusnya mengalir ke sebelah bulatan
+| dan bukan ke bawahnya.
+*/
 .workflow-step {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     flex: 1 1 0;
     min-width: 120px;
     padding: 0 0.35rem;
     text-align: center;
-}
-
-.workflow-step__nombor {
-    display: block;
-    font-weight: 700;
-    color: $secondary;
 }
 
 .workflow-step__nota {
@@ -146,7 +176,10 @@
 }
 
 .workflow-step__label {
-    margin-top: 0.6rem;
+    margin-top: 0.55rem;
+    // Satu baris ditempah walaupun kosong, supaya lencana status setiap
+    // kumpulan mendarat pada paras yang sama.
+    min-height: 1.25em;
     font-size: 0.8rem;
     line-height: 1.25;
     color: $muted;
@@ -220,17 +253,17 @@
         color: $muted;
     }
 
-    .workflow-step__label,
-    .workflow-step__nombor {
+    .workflow-step__label {
         color: $muted;
     }
 }
 
 // Varian ringkas — untuk senarai / kad kecil
 .workflow-stepper--compact {
-    .workflow-utama {
-        min-width: calc(var(--sub, 1) * 34px);
-    }
+    // Tiada tajuk kumpulan dalam varian ini, jadi baris pertama grid
+    // tidak diperlukan langsung.
+    grid-template-rows: auto;
+    row-gap: 0;
 
     .workflow-step {
         min-width: 34px;

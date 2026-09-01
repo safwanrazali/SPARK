@@ -17,9 +17,33 @@
      * membezakan peringkat yang sedang berjalan daripada yang belum bermula.
      */
     $statusPeringkat = fn (string $kunci): ?string => $peringkat?->get($kunci)?->status;
+
+    /*
+     * Lebar setiap kumpulan peringkat utama, dijana sebagai lajur grid.
+     *
+     * Setiap kumpulan mendapat lebar mengikut BILANGAN sub-peringkatnya, supaya
+     * setiap bulatan sama luas merentas keseluruhan baris — kumpulan bersub-tiga
+     * tidak boleh sesempit kumpulan berproses tunggal.
+     *
+     * Grid (dan bukan flex) digunakan kerana tajuk kumpulan mempunyai bilangan
+     * baris yang berbeza-beza: "Penyediaan & Pengesahan Data" membalut kepada
+     * dua baris sedangkan "Analisis Data" tidak. Dengan grid dua baris, SEMUA
+     * tajuk berkongsi baris pertama, jadi baris bulatan bermula pada paras yang
+     * sama tanpa mengira panjang tajuk.
+     */
+    $lebarMinimum = $compact ? 34 : 120;
+
+    $kolum = collect(array_keys(AliranKerja::UTAMA))
+        ->map(function (int $utama) use ($lebarMinimum): string {
+            $bilangan = max(1, count(AliranKerja::subPeringkat($utama)));
+
+            return sprintf('minmax(%dpx, %dfr)', $bilangan * $lebarMinimum, $bilangan);
+        })
+        ->implode(' ');
 @endphp
 
-<div {{ $attributes->merge(['class' => 'workflow-stepper' . ($compact ? ' workflow-stepper--compact' : '')]) }}>
+<div {{ $attributes->merge(['class' => 'workflow-stepper' . ($compact ? ' workflow-stepper--compact' : '')]) }}
+    style="--kolum: {{ $kolum }}">
 
     {{--
         Lima kumpulan peringkat UTAMA. Sub-peringkat berada DI DALAM
@@ -30,10 +54,6 @@
         @php
             $sub = AliranKerja::subPeringkat($utama);
 
-            // Kumpulan diberi lebar mengikut bilangan sub-peringkatnya,
-            // supaya setiap bulatan sama luas merentas keseluruhan baris.
-            $bilanganSub = max(1, count($sub));
-
             // Peringkat utama dianggap selesai apabila setiap sub-peringkat
             // FASA SEMASA di dalamnya selesai. Peringkat fasa akan datang
             // tidak boleh menyekat kiraan ini: modulnya belum wujud.
@@ -43,10 +63,15 @@
                 ->every(fn (string $k) => $statusPeringkat($k) === WorkflowStageStatus::SELESAI);
 
             $akanDatangUtama = $subSemasa === [];
+
+            // Nama sub-peringkat hanya bermakna apabila kumpulan itu BENAR-BENAR
+            // mempunyai lebih daripada satu proses. Bagi peringkat 2, 4 dan 5,
+            // nama sub-peringkat sama dengan tajuk kumpulan — memaparkannya dua
+            // kali hanya mengulang perkataan yang sama di bawah bulatan.
+            $adaSub = AliranKerja::adaSubPeringkat($utama);
         @endphp
 
-        <div class="workflow-utama {{ $selesaiUtama ? 'workflow-utama--selesai' : '' }} {{ $akanDatangUtama ? 'workflow-utama--akan-datang' : '' }}"
-            style="--sub: {{ $bilanganSub }}">
+        <div class="workflow-utama {{ $selesaiUtama ? 'workflow-utama--selesai' : '' }} {{ $akanDatangUtama ? 'workflow-utama--akan-datang' : '' }}">
 
             @unless ($compact)
                 <div class="workflow-utama__label">
@@ -74,9 +99,9 @@
                             default => 'menunggu',
                         };
 
-                        // Sub-peringkat dipaparkan dengan nombor penuhnya
-                        // ('1.1'); peringkat tanpa sub-peringkat memaparkan
-                        // nombor utamanya sahaja ('2').
+                        // Nombor peringkat penuh kekal dalam tooltip: ia berguna
+                        // untuk rujukan silang dengan borang dan jejak audit,
+                        // tetapi tidak perlu memenuhi ruang paparan.
                         $tajuk = AliranKerja::labelPenuh($kunci)
                             . ($status && ! $akanDatang ? ' — ' . $status : '')
                             . ($akanDatang ? ' — belum dibina' : '');
@@ -86,20 +111,32 @@
 
                         <div class="workflow-step__track" aria-hidden="true"></div>
 
+                        {{--
+                            Bulatan membawa KEADAAN peringkat, bukan nombornya.
+                            Nombor sub-peringkat telah dibuang: kumpulan di
+                            atasnya sudah menomborkan peringkat utama, dan
+                            mengulanginya pada setiap bulatan hanya menambah
+                            angka yang perlu dibaca tanpa memberi maklumat baharu.
+                        --}}
                         <div class="workflow-step__node">
                             @if ($keadaan === 'selesai')
                                 <i class="bi bi-check-lg"></i>
                             @elseif ($akanDatang)
                                 <i class="bi bi-hourglass"></i>
-                            @else
-                                {{ $kunci }}
                             @endif
                         </div>
 
                         @unless ($compact)
-                            <div class="workflow-step__label">
-                                <span class="workflow-step__nombor">{{ $kunci }}</span>
-                                {{ AliranKerja::label($kunci) }}
+                            {{--
+                                Baris nama sentiasa ditempah, walaupun kosong.
+                                Peringkat tanpa sub-peringkat tidak memerlukan
+                                nama di sini — tajuk kumpulan di atasnya sudah
+                                menyebutnya — tetapi tanpa ruang yang ditempah,
+                                lencana statusnya naik satu baris dan tidak lagi
+                                sebaris dengan lencana kumpulan lain.
+                            --}}
+                            <div class="workflow-step__label" @unless ($adaSub) aria-hidden="true" @endunless>
+                                {{ $adaSub ? AliranKerja::label($kunci) : '' }}
                             </div>
 
                             @if ($akanDatang)
