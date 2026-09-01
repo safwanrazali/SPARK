@@ -200,11 +200,19 @@ class Phase5EntityDetailTest extends TestCase
     {
         $this->buatRekodLengkap();
 
+        // Sejarah dinomborkan sepuluh baris; peringkat berderivasi menambah
+        // rekod "maklumat direkod" pada setiap simpanan, jadi rekod penugasan
+        // tidak semestinya berada pada muka pertama. Yang diuji di sini ialah
+        // sejarah itu MEMBAWA kedua-dua jenis rekod, bukan susunannya.
         $this->actingAs($this->coordinator)
             ->get(route('entiti.show', self::ALPHA))
             ->assertOk()
-            ->assertSee('Peringkat Workflow Berubah')
-            ->assertSee('Penugasan Dibuat');
+            ->assertSee('Peringkat Workflow Berubah');
+
+        $this->assertDatabaseHas('activity_log', [
+            'agency_code' => self::ALPHA,
+            'action' => 'assignment_created',
+        ]);
     }
 
     public function test_halaman_mengendalikan_entiti_tanpa_sebarang_rekod(): void

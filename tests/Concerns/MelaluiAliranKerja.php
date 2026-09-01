@@ -2,7 +2,9 @@
 
 namespace Tests\Concerns;
 
+use App\Models\EntitiAssignment;
 use App\Models\User;
+use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
@@ -63,6 +65,33 @@ trait MelaluiAliranKerja
         if (in_array(AliranKerja::MEDAN_NO_RUJUKAN, AliranKerja::syaratSelesai($kunci), true)) {
             $kemajuan->simpanRujukan($agencyCode, $kunci, 'FIKSTUR/'.$kunci, $pengguna);
         }
+
+        $this->pastikanPenugasan($agencyCode, $kunci, $pengguna);
+    }
+
+    /**
+     * Peringkat yang membuka peringkat seterusnya hanya setelah seorang
+     * Pegawai Analisis ditugaskan (peringkat 1.2) memerlukan penugasan itu
+     * wujud sebelum fikstur boleh meneruskan aliran.
+     *
+     * Penugasan yang telah dibuat oleh ujian TIDAK diganti — ujian yang
+     * menetapkan pegawainya sendiri kekal memegangnya.
+     */
+    protected function pastikanPenugasan(string $agencyCode, string $kunci, ?User $pengguna = null): void
+    {
+        if (! AliranKerja::perluPenugasanUntukLanjut($kunci)) {
+            return;
+        }
+
+        if (EntitiAssignment::query()->forAgency($agencyCode)->active()->exists()) {
+            return;
+        }
+
+        app(EntityAssignmentService::class)->assign(
+            SektorDirectory::cariEntiti($agencyCode),
+            User::factory()->create(['role' => User::ROLE_ANALYST, 'name' => 'Pegawai Fikstur']),
+            $pengguna,
+        );
     }
 
     /**

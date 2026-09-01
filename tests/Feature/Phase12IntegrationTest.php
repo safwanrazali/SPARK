@@ -516,11 +516,7 @@ class Phase12IntegrationTest extends TestCase
             ->assertViewHas('kemajuan', 60);
 
         // Satu peringkat maju -> angka berubah tanpa sebarang nilai manual.
-        app(KemajuanAnalisisService::class)->tandakanSelesai(
-            self::ALPHA,
-            AliranKerja::PENDAFTARAN_DATA,
-            $this->penyelaras,
-        );
+        $this->siapkanPeringkat(self::ALPHA, AliranKerja::PENDAFTARAN_DATA, $this->penyelaras);
 
         $this->get(route('dashboard'))
             ->assertOk()

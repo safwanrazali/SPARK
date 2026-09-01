@@ -55,6 +55,7 @@ class WorkflowStageStatus extends Model
         'stage',
         'status',
         'tarikh_terima',
+        'tarikh_daftar',
         'tarikh_semakan',
         'tarikh_mula',
         'tarikh_tamat',
@@ -72,6 +73,7 @@ class WorkflowStageStatus extends Model
     protected $casts = [
         'stage' => 'string',
         'tarikh_terima' => 'date',
+        'tarikh_daftar' => 'date',
         'tarikh_semakan' => 'date',
         'tarikh_mula' => 'date',
         'tarikh_tamat' => 'date',

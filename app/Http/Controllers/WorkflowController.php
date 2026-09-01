@@ -128,6 +128,12 @@ class WorkflowController extends Controller
             'bilanganSelesai' => $this->kemajuan->bilanganSelesai($peringkat),
             'peringkatSemasa' => $this->kemajuan->peringkatSemasa($peringkat),
             'laporan' => $this->semakan->untuk($agencyCode),
+            // Penugasan Pegawai Analisis ialah kerja peringkat 1.2, jadi
+            // halaman ini membawanya bersama peringkat yang lain.
+            'penugasan' => $this->assignments->activeFor($agencyCode),
+            'analysts' => $request->user()->can('manage-assignment')
+                ? $this->assignments->analystsAvailable()
+                : collect(),
             'analisis' => RekodAnalisis::where('agency_code', $agencyCode)->first(),
             // Sumbernya ialah KemajuanAnalisisService, bukan
             // WorkflowTransitionService: aliran semasa menulis tindakan

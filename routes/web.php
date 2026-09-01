@@ -169,6 +169,18 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::post('/peringkat/{stage}/rujukan', [KemajuanAnalisisController::class, 'rujukan'])
                 ->where('stage', '[0-9]+(\.[0-9]+)?')
                 ->name('rujukan');
+
+            /*
+            | Penugasan Pegawai Analisis — kerja peringkat 1.2 Pendaftaran
+            | Data, milik PPA.
+            |
+            | Ia berada di sini dan bukan pada modulnya sendiri kerana itulah
+            | tempatnya dalam aliran kerja: PPA mendaftarkan data DAN menetapkan
+            | pegawai yang akan menjalankan peringkat seterusnya.
+            */
+            Route::post('/penugasan', [KemajuanAnalisisController::class, 'tugaskan'])
+                ->middleware('can:manage-assignment')
+                ->name('tugaskan');
         });
 
     /*

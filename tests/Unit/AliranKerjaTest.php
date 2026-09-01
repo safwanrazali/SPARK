@@ -166,8 +166,10 @@ class AliranKerjaTest extends TestCase
             'status_borang' => 'Status Borang Penerimaan Data',
         ], AliranKerja::medan('1.1'));
 
+        // Peringkat 1.2 menangkap TARIKH DAFTAR — bukan Tarikh Terima, yang
+        // menjawab soalan berbeza pada peringkat 1.1.
         $this->assertSame([
-            'tarikh_terima' => 'Tarikh Terima',
+            'tarikh_daftar' => 'Tarikh Daftar',
             'status_borang' => 'Status Borang Pendaftaran Data',
         ], AliranKerja::medan('1.2'));
 

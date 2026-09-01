@@ -99,6 +99,8 @@ final class AliranKerja
      */
     public const MEDAN_TARIKH_TERIMA = 'tarikh_terima';
 
+    public const MEDAN_TARIKH_DAFTAR = 'tarikh_daftar';
+
     public const MEDAN_TARIKH_SEMAKAN = 'tarikh_semakan';
 
     public const MEDAN_TARIKH_MULA = 'tarikh_mula';
@@ -173,6 +175,7 @@ final class AliranKerja
      */
     public const MEDAN_TARIKH = [
         self::MEDAN_TARIKH_TERIMA,
+        self::MEDAN_TARIKH_DAFTAR,
         self::MEDAN_TARIKH_SEMAKAN,
         self::MEDAN_TARIKH_MULA,
         self::MEDAN_TARIKH_TAMAT,
@@ -242,10 +245,32 @@ final class AliranKerja
                 'peranan' => [User::ROLE_COORDINATOR],
                 'gate' => 'manage-stage-pendaftaran',
                 'medan' => [
-                    self::MEDAN_TARIKH_TERIMA => 'Tarikh Terima',
+                    self::MEDAN_TARIKH_DAFTAR => 'Tarikh Daftar',
                     self::MEDAN_STATUS_BORANG => 'Status Borang Pendaftaran Data',
                 ],
                 'rujukan' => 'No. Rujukan Borang Pendaftaran Data',
+
+                // Tiada butang "Selesai": peringkat ini Selesai apabila
+                // kedua-dua medannya direkod. No. Rujukan TIDAK disenaraikan —
+                // ia milik PPR, dan menuntutnya akan menahan peringkat 1.3
+                // menunggu pegawai lain.
+                'syarat_selesai' => [
+                    self::MEDAN_TARIKH_DAFTAR,
+                    self::MEDAN_STATUS_BORANG,
+                ],
+                'syarat_lanjut' => [
+                    self::MEDAN_TARIKH_DAFTAR,
+                    self::MEDAN_STATUS_BORANG,
+                ],
+
+                // ...DAN seorang Pegawai Analisis mesti ditugaskan. Peringkat
+                // 1.3 ialah kerja PA; tanpa pegawai yang ditugaskan, tiada
+                // sesiapa yang boleh membukanya.
+                //
+                // Ini syarat LANJUT sahaja, bukan syarat Selesai: pendaftaran
+                // data itu sendiri sudah lengkap dengan dua medannya. Peringkat
+                // 1.2 boleh Selesai sementara penugasan masih tertunggak.
+                'lanjut_perlu_penugasan' => true,
             ],
 
             self::SEMAKAN_AWAL_DATA => [
@@ -566,6 +591,20 @@ final class AliranKerja
     public static function syaratLanjut(mixed $key): array
     {
         return self::def($key)['syarat_lanjut'] ?? [];
+    }
+
+    /**
+     * Adakah peringkat SETERUSNYA menuntut seorang Pegawai Analisis
+     * ditugaskan kepada entiti?
+     *
+     * Diasingkan daripada `syarat_lanjut` kerana ia BUKAN medan pada baris
+     * peringkat: penugasan hidup dalam `entiti_assignment`. Menyimpannya
+     * sebagai penanda di sini mengekalkan satu tempat yang menjawab "apa yang
+     * membuka peringkat seterusnya".
+     */
+    public static function perluPenugasanUntukLanjut(mixed $key): bool
+    {
+        return (bool) (self::def($key)['lanjut_perlu_penugasan'] ?? false);
     }
 
     /**

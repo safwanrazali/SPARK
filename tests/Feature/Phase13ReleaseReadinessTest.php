@@ -407,6 +407,7 @@ class Phase13ReleaseReadinessTest extends TestCase
             'kemajuan.rujukan',
             'kemajuan.selesai',
             'kemajuan.simpan',
+            'kemajuan.tugaskan',
             'laporan.index',
             'laporan.inventori',
             'laporan.unduh',

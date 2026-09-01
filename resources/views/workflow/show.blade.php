@@ -13,20 +13,64 @@
 
         $pengguna = auth()->user();
 
-        // Baris peringkat kekal selepas "Set Semula" Ketua Bahagian, jadi
-        // kehadirannya tidak membuktikan entiti berada dalam aliran kerja.
-        // Peringkat 1.1 Selesai ialah ujian sebenar.
-        $didaftar = $peringkat->get(AliranKerja::PENERIMAAN_DATA)?->isSelesai() ?? false;
+        /*
+        | "Berada dalam aliran kerja" bermakna peringkat 1.1 telah DIMULAKAN —
+        | bukan Selesai.
+        |
+        | Peringkat 1.1 berderivasi: ia hanya Selesai setelah No. Rujukan
+        | (milik PPR) direkod. Menuntut Selesai di sini akan menyembunyikan
+        | keseluruhan halaman daripada PPA yang baru sahaja merekod Tarikh
+        | Terima — sedangkan peringkat 1.2 mereka sudah pun terbuka.
+        |
+        | Baris peringkat sahaja tidak memadai: "Set Semula" mengekalkan baris
+        | dan hanya mengosongkan datanya.
+        */
+        $dalamAliran = app(KemajuanAnalisisService::class)->telahMemasukiAliran($peringkat);
 
         $status = fn(string $kunci): string => $peringkat->get($kunci)?->status ?? WorkflowStageStatus::BELUM_MULA;
         $selesai = fn(string $kunci): bool => $status($kunci) === WorkflowStageStatus::SELESAI;
 
-        // Satu peringkat "terbuka" apabila pendahulunya dalam turutan aliran
-        // telah Selesai. Peringkat pertama sentiasa terbuka.
-        $terbuka = function (string $kunci) use ($selesai): bool {
+        /*
+        | Satu peringkat "terbuka" apabila pendahulunya membenarkannya. DUA
+        | peraturan, mencerminkan KemajuanAnalisisService::ralatPendahulu():
+        |
+        | - Pendahulu dengan `syarat_lanjut`: cukup medan tersebut ADA. Ia
+        |   tidak semestinya Selesai — itulah yang membenarkan peringkat 1.2
+        |   bermula sementara No. Rujukan peringkat 1.1 masih menunggu PPR.
+        | - Pendahulu lain: mesti benar-benar Selesai.
+        */
+        $terbuka = function (string $kunci) use ($peringkat, $selesai, $penugasan): bool {
             $sebelum = AliranKerja::sebelum($kunci);
 
-            return $sebelum === null || $selesai($sebelum);
+            if ($sebelum === null) {
+                return true;
+            }
+
+            // Penugasan Pegawai Analisis boleh menjadi syarat lanjut — ia
+            // BUKAN medan peringkat, jadi ia disemak berasingan.
+            if (AliranKerja::perluPenugasanUntukLanjut($sebelum) && $penugasan === null) {
+                return false;
+            }
+
+            $syarat = AliranKerja::syaratLanjut($sebelum);
+
+            if ($syarat === []) {
+                return $selesai($sebelum);
+            }
+
+            $rekod = $peringkat->get($sebelum);
+
+            if ($rekod === null) {
+                return false;
+            }
+
+            foreach ($syarat as $lajur) {
+                if (blank($rekod->{$lajur})) {
+                    return false;
+                }
+            }
+
+            return true;
         };
 
         // Bolehkah pengguna ini melaksanakan peringkat berkenaan SEKARANG?
@@ -50,11 +94,32 @@
         | Gilirannya TIDAK terikat kepada status peringkat: nombor rujukan
         | boleh direkodkan sepanjang peringkat itu berjalan.
         */
-        $bolehRujukan = function (string $kunci) use ($pengguna): bool {
+        $bolehRujukan = function (string $kunci) use ($pengguna, $peringkat): bool {
             $gate = \App\Support\AliranKerja::gateRujukan($kunci);
 
-            return $gate !== null && $pengguna->can($gate);
+            if ($gate === null || ! $pengguna->can($gate)) {
+                return false;
+            }
+
+            // Borang fizikal mesti direkod dahulu oleh pegawai peringkat itu:
+            // PPR merekod nombor rujukan borang yang SUDAH wujud. Sebelum itu
+            // entiti ini langsung tidak muncul kepadanya bagi peringkat ini.
+            return app(KemajuanAnalisisService::class)
+                ->rujukanTersedia($peringkat->get($kunci), $kunci);
         };
+
+        /*
+        | Penugasan Pegawai Analisis ialah kerja peringkat 1.2: PPA
+        | mendaftarkan data DAN menetapkan pegawai yang menjalankan peringkat
+        | seterusnya.
+        |
+        | Ia kekal tersedia walaupun peringkat 1.2 telah Selesai — pegawai
+        | boleh bertukar selepas pendaftaran, dan menutupnya bersama peringkat
+        | itu akan meninggalkan entiti tanpa cara menggantikan pegawainya.
+        */
+        $bolehTugaskan = fn(string $kunci): bool => $kunci === AliranKerja::PENDAFTARAN_DATA
+            && $terbuka(AliranKerja::PENDAFTARAN_DATA)
+            && $pengguna->can('manage-assignment');
 
         $jumlahPeringkat = app(KemajuanAnalisisService::class)->jumlahPeringkatSemasa();
 
@@ -74,7 +139,9 @@
         | aliran.
         */
         $peringkatBertindak = collect(AliranKerja::semasa())->filter(
-            fn(string $kunci) => $bolehKendali($kunci) || ($didaftar && $bolehRujukan($kunci)),
+            fn(string $kunci) => $bolehKendali($kunci)
+                || ($dalamAliran && $bolehRujukan($kunci))
+                || $bolehTugaskan($kunci),
         );
 
         $adaTindakan = $peringkatBertindak->isNotEmpty();
@@ -147,7 +214,12 @@
                         <span class="peringkat-tindakan__label">
                             {{ AliranKerja::labelPenuh($kunci) }}
 
-                            @if (! $milikSaya)
+                            @if (! $milikSaya && $bolehTugaskan($kunci))
+                                <small class="peringkat-tindakan__nota">
+                                    Peringkat ini telah Selesai; penugasan Pegawai
+                                    Analisis kekal boleh dikemas kini di sini.
+                                </small>
+                            @elseif (! $milikSaya)
                                 <small class="peringkat-tindakan__nota">
                                     Peringkat ini bukan tanggungjawab anda; hanya
                                     {{ $labelRujukan }} boleh dikemas kini di sini.
@@ -248,6 +320,11 @@
                                                 direkod.
                                             @endif
                                         @endif
+
+                                        @if (AliranKerja::perluPenugasanUntukLanjut($kunci) && $penugasan === null)
+                                            Peringkat seterusnya juga memerlukan seorang
+                                            <strong>Pegawai Analisis</strong> ditugaskan.
+                                        @endif
                                     </small>
                                 @endif
                             </form>
@@ -321,6 +398,56 @@
                             </form>
                         @endif
 
+                        {{--
+                            Penugasan Pegawai Analisis — kerja peringkat 1.2.
+                            Borang berasingan kerana borang HTML tidak boleh
+                            bersarang, dan kerana ia bukan medan peringkat: ia
+                            menulis ke `entiti_assignment`, bukan ke baris
+                            peringkat.
+                        --}}
+                        @if ($bolehTugaskan($kunci))
+                            <form action="{{ route('kemajuan.tugaskan', $entiti['agency_code']) }}"
+                                method="POST" class="peringkat-borang peringkat-borang--rujukan mt-2">
+                                @csrf
+
+                                <label class="form-label" for="assigned_to_user_id">
+                                    Pegawai Analisis
+                                    <small class="peringkat-tindakan__nota">
+                                        Pegawai yang akan menjalankan peringkat 1.3 dan seterusnya.
+                                    </small>
+                                </label>
+
+                                <div class="d-flex gap-2 flex-wrap align-items-start">
+                                    <select id="assigned_to_user_id" name="assigned_to_user_id"
+                                        class="form-select @error('assigned_to_user_id') is-invalid @enderror"
+                                        style="max-width: 320px">
+                                        <option value="">— Pilih Pegawai Analisis —</option>
+                                        @foreach ($analysts as $pegawai)
+                                            <option value="{{ $pegawai->id }}"
+                                                @selected(old('assigned_to_user_id', $penugasan?->assigned_to_user_id) == $pegawai->id)>
+                                                {{ $pegawai->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    <button type="submit" class="btn btn-sm btn-outline-light">
+                                        <i class="bi bi-person-check"></i> Tugaskan
+                                    </button>
+                                </div>
+
+                                @if ($penugasan)
+                                    <small class="peringkat-tindakan__nota d-block mt-1">
+                                        Ditugaskan kepada <strong>{{ $penugasan->assignedTo?->name }}</strong>
+                                        pada {{ $penugasan->assigned_at?->format('d/m/Y') }}.
+                                    </small>
+                                @else
+                                    <small class="peringkat-tindakan__nota d-block mt-1">
+                                        Belum ditugaskan kepada mana-mana Pegawai Analisis.
+                                    </small>
+                                @endif
+                            </form>
+                        @endif
+
                     </div>
                 @endforeach
 
@@ -329,18 +456,17 @@
 
     </div>
 
-    @if (!$didaftar)
+    @if (!$dalamAliran)
 
         <div class="report-card">
             <h4 class="section-title">Belum Memasuki Aliran Kerja</h4>
             <p class="text-secondary mb-0">
                 Entiti ini belum memasuki aliran kerja kerana peringkat
-                <strong>1.1 Penerimaan Data</strong> belum Selesai.
+                <strong>1.1 Penerimaan Data</strong> belum dimulakan.
 
                 @if ($bolehKendali(AliranKerja::PERTAMA))
                     Rekodkan Tarikh Terima dan Status Borang Penerimaan Data di
-                    atas, kemudian tandakan peringkat itu Selesai — entiti akan
-                    memasuki aliran kerja dan peringkat
+                    atas — entiti akan memasuki aliran kerja dan peringkat
                     <strong>1.2 Pendaftaran Data</strong> terbuka.
                 @else
                     Ketua Bahagian atau Pegawai Penyelaras Analisis perlu

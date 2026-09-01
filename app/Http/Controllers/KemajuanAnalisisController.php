@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InvalidAssignmentException;
 use App\Exceptions\InvalidWorkflowTransitionException;
+use App\Models\User;
+use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Support\AliranKerja;
 use App\Support\SektorDirectory;
@@ -40,6 +43,7 @@ class KemajuanAnalisisController extends Controller
 {
     public function __construct(
         private readonly KemajuanAnalisisService $kemajuan,
+        private readonly EntityAssignmentService $assignments,
     ) {}
 
     /**
@@ -180,6 +184,53 @@ class KemajuanAnalisisController extends Controller
     }
 
     /**
+     * Tugaskan Pegawai Analisis kepada entiti — kerja peringkat 1.2.
+     *
+     * PPA mendaftarkan data DAN menetapkan pegawai yang akan menjalankan
+     * peringkat seterusnya; kerana itu kawalan ini berada dalam blok
+     * peringkat 1.2 dan bukan pada skrinnya sendiri.
+     *
+     * Syaratnya sama seperti peringkat 1.2 itu sendiri: entiti mesti telah
+     * melepasi peringkat 1.1. Tanpa semakan ini, permintaan langsung boleh
+     * menugaskan entiti yang belum pun memasuki aliran kerja.
+     */
+    public function tugaskan(Request $request, string $agencyCode)
+    {
+        $entiti = $this->entitiAtauGagal($agencyCode);
+
+        // Ambang yang sama seperti MEMBUKA peringkat 1.2: syarat lanjut
+        // peringkat 1.1 mesti dipenuhi. Menggunakan ambang "telah bermula"
+        // yang lebih longgar akan membenarkan penugasan pada entiti yang
+        // peringkat 1.2-nya sendiri masih tertutup.
+        $ralat = $this->kemajuan->ralatPeringkat($agencyCode, AliranKerja::PENDAFTARAN_DATA);
+
+        if ($ralat !== null) {
+            return back()->withErrors(['assigned_to_user_id' => $ralat]);
+        }
+
+        $data = $request->validate([
+            'assigned_to_user_id' => ['required', 'integer', 'exists:users,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ], [], [
+            'assigned_to_user_id' => 'Pegawai Analisis',
+        ]);
+
+        $pegawai = User::findOrFail($data['assigned_to_user_id']);
+
+        try {
+            $this->assignments->assign($entiti, $pegawai, $request->user(), $data['notes'] ?? null);
+        } catch (InvalidAssignmentException $e) {
+            return back()->withInput()->withErrors(['assigned_to_user_id' => $e->getMessage()]);
+        }
+
+        return back()->with('success', sprintf(
+            '%s telah ditugaskan kepada %s.',
+            $entiti['agency_code'],
+            $pegawai->name,
+        ));
+    }
+
+    /**
      * Peringkat PERTAMA ialah pintu masuk aliran kerja: melaksanakannya pada
      * entiti yang belum mempunyai baris peringkat MEMASUKKAN entiti itu ke
      * dalam aliran.
@@ -261,6 +312,20 @@ class KemajuanAnalisisController extends Controller
     private function namaMedan(string $stage): array
     {
         return AliranKerja::medan($stage);
+    }
+
+    /**
+     * Entiti mesti wujud dalam senarai induk sektor.
+     *
+     * @return array<string, string>
+     */
+    private function entitiAtauGagal(string $agencyCode): array
+    {
+        $entiti = SektorDirectory::cariEntiti($agencyCode);
+
+        abort_if($entiti === null, 404, 'Entiti tidak ditemui dalam senarai induk sektor.');
+
+        return $entiti;
     }
 
     /**

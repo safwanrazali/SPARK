@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\ActivityLog;
+use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
@@ -173,6 +174,32 @@ class KemajuanAnalisisService
     }
 
     /**
+     * Adakah entiti ini telah MEMASUKI aliran kerja?
+     *
+     * Soalan yang BERBEZA daripada dalamAliranKerja(), dan perbezaannya
+     * timbul daripada peringkat 1.1 yang berderivasi:
+     *
+     *   telahMemasukiAliran()  ada data peringkat 1.1 — kerja telah bermula
+     *   dalamAliranKerja()     peringkat 1.1 SELESAI — ketiga-tiga medannya ada
+     *
+     * Entiti yang baru direkod Tarikh Terima berada di antara kedua-duanya:
+     * ia sedang dikerjakan, dan peringkat 1.2 mungkin sudah terbuka, tetapi
+     * peringkat 1.1 belum Selesai kerana No. Rujukan masih menunggu PPR.
+     *
+     * Baris peringkat sahaja TIDAK memadai sebagai ujian: setSemula()
+     * mengekalkan baris dan hanya mengosongkan datanya, jadi entiti yang
+     * ditetapkan semula tetap mempunyai baris.
+     *
+     * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
+     */
+    public function telahMemasukiAliran(?Collection $peringkat): bool
+    {
+        $satuSatu = $peringkat?->get(AliranKerja::PENERIMAAN_DATA);
+
+        return $satuSatu !== null && ! $satuSatu->isBelumMula();
+    }
+
+    /**
      * Adakah "Status Laporan" berkenaan bagi entiti ini?
      *
      * Laporan Analisis Inventori Kriptografi baru bermakna setelah peringkat
@@ -249,7 +276,7 @@ class KemajuanAnalisisService
         $sebelum = $peringkat->get($sebelumKunci);
 
         if ($status === WorkflowStageStatus::SELESAI) {
-            return $this->ralatPendahulu($sebelum, $sebelumKunci);
+            return $this->ralatPendahulu($agencyCode, $sebelum, $sebelumKunci);
         }
 
         if ($sebelum === null || $sebelum->isBelumMula()) {
@@ -281,31 +308,58 @@ class KemajuanAnalisisService
      *   sepatutnya tertahan menunggu pegawai lain.
      * - Peringkat lain: peraturan lalai — mesti benar-benar Selesai.
      */
-    private function ralatPendahulu(?WorkflowStageStatus $sebelum, string $sebelumKunci): ?string
+    private function ralatPendahulu(string $agencyCode, ?WorkflowStageStatus $sebelum, string $sebelumKunci): ?string
     {
         $syarat = AliranKerja::syaratLanjut($sebelumKunci);
 
         if ($syarat === []) {
-            return $sebelum === null || ! $sebelum->isSelesai()
-                ? sprintf('Peringkat %s mesti Selesai terlebih dahulu.', AliranKerja::labelPenuh($sebelumKunci))
-                : null;
+            if ($sebelum === null || ! $sebelum->isSelesai()) {
+                return sprintf('Peringkat %s mesti Selesai terlebih dahulu.', AliranKerja::labelPenuh($sebelumKunci));
+            }
+
+            return $this->ralatPenugasan($agencyCode, $sebelumKunci);
         }
 
         $tiada = $sebelum === null
             ? $syarat
             : array_values(array_filter($syarat, fn (string $lajur) => $this->kosong($sebelum->{$lajur})));
 
-        if ($tiada === []) {
+        if ($tiada !== []) {
+            return sprintf(
+                'Peringkat %s memerlukan %s terlebih dahulu.',
+                AliranKerja::labelPenuh($sebelumKunci),
+                implode(' dan ', array_map(
+                    fn (string $lajur) => AliranKerja::labelMedan($sebelumKunci, $lajur),
+                    $tiada,
+                )),
+            );
+        }
+
+        return $this->ralatPenugasan($agencyCode, $sebelumKunci);
+    }
+
+    /**
+     * Peringkat yang menuntut penugasan tidak boleh membuka peringkat
+     * seterusnya sehingga seorang Pegawai Analisis ditugaskan.
+     *
+     * `entiti_assignment` disoal terus dan bukan melalui EntityAssignmentService
+     * supaya servis ini tidak bergantung kepada servis penugasan hanya untuk
+     * satu soalan ya/tidak.
+     */
+    private function ralatPenugasan(string $agencyCode, string $sebelumKunci): ?string
+    {
+        if (! AliranKerja::perluPenugasanUntukLanjut($sebelumKunci)) {
             return null;
         }
 
-        return sprintf(
-            'Peringkat %s memerlukan %s terlebih dahulu.',
+        $ada = EntitiAssignment::query()
+            ->forAgency($agencyCode)
+            ->active()
+            ->exists();
+
+        return $ada ? null : sprintf(
+            'Peringkat %s memerlukan Pegawai Analisis ditugaskan terlebih dahulu.',
             AliranKerja::labelPenuh($sebelumKunci),
-            implode(' dan ', array_map(
-                fn (string $lajur) => AliranKerja::labelMedan($sebelumKunci, $lajur),
-                $tiada,
-            )),
         );
     }
 
@@ -334,6 +388,46 @@ class KemajuanAnalisisService
             $syarat,
             fn (string $lajur) => $this->kosong($rekod->{$lajur}),
         ));
+    }
+
+    /**
+     * Medan peringkat yang MASIH TIADA sebelum No. Rujukannya boleh direkod.
+     *
+     * Peraturannya seragam merentas peringkat: No. Rujukan sesuatu borang
+     * hanya bermakna setelah borang itu sendiri direkod. PPR merekod nombor
+     * rujukan borang FIZIKAL — dan borang itu belum wujud sehingga pegawai
+     * peringkat berkenaan mengisi medannya.
+     *
+     * Medan yang dikira ialah medan tangkapan peringkat itu; No. Rujukan
+     * sendiri tidak termasuk (ia bukan syarat kepada dirinya).
+     *
+     * @return array<int, string>
+     */
+    public function medanSebelumRujukan(?WorkflowStageStatus $rekod, string $stage): array
+    {
+        if (AliranKerja::labelRujukan($stage) === null) {
+            return [];
+        }
+
+        $medan = array_keys(AliranKerja::medan($stage));
+
+        if ($rekod === null) {
+            return $medan;
+        }
+
+        return array_values(array_filter(
+            $medan,
+            fn (string $lajur) => $this->kosong($rekod->{$lajur}),
+        ));
+    }
+
+    /**
+     * Bolehkah No. Rujukan peringkat ini direkod sekarang?
+     */
+    public function rujukanTersedia(?WorkflowStageStatus $rekod, string $stage): bool
+    {
+        return AliranKerja::labelRujukan($stage) !== null
+            && $this->medanSebelumRujukan($rekod, $stage) === [];
     }
 
     /**
@@ -530,6 +624,16 @@ class KemajuanAnalisisService
             ));
         }
 
+        // Turutan peringkat terpakai kepada MENYIMPAN juga, bukan hanya
+        // kepada menyiapkan. Tanpa ini, data peringkat 1.2 boleh direkod
+        // sebelum peringkat 1.1 membenarkannya — dan bagi peringkat
+        // berderivasi, merekod data ITULAH yang menyiapkannya.
+        $ralat = $this->ralatPeringkat($agencyCode, $stage);
+
+        if ($ralat !== null) {
+            throw new InvalidWorkflowTransitionException($ralat);
+        }
+
         $dibenarkan = array_keys(AliranKerja::medan($stage));
         $data = array_intersect_key($data, array_flip($dibenarkan));
 
@@ -604,6 +708,25 @@ class KemajuanAnalisisService
 
         $noRujukan = is_string($noRujukan) ? trim($noRujukan) : null;
         $noRujukan = $noRujukan === '' ? null : $noRujukan;
+
+        // Borang fizikal mesti direkod dahulu: No. Rujukan sesuatu borang
+        // tiada makna sebelum borang itu sendiri wujud.
+        $tiada = $this->medanSebelumRujukan(
+            $this->peringkat($agencyCode)->get($stage),
+            $stage,
+        );
+
+        if ($tiada !== []) {
+            throw new InvalidWorkflowTransitionException(sprintf(
+                '%s belum boleh direkod: peringkat %s memerlukan %s terlebih dahulu.',
+                AliranKerja::labelRujukan($stage),
+                AliranKerja::labelPenuh($stage),
+                implode(' dan ', array_map(
+                    fn (string $lajur) => AliranKerja::labelMedan($stage, $lajur),
+                    $tiada,
+                )),
+            ));
+        }
 
         return DB::transaction(function () use ($agencyCode, $stage, $noRujukan, $user) {
             $rekod = WorkflowStageStatus::query()
@@ -838,6 +961,7 @@ class KemajuanAnalisisService
                     'started_at' => null,
                     'completed_at' => null,
                     'tarikh_terima' => null,
+                    'tarikh_daftar' => null,
                     'tarikh_semakan' => null,
                     'tarikh_mula' => null,
                     'tarikh_tamat' => null,
