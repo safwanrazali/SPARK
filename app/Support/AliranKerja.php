@@ -257,19 +257,18 @@ final class AliranKerja
                 'syarat_selesai' => [
                     self::MEDAN_TARIKH_DAFTAR,
                     self::MEDAN_STATUS_BORANG,
+                    self::MEDAN_NO_RUJUKAN,
                 ],
                 'syarat_lanjut' => [
                     self::MEDAN_TARIKH_DAFTAR,
                     self::MEDAN_STATUS_BORANG,
                 ],
 
-                // ...DAN seorang Pegawai Analisis mesti ditugaskan. Peringkat
-                // 1.3 ialah kerja PA; tanpa pegawai yang ditugaskan, tiada
-                // sesiapa yang boleh membukanya.
-                //
-                // Ini syarat LANJUT sahaja, bukan syarat Selesai: pendaftaran
-                // data itu sendiri sudah lengkap dengan dua medannya. Peringkat
-                // 1.2 boleh Selesai sementara penugasan masih tertunggak.
+                // Seorang Pegawai Analisis mesti ditugaskan — untuk Selesai
+                // DAN untuk membuka peringkat seterusnya. Peringkat 1.3 ialah
+                // kerja PA; tanpa pegawai yang ditugaskan, tiada sesiapa yang
+                // boleh membukanya.
+                'selesai_perlu_penugasan' => true,
                 'lanjut_perlu_penugasan' => true,
             ],
 
@@ -284,6 +283,18 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Borang Semakan Awal Data',
                 ],
                 'rujukan' => 'No. Rujukan Borang Semakan Awal Data',
+
+                'syarat_selesai' => [
+                    self::MEDAN_TARIKH_SEMAKAN,
+                    self::MEDAN_STATUS_BORANG,
+                    self::MEDAN_NO_RUJUKAN,
+                ],
+
+                // No. Rujukan milik PPR — ia tidak menahan peringkat 2.
+                'syarat_lanjut' => [
+                    self::MEDAN_TARIKH_SEMAKAN,
+                    self::MEDAN_STATUS_BORANG,
+                ],
             ],
 
             self::PENYEDIAAN_DATA => [
@@ -299,6 +310,15 @@ final class AliranKerja
                     self::MEDAN_NAMA_FAIL => 'Nama Fail',
                 ],
                 'rujukan' => null,
+
+                // Tiada No. Rujukan pada peringkat ini, jadi syarat Selesai
+                // dan syarat lanjut memang sama.
+                'syarat_selesai' => [
+                    self::MEDAN_TARIKH_MULA,
+                    self::MEDAN_TARIKH_TAMAT,
+                    self::MEDAN_STATUS_BORANG,
+                    self::MEDAN_NAMA_FAIL,
+                ],
             ],
 
             self::ANALISIS_INVENTORI => [
@@ -313,6 +333,30 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Laporan Inventori Kriptografi',
                 ],
                 'rujukan' => 'No. Rujukan Laporan',
+
+                'syarat_selesai' => [
+                    self::MEDAN_TARIKH_MULA,
+                    self::MEDAN_TARIKH_TAMAT,
+                    self::MEDAN_STATUS_BORANG,
+                    self::MEDAN_NO_RUJUKAN,
+                ],
+
+                // Status Laporan Inventori Kriptografi hanya boleh ditetapkan
+                // "Selesai" setelah Borang Input Analisis Inventori
+                // Kriptografi dimuktamadkan.
+                //
+                // Ini prasyarat pada SATU NILAI, bukan pada medan itu: nilai
+                // lain (Dalam Proses, Tidak Berkaitan, …) kekal boleh direkod
+                // sepanjang kerja berjalan.
+                'status_selesai_perlu_borang' => true,
+
+                // Peringkat terakhir fasa semasa; syarat lanjut dikekalkan
+                // selari dengan peringkat lain — No. Rujukan tidak menahan.
+                'syarat_lanjut' => [
+                    self::MEDAN_TARIKH_MULA,
+                    self::MEDAN_TARIKH_TAMAT,
+                    self::MEDAN_STATUS_BORANG,
+                ],
             ],
 
             self::ANALISIS_RISIKO_PQC => [
@@ -605,6 +649,32 @@ final class AliranKerja
     public static function perluPenugasanUntukLanjut(mixed $key): bool
     {
         return (bool) (self::def($key)['lanjut_perlu_penugasan'] ?? false);
+    }
+
+    /**
+     * Adakah peringkat ini menuntut seorang Pegawai Analisis ditugaskan
+     * sebelum ia boleh menjadi Selesai?
+     */
+    public static function perluPenugasanUntukSelesai(mixed $key): bool
+    {
+        return (bool) (self::def($key)['selesai_perlu_penugasan'] ?? false);
+    }
+
+    /**
+     * Adakah Status Borang peringkat ini hanya boleh menjadi "Selesai" setelah
+     * borang analisis entiti dimuktamadkan?
+     */
+    public static function statusSelesaiPerluBorangAnalisis(mixed $key): bool
+    {
+        return (bool) (self::def($key)['status_selesai_perlu_borang'] ?? false);
+    }
+
+    /**
+     * Adakah penugasan Pegawai Analisis relevan kepada peringkat ini langsung?
+     */
+    public static function penugasanRelevan(mixed $key): bool
+    {
+        return self::perluPenugasanUntukSelesai($key) || self::perluPenugasanUntukLanjut($key);
     }
 
     /**

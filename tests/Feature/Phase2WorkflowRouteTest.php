@@ -154,7 +154,6 @@ class Phase2WorkflowRouteTest extends TestCase
             ->assertOk()
             ->assertSee('Belum Memasuki Aliran Kerja')
             ->assertSee('1.1 Penerimaan Data')
-            ->assertSee('Tiada perubahan peringkat')
             // Borang peringkat 1.1 tersedia di sini — itulah gantian kepada
             // penandaan pukal skrin Penetapan Entiti yang telah dibuang.
             // Peringkat berderivasi disiapkan melalui `simpan`, bukan `selesai`.
@@ -199,9 +198,16 @@ class Phase2WorkflowRouteTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_sejarah_peringkat_dipaparkan_pada_halaman_entiti(): void
+    /**
+     * Kad "Sejarah Peringkat" telah dibuang daripada halaman Kemajuan kerana
+     * ia mengulang "Maklumat Peringkat".
+     *
+     * Jejaknya TIDAK hilang: setiap perubahan terus direkodkan dalam
+     * activity_log dan dibaca melalui modul Log Audit.
+     */
+    public function test_halaman_kemajuan_tiada_kad_sejarah_peringkat(): void
     {
-        $workflow = $this->workflowPada(1);
+        $workflow = $this->workflowPada(AliranKerja::PENDAFTARAN_DATA);
         $coordinator = $this->coordinator();
 
         app(WorkflowTransitionService::class)->advance($workflow, $coordinator);
@@ -209,8 +215,13 @@ class Phase2WorkflowRouteTest extends TestCase
         $this->actingAs($coordinator)
             ->get(route('workflow.show', self::ENTITI))
             ->assertOk()
-            ->assertSee('Sejarah Peringkat')
-            ->assertSee('Peringkat Workflow Berubah')
-            ->assertSee($coordinator->name);
+            ->assertSee('Maklumat Peringkat')
+            ->assertDontSee('Sejarah Peringkat');
+
+        // Rekod jejak audit kekal wujud.
+        $this->assertDatabaseHas('activity_log', [
+            'agency_code' => self::ENTITI,
+            'action' => 'workflow_stage_changed',
+        ]);
     }
 }

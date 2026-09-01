@@ -135,12 +135,6 @@ class WorkflowController extends Controller
                 ? $this->assignments->analystsAvailable()
                 : collect(),
             'analisis' => RekodAnalisis::where('agency_code', $agencyCode)->first(),
-            // Sumbernya ialah KemajuanAnalisisService, bukan
-            // WorkflowTransitionService: aliran semasa menulis tindakan
-            // 'stage_status_changed' dan kitaran laporan, yang tiada dalam
-            // perbendaharaan workflow lama. Lihat TINDAKAN_SEJARAH.
-            'sejarah' => $this->kemajuan->sejarahQuery($agencyCode)
-                ->paginate(Halaman::SETIAP_MUKA, ['*'], 'muka_sejarah'),
         ]);
     }
 

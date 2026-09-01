@@ -70,8 +70,10 @@ class PenomboranHalamanTest extends TestCase
     public static function skrinSejarah(): array
     {
         return [
+            // Halaman Kemajuan Analisis Entiti tidak lagi memaparkan sejarah:
+            // kad itu mengulang "Maklumat Peringkat". Jejak penuh dibaca
+            // melalui modul Log Audit.
             'pusat maklumat entiti' => ['entiti.show', User::ROLE_COORDINATOR],
-            'Kemajuan Analisis Entiti' => ['workflow.show', User::ROLE_COORDINATOR],
         ];
     }
 

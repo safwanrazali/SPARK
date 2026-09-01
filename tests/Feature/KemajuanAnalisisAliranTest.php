@@ -115,6 +115,8 @@ class KemajuanAnalisisAliranTest extends TestCase
      */
     private function siapkanMelaluiHttp(string $agencyCode, string $kunci, User $pengguna): void
     {
+        $this->pastikanBorangAnalisis($agencyCode, $kunci, $pengguna);
+
         $data = [];
 
         foreach (array_keys(AliranKerja::medan($kunci)) as $lajur) {
@@ -131,13 +133,55 @@ class KemajuanAnalisisAliranTest extends TestCase
             ->post(route($laluan, [$agencyCode, $kunci]), $data)
             ->assertRedirect();
 
-        // No. Rujukan milik PPR, dan ia salah satu syarat Selesai peringkat 1.1.
+        // Penugasan Pegawai Analisis ialah salah satu syarat Selesai
+        // peringkat 1.2 — dan syarat membuka peringkat 1.3.
+        if (AliranKerja::penugasanRelevan($kunci)
+            && app(EntityAssignmentService::class)->activeFor($agencyCode) === null) {
+            app(EntityAssignmentService::class)->assign(
+                SektorDirectory::cariEntiti($agencyCode),
+                $this->pa,
+                $this->ppa,
+            );
+        }
+
+        // No. Rujukan milik PPR, dan ia salah satu syarat Selesai bagi
+        // kebanyakan peringkat.
         if (in_array(AliranKerja::MEDAN_NO_RUJUKAN, AliranKerja::syaratSelesai($kunci), true)) {
             $this->actingAs($this->ppr)
                 ->post(route('kemajuan.rujukan', [$agencyCode, $kunci]), [
                     'no_rujukan' => 'FIKSTUR/'.$kunci,
                 ]);
         }
+    }
+
+    /**
+     * Peringkat 3.1 hanya menerima Status Laporan "Selesai" setelah Borang
+     * Input Analisis Inventori Kriptografi dimuktamadkan, jadi fikstur yang
+     * menyiapkan peringkat itu mesti menyiapkan borangnya dahulu.
+     *
+     * Borang yang telah dibuat oleh ujian TIDAK diganti.
+     */
+    private function pastikanBorangAnalisis(string $agencyCode, string $kunci, ?User $pengguna = null): void
+    {
+        if (! AliranKerja::statusSelesaiPerluBorangAnalisis($kunci)) {
+            return;
+        }
+
+        if (AnalisisInventori::query()->where('agency_code', $agencyCode)->where('selesai', true)->exists()) {
+            return;
+        }
+
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti($agencyCode) + [
+                'selesai' => true,
+                'user_id' => $pengguna?->id,
+            ],
+        );
+    }
+
+    private function rekod(string $stage, string $agencyCode = self::ALPHA): ?WorkflowStageStatus
+    {
+        return app(KemajuanAnalisisService::class)->peringkat($agencyCode)->get($stage);
     }
 
     private function statusPeringkat(string $stage, string $agencyCode = self::ALPHA): string
@@ -447,9 +491,10 @@ class KemajuanAnalisisAliranTest extends TestCase
             $this->statusPeringkat(AliranKerja::PENERIMAAN_DATA),
         );
 
+        // Peringkat 1.2 belum bermula: fikstur hanya melengkapkan 1.1.
         $this->assertSame(
             WorkflowStageStatus::BELUM_MULA,
-            $this->statusPeringkat(AliranKerja::PENDAFTARAN_DATA),
+            $this->statusPeringkat(AliranKerja::SEMAKAN_AWAL_DATA),
         );
     }
 
@@ -457,31 +502,15 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->lalui(AliranKerja::PENDAFTARAN_DATA);
 
-        // 1.2 — PPA. Berderivasi: merekod kedua-dua medannya menyiapkannya.
-        $this->actingAs($this->ppa)
-            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
-                'tarikh_daftar' => '2026-08-20',
-                'status_borang' => 'Selesai',
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
-
-        // 1.3 — PA
-        $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]))
-            ->assertRedirect();
-
-        // 2 — PA
-        $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENYEDIAAN_DATA]))
-            ->assertRedirect();
+        // Setiap peringkat disiapkan dengan merekod datanya — tiada satu pun
+        // mempunyai tindakan "Selesai".
+        $this->siapkanMelaluiHttp(self::ALPHA, AliranKerja::PENDAFTARAN_DATA, $this->ppa);
+        $this->siapkanMelaluiHttp(self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA, $this->pa);
+        $this->siapkanMelaluiHttp(self::ALPHA, AliranKerja::PENYEDIAAN_DATA, $this->pa);
 
         $this->assertSame(KemajuanAnalisisService::KESELURUHAN_DALAM_PROSES, $this->keseluruhan());
 
-        // 3.1 — PA. Peringkat terakhir fasa semasa.
-        $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]))
-            ->assertRedirect();
+        $this->siapkanMelaluiHttp(self::ALPHA, AliranKerja::ANALISIS_INVENTORI, $this->pa);
 
         foreach (AliranKerja::semasa() as $kunci) {
             $this->assertSame(WorkflowStageStatus::SELESAI, $this->statusPeringkat($kunci), $kunci);
@@ -501,9 +530,11 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->sediakanEntiti();
 
-        // 1.2 belum Selesai, jadi 1.3 belum terbuka.
+        // 1.2 belum dilengkapkan, jadi 1.3 belum terbuka.
         $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]))
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]), [
+                'tarikh_semakan' => '2026-08-18',
+            ])
             ->assertSessionHasErrors('stage');
 
         $this->assertSame(
@@ -519,7 +550,9 @@ class KemajuanAnalisisAliranTest extends TestCase
         // Melangkau 1.2 untuk terus ke 2 juga dihalang — sub-peringkat ialah
         // sebahagian daripada turutan, bukan hiasan paparan.
         $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENYEDIAAN_DATA]))
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENYEDIAAN_DATA]), [
+                'tarikh_mula' => '2026-08-14',
+            ])
             ->assertSessionHasErrors('stage');
     }
 
@@ -542,10 +575,17 @@ class KemajuanAnalisisAliranTest extends TestCase
                 ->assertForbidden();
         }
 
-        $this->assertSame(
-            WorkflowStageStatus::BELUM_MULA,
-            $this->statusPeringkat(AliranKerja::PENDAFTARAN_DATA),
-        );
+        // Tiga peranan telah mencuba; MEDANNYA kekal tidak tersentuh.
+        //
+        // Statusnya disemak melalui medan dan bukan melalui lencana: fikstur
+        // telah menugaskan Pegawai Analisis, dan penugasan itu SENDIRI ialah
+        // salah satu syarat peringkat 1.2 — jadi peringkat itu sudah pun
+        // Dalam Proses sebelum PPA menyentuhnya.
+        $rekod = app(KemajuanAnalisisService::class)
+            ->peringkat(self::ALPHA)->get(AliranKerja::PENDAFTARAN_DATA);
+
+        $this->assertNull($rekod->tarikh_daftar);
+        $this->assertNull($rekod->status_borang);
 
         $this->actingAs($this->ppa)
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
@@ -554,10 +594,13 @@ class KemajuanAnalisisAliranTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertSame(
-            WorkflowStageStatus::SELESAI,
-            $this->statusPeringkat(AliranKerja::PENDAFTARAN_DATA),
-        );
+        $rekod = app(KemajuanAnalisisService::class)
+            ->peringkat(self::ALPHA)->get(AliranKerja::PENDAFTARAN_DATA);
+
+        $this->assertSame('2026-08-20', $rekod->tarikh_daftar->format('Y-m-d'));
+
+        // Tiga daripada empat syarat kini ada; No. Rujukan masih tertunggak.
+        $this->assertSame(WorkflowStageStatus::DALAM_PROSES, $rekod->status);
     }
 
     public function test_peringkat_pa_tidak_boleh_dilaksanakan_oleh_peranan_lain(): void
@@ -612,9 +655,9 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->assertSame('2026-08-14', $rekod->tarikh_daftar->format('Y-m-d'));
         $this->assertSame('Dalam Semakan', $rekod->status_borang);
 
-        // Kedua-dua medan syarat Selesai peringkat 1.2 kini ada — statusnya
-        // diterbitkan daripada itu, bukan daripada butang.
-        $this->assertSame(WorkflowStageStatus::SELESAI, $rekod->status);
+        // Dua daripada empat syarat Selesai peringkat 1.2 ada; No. Rujukan
+        // dan penugasan Pegawai Analisis masih tertunggak.
+        $this->assertSame(WorkflowStageStatus::DALAM_PROSES, $rekod->status);
     }
 
     public function test_peringkat_dua_menangkap_tarikh_mula_tamat_dan_nama_fail(): void
@@ -736,24 +779,30 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->assertNull($rekod->nama_fail);
     }
 
-    public function test_selesai_menyimpan_data_yang_dihantar_bersamanya(): void
+    /**
+     * Setiap peringkat fasa semasa kini BERDERIVASI: tiada satu pun mempunyai
+     * tindakan "Selesai", dan statusnya datang daripada datanya sahaja.
+     */
+    public function test_tiada_peringkat_mempunyai_tindakan_selesai(): void
     {
-        $this->lalui(AliranKerja::SEMAKAN_AWAL_DATA);
+        $this->lalui(AliranKerja::PENDAFTARAN_DATA);
 
-        $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]), [
-                'tarikh_semakan' => '2026-08-18',
-                'status_borang' => 'Selesai',
-            ])
-            ->assertRedirect();
+        $pemilik = [
+            AliranKerja::PENERIMAAN_DATA => $this->ppa,
+            AliranKerja::PENDAFTARAN_DATA => $this->ppa,
+            AliranKerja::SEMAKAN_AWAL_DATA => $this->pa,
+            AliranKerja::PENYEDIAAN_DATA => $this->pa,
+            AliranKerja::ANALISIS_INVENTORI => $this->pa,
+        ];
 
-        $rekod = app(KemajuanAnalisisService::class)
-            ->peringkat(self::ALPHA)
-            ->get(AliranKerja::SEMAKAN_AWAL_DATA);
+        foreach (AliranKerja::semasa() as $kunci) {
+            $this->assertTrue(AliranKerja::statusDiterbitkan($kunci), $kunci);
 
-        $this->assertSame(WorkflowStageStatus::SELESAI, $rekod->status);
-        $this->assertSame('2026-08-18', $rekod->tarikh_semakan->format('Y-m-d'));
-        $this->assertSame('Selesai', $rekod->status_borang);
+            // 404 dan bukan 403: pemilik peringkat pun tiada tindakan ini.
+            $this->actingAs($pemilik[$kunci])
+                ->post(route('kemajuan.selesai', [self::ALPHA, $kunci]))
+                ->assertNotFound();
+        }
     }
 
     /*
@@ -884,10 +933,11 @@ class KemajuanAnalisisAliranTest extends TestCase
             ])
             ->assertSessionHasNoErrors();
 
-        // Kedua-dua medan ada, jadi peringkat 1.2 SELESAI — tetapi peringkat
-        // 1.3 masih tertutup: belum ada Pegawai Analisis.
+        // Kedua-dua medan ada, tetapi peringkat 1.2 belum SELESAI: No.
+        // Rujukan dan penugasan masih tertunggak. Peringkat 1.3 pula tertutup
+        // kerana penugasan itulah salah satu syarat lanjutnya.
         $this->assertSame(
-            WorkflowStageStatus::SELESAI,
+            WorkflowStageStatus::DALAM_PROSES,
             $kemajuan->peringkat($kod)->get(AliranKerja::PENDAFTARAN_DATA)->status,
         );
 
@@ -908,11 +958,14 @@ class KemajuanAnalisisAliranTest extends TestCase
         );
 
         $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [$kod, AliranKerja::SEMAKAN_AWAL_DATA]))
+            ->post(route('kemajuan.simpan', [$kod, AliranKerja::SEMAKAN_AWAL_DATA]), [
+                'tarikh_semakan' => '2026-08-18',
+                'status_borang' => 'Selesai',
+            ])
             ->assertSessionHasNoErrors();
 
         $this->assertSame(
-            WorkflowStageStatus::SELESAI,
+            WorkflowStageStatus::DALAM_PROSES,
             $kemajuan->peringkat($kod)->get(AliranKerja::SEMAKAN_AWAL_DATA)->status,
         );
     }
@@ -957,7 +1010,11 @@ class KemajuanAnalisisAliranTest extends TestCase
         // medannya, jadi borang fizikalnya wujud.
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
-        // Peringkat 3.1 sendiri masih kosong — rekod medannya dahulu.
+        // Peringkat 3.1 sendiri masih kosong — rekod medannya dahulu. Status
+        // "Selesai" menuntut Borang Input Analisis Inventori Kriptografi
+        // dimuktamadkan, jadi borang itu disiapkan dahulu.
+        $this->pastikanBorangAnalisis(self::ALPHA, AliranKerja::ANALISIS_INVENTORI, $this->pa);
+
         $this->actingAs($this->pa)
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
                 'tarikh_mula' => '2026-08-14',
@@ -1056,7 +1113,10 @@ class KemajuanAnalisisAliranTest extends TestCase
             ->get(AliranKerja::SEMAKAN_AWAL_DATA);
 
         $this->assertSame('BSAD/2026/009', $rekod->no_rujukan);
-        $this->assertNotSame(WorkflowStageStatus::SELESAI, $rekod->status);
+
+        // Ketiga-tiga syarat peringkat 1.3 kini ada, jadi ia Selesai — itulah
+        // maksud status berderivasi.
+        $this->assertSame(WorkflowStageStatus::SELESAI, $rekod->status);
     }
 
     /**
@@ -1131,7 +1191,10 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
         // Medan peringkat 3.1 direkod dahulu — borangnya mesti wujud sebelum
-        // nombor rujukannya boleh direkod.
+        // nombor rujukannya boleh direkod, dan Status Laporan "Selesai"
+        // menuntut Borang Input Analisis Inventori Kriptografi dimuktamadkan.
+        $this->pastikanBorangAnalisis(self::ALPHA, AliranKerja::ANALISIS_INVENTORI, $this->pa);
+
         $this->actingAs($this->pa)
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
                 'tarikh_mula' => '2026-08-14',
@@ -1230,10 +1293,6 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
-        $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]))
-            ->assertRedirect();
-
         foreach (AliranKerja::akanDatang() as $kunci) {
             foreach ([$this->pa, $this->ppa, $this->kb, $this->ppr] as $pengguna) {
                 $this->actingAs($pengguna)
@@ -1275,21 +1334,20 @@ class KemajuanAnalisisAliranTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_membuka_borang_menandakan_peringkat_analisis_dalam_proses(): void
+    /**
+     * Membuka borang tidak lagi menggerakkan peringkat 3.1: statusnya
+     * diterbitkan daripada medannya, bukan daripada perbuatan membukanya.
+     */
+    public function test_membuka_borang_tidak_menggerakkan_peringkat_analisis(): void
     {
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
-
-        $this->assertSame(
-            WorkflowStageStatus::BELUM_MULA,
-            $this->statusPeringkat(AliranKerja::ANALISIS_INVENTORI),
-        );
 
         $this->actingAs($this->pa)
             ->get(route('analisis.borang', ['sector_code' => self::SEKTOR, 'agency_code' => self::ALPHA]))
             ->assertOk();
 
         $this->assertSame(
-            WorkflowStageStatus::DALAM_PROSES,
+            WorkflowStageStatus::BELUM_MULA,
             $this->statusPeringkat(AliranKerja::ANALISIS_INVENTORI),
         );
     }
@@ -1482,8 +1540,7 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->assertSame(StatusLaporan::PAPARAN_DALAM_PROSES, $status['inventori']['status']);
 
-        $this->actingAs($this->pa)
-            ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]));
+        $this->siapkanMelaluiHttp(self::ALPHA, AliranKerja::ANALISIS_INVENTORI, $this->pa);
 
         $status = app(StatusTigaLaporanService::class)->untukEntiti(self::ALPHA);
 
@@ -1505,5 +1562,204 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->assertSame(StatusLaporan::PAPARAN_TIADA, $status['risiko']['status']);
         $this->assertSame(StatusLaporan::PAPARAN_TIADA, $status['kesiapsiagaan']['status']);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Laporan Inventori Kriptografi bergantung kepada borangnya
+    |--------------------------------------------------------------------------
+    |
+    | Status peringkat 3.1 melaporkan keadaan Laporan Analisis Inventori
+    | Kriptografi. Ia tidak boleh mendahului kerja yang diwakilinya: selagi
+    | Borang Input Analisis Inventori Kriptografi belum dimuktamadkan, tiada
+    | laporan yang boleh diisytiharkan Selesai.
+    */
+
+    /**
+     * "Selesai" ditolak selagi borang analisis belum dilengkapkan.
+     */
+    public function test_status_laporan_tidak_boleh_selesai_sebelum_borang_analisis_lengkap(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        $this->actingAs($this->pa)
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
+                'tarikh_mula' => '2026-08-14',
+                'tarikh_tamat' => '2026-08-20',
+                'status_borang' => WorkflowStageStatus::SELESAI,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('stage');
+
+        // Tiada apa yang tersimpan: penolakan berlaku sebelum tulisan.
+        $this->assertNull($this->rekod(AliranKerja::ANALISIS_INVENTORI)?->status_borang);
+
+        $this->assertSame(
+            WorkflowStageStatus::BELUM_MULA,
+            $this->statusPeringkat(AliranKerja::ANALISIS_INVENTORI),
+        );
+    }
+
+    /**
+     * Nilai lain tidak tersekat — kerja yang sedang berjalan tetap direkod.
+     */
+    public function test_status_laporan_selain_selesai_diterima_tanpa_borang_analisis(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        $this->actingAs($this->pa)
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
+                'tarikh_mula' => '2026-08-14',
+                'status_borang' => WorkflowStageStatus::DALAM_PROSES,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            WorkflowStageStatus::DALAM_PROSES,
+            $this->rekod(AliranKerja::ANALISIS_INVENTORI)?->status_borang,
+        );
+    }
+
+    /**
+     * Setelah borang dimuktamadkan, "Selesai" diterima.
+     */
+    public function test_status_laporan_boleh_selesai_setelah_borang_analisis_lengkap(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti(self::ALPHA) + ['selesai' => true, 'user_id' => $this->pa->id],
+        );
+
+        $this->actingAs($this->pa)
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
+                'tarikh_mula' => '2026-08-14',
+                'tarikh_tamat' => '2026-08-20',
+                'status_borang' => WorkflowStageStatus::SELESAI,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            WorkflowStageStatus::SELESAI,
+            $this->rekod(AliranKerja::ANALISIS_INVENTORI)?->status_borang,
+        );
+    }
+
+    /**
+     * Borang yang WUJUD tetapi belum dimuktamadkan tidak memadai — draf
+     * bukan borang siap.
+     */
+    public function test_borang_analisis_belum_muktamad_tidak_membuka_status_selesai(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti(self::ALPHA) + ['selesai' => false, 'user_id' => $this->pa->id],
+        );
+
+        $this->actingAs($this->pa)
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
+                'tarikh_mula' => '2026-08-14',
+                'status_borang' => WorkflowStageStatus::SELESAI,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('stage');
+    }
+
+    /**
+     * Borang entiti LAIN tidak mengira: prasyarat ini per-entiti.
+     */
+    public function test_borang_analisis_entiti_lain_tidak_membuka_status_selesai(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti(self::BETA) + ['selesai' => true, 'user_id' => $this->pa->id],
+        );
+
+        $this->actingAs($this->pa)
+            ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
+                'tarikh_mula' => '2026-08-14',
+                'status_borang' => WorkflowStageStatus::SELESAI,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('stage');
+    }
+
+    /**
+     * Peringkat lain tidak terikat kepada borang analisis — prasyarat ini
+     * milik 3.1 sahaja, dan diisytiharkan pada takrifannya.
+     */
+    public function test_prasyarat_borang_analisis_hanya_pada_peringkat_analisis_inventori(): void
+    {
+        foreach (AliranKerja::semasa() as $kunci) {
+            $this->assertSame(
+                $kunci === AliranKerja::ANALISIS_INVENTORI,
+                AliranKerja::statusSelesaiPerluBorangAnalisis($kunci),
+                $kunci,
+            );
+        }
+    }
+
+    /**
+     * Borang belum lengkap: pilihan "Selesai" dilumpuhkan pada paparan, dan
+     * sebabnya dinyatakan. Sekatan pelayan tetap yang berkuasa — ini supaya
+     * pegawai nampak sekatan itu sebelum menekan Simpan.
+     */
+    public function test_pilihan_selesai_dilumpuhkan_selagi_borang_analisis_belum_lengkap(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        $html = $this->actingAs($this->pa)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertSee('hanya boleh ditetapkan')
+            ->getContent();
+
+        $this->assertTrue(
+            $this->pilihanDilumpuhkan($html, WorkflowStageStatus::SELESAI),
+            'Pilihan "Selesai" sepatutnya dilumpuhkan selagi borang belum lengkap.',
+        );
+
+        // Hanya nilai itu yang tersekat — status lain kekal boleh dipilih.
+        $this->assertFalse(
+            $this->pilihanDilumpuhkan($html, WorkflowStageStatus::DALAM_PROSES),
+            'Pilihan "Dalam Proses" tidak sepatutnya tersekat.',
+        );
+    }
+
+    /**
+     * Setelah borang dimuktamadkan, sekatan pada paparan diangkat.
+     */
+    public function test_pilihan_selesai_terbuka_setelah_borang_analisis_lengkap(): void
+    {
+        $this->lalui(AliranKerja::ANALISIS_INVENTORI);
+
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti(self::ALPHA) + ['selesai' => true, 'user_id' => $this->pa->id],
+        );
+
+        $html = $this->actingAs($this->pa)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertDontSee('hanya boleh ditetapkan')
+            ->getContent();
+
+        $this->assertFalse($this->pilihanDilumpuhkan($html, WorkflowStageStatus::SELESAI));
+    }
+
+    /**
+     * Adakah pilihan Status Borang bernilai $nilai dilumpuhkan dalam HTML?
+     *
+     * Dicari pada atribut, bukan pada teks: teks pilihan boleh berubah, tetapi
+     * nilai yang dihantar ke pelayan tidak.
+     */
+    private function pilihanDilumpuhkan(string $html, string $nilai): bool
+    {
+        $corak = '/<option value="'.preg_quote($nilai, '/').'"[^>]*disabled/';
+
+        return preg_match($corak, $html) === 1;
     }
 }

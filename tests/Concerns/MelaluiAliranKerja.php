@@ -2,6 +2,7 @@
 
 namespace Tests\Concerns;
 
+use App\Models\AnalisisInventori;
 use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Services\EntityAssignmentService;
@@ -60,6 +61,8 @@ trait MelaluiAliranKerja
             return;
         }
 
+        $this->pastikanBorangAnalisis($agencyCode, $kunci, $pengguna);
+
         $kemajuan->simpanData($agencyCode, $kunci, $this->dataPeringkat($kunci), $pengguna);
 
         if (in_array(AliranKerja::MEDAN_NO_RUJUKAN, AliranKerja::syaratSelesai($kunci), true)) {
@@ -67,6 +70,31 @@ trait MelaluiAliranKerja
         }
 
         $this->pastikanPenugasan($agencyCode, $kunci, $pengguna);
+    }
+
+    /**
+     * Peringkat yang Status Borangnya hanya boleh "Selesai" setelah borang
+     * analisis dimuktamadkan (peringkat 3.1) memerlukan borang itu wujud
+     * sebelum fikstur boleh merekod status tersebut.
+     *
+     * Borang yang telah dibuat oleh ujian TIDAK diganti.
+     */
+    protected function pastikanBorangAnalisis(string $agencyCode, string $kunci, ?User $pengguna = null): void
+    {
+        if (! AliranKerja::statusSelesaiPerluBorangAnalisis($kunci)) {
+            return;
+        }
+
+        if (AnalisisInventori::query()->where('agency_code', $agencyCode)->where('selesai', true)->exists()) {
+            return;
+        }
+
+        AnalisisInventori::factory()->create(
+            SektorDirectory::cariEntiti($agencyCode) + [
+                'selesai' => true,
+                'user_id' => $pengguna?->id,
+            ],
+        );
     }
 
     /**
@@ -79,7 +107,7 @@ trait MelaluiAliranKerja
      */
     protected function pastikanPenugasan(string $agencyCode, string $kunci, ?User $pengguna = null): void
     {
-        if (! AliranKerja::perluPenugasanUntukLanjut($kunci)) {
+        if (! AliranKerja::penugasanRelevan($kunci)) {
             return;
         }
 

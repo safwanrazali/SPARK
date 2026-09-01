@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\InvalidWorkflowTransitionException;
 use App\Models\ActivityLog;
+use App\Models\AnalisisInventori;
 use App\Models\EntitiAssignment;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
@@ -431,6 +432,48 @@ class KemajuanAnalisisService
     }
 
     /**
+     * Adakah penugasan Pegawai Analisis masih tertunggak bagi peringkat ini?
+     *
+     * Hanya bermakna pada peringkat yang menuntutnya (1.2).
+     */
+    private function penugasanTertunggak(string $agencyCode, string $stage): bool
+    {
+        if (! AliranKerja::perluPenugasanUntukSelesai($stage)) {
+            return false;
+        }
+
+        return ! EntitiAssignment::query()
+            ->forAgency($agencyCode)
+            ->active()
+            ->exists();
+    }
+
+    /**
+     * Terbitkan semula status satu peringkat daripada keadaan semasanya.
+     *
+     * Dipanggil dari luar apabila sesuatu YANG BUKAN medan peringkat berubah
+     * dan boleh menjejaskan statusnya — khususnya penugasan Pegawai Analisis,
+     * yang merupakan salah satu syarat Selesai peringkat 1.2.
+     */
+    public function terbitkanSemula(string $agencyCode, string $stage, ?User $user = null): void
+    {
+        $this->terbitkanStatus($agencyCode, $stage, $user);
+    }
+
+    /**
+     * Terbitkan semula status setiap peringkat yang bergantung kepada
+     * penugasan Pegawai Analisis.
+     */
+    public function terbitkanSemulaBergantungPenugasan(string $agencyCode, ?User $user = null): void
+    {
+        foreach (AliranKerja::semasa() as $stage) {
+            if (AliranKerja::perluPenugasanUntukSelesai($stage)) {
+                $this->terbitkanStatus($agencyCode, $stage, $user);
+            }
+        }
+    }
+
+    /**
      * Terbitkan semula status satu peringkat daripada datanya.
      *
      * Hanya terpakai pada peringkat yang mempunyai `syarat_selesai`. Bagi
@@ -459,12 +502,17 @@ class KemajuanAnalisisService
             return;
         }
 
-        $syarat = AliranKerja::syaratSelesai($stage);
-        $tiada = $this->medanBelumLengkap($rekod, $stage);
+        // Penugasan dikira sebagai satu syarat tambahan di sebelah medan,
+        // supaya "berapa banyak syarat sudah dipenuhi" kekal satu kiraan.
+        $perluPenugasan = AliranKerja::perluPenugasanUntukSelesai($stage);
+
+        $jumlahSyarat = count(AliranKerja::syaratSelesai($stage)) + ($perluPenugasan ? 1 : 0);
+        $jumlahTiada = count($this->medanBelumLengkap($rekod, $stage))
+            + ($this->penugasanTertunggak($agencyCode, $stage) ? 1 : 0);
 
         $baharu = match (true) {
-            $tiada === [] => WorkflowStageStatus::SELESAI,
-            count($tiada) < count($syarat) => WorkflowStageStatus::DALAM_PROSES,
+            $jumlahTiada === 0 => WorkflowStageStatus::SELESAI,
+            $jumlahTiada < $jumlahSyarat => WorkflowStageStatus::DALAM_PROSES,
             default => WorkflowStageStatus::BELUM_MULA,
         };
 
@@ -637,6 +685,8 @@ class KemajuanAnalisisService
         $dibenarkan = array_keys(AliranKerja::medan($stage));
         $data = array_intersect_key($data, array_flip($dibenarkan));
 
+        $this->sahkanStatusBorang($agencyCode, $stage, $data);
+
         return DB::transaction(function () use ($agencyCode, $stage, $data, $user) {
             $rekod = WorkflowStageStatus::query()
                 ->forAgency($agencyCode)
@@ -681,6 +731,50 @@ class KemajuanAnalisisService
 
             return $rekod;
         });
+    }
+
+    /**
+     * "Selesai" pada Status Borang menuntut borang itu benar-benar siap.
+     *
+     * Peringkat 3.1 menangkap Status Laporan Inventori Kriptografi, dan
+     * laporan itu tidak boleh diisytiharkan Selesai sementara Borang Input
+     * Analisis Inventori Kriptografi masih belum dimuktamadkan — status akan
+     * mendahului kerja yang sepatutnya diwakilinya.
+     *
+     * Nilai lain tidak tersekat: kerja yang sedang berjalan tetap boleh
+     * direkod.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws InvalidWorkflowTransitionException
+     */
+    private function sahkanStatusBorang(string $agencyCode, string $stage, array $data): void
+    {
+        if (! AliranKerja::statusSelesaiPerluBorangAnalisis($stage)) {
+            return;
+        }
+
+        $status = $data[AliranKerja::MEDAN_STATUS_BORANG] ?? null;
+
+        if ($status !== WorkflowStageStatus::SELESAI) {
+            return;
+        }
+
+        $siap = AnalisisInventori::query()
+            ->where('agency_code', $agencyCode)
+            ->where('selesai', true)
+            ->exists();
+
+        if ($siap) {
+            return;
+        }
+
+        throw new InvalidWorkflowTransitionException(sprintf(
+            '%s hanya boleh ditetapkan "%s" setelah Borang Input Analisis Inventori '
+            .'Kriptografi dilengkapkan.',
+            AliranKerja::labelMedan($stage, AliranKerja::MEDAN_STATUS_BORANG),
+            WorkflowStageStatus::SELESAI,
+        ));
     }
 
     /**
@@ -789,6 +883,12 @@ class KemajuanAnalisisService
             ->forAgency($agencyCode)
             ->atStage($stage)
             ->first();
+
+        // Peringkat berderivasi menetapkan statusnya sendiri daripada datanya;
+        // membuka borangnya tidak mengubah apa-apa.
+        if (AliranKerja::statusDiterbitkan($stage)) {
+            return $rekod;
+        }
 
         $bolehMula = $this->ralatPeringkat($agencyCode, $stage, WorkflowStageStatus::DALAM_PROSES) === null;
 

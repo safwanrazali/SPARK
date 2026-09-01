@@ -255,12 +255,24 @@
                                                 boleh masuk langsung.
                                             --}}
                                             @if ($lajur === AliranKerja::MEDAN_STATUS_BORANG)
+                                                @php
+                                                    // "Selesai" menuntut Borang Input Analisis
+                                                    // Inventori Kriptografi dimuktamadkan dahulu.
+                                                    $selesaiTerkunci = AliranKerja::statusSelesaiPerluBorangAnalisis($kunci)
+                                                        && ! $analisisLengkap;
+                                                @endphp
+
                                                 <select class="form-select @error($lajur) is-invalid @enderror"
                                                     id="{{ $kunci }}-{{ $lajur }}" name="{{ $lajur }}">
                                                     <option value="">— Pilih —</option>
                                                     @foreach (AliranKerja::statusBorang($kunci) as $pilihan)
-                                                        <option value="{{ $pilihan }}" @selected($nilai === $pilihan)>
-                                                            {{ $pilihan }}
+                                                        @php
+                                                            $terkunci = $selesaiTerkunci
+                                                                && $pilihan === WorkflowStageStatus::SELESAI;
+                                                        @endphp
+                                                        <option value="{{ $pilihan }}" @selected($nilai === $pilihan)
+                                                            @disabled($terkunci)>
+                                                            {{ $pilihan }}{{ $terkunci ? ' — borang belum lengkap' : '' }}
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -363,6 +375,13 @@
                                 <small class="peringkat-tindakan__nota d-block mt-1">
                                     Borang Input Analisis Inventori Kriptografi:
                                     {{ $analisisLengkap ? 'Lengkap' : 'Belum Lengkap' }}.
+
+                                    @unless ($analisisLengkap)
+                                        {{ AliranKerja::labelMedan($kunci, AliranKerja::MEDAN_STATUS_BORANG) }}
+                                        hanya boleh ditetapkan
+                                        <strong>{{ WorkflowStageStatus::SELESAI }}</strong>
+                                        setelah borang ini dilengkapkan.
+                                    @endunless
                                 </small>
                             </div>
                         @endif
@@ -582,92 +601,14 @@
     @endif
 
 
-    <div class="report-card">
+    {{--
+        Kad "Sejarah Peringkat" telah dibuang: ia mengulang "Maklumat
+        Peringkat" di atas.
 
-        <h4 class="section-title">Sejarah Peringkat</h4>
-        <p class="text-secondary">
-            Setiap perubahan peringkat dan setiap maklumat yang direkodkan padanya
-            disimpan bersama pegawai dan masa untuk tujuan jejak audit.
-        </p>
-
-        <div class="table-responsive-custom">
-            <table class="table-modern">
-                <thead>
-                    <tr>
-                        <th scope="col">Tarikh &amp; Masa</th>
-                        <th scope="col">Tindakan</th>
-                        <th scope="col">Dari</th>
-                        <th scope="col">Kepada</th>
-                        <th scope="col">Oleh</th>
-                        <th scope="col">Catatan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($sejarah as $log)
-                        @php
-                            /*
-                             * Tiga bentuk rekod berkongsi jadual ini:
-                             *
-                             * - Workflow lama: old_value/new_value ialah NOMBOR
-                             *   peringkat, namanya dalam metadata.
-                             * - Aliran semasa: kedua-duanya ialah STATUS
-                             *   ('Belum Mula' → 'Selesai'), dan kunci peringkat
-                             *   yang terlibat berada dalam metadata.
-                             *
-                             * Menganggap semuanya nombor peringkat akan
-                             * memaparkan "00 —" bagi rekod status.
-                             */
-                            $nomborPeringkat = in_array($log->action, [
-                                \App\Services\WorkflowTransitionService::ACTION_INITIALIZED,
-                                \App\Services\WorkflowTransitionService::ACTION_STAGE_CHANGED,
-                            ], true);
-
-                            $peringkatLog = $log->metadata['stage'] ?? null;
-
-                            $catatanLog = $log->metadata['catatan']
-                                ?? $log->metadata['notes']
-                                ?? $log->metadata['reason']
-                                ?? null;
-                        @endphp
-                        <tr>
-                            <td class="text-nowrap">{{ $log->changed_at?->format('d/m/Y H:i') }}</td>
-                            <td>
-                                {{ $log->getActionLabel() }}
-                                @if ($peringkatLog !== null)
-                                    <br>
-                                    <small class="text-secondary">
-                                        {{ $log->metadata['stage_name'] ?? AliranKerja::labelPenuh($peringkatLog) }}
-                                    </small>
-                                @endif
-                            </td>
-                            <td>
-                                @if ($nomborPeringkat && $log->old_value !== null)
-                                    {{ $log->metadata['from_stage_name'] ?? $log->old_value }}
-                                @else
-                                    {{ $log->old_value ?? '-' }}
-                                @endif
-                            </td>
-                            <td>
-                                @if ($nomborPeringkat && $log->new_value !== null)
-                                    {{ $log->metadata['to_stage_name'] ?? $log->new_value }}
-                                @else
-                                    {{ $log->new_value ?? '-' }}
-                                @endif
-                            </td>
-                            <td>{{ $log->changedBy?->name ?? '-' }}</td>
-                            <td>{{ $catatanLog ?? '-' }}</td>
-                        </tr>
-                    @empty
-                        <x-empty-state colspan="6" icon="bi-clock-history" title="Tiada perubahan peringkat">
-                            Sejarah muncul apabila entiti memasuki aliran kerja atau peringkatnya dikemas kini.
-                        </x-empty-state>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-3">{{ $sejarah->links() }}</div>
-
-    </div>
+        Setiap perubahan TERUS direkodkan dalam activity_log — tiada jejak
+        audit yang hilang. Ia dibaca melalui modul Log Audit, yang memang
+        wujud untuk soalan itu; halaman ini menjawab "di mana entiti ini
+        sekarang", bukan "apa yang berlaku kepadanya".
+    --}}
 
 @endsection

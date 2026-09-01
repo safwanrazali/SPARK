@@ -24,7 +24,29 @@ use Illuminate\Support\Facades\DB;
  */
 class EntityAssignmentService
 {
-    public function __construct(private readonly AuditTrailService $audit) {}
+    /**
+     * KemajuanAnalisisService diperlukan kerana penugasan ialah salah satu
+     * syarat Selesai peringkat 1.2: menukar penugasan boleh menyiapkan atau
+     * membuka semula peringkat itu.
+     *
+     * Arah kebergantungan ini selamat — KemajuanAnalisisService menyoal
+     * `entiti_assignment` secara terus dan tidak memanggil servis ini.
+     */
+    public function __construct(
+        private readonly AuditTrailService $audit,
+        private readonly KemajuanAnalisisService $kemajuan,
+    ) {}
+
+    /**
+     * Selaraskan status peringkat yang bergantung kepada penugasan.
+     *
+     * Dipanggil selepas setiap perubahan penugasan supaya status peringkat
+     * tidak pernah terpisah daripada keadaan sebenar entiti.
+     */
+    private function selaraskanPeringkat(string $agencyCode, ?User $actor = null): void
+    {
+        $this->kemajuan->terbitkanSemulaBergantungPenugasan($agencyCode, $actor);
+    }
 
     public const ACTION_CREATED = 'assignment_created';
 
@@ -94,6 +116,8 @@ class EntityAssignmentService
                 ],
             );
 
+            $this->selaraskanPeringkat($entiti['agency_code'], $coordinator);
+
             return $penugasan;
         });
     }
@@ -147,6 +171,8 @@ class EntityAssignmentService
                 'previous_user_id' => $pegawai?->id,
                 'reason' => $reason,
             ]);
+
+            $this->selaraskanPeringkat($agencyCode, $actor);
 
             return $aktif;
         });
