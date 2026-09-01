@@ -112,6 +112,28 @@ final class AliranKerja
     public const MEDAN_NO_RUJUKAN = 'no_rujukan';
 
     /**
+     * Peranan yang memasukkan SETIAP No. Rujukan dalam sistem — Pegawai
+     * Penyelaras Rekod.
+     *
+     * Ini BUKAN peranan peringkat. Peringkat 1.1, 1.2, 1.3 dan 3.1 dimiliki
+     * oleh KB, PPA dan PA, tetapi tiada seorang pun daripada mereka
+     * memasukkan nombor rujukannya sendiri: merekod No. Rujukan ialah
+     * keseluruhan tanggungjawab PPR, dan satu-satunya kuasa menulis yang
+     * dimilikinya.
+     *
+     * Kerana itu ia ditakrifkan sekali di sini dan bukan sebagai medan pada
+     * setiap peringkat — peraturannya global, bukan per peringkat.
+     */
+    public const PERANAN_RUJUKAN = User::ROLE_PENYELARAS_REKOD;
+
+    /**
+     * Gate yang melindungi kemasukan No. Rujukan. Sengaja BERASINGAN daripada
+     * gate peringkat: menyatukannya akan memberi pemilik peringkat kuasa
+     * menetapkan nombor rujukan yang bukan tanggungjawabnya.
+     */
+    public const GATE_RUJUKAN = 'record-stage-reference';
+
+    /**
      * Perbendaharaan "Status Borang" — SATU senarai, dikongsi oleh setiap
      * peringkat yang menangkapnya:
      *
@@ -163,12 +185,10 @@ final class AliranKerja
      * `gate`         gate kebenaran yang melindungi tindakannya
      * `medan`        lajur data yang ditangkap, dengan labelnya
      * `rujukan`      label No. Rujukan bagi peringkat ini, jika ada
-     * `rujukan_oleh` peranan yang memasukkan No. Rujukan; null bermakna
-     *                pegawai peringkat itu sendiri
      *
-     * `rujukan_oleh` WUJUD kerana pemilik peringkat dan pemasuk nombor
-     * rujukan bukan orang yang sama pada peringkat 1.1–1.3: PPR memasukkan
-     * ketiga-tiga No. Rujukan Borang walaupun peringkatnya milik KB/PPA/PA.
+     * SIAPA memasukkan No. Rujukan tidak ditakrifkan di sini: setiap No.
+     * Rujukan dimasukkan oleh PPR tanpa mengira siapa memiliki peringkatnya
+     * (lihat self::PERANAN_RUJUKAN).
      *
      * @return array<string, array<string, mixed>>
      */
@@ -186,7 +206,6 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Borang Penerimaan Data',
                 ],
                 'rujukan' => 'No. Rujukan Borang Penerimaan Data',
-                'rujukan_oleh' => User::ROLE_PENYELARAS_REKOD,
             ],
 
             self::PENDAFTARAN_DATA => [
@@ -200,7 +219,6 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Borang Pendaftaran Data',
                 ],
                 'rujukan' => 'No. Rujukan Borang Pendaftaran Data',
-                'rujukan_oleh' => User::ROLE_PENYELARAS_REKOD,
             ],
 
             self::SEMAKAN_AWAL_DATA => [
@@ -214,7 +232,6 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Borang Semakan Awal Data',
                 ],
                 'rujukan' => 'No. Rujukan Borang Semakan Awal Data',
-                'rujukan_oleh' => User::ROLE_PENYELARAS_REKOD,
             ],
 
             self::PENYEDIAAN_DATA => [
@@ -230,7 +247,6 @@ final class AliranKerja
                     self::MEDAN_NAMA_FAIL => 'Nama Fail',
                 ],
                 'rujukan' => null,
-                'rujukan_oleh' => null,
             ],
 
             self::ANALISIS_INVENTORI => [
@@ -245,7 +261,6 @@ final class AliranKerja
                     self::MEDAN_STATUS_BORANG => 'Status Laporan Inventori Kriptografi',
                 ],
                 'rujukan' => 'No. Rujukan Laporan',
-                'rujukan_oleh' => null,
             ],
 
             self::ANALISIS_RISIKO_PQC => [
@@ -256,7 +271,6 @@ final class AliranKerja
                 'gate' => null,
                 'medan' => [],
                 'rujukan' => null,
-                'rujukan_oleh' => null,
             ],
 
             self::PENJANAAN_LAPORAN => [
@@ -267,7 +281,6 @@ final class AliranKerja
                 'gate' => null,
                 'medan' => [],
                 'rujukan' => null,
-                'rujukan_oleh' => null,
             ],
 
             self::SEMAKAN_KELULUSAN => [
@@ -278,7 +291,6 @@ final class AliranKerja
                 'gate' => null,
                 'medan' => [],
                 'rujukan' => null,
-                'rujukan_oleh' => null,
             ],
         ];
     }
@@ -504,47 +516,24 @@ final class AliranKerja
     }
 
     /**
-     * Peranan yang memasukkan No. Rujukan peringkat ini.
+     * Peranan yang memasukkan No. Rujukan peringkat ini, atau null jika
+     * peringkat itu langsung tiada No. Rujukan.
      *
-     * null bermakna pegawai peringkat itu sendiri yang memasukkannya —
-     * berbeza daripada peringkat 1.1–1.3, yang nombor rujukannya dimasukkan
-     * oleh PPR walaupun peringkatnya bukan miliknya.
+     * Sentiasa PPR — termasuk No. Rujukan Laporan peringkat 3.1, yang TIDAK
+     * dimasukkan oleh Pegawai Analisis walaupun laporan itu kerjanya.
      */
     public static function perananRujukan(mixed $key): ?string
     {
-        return self::def($key)['rujukan_oleh'] ?? null;
+        return self::labelRujukan($key) === null ? null : self::PERANAN_RUJUKAN;
     }
 
     /**
-     * Adakah No. Rujukan peringkat ini dimasukkan oleh peranan yang BERBEZA
-     * daripada pemilik peringkat?
-     */
-    public static function rujukanOlehPerananLain(mixed $key): bool
-    {
-        return self::labelRujukan($key) !== null && self::perananRujukan($key) !== null;
-    }
-
-    /**
-     * Gate yang melindungi kemasukan No. Rujukan peringkat ini.
-     *
-     * Dua kes, dan membezakannya ialah keseluruhan sebabnya kaedah ini wujud:
-     *
-     * - Peringkat 1.1–1.3: No. Rujukan Borang dimasukkan oleh PPR, jadi
-     *   gate-nya `record-stage-reference` dan BUKAN gate peringkat itu.
-     * - Peringkat 3.1: No. Rujukan Laporan dimasukkan oleh pegawai peringkat
-     *   itu sendiri, jadi gate peringkatnya yang terpakai.
-     *
-     * null bermakna peringkat itu langsung tiada No. Rujukan.
+     * Gate yang melindungi kemasukan No. Rujukan peringkat ini, atau null jika
+     * peringkat itu langsung tiada No. Rujukan.
      */
     public static function gateRujukan(mixed $key): ?string
     {
-        if (self::labelRujukan($key) === null) {
-            return null;
-        }
-
-        return self::perananRujukan($key) === null
-            ? self::gate($key)
-            : 'record-stage-reference';
+        return self::labelRujukan($key) === null ? null : self::GATE_RUJUKAN;
     }
 
     /**

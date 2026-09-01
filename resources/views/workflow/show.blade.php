@@ -43,9 +43,9 @@
         /*
         | Bolehkah pengguna ini memasukkan No. Rujukan peringkat berkenaan?
         |
-        | Pemiliknya berbeza mengikut peringkat — PPR bagi No. Rujukan Borang
-        | (1.1–1.3), pegawai peringkat itu sendiri bagi No. Rujukan Laporan
-        | (3.1) — jadi gate diambil daripada takrifan aliran kerja.
+        | Setiap No. Rujukan milik PPR, tanpa mengira siapa memiliki
+        | peringkatnya — jadi gate diambil daripada takrifan aliran kerja dan
+        | bukan daripada gate peringkat.
         |
         | Gilirannya TIDAK terikat kepada status peringkat: nombor rujukan
         | boleh direkodkan sepanjang peringkat itu berjalan.
@@ -248,11 +248,9 @@
 
                         {{--
                             No. Rujukan — borang BERASINGAN kerana pemiliknya
-                            tidak semestinya pemilik peringkat: PPR memasukkan
-                            No. Rujukan Borang bagi peringkat 1.1–1.3 walaupun
-                            peringkat itu milik KB, PPA dan PA, sedangkan No.
-                            Rujukan Laporan peringkat 3.1 dimasukkan oleh
-                            pegawai peringkat itu sendiri.
+                            BUKAN pemilik peringkat: setiap No. Rujukan
+                            dimasukkan oleh Pegawai Penyelaras Rekod, walaupun
+                            peringkatnya milik KB, PPA atau PA.
                         --}}
                         @if ($bolehRujukan($kunci))
                             <form action="{{ route('kemajuan.rujukan', [$entiti['agency_code'], $kunci]) }}"
@@ -261,12 +259,9 @@
 
                                 <label class="form-label" for="{{ $kunci }}-no-rujukan">
                                     {{ $labelRujukan }}
-
-                                    @if (AliranKerja::rujukanOlehPerananLain($kunci))
-                                        <small class="peringkat-tindakan__nota">
-                                            Dimasukkan oleh Pegawai Penyelaras Rekod.
-                                        </small>
-                                    @endif
+                                    <small class="peringkat-tindakan__nota">
+                                        Dimasukkan oleh Pegawai Penyelaras Rekod.
+                                    </small>
                                 </label>
 
                                 <div class="d-flex gap-2 flex-wrap align-items-start">

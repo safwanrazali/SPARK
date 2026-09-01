@@ -115,47 +115,44 @@ class AliranKerjaTest extends TestCase
     }
 
     /**
-     * Inilah pemisahan yang paling mudah hilang: pemilik peringkat dan
-     * pemasuk No. Rujukan bukan orang yang sama pada peringkat 1.1–1.3.
+     * SETIAP No. Rujukan dimasukkan oleh PPR — itulah keseluruhan
+     * tanggungjawabnya. Empat nombor, empat peringkat, satu peranan.
      */
-    public function test_no_rujukan_borang_dimasukkan_oleh_ppr(): void
+    public function test_setiap_no_rujukan_dimasukkan_oleh_ppr(): void
     {
-        foreach (['1.1', '1.2', '1.3'] as $kunci) {
+        $berujukan = ['1.1', '1.2', '1.3', '3.1'];
+
+        foreach ($berujukan as $kunci) {
             $this->assertNotNull(AliranKerja::labelRujukan($kunci));
             $this->assertSame(User::ROLE_PENYELARAS_REKOD, AliranKerja::perananRujukan($kunci));
-            $this->assertTrue(AliranKerja::rujukanOlehPerananLain($kunci));
         }
 
         $this->assertSame('No. Rujukan Borang Penerimaan Data', AliranKerja::labelRujukan('1.1'));
         $this->assertSame('No. Rujukan Borang Pendaftaran Data', AliranKerja::labelRujukan('1.2'));
         $this->assertSame('No. Rujukan Borang Semakan Awal Data', AliranKerja::labelRujukan('1.3'));
-    }
-
-    /**
-     * No. Rujukan Laporan peringkat 3.1 BUKAN tanggungjawab PPR — jadual
-     * rasmi menamakan PPR bagi tiga No. Rujukan Borang sahaja.
-     */
-    public function test_no_rujukan_laporan_bukan_milik_ppr(): void
-    {
         $this->assertSame('No. Rujukan Laporan', AliranKerja::labelRujukan('3.1'));
-        $this->assertNull(AliranKerja::perananRujukan('3.1'));
-        $this->assertFalse(AliranKerja::rujukanOlehPerananLain('3.1'));
+
+        // Tiada peringkat LAIN yang mempunyai No. Rujukan — senarai ini
+        // lengkap, jadi menambah satu tanpa menyedarinya akan gagal di sini.
+        foreach (array_diff(AliranKerja::kekunci(), $berujukan) as $kunci) {
+            $this->assertNull(AliranKerja::labelRujukan($kunci), $kunci);
+            $this->assertNull(AliranKerja::perananRujukan($kunci), $kunci);
+        }
     }
 
     /**
-     * Gate No. Rujukan mengikut pemiliknya, bukan mengikut pemilik peringkat.
+     * Inilah pemisahan yang paling mudah hilang: gate No. Rujukan BUKAN gate
+     * peringkat. Menyatukannya akan memberi pemilik peringkat kuasa
+     * menetapkan nombor rujukan yang bukan tanggungjawabnya.
      */
-    public function test_gate_no_rujukan_mengikut_pemiliknya(): void
+    public function test_gate_no_rujukan_berasingan_daripada_gate_peringkat(): void
     {
-        // 1.1–1.3: milik PPR, jadi gate-nya BUKAN gate peringkat.
-        foreach (['1.1', '1.2', '1.3'] as $kunci) {
-            $this->assertSame('record-stage-reference', AliranKerja::gateRujukan($kunci));
+        foreach (['1.1', '1.2', '1.3', '3.1'] as $kunci) {
+            $this->assertSame(AliranKerja::GATE_RUJUKAN, AliranKerja::gateRujukan($kunci));
             $this->assertNotSame(AliranKerja::gate($kunci), AliranKerja::gateRujukan($kunci));
         }
 
-        // 3.1: milik pegawai peringkat itu sendiri.
-        $this->assertSame(AliranKerja::gate('3.1'), AliranKerja::gateRujukan('3.1'));
-        $this->assertSame('advance-analysis-stage', AliranKerja::gateRujukan('3.1'));
+        $this->assertSame('record-stage-reference', AliranKerja::GATE_RUJUKAN);
 
         // Peringkat tanpa No. Rujukan tiada gate rujukan langsung.
         $this->assertNull(AliranKerja::gateRujukan('2'));

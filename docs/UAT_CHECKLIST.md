@@ -18,9 +18,17 @@
 > | 4         | Penjanaan Laporan                          | —        | Akan datang  |
 > | 5         | Semakan, Kelulusan & Penyerahan Laporan    | —        | Akan datang  |
 >
-> **No. Rujukan Borang** bagi peringkat 1.1, 1.2 dan 1.3 dimasukkan oleh
-> **Pegawai Penyelaras Rekod (PPR)**, walaupun peringkat itu dilaksanakan oleh
-> KB, PPA dan PA. **No. Rujukan Laporan** peringkat 3.1 dimasukkan oleh PA.
+> **SETIAP No. Rujukan** — keempat-empatnya — dimasukkan oleh **Pegawai
+> Penyelaras Rekod (PPR)**, walaupun peringkatnya dilaksanakan oleh KB, PPA
+> dan PA. Itulah keseluruhan tanggungjawab PPR, dan satu-satunya kuasa
+> menulis yang dimilikinya:
+>
+> | No. Rujukan                          | Peringkat |
+> | ------------------------------------ | --------- |
+> | No. Rujukan Borang Penerimaan Data   | 1.1       |
+> | No. Rujukan Borang Pendaftaran Data  | 1.2       |
+> | No. Rujukan Borang Semakan Awal Data | 1.3       |
+> | No. Rujukan Laporan                  | 3.1       |
 >
 > **Fasa semasa berakhir pada peringkat 3.1.** Peringkat 3.2, 4 dan 5 telah
 > ditakrifkan dalam struktur tetapi prosesnya belum ditentukan; ia tidak

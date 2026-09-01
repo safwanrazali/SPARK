@@ -18,9 +18,17 @@
 > | 4         | Penjanaan Laporan                          | —        | Akan datang  |
 > | 5         | Semakan, Kelulusan & Penyerahan Laporan    | —        | Akan datang  |
 >
-> **No. Rujukan Borang** bagi peringkat 1.1, 1.2 dan 1.3 dimasukkan oleh
-> **Pegawai Penyelaras Rekod (PPR)**, walaupun peringkat itu dilaksanakan oleh
-> KB, PPA dan PA. **No. Rujukan Laporan** peringkat 3.1 dimasukkan oleh PA.
+> **SETIAP No. Rujukan** — keempat-empatnya — dimasukkan oleh **Pegawai
+> Penyelaras Rekod (PPR)**, walaupun peringkatnya dilaksanakan oleh KB, PPA
+> dan PA. Itulah keseluruhan tanggungjawab PPR, dan satu-satunya kuasa
+> menulis yang dimilikinya:
+>
+> | No. Rujukan                          | Peringkat |
+> | ------------------------------------ | --------- |
+> | No. Rujukan Borang Penerimaan Data   | 1.1       |
+> | No. Rujukan Borang Pendaftaran Data  | 1.2       |
+> | No. Rujukan Borang Semakan Awal Data | 1.3       |
+> | No. Rujukan Laporan                  | 3.1       |
 >
 > **Fasa semasa berakhir pada peringkat 3.1.** Peringkat 3.2, 4 dan 5 telah
 > ditakrifkan dalam struktur tetapi prosesnya belum ditentukan; ia tidak
@@ -164,16 +172,36 @@ memilikinya.
 | 1.2       | Tarikh Terima · Status Borang Pendaftaran Data · No. Rujukan Borang (PPR)      |
 | 1.3       | Tarikh Semakan · Status Borang Semakan Awal Data · No. Rujukan Borang (PPR)    |
 | 2         | Tarikh Mula · Tarikh Tamat · Status Mastertable · Nama Fail                    |
-| 3.1       | Tarikh Mula · Tarikh Tamat · Status Laporan Inventori · No. Rujukan Laporan    |
+| 3.1       | Tarikh Mula · Tarikh Tamat · Status Laporan Inventori · No. Rujukan Laporan (PPR) |
+
+**Nilai Status Borang**
+
+Medan *Status Borang* pada setiap peringkat (termasuk *Status Mastertable* dan
+*Status Laporan Inventori Kriptografi*) menggunakan senarai yang sama:
+
+| # | Status                 |
+| - | ---------------------- |
+| 1 | Belum Mula             |
+| 2 | Dalam Proses           |
+| 3 | Dalam Semakan          |
+| 4 | Selesai                |
+| 5 | Tidak Boleh Diteruskan |
+| 6 | Tidak Berkaitan        |
+| 7 | Telah Diserah          |
+
+Senarai ini BERASINGAN daripada status peringkat (Belum Mula / Dalam Proses /
+Selesai): yang itu menjejaki kedudukan peringkat dalam aliran kerja, yang ini
+menjejaki keadaan borangnya.
 
 **Peraturan peringkat**
 
 - Peringkat mesti dilalui **berturutan**, termasuk sub-peringkat: 1.1 → 1.2 →
   1.3 → 2 → 3.1. Melangkau mana-mana satu ditolak.
 - Peringkat hanya boleh ditandakan **Selesai** oleh peranan yang memilikinya.
-- **No. Rujukan Borang** peringkat 1.1–1.3 dimasukkan oleh **PPR sahaja**, dan
-  tidak menunggu giliran peringkat — borang fizikal boleh didaftarkan bila-bila
-  masa. **No. Rujukan Laporan** peringkat 3.1 dimasukkan oleh PA.
+- **Setiap No. Rujukan** dimasukkan oleh **PPR sahaja** — termasuk No. Rujukan
+  Laporan peringkat 3.1, yang peringkatnya milik PA. Ia tidak menunggu giliran
+  peringkat: nombor rujukan boleh direkodkan bila-bila masa sepanjang peringkat
+  itu berjalan.
 - Kemajuan diukur terhadap peringkat **fasa semasa** (1.1 hingga 3.1). Entiti
   menjadi **Siap** apabila kelima-limanya Selesai.
 - Peringkat 3.2, 4 dan 5 **tidak menerima sebarang tindakan** dalam fasa ini.

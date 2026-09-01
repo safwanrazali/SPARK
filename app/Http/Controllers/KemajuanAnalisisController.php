@@ -113,11 +113,9 @@ class KemajuanAnalisisController extends Controller
     /**
      * Masukkan No. Rujukan peringkat.
      *
-     * Pemiliknya berbeza mengikut peringkat, jadi gate diambil daripada
-     * takrifan aliran kerja dan bukan ditulis tetap di sini:
-     *
-     *   1.1–1.3  No. Rujukan Borang    Pegawai Penyelaras Rekod
-     *   3.1      No. Rujukan Laporan   pegawai peringkat itu (PA)
+     * Setiap No. Rujukan — keempat-empatnya — dimasukkan oleh Pegawai
+     * Penyelaras Rekod, tanpa mengira siapa memiliki peringkatnya. Gate
+     * diambil daripada takrifan aliran kerja dan bukan ditulis tetap di sini.
      *
      * Tiada semakan status peringkat di sini dengan sengaja: nombor rujukan
      * boleh direkodkan sepanjang peringkat itu berjalan, bukan hanya selepas

@@ -175,8 +175,9 @@ class Phase9RolesPermissionsTest extends TestCase
             'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, [
                 'view-dashboard' => true,
                 'view-all-entities' => true,
-                // PPR tidak lagi melaksanakan peringkat 1.1; tanggungjawabnya
-                // ialah memasukkan No. Rujukan Borang (record-stage-reference).
+                // PPR tidak melaksanakan sebarang peringkat. Keseluruhan
+                // tanggungjawabnya — dan satu-satunya kuasa menulisnya —
+                // ialah memasukkan SETIAP No. Rujukan.
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
