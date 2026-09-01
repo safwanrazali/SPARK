@@ -65,8 +65,10 @@ class Phase2WorkflowRouteTest extends TestCase
     {
         $this->workflowPada(AliranKerja::PENYEDIAAN_DATA);
 
+        // Entiti disenaraikan mengikut sektor: senarai hanya wujud setelah
+        // satu sektor dipilih.
         $this->actingAs($this->coordinator())
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertSee('A010101')
             ->assertSee('Penyediaan &amp; Pengesahan Data', false);
@@ -83,7 +85,7 @@ class Phase2WorkflowRouteTest extends TestCase
         $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
 
         $this->actingAs($ppr)
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertSee(self::ENTITI)
             ->assertDontSee('Tindakan')
@@ -91,7 +93,7 @@ class Phase2WorkflowRouteTest extends TestCase
 
         // Peranan lain kekal mempunyai pautan butiran.
         $this->actingAs($this->coordinator())
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertSee('Tindakan')
             ->assertSee(route('workflow.show', self::ENTITI));

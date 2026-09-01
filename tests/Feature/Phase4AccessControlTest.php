@@ -230,7 +230,7 @@ class Phase4AccessControlTest extends TestCase
         $this->buatData(self::BETA);
 
         $this->actingAs($this->analystA)
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertSee('A010101')
             ->assertDontSee('A010102');
@@ -559,7 +559,7 @@ class Phase4AccessControlTest extends TestCase
 
         // 1. UI tidak memaparkannya.
         $this->actingAs($this->analystA)
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertDontSee(route('workflow.show', self::BETA));
 
         // 2. Capaian terus tetap ditolak (bukan sekadar butang tersembunyi).

@@ -2,11 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AnalisisInventori;
 use App\Models\AnalisisInventori as RekodAnalisis;
-use App\Models\MuatNaik;
-use App\Models\StatusLaporan;
-use App\Models\User;
 use App\Models\WorkflowStatus;
 use App\Services\EntityAccessService;
 use App\Services\EntityAssignmentService;
@@ -16,7 +12,6 @@ use App\Services\WorkflowTransitionService;
 use App\Support\Halaman;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 /**
  * Pemantauan kedudukan setiap entiti dalam aliran kerja lima peringkat.
@@ -62,23 +57,20 @@ class WorkflowController extends Controller
             ->get()
             ->keyBy('agency_code');
 
+        /*
+         * Entiti disenaraikan MENGIKUT SEKTOR: tiada senarai sehingga satu
+         * sektor dipilih.
+         *
+         * Senarai induk mengandungi ratusan entiti merentas sebelas sektor,
+         * jadi "semua entiti sekali gus" bukan paparan yang boleh dibaca.
+         * Memilih sektor ialah langkah pertama aliran kerja, bukan penapis
+         * pilihan di atas senarai sedia ada.
+         */
         $entiti = $sectorCode !== null
             ? $this->access->entitiDalamSektorFor($pengguna, $sectorCode)
-            : $this->entitiDipantau($rekod->keys()->all(), $pengguna);
+            : collect();
 
         $peringkat = $this->kemajuan->peringkatUntukBanyak($entiti->pluck('agency_code')->all());
-
-        // Senarai lalai memantau entiti yang BERADA dalam aliran kerja.
-        // Entiti yang ditetapkan semula oleh Ketua Bahagian telah keluar
-        // daripadanya, jadi ia digugurkan di sini — sama seperti entiti yang
-        // belum pernah didaftarkan. Mod sektor sengaja dikecualikan: ia
-        // memaparkan keseluruhan sektor, dan entiti yang tidak berdaftar
-        // ditandakan "Belum Didaftarkan" pada paparan.
-        if ($sectorCode === null) {
-            $entiti = $entiti
-                ->filter(fn (array $e) => $this->kemajuan->dalamAliranKerja($peringkat->get($e['agency_code'])))
-                ->values();
-        }
 
         // Setiap baris memaparkan pegawai yang ditugaskan, status keseluruhan
         // dan kedudukan laporan; ketiga-tiganya dimuatkan sekali gus supaya
@@ -101,7 +93,11 @@ class WorkflowController extends Controller
                     'laporan' => $laporan->get($e['agency_code']),
                 ];
             })
-            ->sortBy([['sector_code', 'asc'], ['agency_name', 'asc']])
+            // Disusun mengikut KOD entiti, bukan namanya: kod itulah yang
+            // dipaparkan sebagai pengenal setiap baris, jadi susunan mengikut
+            // nama yang tidak kelihatan membacanya sebagai tiada susunan.
+            // Sama seperti panel Penetapan Entiti.
+            ->sortBy([['sector_code', 'asc'], ['agency_code', 'asc']])
             ->values();
 
         return view('workflow.index', [
@@ -140,30 +136,6 @@ class WorkflowController extends Controller
             'sejarah' => $this->kemajuan->sejarahQuery($agencyCode)
                 ->paginate(Halaman::SETIAP_MUKA, ['*'], 'muka_sejarah'),
         ]);
-    }
-
-    /**
-     * Entiti yang telah terlibat dalam mana-mana proses sedia ada, digabungkan
-     * dengan entiti yang telah mempunyai rekod workflow. Setiap sumber ditapis
-     * mengikut akses pengguna.
-     *
-     * @param  array<int, string>  $kodBerekod
-     * @return Collection<int, array<string, string>>
-     */
-    private function entitiDipantau(array $kodBerekod, User $pengguna)
-    {
-        $kod = collect($kodBerekod)
-            ->merge(MuatNaik::query()->accessibleBy($pengguna)->pluck('agency_code'))
-            ->merge(AnalisisInventori::query()->accessibleBy($pengguna)->pluck('agency_code'))
-            ->merge(StatusLaporan::query()->accessibleBy($pengguna)->pluck('agency_code'))
-            ->filter()
-            ->unique()
-            ->filter(fn (string $agencyCode) => $this->access->canAccess($pengguna, $agencyCode));
-
-        return $kod
-            ->map(fn (string $agencyCode) => SektorDirectory::cariEntiti($agencyCode))
-            ->filter()
-            ->values();
     }
 
     /**

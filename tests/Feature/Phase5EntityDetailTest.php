@@ -362,7 +362,7 @@ class Phase5EntityDetailTest extends TestCase
         $this->buatRekodLengkap();
 
         $this->actingAs($this->coordinator)
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertSee(route('entiti.show', self::ALPHA));
     }
@@ -372,7 +372,7 @@ class Phase5EntityDetailTest extends TestCase
         $this->buatRekodLengkap(self::BETA);
 
         $this->actingAs($this->analystA)
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertDontSee(route('entiti.show', self::BETA));
     }

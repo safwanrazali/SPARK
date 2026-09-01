@@ -11,14 +11,16 @@
         <h4 class="section-title">Pilih Sektor</h4>
         <p class="text-secondary">
             @if ($bolehDaftar && $bolehTugas)
-                Pilih sektor untuk memaparkan semua entiti di bawahnya. Tandakan entiti yang
-                telah menerima dan mendaftarkan data, kemudian tugaskan entiti yang telah
-                dikunci kepada Pegawai Analisis.
+                Entiti disusun mengikut sektor. Pilih satu sektor untuk memaparkan
+                kesemua entiti di bawahnya dan menandakan peringkat 1.1 Penerimaan Data;
+                entiti yang telah dikunci kekal disenaraikan di bawah untuk ditugaskan
+                kepada Pegawai Analisis.
             @elseif ($bolehDaftar)
-                Pilih sektor untuk memaparkan semua entiti di bawahnya, kemudian tandakan
-                entiti yang telah menyelesaikan Penerimaan &amp; Pendaftaran Data.
+                Entiti disusun mengikut sektor. Pilih satu sektor untuk memaparkan
+                kesemua entiti di bawahnya, kemudian tandakan entiti yang telah
+                menyelesaikan peringkat 1.1 Penerimaan Data.
             @else
-                Entiti muncul di sini setelah Penerimaan &amp; Pendaftaran Data selesai.
+                Entiti muncul di sini setelah peringkat 1.1 Penerimaan Data selesai.
                 Setiap entiti hanya boleh mempunyai satu penugasan aktif pada satu masa.
             @endif
         </p>
@@ -27,9 +29,11 @@
             <div class="col-md-6">
                 <label class="form-label" for="sector_code">Sektor</label>
                 <select id="sector_code" name="sector_code" class="form-select">
-                    <option value="">-- Entiti yang telah didaftarkan sahaja --</option>
+                    <option value="">-- Pilih sektor --</option>
                     @foreach (config('sektor') as $kod => $sektor)
-                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $kod }}</option>
+                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>
+                            {{ $kod }} — {{ $sektor['name'] }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -57,6 +61,12 @@
             <p class="text-secondary">
                 {{ $jumlahDidaftar }} entiti telah dikunci dan tersedia kepada Pegawai Penyelaras Analisis.
                 Entiti yang telah dikunci tidak boleh diubah lagi di sini.
+
+                @if (!$sectorCode)
+                    Senarai di bawah memaparkan entiti yang telah dikunci sahaja —
+                    <strong>pilih sektor di atas</strong> untuk memaparkan kesemua entiti
+                    di bawahnya dan menandakan entiti baharu.
+                @endif
             </p>
 
             @php

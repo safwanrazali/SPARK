@@ -220,16 +220,22 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
      *
      * setSemula() mengekalkan SEMUA baris peringkat (supaya jejak
      * auditnya kekal bermakna) dan hanya mengembalikan statusnya kepada
-     * Belum Mula. Senarai yang menguji "ada baris peringkat" akan terus
-     * memaparkan entiti itu; peringkat 1.1 Selesai ialah ujian yang betul.
+     * Belum Mula. Kiraan yang menguji "ada baris peringkat" akan terus
+     * mengiranya sebagai berdaftar; peringkat 1.1 Selesai ialah ujian yang
+     * betul.
+     *
+     * Senarai Kemajuan Analisis kini disusun mengikut SEKTOR, jadi entiti
+     * yang ditetapkan semula tetap muncul di dalamnya — ditandakan "Belum
+     * Didaftarkan", sama seperti entiti yang tidak pernah didaftarkan. Yang
+     * mesti berubah ialah KIRAAN entiti yang berada dalam aliran kerja.
      */
-    public function test_entiti_yang_ditetapkan_semula_tidak_disenaraikan_dalam_kemajuan_analisis(): void
+    public function test_entiti_yang_ditetapkan_semula_tidak_lagi_dikira_berdaftar(): void
     {
         $this->daftarkan(self::ALPHA);
         $this->daftarkan(self::BETA);
 
         $this->actingAs($this->ppa)
-            ->get(route('workflow.index'))
+            ->get(route('workflow.index', ['sector_code' => '001']))
             ->assertOk()
             ->assertSee(route('workflow.show', self::ALPHA), false)
             ->assertSee(route('workflow.show', self::BETA), false)
@@ -239,14 +245,26 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
             ->post(route('penugasan.pendaftaran.set-semula', self::ALPHA), ['reason' => 'Data perlu dihantar semula.'])
             ->assertSessionHasNoErrors();
 
-        // Pautan baris disemak, bukan kod entiti: mesej kejayaan Set Semula
-        // turut menyebut kod itu.
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index', ['sector_code' => '001']))
+            ->assertOk()
+            ->assertSee('Belum Didaftarkan')
+            ->assertSee('1 entiti telah memasuki aliran kerja');
+    }
+
+    /**
+     * Tiada sektor dipilih bermakna tiada senarai — bukan senarai kosong,
+     * yang akan terbaca sebagai "tiada entiti dalam sistem".
+     */
+    public function test_senarai_kemajuan_menuntut_sektor_dipilih(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
         $this->actingAs($this->ppa)
             ->get(route('workflow.index'))
             ->assertOk()
-            ->assertDontSee(route('workflow.show', self::ALPHA), false)
-            ->assertSee(route('workflow.show', self::BETA), false)
-            ->assertSee('1 entiti telah memasuki aliran kerja');
+            ->assertSee('Pilih sektor untuk memaparkan entiti')
+            ->assertDontSee(route('workflow.show', self::ALPHA), false);
     }
 
     /**

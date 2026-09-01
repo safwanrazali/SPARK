@@ -24,9 +24,11 @@
             <div class="col-md-6">
                 <label class="form-label" for="sector_code">Pilih Sektor</label>
                 <select id="sector_code" name="sector_code" class="form-select">
-                    <option value="">-- Entiti dipantau sahaja --</option>
+                    <option value="">-- Pilih sektor --</option>
                     @foreach ($sektor as $kod => $s)
-                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>{{ $kod }}</option>
+                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>
+                            {{ $kod }} — {{ $s['name'] }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -46,11 +48,21 @@
 
         <h4 class="section-title">Kedudukan Semasa Entiti</h4>
         <p class="text-secondary">
-            {{ $jumlahDidaftar }} entiti telah memasuki aliran kerja Kemajuan Analisis.
-            @if (!$sectorCode)
-                Pilih sektor di atas untuk melihat keseluruhan entiti dalam sektor tersebut.
-            @endif
+            {{ $jumlahDidaftar }} entiti telah memasuki aliran kerja Kemajuan Analisis
+            merentas kesemua sektor.
         </p>
+
+        {{--
+            Entiti disenaraikan mengikut sektor. Tanpa sektor yang dipilih
+            tiada jadual langsung — bukan jadual kosong — supaya tiada siapa
+            membacanya sebagai "tiada entiti dalam sistem".
+        --}}
+        @if (!$sectorCode)
+            <x-empty-state icon="bi-diagram-3" title="Pilih sektor untuk memaparkan entiti">
+                Senarai entiti disusun mengikut sektor. Pilih satu sektor di atas untuk
+                melihat kesemua entiti di bawahnya beserta kedudukan aliran kerjanya.
+            </x-empty-state>
+        @else
 
         @php
             /*
@@ -166,8 +178,8 @@
                             @endif
                         </tr>
                     @empty
-                        <x-empty-state :colspan="$adaTindakan ? 7 : 6" icon="bi-diagram-3" title="Tiada entiti dipantau">
-                            Pilih sektor di atas untuk memaparkan entiti dan mendaftarkannya ke dalam workflow.
+                        <x-empty-state :colspan="$adaTindakan ? 7 : 6" icon="bi-diagram-3" title="Tiada entiti dalam sektor ini">
+                            Sektor {{ $sectorCode }} tiada entiti yang boleh anda lihat.
                         </x-empty-state>
                     @endforelse
                 </tbody>
@@ -175,6 +187,8 @@
         </div>
 
         <div class="mt-3">{{ $entiti->links() }}</div>
+
+        @endif
 
     </div>
 
