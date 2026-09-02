@@ -216,6 +216,18 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         ->middleware('can:generateReport,analisis')
         ->name('laporan.unduh');
 
+    // Komentar pada laporan — hanya KB dan PPA boleh menambah
+    Route::post('/laporan/inventori/{analisis}/komentar', [LaporanController::class, 'storeComment'])
+        ->middleware('can:view,analisis')
+        ->name('laporan.komentar.store');
+
+    Route::get('/laporan/inventori/{analisis}/komentar', [LaporanController::class, 'getComments'])
+        ->middleware('can:view,analisis')
+        ->name('laporan.komentar.get');
+
+    Route::delete('/laporan/komentar/{komentar}', [LaporanController::class, 'destroyComment'])
+        ->name('laporan.komentar.destroy');
+
     /*
     |----------------------------------------------------------------------
     | Pentadbiran (sedia ada, dikekalkan)

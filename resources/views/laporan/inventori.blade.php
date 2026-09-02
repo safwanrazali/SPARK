@@ -70,7 +70,10 @@
              Struktur dan teks MESTI kekal sama dengan pasangannya dalam
              resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
         <section class="laporan-seksyen">
-            <h2 class="laporan-seksyen__tajuk">Tujuan</h2>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="laporan-seksyen__tajuk mb-0">Tujuan</h2>
+                <x-section-comment-widget :section="'pengenalan'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
             <p class="laporan-seksyen__perenggan">
                 Laporan ini disediakan bagi membentangkan dapatan analisis inventori kriptografi
@@ -100,7 +103,10 @@
              teks MESTI kekal sama dengan pasangannya dalam
              resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
-            <h2 class="laporan-seksyen__tajuk">Status Penerimaan dan Kebolehgunaan Data</h2>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="laporan-seksyen__tajuk mb-0">Status Penerimaan dan Kebolehgunaan Data</h2>
+                <x-section-comment-widget :section="'keadaan_semasa'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
             <p class="laporan-seksyen__perenggan">
                 Jadual di bawah merumuskan status penerimaan dan kebolehgunaan data inventori kriptografi
@@ -162,7 +168,8 @@
                     @foreach ($failSumber as $fail)
                         <li>
                             {{ $fail }}
-                            (dirujuk sebagai <strong>FAIL {{ $loop->iteration }}</strong> dalam laporan ini).
+                            (dirujuk sebagai <strong>FAIL {{ $loop->iteration }}</strong> dalam laporan ini)
+                            .
                         </li>
                     @endforeach
                 </ol>
@@ -178,7 +185,10 @@
              .laporan-jadual-ringkas). Struktur dan teks MESTI kekal sama dengan
              pasangannya dalam resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
-            <h2 class="laporan-seksyen__tajuk">Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="laporan-seksyen__tajuk mb-0">Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
+                <x-section-comment-widget :section="'algoritma_kenal_pasti'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
             <p class="laporan-seksyen__perenggan">
                 Bahagian ini merumuskan dapatan utama hasil analisis inventori kriptografi berdasarkan
@@ -187,7 +197,10 @@
                 berkaitan.
             </p>
 
-            <h3 class="laporan-seksyen__subtajuk">1. Profil Sistem dan Aset</h3>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h3 class="laporan-seksyen__subtajuk mb-0">1. Profil Sistem dan Aset</h3>
+                <x-section-comment-widget :section="'profil_sistem_aset'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
             <p class="laporan-seksyen__perenggan">
                 Jadual di bawah merumuskan profil sistem dan aset yang dikenal pasti berdasarkan data
@@ -246,319 +259,337 @@
                 @endforeach
             @endif
 
-        <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">2. Algoritma Kriptografi</h3>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">2. Algoritma Kriptografi</h3>
+                <x-section-comment-widget :section="'algoritma_kriptografi'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
-        {{-- Jadual hanya muncul apabila ada algoritma dikenal pasti, jadi ayat
+            {{-- Jadual hanya muncul apabila ada algoritma dikenal pasti, jadi ayat
              pembuka mesti mengikutinya: "Jadual di bawah" apabila jadual dipaparkan,
              "Bahagian ini" apabila tidak. Pembolehubah yang SAMA mengawal kedua-duanya
              supaya ayat dan jadual tidak boleh terpesong. --}}
-        @php $adaJadualAlgoritma = count($algoritma) > 0; @endphp
+            @php $adaJadualAlgoritma = count($algoritma) > 0; @endphp
 
-        <p class="laporan-seksyen__perenggan">
-            {{ $adaJadualAlgoritma ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan algoritma dan
-            mekanisme kriptografi yang dikenal pasti berdasarkan data dalam Jadual 0–2, mengikut
-            primitif atau kategori kriptografi serta bilangan sistem dan aset yang terlibat.
-        </p>
+            <p class="laporan-seksyen__perenggan">
+                {{ $adaJadualAlgoritma ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan algoritma dan
+                mekanisme kriptografi yang dikenal pasti berdasarkan data dalam Jadual 0–2, mengikut
+                primitif atau kategori kriptografi serta bilangan sistem dan aset yang terlibat.
+            </p>
 
-        @if ($adaJadualAlgoritma)
-            <table class="laporan-jadual-algo">
-                {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+            @if ($adaJadualAlgoritma)
+                <table class="laporan-jadual-algo">
+                    {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
                      pertama menentukan lebar lajur. --}}
-                <colgroup>
-                    <col class="laporan-jadual-algo__lajur-bil">
-                    <col class="laporan-jadual-algo__lajur-kategori">
-                    <col class="laporan-jadual-algo__lajur-algoritma">
-                    <col class="laporan-jadual-algo__lajur-bilangan">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Bil.</th>
-                        <th>Primitif/Kategori Kriptografi</th>
-                        <th>Algoritma/Mekanisme Dikenal Pasti</th>
-                        <th>Bilangan Sistem/Aset Terlibat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($algoritma as $kategori)
-                        @foreach ($kategori['item'] as $item)
-                            <tr>
-                                {{-- Bil. dan kategori ditulis SEKALI sahaja bagi setiap
+                    <colgroup>
+                        <col class="laporan-jadual-algo__lajur-bil">
+                        <col class="laporan-jadual-algo__lajur-kategori">
+                        <col class="laporan-jadual-algo__lajur-algoritma">
+                        <col class="laporan-jadual-algo__lajur-bilangan">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Bil.</th>
+                            <th>Primitif/Kategori Kriptografi</th>
+                            <th>Algoritma/Mekanisme Dikenal Pasti</th>
+                            <th>Bilangan Sistem/Aset Terlibat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($algoritma as $kategori)
+                            @foreach ($kategori['item'] as $item)
+                                <tr>
+                                    {{-- Bil. dan kategori ditulis SEKALI sahaja bagi setiap
                                      kumpulan; rowspan merentangi semua algoritmanya
                                      supaya kategori tidak berulang pada setiap baris. --}}
-                                @if ($loop->first)
-                                    <td class="laporan-jadual-algo__bil" rowspan="{{ count($kategori['item']) }}">
-                                        {{ $loop->parent->iteration }}.
-                                    </td>
-                                    <td class="laporan-jadual-algo__kategori" rowspan="{{ count($kategori['item']) }}">
-                                        {{ $kategori['kategori'] }}
-                                    </td>
-                                @endif
-                                <td class="laporan-jadual-algo__algoritma">
-                                    <span class="laporan-jadual-algo__label">{{ $item['label'] }}.</span>
-                                    {{ $item['nama'] }}
-                                </td>
-                                <td class="laporan-jadual-algo__bilangan">{{ $item['bilangan'] !== '' ? $item['bilangan'] : '—' }}</td>
-                            </tr>
-                        @endforeach
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="laporan-seksyen__perenggan">
-                Tiada algoritma atau mekanisme kriptografi dikenal pasti berdasarkan data yang dikemukakan.
-            </p>
-        @endif
-
-        @if (count($ulasanAlgoritma))
-            <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
-            @foreach ($ulasanAlgoritma as $blok)
-                @if ($blok['jenis'] === 'senarai')
-                    @if ($blok['bernombor'])
-                        <ol class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ol>
-                    @else
-                        <ul class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ul>
-                    @endif
-                @else
-                    <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
-                @endif
-            @endforeach
-        @endif
-
-        <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">3. Protokol Kriptografi</h3>
-
-        {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
-        @php $adaJadualProtokol = count($data['protokol'] ?? []) > 0; @endphp
-
-        <p class="laporan-seksyen__perenggan">
-            {{ $adaJadualProtokol ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan protokol
-            kriptografi yang dikenal pasti berdasarkan maklumat yang direkodkan dalam Jadual 0–2.
-            Pada masa ini, Buku Kerja Migrasi PQC tidak menyediakan medan khusus untuk merekodkan
-            protokol kriptografi. Oleh itu, maklumat protokol dikenal pasti berdasarkan rekod yang
-            dikemukakan oleh entiti, termasuk maklumat yang direkodkan pada medan komponen atau
-            algoritma.
-        </p>
-
-        @if ($adaJadualProtokol)
-            <table class="laporan-jadual-protokol">
-                {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
-                     pertama menentukan lebar lajur. --}}
-                <colgroup>
-                    <col class="laporan-jadual-protokol__lajur-bil">
-                    <col class="laporan-jadual-protokol__lajur-nama">
-                    <col class="laporan-jadual-protokol__lajur-versi">
-                    <col class="laporan-jadual-protokol__lajur-bilangan">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Bil.</th>
-                        <th>Protokol Kriptografi</th>
-                        <th>Versi</th>
-                        <th>Bilangan Sistem/Aset Terlibat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($data['protokol'] as $baris)
-                        <tr>
-                            <td class="laporan-jadual-algo__bil">{{ $loop->iteration }}.</td>
-                            <td>{{ $baris['nama'] ?? '' ?: '—' }}</td>
-                            <td class="laporan-jadual-protokol__versi">{{ $baris['versi'] ?? '' ?: '—' }}</td>
-                            <td class="laporan-jadual-algo__bilangan">{{ $baris['bilangan'] ?? '' ?: '—' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="laporan-seksyen__perenggan">
-                Tiada protokol kriptografi dikenal pasti berdasarkan data yang dikemukakan.
-            </p>
-        @endif
-
-        @if (count($ulasanProtokol))
-            <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
-            @foreach ($ulasanProtokol as $blok)
-                @if ($blok['jenis'] === 'senarai')
-                    @if ($blok['bernombor'])
-                        <ol class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ol>
-                    @else
-                        <ul class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ul>
-                    @endif
-                @else
-                    <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
-                @endif
-            @endforeach
-        @endif
-        <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">4. Pustaka dan Modul Kriptografi</h3>
-
-        {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
-        @php $adaJadualPustaka = count($data['pustaka'] ?? []) > 0; @endphp
-
-        <p class="laporan-seksyen__perenggan">
-            {{ $adaJadualPustaka ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan maklumat pustaka
-            dan modul kriptografi yang dikenal pasti berdasarkan data dalam Jadual 0–2, termasuk
-            maklumat versi serta padanan dengan sistem atau aset yang berkaitan.
-        </p>
-
-        @if ($adaJadualPustaka)
-            <table class="laporan-jadual-pustaka">
-                {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
-                     pertama menentukan lebar lajur. --}}
-                <colgroup>
-                    <col class="laporan-jadual-pustaka__lajur-bil">
-                    <col class="laporan-jadual-pustaka__lajur-nama">
-                    <col class="laporan-jadual-pustaka__lajur-versi">
-                    <col class="laporan-jadual-pustaka__lajur-bilangan">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Bil.</th>
-                        <th>Pustaka/Modul Kriptografi</th>
-                        <th>Versi</th>
-                        <th>Bilangan Sistem/Aset Terlibat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($data['pustaka'] as $baris)
-                        <tr>
-                            <td class="laporan-jadual-algo__bil">{{ $loop->iteration }}.</td>
-                            <td>{{ $baris['nama'] ?? '' ?: '—' }}</td>
-                            <td class="laporan-jadual-protokol__versi">{{ $baris['versi'] ?? '' ?: '—' }}</td>
-                            <td class="laporan-jadual-algo__bilangan">{{ $baris['bilangan'] ?? '' ?: '—' }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="laporan-seksyen__perenggan">
-                Tiada pustaka atau modul kriptografi dikenal pasti berdasarkan data yang dikemukakan.
-            </p>
-        @endif
-
-        @if (count($ulasanPustaka))
-            <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
-            @foreach ($ulasanPustaka as $blok)
-                @if ($blok['jenis'] === 'senarai')
-                    @if ($blok['bernombor'])
-                        <ol class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ol>
-                    @else
-                        <ul class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ul>
-                    @endif
-                @else
-                    <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
-                @endif
-            @endforeach
-        @endif
-        <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">5. Maklumat Vendor</h3>
-
-        {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
-        @php $adaJadualVendor = count($vendor) > 0; @endphp
-
-        <p class="laporan-seksyen__perenggan">
-            {{ $adaJadualVendor ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan maklumat vendor
-            serta produk atau komponen yang dikenal pasti berdasarkan data dalam Jadual 0–2, termasuk
-            padanan dengan sistem atau aset yang berkaitan.
-        </p>
-
-        @if ($adaJadualVendor)
-            <table class="laporan-jadual-vendor">
-                {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
-                     pertama menentukan lebar lajur. --}}
-                <colgroup>
-                    <col class="laporan-jadual-vendor__lajur-bil">
-                    <col class="laporan-jadual-vendor__lajur-nama">
-                    <col class="laporan-jadual-vendor__lajur-produk">
-                    <col class="laporan-jadual-vendor__lajur-bilangan">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Bil.</th>
-                        <th>Nama Vendor</th>
-                        <th>Produk/Komponen</th>
-                        <th>Bilangan Sistem/Aset Terlibat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($vendor as $kumpulan)
-                        @foreach ($kumpulan['item'] as $item)
-                            <tr>
-                                {{-- Bil. dan nama vendor ditulis SEKALI sahaja bagi setiap
-                                     kumpulan; rowspan merentangi semua produknya. --}}
-                                @if ($loop->first)
-                                    <td class="laporan-jadual-algo__bil" rowspan="{{ count($kumpulan['item']) }}">
-                                        {{ $loop->parent->iteration }}.
-                                    </td>
-                                    <td class="laporan-jadual-vendor__nama" rowspan="{{ count($kumpulan['item']) }}">
-                                        {{ $kumpulan['nama'] }}
-                                    </td>
-                                @endif
-                                <td class="laporan-jadual-vendor__produk">
-                                    @if ($item['label'] !== '')
-                                        <span class="laporan-jadual-algo__label">{{ $item['label'] }}.</span>
+                                    @if ($loop->first)
+                                        <td class="laporan-jadual-algo__bil" rowspan="{{ count($kategori['item']) }}">
+                                            {{ $loop->parent->iteration }}.
+                                        </td>
+                                        <td class="laporan-jadual-algo__kategori" rowspan="{{ count($kategori['item']) }}">
+                                            {{ $kategori['kategori'] }}
+                                        </td>
                                     @endif
-                                    {{ $item['produk'] !== '' ? $item['produk'] : '—' }}
-                                </td>
-                                <td class="laporan-jadual-algo__bilangan">{{ $item['bilangan'] !== '' ? $item['bilangan'] : '—' }}</td>
+                                    <td class="laporan-jadual-algo__algoritma">
+                                        <span class="laporan-jadual-algo__label">{{ $item['label'] }}.</span>
+                                        {{ $item['nama'] }}
+                                    </td>
+                                    <td class="laporan-jadual-algo__bilangan">
+                                        {{ $item['bilangan'] !== '' ? $item['bilangan'] : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <p class="laporan-seksyen__perenggan">
+                    Tiada algoritma atau mekanisme kriptografi dikenal pasti berdasarkan data yang dikemukakan.
+                </p>
+            @endif
+
+            @if (count($ulasanAlgoritma))
+                <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+                @foreach ($ulasanAlgoritma as $blok)
+                    @if ($blok['jenis'] === 'senarai')
+                        @if ($blok['bernombor'])
+                            <ol class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ol>
+                        @else
+                            <ul class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @else
+                        <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+                    @endif
+             div class="d-flex align-items-center justify-content-between gap-2">
+                <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">3. Protokol Kriptografi</h3>
+                <x-section-comment-widget :section="'protokol_kriptografi'" :komentar="$komentar" :analisis="$analisis" />
+            </div
+            @endif
+
+            <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">3. Protokol Kriptografi</h3>
+
+            {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
+            @php $adaJadualProtokol = count($data['protokol'] ?? []) > 0; @endphp
+
+            <p class="laporan-seksyen__perenggan">
+                {{ $adaJadualProtokol ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan protokol
+                kriptografi yang dikenal pasti berdasarkan maklumat yang direkodkan dalam Jadual 0–2.
+                Pada masa ini, Buku Kerja Migrasi PQC tidak menyediakan medan khusus untuk merekodkan
+                protokol kriptografi. Oleh itu, maklumat protokol dikenal pasti berdasarkan rekod yang
+                dikemukakan oleh entiti, termasuk maklumat yang direkodkan pada medan komponen atau
+                algoritma.
+            </p>
+
+            @if ($adaJadualProtokol)
+                <table class="laporan-jadual-protokol">
+                    {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                     pertama menentukan lebar lajur. --}}
+                    <colgroup>
+                        <col class="laporan-jadual-protokol__lajur-bil">
+                        <col class="laporan-jadual-protokol__lajur-nama">
+                        <col class="laporan-jadual-protokol__lajur-versi">
+                        <col class="laporan-jadual-protokol__lajur-bilangan">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Bil.</th>
+                            <th>Protokol Kriptografi</th>
+                            <th>Versi</th>
+                            <th>Bilangan Sistem/Aset Terlibat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($data['protokol'] as $baris)
+                            <tr>
+                                <td class="laporan-jadual-algo__bil">{{ $loop->iteration }}.</td>
+                                <td>{{ $baris['nama'] ?? '' ?: '—' }}</td>
+                                <td class="laporan-jadual-protokol__versi">{{ $baris['versi'] ?? '' ?: '—' }}</td>
+                                <td class="laporan-jadual-algo__bilangan">{{ $baris['bilangan'] ?? '' ?: '—' }}</td>
                             </tr>
                         @endforeach
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="laporan-seksyen__perenggan">
-                Tiada maklumat vendor dikenal pasti berdasarkan data yang dikemukakan.
-            </p>
-        @endif
+                    </tbody>
+                </table>
+            @else
+                <p class="laporan-seksyen__perenggan">
+                    Tiada protokol kriptografi dikenal pasti berdasarkan data yang dikemukakan.
+                </p>
+            @endif
 
-        @if (count($ulasanVendor))
-            <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
-            @foreach ($ulasanVendor as $blok)
-                @if ($blok['jenis'] === 'senarai')
-                    @if ($blok['bernombor'])
-                        <ol class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ol>
+            @if (count($ulasanProtokol))
+                <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+                @foreach ($ulasanProtokol as $blok)
+                    @if ($blok['jenis'] === 'senarai')
+                        @if ($blok['bernombor'])
+                            <ol class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ol>
+                        @else
+                            <ul class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
                     @else
-                        <ul class="laporan-seksyen__senarai-ulasan">
-                            @foreach ($blok['isi'] as $titik)
-                                <li>{{ $titik }}</li>
-                            @endforeach
-                        </ul>
+                        <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+             div class="d-flex align-items-center justify-content-between gap-2">
+                <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">4. Pustaka dan Modul Kriptografi
+                </h3>
+                <x-section-comment-widget :section="'pustaka_modul_kriptografi'" :komentar="$komentar" :analisis="$analisis" />
+            </div@endforeach
+            @endif
+            <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">4. Pustaka dan Modul Kriptografi
+            </h3>
+
+            {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
+            @php $adaJadualPustaka = count($data['pustaka'] ?? []) > 0; @endphp
+
+            <p class="laporan-seksyen__perenggan">
+                {{ $adaJadualPustaka ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan maklumat pustaka
+                dan modul kriptografi yang dikenal pasti berdasarkan data dalam Jadual 0–2, termasuk
+                maklumat versi serta padanan dengan sistem atau aset yang berkaitan.
+            </p>
+
+            @if ($adaJadualPustaka)
+                <table class="laporan-jadual-pustaka">
+                    {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                     pertama menentukan lebar lajur. --}}
+                    <colgroup>
+                        <col class="laporan-jadual-pustaka__lajur-bil">
+                        <col class="laporan-jadual-pustaka__lajur-nama">
+                        <col class="laporan-jadual-pustaka__lajur-versi">
+                        <col class="laporan-jadual-pustaka__lajur-bilangan">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Bil.</th>
+                            <th>Pustaka/Modul Kriptografi</th>
+                            <th>Versi</th>
+                            <th>Bilangan Sistem/Aset Terlibat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($data['pustaka'] as $baris)
+                            <tr>
+                                <td class="laporan-jadual-algo__bil">{{ $loop->iteration }}.</td>
+                                <td>{{ $baris['nama'] ?? '' ?: '—' }}</td>
+                                <td class="laporan-jadual-protokol__versi">{{ $baris['versi'] ?? '' ?: '—' }}</td>
+                                <td class="laporan-jadual-algo__bilangan">{{ $baris['bilangan'] ?? '' ?: '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <p class="laporan-seksyen__perenggan">
+                    Tiada pustaka atau modul kriptografi dikenal pasti berdasarkan data yang dikemukakan.
+                </p>
+            @endif
+
+            @if (count($ulasanPustaka))
+                <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+                @foreach ($ulasanPustaka as $blok)
+                    @if ($blok['jenis'] === 'senarai')
+                        @if ($blok['bernombor'])
+                            <ol class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ol>
+                        @else
+                            <ul class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ul>
+             div class="d-flex align-items-center justify-content-between gap-2">
+                <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">5. Maklumat Vendor</h3>
+                <x-section-comment-widget :section="'maklumat_vendor'" :komentar="$komentar" :analisis="$analisis" />
+            </div
+                    @else
+                        <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
                     @endif
-                @else
-                    <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
-                @endif
-            @endforeach
-        @endif
+                @endforeach
+            @endif
+            <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman">5. Maklumat Vendor</h3>
+
+            {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
+            @php $adaJadualVendor = count($vendor) > 0; @endphp
+
+            <p class="laporan-seksyen__perenggan">
+                {{ $adaJadualVendor ? 'Jadual di bawah' : 'Bahagian ini' }} merumuskan maklumat vendor
+                serta produk atau komponen yang dikenal pasti berdasarkan data dalam Jadual 0–2, termasuk
+                padanan dengan sistem atau aset yang berkaitan.
+            </p>
+
+            @if ($adaJadualVendor)
+                <table class="laporan-jadual-vendor">
+                    {{-- Lebar lajur MESTI di sini: dengan `table-layout: fixed`, hanya baris
+                     pertama menentukan lebar lajur. --}}
+                    <colgroup>
+                        <col class="laporan-jadual-vendor__lajur-bil">
+                        <col class="laporan-jadual-vendor__lajur-nama">
+                        <col class="laporan-jadual-vendor__lajur-produk">
+                        <col class="laporan-jadual-vendor__lajur-bilangan">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Bil.</th>
+                            <th>Nama Vendor</th>
+                            <th>Produk/Komponen</th>
+                            <th>Bilangan Sistem/Aset Terlibat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($vendor as $kumpulan)
+                            @foreach ($kumpulan['item'] as $item)
+                                <tr>
+                                    {{-- Bil. dan nama vendor ditulis SEKALI sahaja bagi setiap
+                                     kumpulan; rowspan merentangi semua produknya. --}}
+                                    @if ($loop->first)
+                                        <td class="laporan-jadual-algo__bil" rowspan="{{ count($kumpulan['item']) }}">
+                                            {{ $loop->parent->iteration }}.
+                                        </td>
+                                        <td class="laporan-jadual-vendor__nama" rowspan="{{ count($kumpulan['item']) }}">
+                                            {{ $kumpulan['nama'] }}
+                                        </td>
+                                    @endif
+                                    <td class="laporan-jadual-vendor__produk">
+                                        @if ($item['label'] !== '')
+                                            <span class="laporan-jadual-algo__label">{{ $item['label'] }}.</span>
+                                        @endif
+                                        {{ $item['produk'] !== '' ? $item['produk'] : '—' }}
+                                    </td>
+                                    <td class="laporan-jadual-algo__bilangan">
+                                        {{ $item['bilangan'] !== '' ? $item['bilangan'] : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <p class="laporan-seksyen__perenggan">
+                    Tiada maklumat vendor dikenal pasti berdasarkan data yang dikemukakan.
+                </p>
+            @endif
+
+            @if (count($ulasanVendor))
+                <p class="laporan-seksyen__ulasan-tajuk">Ulasan:</p>
+                @foreach ($ulasanVendor as $blok)
+                    @if ($blok['jenis'] === 'senarai')
+                        @if ($blok['bernombor'])
+                            <ol class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ol>
+                        @else
+                            <ul class="laporan-seksyen__senarai-ulasan">
+                                @foreach ($blok['isi'] as $titik)
+                                    <li>{{ $titik }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @else
+                        <p class="laporan-seksyen__perenggan">{{ $blok['isi'] }}</p>
+                    @endif
+                @endforeach
+            @endif
         </section>
 
 
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
-            <h2 class="laporan-seksyen__tajuk">Cadangan Tindakan Susulan</h2>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="laporan-seksyen__tajuk mb-0">Cadangan Tindakan Susulan</h2>
+                <x-section-comment-widget :section="'kesimpulan'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
             @if (count($tindakan))
                 <p class="laporan-seksyen__perenggan">
@@ -581,7 +612,10 @@
         </section>
 
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
-            <h2 class="laporan-seksyen__tajuk">Kesimpulan</h2>
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="laporan-seksyen__tajuk mb-0">Kesimpulan</h2>
+                <x-section-comment-widget :section="'kesimpulan'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
 
             @if (count($kesimpulan))
                 @foreach ($kesimpulan as $blok)
@@ -660,7 +694,7 @@
 
             <p class="laporan-seksyen__perenggan">
                 Laporan ini merupakan <strong>penilaian inventori kriptografi bagi tujuan pelaksanaan
-                Klinik Migrasi PQC</strong> berdasarkan rekod yang dikemukakan. Laporan ini tidak
+                    Klinik Migrasi PQC</strong> berdasarkan rekod yang dikemukakan. Laporan ini tidak
                 menggantikan audit teknikal, semakan kod sumber, pengesahan konfigurasi sistem,
                 <em>vulnerability scanning</em>, <em>penetration testing</em> atau pensijilan
                 keselamatan kriptografi.

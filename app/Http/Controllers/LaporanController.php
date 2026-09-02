@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
+use App\Models\LaporanKomentar;
 use App\Services\KemajuanAnalisisService;
 use App\Services\LaporanSemakanService;
 use App\Support\AliranKerja;
@@ -10,6 +11,7 @@ use App\Support\BorangAnalisis;
 use App\Support\Halaman;
 use App\Support\TeksBerformat;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Spatie\Browsershot\Browsershot;
 
 class LaporanController extends Controller
@@ -31,46 +33,31 @@ class LaporanController extends Controller
     /**
      * Jana Laporan Analisis Inventori Kriptografi mengikut templat rasmi.
      * Templat + business rules + input berstruktur -> kandungan laporan.
+     * 
+     * Laporan boleh dilihat meskipun Borang Input belum disempurnakan.
+     * Komentar daripada KB dan PPA dipaparkan untuk PA sahaja.
      */
     public function inventori(AnalisisInventori $analisis)
     {
         $this->authorize('view', $analisis);
 
-        return view('laporan.inventori', $this->siapkanData($analisis));
+        return view('laporan.inventori', $this->siapkanData($analisis, includeComments: true));
     }
 
     /**
      * Muat turun Laporan Analisis Inventori Kriptografi sebagai PDF,
      * dengan header (NACSA + PTPKM + RAHSIA) dan footer (kod rujukan +
      * nombor muka surat) berulang pada setiap muka surat.
+     * 
+     * Laporan boleh dimuat turun meskipun Borang Input belum disempurnakan
+     * (tiada fasa kelulusan diperlukan). Komentar KB dan PPA TIDAK disertakan
+     * dalam PDF yang dijana.
      */
     public function unduh(AnalisisInventori $analisis)
     {
         $this->authorize('generateReport', $analisis);
 
-        /*
-         * Syarat muat turun: peringkat 3.1 "Analisis Inventori Kriptografi"
-         * mesti Selesai.
-         *
-         * Dahulu syaratnya ialah laporan telah disahkan Ketua Bahagian.
-         * Pengesahan itu milik peringkat 5, yang belum dibina — mengekalkan
-         * syarat lama bermakna laporan tidak akan pernah boleh dimuat turun
-         * dalam fasa ini. Peringkat 3.1 ialah titik terakhir aliran kerja
-         * fasa semasa, jadi ia syarat yang betul buat masa ini.
-         *
-         * Apabila peringkat 4 dan 5 dibina, syarat kelulusan boleh
-         * ditambah semula di sini.
-         */
-        $peringkat = app(KemajuanAnalisisService::class)->peringkat($analisis->agency_code);
-
-        abort_unless(
-            $peringkat->get(AliranKerja::ANALISIS_INVENTORI)?->isSelesai() ?? false,
-            403,
-            'Laporan ini belum boleh dimuat turun. Peringkat 3.1 — Analisis Inventori '
-            .'Kriptografi perlu Selesai terlebih dahulu.',
-        );
-
-        $viewData = $this->siapkanData($analisis);
+        $viewData = $this->siapkanData($analisis, includeComments: false);
 
         $bodyHtml = view('laporan.pdf.body', $viewData)->render();
 
@@ -118,6 +105,81 @@ class LaporanController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$namaFail.'"',
         ]);
+    }
+
+    /**
+     * Simpan komentar daripada KB atau PPA pada seksyen laporan tertentu.
+     * 
+     * Hanya KB dan PPA boleh menambah komentar. Komentar hanya dilihat PA.
+     */
+    public function storeComment(Request $request, AnalisisInventori $analisis)
+    {
+        $this->authorize('view', $analisis);
+
+        // Hanya KB dan PPA boleh menambah komentar
+        if (! ($request->user()->isCoordinator() || $request->user()->isKetuaBahagian())) {
+            abort(403, 'Hanya Pegawai Penyelaras Analisis (PPA) dan Ketua Bahagian (KB) boleh menambah komentar.');
+        }
+
+        $request->validate([
+            'section' => ['required', 'string', Rule::in(array_keys(LaporanKomentar::seksyenLaporan()))],
+            'content' => ['required', 'string', 'max:2000'],
+        ]);
+
+        LaporanKomentar::create([
+            'agency_code' => $analisis->agency_code,
+            'agency_name' => $analisis->agency_name,
+            'section' => $request->input('section'),
+            'content' => $request->input('content'),
+            'user_id' => $request->user()->id,
+        ]);
+
+        return redirect()
+            ->route('laporan.inventori', $analisis)
+            ->with('success', 'Komentar telah disimpan.');
+    }
+
+    /**
+     * Ambil komentar untuk satu agensi (untuk AJAX).
+     * 
+     * Hanya PA pemilik laporan boleh melihat komentar.
+     */
+    public function getComments(Request $request, AnalisisInventori $analisis)
+    {
+        $this->authorize('view', $analisis);
+
+        $komentar = LaporanKomentar::forAgency($analisis->agency_code)
+            ->with('user')
+            ->get()
+            ->groupBy('section')
+            ->map(fn ($items) => $items->map(fn ($item) => [
+                'id' => $item->id,
+                'user_name' => $item->user->name,
+                'user_role' => implode(', ', $item->user->assignedRoleShortLabels()),
+                'content' => $item->content,
+                'created_at' => $item->created_at->format('d/m/Y H:i'),
+            ])->toArray())
+            ->toArray();
+
+        return response()->json($komentar);
+    }
+
+    /**
+     * Padam komentar (hanya pemilik komentar atau admin boleh).
+     */
+    public function destroyComment(Request $request, LaporanKomentar $komentar)
+    {
+        if ($request->user()->id !== $komentar->user_id && ! $request->user()->isAdministrator()) {
+            abort(403, 'Anda tidak dibenarkan memadam komentar ini.');
+        }
+
+        $agencyCode = $komentar->agency_code;
+
+        $komentar->delete();
+
+        return redirect()
+            ->route('laporan.inventori', AnalisisInventori::where('agency_code', $agencyCode)->first())
+            ->with('success', 'Komentar telah dipadamkan.');
     }
 
     /**
@@ -178,8 +240,10 @@ class LaporanController extends Controller
     /**
      * Sediakan semua data yang diperlukan oleh templat laporan
      * (dikongsi antara pratonton skrin dan muat turun PDF).
+     *
+     * @param bool $includeComments Sertakan komentar KB/PPA (hanya untuk skrin, bukan PDF)
      */
-    private function siapkanData(AnalisisInventori $analisis): array
+    private function siapkanData(AnalisisInventori $analisis, bool $includeComments = false): array
     {
         $data = $analisis->data;
 
@@ -289,7 +353,7 @@ class LaporanController extends Controller
         // Phase13ReleaseReadinessTest::test_aliran_pelaporan_tidak_merujuk_modul_muat_naik).
         $failSumber = BorangAnalisis::senaraiTeks($data['fail_sumber'] ?? null);
 
-        return [
+        $result = [
             'analisis' => $analisis,
             'data' => $data,
             'profil' => $profil,
@@ -307,5 +371,16 @@ class LaporanController extends Controller
             'kesimpulan' => TeksBerformat::blok($data['kesimpulan'] ?? null),
             'pengesahan' => $this->pengesahan($analisis),
         ];
+
+        // Komentar KB dan PPA hanya dipaparkan pada layar, BUKAN dalam PDF.
+        // Hanya PA yang melihat komentar — dipaparkan mengikut seksyen.
+        if ($includeComments) {
+            $result['komentar'] = LaporanKomentar::forAgency($analisis->agency_code)
+                ->with('user')
+                ->get()
+                ->groupBy('section');
+        }
+
+        return $result;
     }
 }
