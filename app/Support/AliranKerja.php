@@ -430,7 +430,7 @@ final class AliranKerja
     {
         return array_map(strval(...), array_keys(array_filter(
             self::semua(),
-            fn (array $def): bool => $def['fasa'] === self::FASA_SEMASA,
+            fn(array $def): bool => $def['fasa'] === self::FASA_SEMASA,
         )));
     }
 
@@ -443,7 +443,7 @@ final class AliranKerja
     {
         return array_map(strval(...), array_keys(array_filter(
             self::semua(),
-            fn (array $def): bool => $def['fasa'] === self::FASA_AKAN_DATANG,
+            fn(array $def): bool => $def['fasa'] === self::FASA_AKAN_DATANG,
         )));
     }
 
@@ -477,7 +477,7 @@ final class AliranKerja
     public static function labelPenuh(mixed $key): string
     {
         return self::wujud($key)
-            ? self::kunci($key).' '.self::label($key)
+            ? self::kunci($key) . ' ' . self::label($key)
             : self::label($key);
     }
 
@@ -506,7 +506,7 @@ final class AliranKerja
     {
         return array_map(strval(...), array_keys(array_filter(
             self::semua(),
-            fn (array $def): bool => $def['utama'] === $utama,
+            fn(array $def): bool => $def['utama'] === $utama,
         )));
     }
 
@@ -748,6 +748,27 @@ final class AliranKerja
         return array_key_exists(self::MEDAN_STATUS_BORANG, self::medan($key))
             ? self::STATUS_BORANG
             : [];
+    }
+
+    /**
+     * Kelas badge bagi satu nilai Status Borang.
+     *
+     * "Tidak Berkaitan" mengembalikan null — ia bukan kedudukan kerja, jadi ia
+     * dipaparkan sebagai teks malap tanpa pil warna, sama seperti "N/A" pada
+     * modul Status Tiga Laporan.
+     */
+    public static function badgeStatusBorang(?string $status): ?string
+    {
+        if ($status === null || $status === '' || $status === 'Tidak Berkaitan') {
+            return null;
+        }
+
+        return [
+            'Selesai' => 'status-rendah',
+            'Telah Diserah' => 'status-rendah',
+            'Dalam Proses' => 'status-sederhana',
+            'Dalam Semakan' => 'status-sederhana',
+        ][$status] ?? 'status-tinggi';
     }
 
     /**
