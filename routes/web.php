@@ -244,5 +244,4 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::post('users/{user}/tetap-semula-kata-laluan', [UserController::class, 'tetapSemulaKataLaluan'])
                 ->name('users.tetap-semula-kata-laluan');
         });
-
 });

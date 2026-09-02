@@ -7,12 +7,12 @@
 Apabila anda membuka **Laporan Inventori Kriptografi**, anda akan melihat seksyen **"Tambah Komentar pada Laporan"** di bahagian atas halaman:
 
 1. **Pilih Seksyen** - Dari dropdown, pilih seksyen laporan yang ingin anda komentari:
-   - Pengenalan
-   - Kerangka Kerja Kriptografi
-   - Keadaan Semasa Kriptografi
-   - Algoritma Dikenal Pasti
-   - Kesimpulan & Cadangan
-   - Lampiran
+    - Pengenalan
+    - Kerangka Kerja Kriptografi
+    - Keadaan Semasa Kriptografi
+    - Algoritma Dikenal Pasti
+    - Kesimpulan & Cadangan
+    - Lampiran
 
 2. **Tulis Komentar** - Dalam medan teks, tulis komentar anda (maksimum 2000 aksara)
 
@@ -35,12 +35,14 @@ Apabila anda membuka **Laporan Inventori Kriptografi**, anda akan melihat seksye
 Apabila anda membuka **Laporan Inventori Kriptografi** yang anda buat, anda akan melihat seksyen **"Komentar daripada PPA & KB"** di bawah butang-butang aksi.
 
 Seksyen ini memaparkan semua komentar yang ditambah oleh:
+
 - Pegawai Penyelaras Analisis (PPA)
 - Ketua Bahagian (KB)
 
 ### Maklumat yang Dipaparkan
 
 Bagi setiap komentar, anda akan melihat:
+
 - **Nama Pengguna** - Siapa yang menambah komentar
 - **Peranan** - PPA atau KB
 - **Masa Hantar** - Tarikh dan masa komentar ditambah
@@ -75,14 +77,17 @@ Bagi setiap komentar, anda akan melihat:
 ### Masalah Umum
 
 **Saya tidak nampak seksyen "Tambah Komentar pada Laporan"**
+
 - Pastikan anda logged in sebagai PPA atau KB
 - Peranan anda mungkin tidak mempunyai kebenaran. Hubungi Pentadbir Sistem.
 
 **Komentar saya hilang**
+
 - Komentar tidak pernah dihapus secara automatik
 - Jika komentar hilang, kemungkinan ia telah dihapus oleh anda, pembuat, atau Pentadbir Sistem
 
 **Saya tidak boleh melihat komentar**
+
 - Jika anda PA: Komentar akan muncul setelah PPA/KB menambahnya. Reload halaman untuk melihat yang terbaru.
 - Jika anda PPA/KB: Komentar hanya dilihat oleh PA. Anda hanya boleh menambah komentar, bukan melihatnya.
 

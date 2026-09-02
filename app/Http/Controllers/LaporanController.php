@@ -99,11 +99,11 @@ class LaporanController extends Controller
             ->writeOptionsToFile()   // must come before ->pdf()
             ->pdf();
 
-        $namaFail = 'laporan-'.($analisis->kod_rujukan ?: $analisis->id).'.pdf';
+        $namaFail = 'laporan-' . ($analisis->kod_rujukan ?: $analisis->id) . '.pdf';
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="'.$namaFail.'"',
+            'Content-Disposition' => 'attachment; filename="' . $namaFail . '"',
         ]);
     }
 
@@ -152,7 +152,7 @@ class LaporanController extends Controller
             ->with('user')
             ->get()
             ->groupBy('section')
-            ->map(fn ($items) => $items->map(fn ($item) => [
+            ->map(fn($items) => $items->map(fn($item) => [
                 'id' => $item->id,
                 'user_name' => $item->user->name,
                 'user_role' => implode(', ', $item->user->assignedRoleShortLabels()),
@@ -234,7 +234,7 @@ class LaporanController extends Controller
     {
         $perkataan = config('kriptografi.bilangan_perkataan')[$bilangan] ?? null;
 
-        return $perkataan === null ? (string) $bilangan : $perkataan.' ('.$bilangan.')';
+        return $perkataan === null ? (string) $bilangan : $perkataan . ' (' . $bilangan . ')';
     }
 
     /**
@@ -266,7 +266,7 @@ class LaporanController extends Controller
 
             $algoritma[] = [
                 'kategori' => $kategori,
-                'item' => array_map(fn ($a, $i) => [
+                'item' => array_map(fn($a, $i) => [
                     'label' => self::angkaRomawi($i + 1),
                     'nama' => $a['nama'],
                     'bilangan' => trim((string) ($a['bilangan'] ?? '')),
@@ -281,7 +281,7 @@ class LaporanController extends Controller
         if ($lain !== []) {
             $algoritma[] = [
                 'kategori' => 'Lain-lain',
-                'item' => array_map(fn ($satu, $i) => [
+                'item' => array_map(fn($satu, $i) => [
                     'label' => self::angkaRomawi($i + 1),
                     'nama' => $satu['nama'],
                     'bilangan' => $satu['bilangan'],
@@ -312,7 +312,7 @@ class LaporanController extends Controller
                 'nama' => $nama,
                 // Nombor roman hanya apabila vendor mempunyai lebih daripada
                 // satu produk; satu produk dipaparkan tanpa penomboran.
-                'item' => array_map(fn ($satu, $i) => $satu + [
+                'item' => array_map(fn($satu, $i) => $satu + [
                     'label' => count($item) > 1 ? self::angkaRomawi($i + 1) : '',
                 ], $item, array_keys($item)),
             ];
@@ -324,7 +324,7 @@ class LaporanController extends Controller
         // cadangan dijana sendiri oleh sistem.
         $tindakan = collect($data['tindakan'] ?? [])
             ->sort()
-            ->map(fn ($i) => config('kriptografi.tindakan_susulan')[$i]['tindakan'] ?? null)
+            ->map(fn($i) => config('kriptografi.tindakan_susulan')[$i]['tindakan'] ?? null)
             ->filter()
             ->values()
             ->all();
@@ -340,7 +340,7 @@ class LaporanController extends Controller
         // baris templat sentiasa hadir dan tersusun sama, walaupun rekod lama
         // tidak mengandungi salah satu kategori.
         $profil = collect(config('kriptografi.kategori_profil'))
-            ->map(fn ($kategori) => [
+            ->map(fn($kategori) => [
                 'perkara' => $kategori,
                 'jumlah' => (int) ($data['profil'][$kategori]['jumlah'] ?? 0),
             ])

@@ -19,6 +19,7 @@ Di bahagian atas halaman laporan, terdapat **seksyen berwarna biru (alert-info)*
 ```
 
 **Seksyen ini mengandungi:**
+
 - Dropdown untuk memilih **Seksyen Laporan** yang ingin dikomentari
 - Text area untuk menulis komentar (maksimum 2000 aksara)
 - Butang "Hantar Komentar" berwarna biru
@@ -32,14 +33,15 @@ Di bawah seksyen "Tambah Komentar", anda akan melihat **seksyen berwarna cyan/bi
 ```
 
 **Seksyen ini memaparkan:**
+
 - Semua komentar yang telah ditambah oleh PPA & KB
 - Disusun mengikut seksyen laporan
 - Bagi setiap komentar ditunjukkan:
-  - Nama pengguna yang membuat komentar
-  - Peranan mereka (PPA atau KB)
-  - Masa komentar ditambah
-  - Kandungan komentar lengkap
-  - Butang "Padam" (jika anda pemilik komentar atau admin)
+    - Nama pengguna yang membuat komentar
+    - Peranan mereka (PPA atau KB)
+    - Masa komentar ditambah
+    - Kandungan komentar lengkap
+    - Butang "Padam" (jika anda pemilik komentar atau admin)
 
 ---
 
@@ -122,16 +124,19 @@ Di bawah seksyen "Tambah Komentar", anda akan melihat **seksyen berwarna cyan/bi
 ## Perkara Penting
 
 ### ✅ Dipaparkan di Skrin:
+
 - Komentar dilihat secara langsung pada halaman Laporan
 - Dikelompokkan mengikut seksyen
 - Disusun mengikut masa terbaru di atas
 
 ### ❌ TIDAK Dipaparkan dalam PDF:
+
 - Komentar secara khusus dikecualikan daripada muat turun PDF
 - Laporan PDF kekal bersih dan rasmi
 - Komentar hanya untuk komunikasi internal PA dengan PPA/KB
 
 ### 🔒 Privasi:
+
 - Hanya PA boleh melihat komentar
 - PPA & KB hanya boleh menambah, tidak melihat
 - Setiap komentar dicatatkan dengan pembuat untuk audit
@@ -143,12 +148,14 @@ Di bawah seksyen "Tambah Komentar", anda akan melihat **seksyen berwarna cyan/bi
 ### Saya tidak nampak seksyen komentar
 
 **Jika anda PPA/KB:**
+
 - Pastikan anda sudah login dengan akaun yang betul
 - Pastikan halaman sudah diload sepenuhnya (tunggu 2-3 saat)
 - Refresh halaman (Ctrl+F5)
 - Hubungi Pentadbir Sistem jika masalah berterusan
 
 **Jika anda PA:**
+
 - Seksyen komentar hanya muncul jika ada komentar
 - Jika PPA/KB belum menambah komentar, seksyen tidak akan terlihat
 - Hubungi PPA/KB untuk meminta mereka menambah komentar

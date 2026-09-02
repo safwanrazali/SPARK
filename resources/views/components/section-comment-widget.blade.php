@@ -8,11 +8,8 @@
 @endphp
 
 <div class="section-comments-widget">
-    <button class="btn btn-sm btn-outline-secondary section-comments-toggle" 
-            type="button"
-            data-bs-toggle="collapse" 
-            data-bs-target="#comments-{{ $sectionKey }}"
-            title="Tampilkan/sembunyikan komentar untuk seksyen ini">
+    <button class="btn btn-sm btn-outline-secondary section-comments-toggle" type="button" data-bs-toggle="collapse"
+        data-bs-target="#comments-{{ $sectionKey }}" title="Tampilkan/sembunyikan komentar untuk seksyen ini">
         <i class="bi bi-chat-dots"></i>
         @if ($hasComments)
             <span class="badge bg-warning text-dark">{{ $commentCount }}</span>
@@ -26,14 +23,12 @@
             {{-- Form untuk menambah komentar (KB/PPA saja) --}}
             @if ($showCommentForm)
                 <div class="mb-2 pb-2 border-bottom">
-                    <form method="POST" action="{{ route('laporan.komentar.store', $analisis) }}" 
-                          class="d-flex gap-2 align-items-end section-comment-form">
+                    <form method="POST" action="{{ route('laporan.komentar.store', $analisis) }}"
+                        class="d-flex gap-2 align-items-end section-comment-form">
                         @csrf
                         <input type="hidden" name="section" value="{{ $sectionKey }}">
-                        <textarea name="content" class="form-control form-control-sm flex-grow-1" 
-                                  rows="1"
-                                  placeholder="Tambah komentar..." 
-                                  maxlength="500"></textarea>
+                        <textarea name="content" class="form-control form-control-sm flex-grow-1" rows="1"
+                            placeholder="Tambah komentar..." maxlength="500"></textarea>
                         <button type="submit" class="btn btn-sm btn-primary" title="Hantar komentar">
                             <i class="bi bi-send"></i>
                         </button>
@@ -46,7 +41,7 @@
             @if ($hasComments)
                 <div class="section-comments-list">
                     @foreach ($komentar[$sectionKey] as $comment)
-                        <div class="comment-item mb-2 pb-2 @if (!$loop->last)border-bottom @endif">
+                        <div class="comment-item mb-2 pb-2 @if (!$loop->last) border-bottom @endif">
                             <div class="d-flex justify-content-between align-items-start gap-2">
                                 <div class="flex-grow-1">
                                     <strong class="d-block small">{{ $comment->user->name }}</strong>
@@ -56,13 +51,12 @@
                                     </small>
                                 </div>
                                 @if (Auth::user()->id === $comment->user_id || Auth::user()->isAdministrator())
-                                    <form method="POST" 
-                                          action="{{ route('laporan.komentar.destroy', $comment) }}"
-                                          class="d-inline">
+                                    <form method="POST" action="{{ route('laporan.komentar.destroy', $comment) }}"
+                                        class="d-inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-link text-danger p-0 m-0"
-                                                title="Padam" onclick="return confirm('Padam?')">
+                                            title="Padam" onclick="return confirm('Padam?')">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
                                     </form>
