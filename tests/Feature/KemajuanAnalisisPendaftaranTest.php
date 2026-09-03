@@ -320,17 +320,117 @@ class KemajuanAnalisisPendaftaranTest extends TestCase
     }
 
     /**
-     * Tiada sektor dipilih bermakna tiada senarai — bukan senarai kosong,
-     * yang akan terbaca sebagai "tiada entiti dalam sistem".
+     * Paparan LALAI ialah "Entiti Diterima": entiti yang Buku Kerja MPQ-nya
+     * telah diterima muncul tanpa perlu memilih sektor terlebih dahulu.
+     *
+     * Sebelum ini skrin bermula kosong sehingga satu sektor dipilih. Kerja
+     * aliran kerja bermula pada penerimaan, jadi senarai itulah yang
+     * menyambut pengguna.
      */
-    public function test_senarai_kemajuan_menuntut_sektor_dipilih(): void
+    public function test_paparan_lalai_menyenaraikan_entiti_diterima(): void
     {
         $this->daftarkan(self::ALPHA);
 
         $this->actingAs($this->ppa)
             ->get(route('workflow.index'))
             ->assertOk()
-            ->assertSee('Pilih sektor untuk memaparkan entiti')
-            ->assertDontSee(route('workflow.show', self::ALPHA), false);
+            ->assertSee('Entiti Diterima')
+            ->assertSee(route('workflow.show', self::ALPHA), false);
+    }
+
+    /**
+     * Entiti yang BELUM diterima tidak muncul pada paparan lalai — ia hanya
+     * kelihatan apabila sektornya dipilih.
+     */
+    public function test_entiti_belum_diterima_hanya_muncul_dalam_paparan_sektor(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
+        // BETA tidak pernah diterima: tiada Tarikh Terima, tiada Status Borang.
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->assertDontSee(route('workflow.show', self::BETA), false);
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index', ['skop' => '001']))
+            ->assertOk()
+            ->assertSee(route('workflow.show', self::BETA), false);
+    }
+
+    /**
+     * Senarai "Entiti Diterima" disusun daripada yang PALING BARU dikemas
+     * kini, bukan mengikut kod entiti.
+     */
+    public function test_entiti_diterima_disusun_terbaru_dahulu(): void
+    {
+        $this->daftarkan(self::ALPHA);
+        $this->travel(1)->minutes();
+        $this->daftarkan(self::BETA);
+
+        $senarai = $this->actingAs($this->ppa)
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->viewData('entiti');
+
+        $this->assertSame(
+            [self::BETA, self::ALPHA],
+            collect($senarai->items())->pluck('agency_code')->all(),
+        );
+    }
+
+    /**
+     * Pegawai Analisis boleh memaparkan entiti yang ditugaskan kepadanya
+     * tanpa perlu tahu sektor mana ia berada.
+     */
+    public function test_pa_boleh_memaparkan_entiti_yang_ditugaskan_kepadanya(): void
+    {
+        $this->daftarkan(self::ALPHA);
+        $this->daftarkan(self::BETA);
+        $this->tugaskan(self::ALPHA, $this->pa);
+        $this->tugaskan(self::BETA, $this->paLain);
+
+        $this->actingAs($this->pa)
+            ->get(route('workflow.index', ['skop' => 'ditugaskan']))
+            ->assertOk()
+            ->assertSee('Entiti Ditugaskan Kepada Saya')
+            ->assertSee(route('workflow.show', self::ALPHA), false)
+            // Entiti pegawai lain TIDAK muncul — kawalan akses entiti kekal
+            // menapis senarai ini seperti setiap senarai lain.
+            ->assertDontSee(route('workflow.show', self::BETA), false);
+    }
+
+    /**
+     * Pilihan "Ditugaskan" hanya ditawarkan kepada peranan yang menerima
+     * penugasan. Peranan lain yang memintanya secara langsung jatuh kembali
+     * kepada paparan lalai — menu ialah penapis paparan, bukan kawalan akses.
+     */
+    public function test_peranan_bukan_pa_tidak_ditawarkan_pilihan_ditugaskan(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index'))
+            ->assertOk()
+            ->assertDontSee('Entiti Ditugaskan Kepada Saya');
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index', ['skop' => 'ditugaskan']))
+            ->assertOk()
+            ->assertViewHas('skop', 'diterima');
+    }
+
+    /**
+     * `?sector_code=` kekal berfungsi supaya pautan dan penanda halaman lama
+     * tidak putus.
+     */
+    public function test_parameter_sector_code_lama_kekal_berfungsi(): void
+    {
+        $this->daftarkan(self::ALPHA);
+
+        $this->actingAs($this->ppa)
+            ->get(route('workflow.index', ['sector_code' => '001']))
+            ->assertOk()
+            ->assertViewHas('sectorCode', '001');
     }
 }

@@ -390,6 +390,44 @@ class KemajuanAnalisisService
     }
 
     /**
+     * Kod entiti yang Buku Kerja MPQ-nya TELAH DITERIMA — Tarikh Terima dan
+     * Status Borang Penerimaan Data kedua-duanya direkod — disusun daripada
+     * yang PALING BARU dikemas kini.
+     *
+     * Ini takrifan yang SAMA dengan kad "Entiti Diterima" pada papan pemuka:
+     * medan `syarat_lanjut` peringkat 1.1, bukan status peringkat 1.1.
+     * Status Selesai turut menuntut No. Rujukan, yang dimasukkan oleh PPR —
+     * entiti yang bukunya sudah diterima tidak sepatutnya hilang daripada
+     * senarai kerana menunggu pegawai lain.
+     *
+     * Susunan datang daripada `updated_at` baris peringkat 1.1, iaitu masa
+     * penerimaan itu direkod atau dipinda. Penapisan medan dibuat dalam PHP
+     * dan bukan dalam SQL supaya peraturan "medan telah direkod" kekal SATU
+     * (@see medanLanjutBelumDirekod) dan tidak terpesong menjadi versi SQL
+     * yang berasingan.
+     *
+     * @param  User|null  $pengguna  hadkan kepada entiti yang boleh diaksesnya
+     * @return array<int, string>
+     */
+    public function kodDiterima(?User $pengguna = null): array
+    {
+        return WorkflowStageStatus::query()
+            ->when($pengguna, fn ($q) => $q->accessibleBy($pengguna))
+            ->atStage(AliranKerja::PENERIMAAN_DATA)
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->get()
+            ->filter(fn (WorkflowStageStatus $rekod) => $this->medanLanjutBelumDirekod(
+                $rekod,
+                AliranKerja::PENERIMAAN_DATA,
+            ) === [])
+            ->pluck('agency_code')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Medan `syarat_lanjut` peringkat ini yang MASIH TIADA.
      *
      * "Syarat lanjut" ialah medan yang mesti ADA sebelum peringkat SETERUSNYA

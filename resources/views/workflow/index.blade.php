@@ -20,23 +20,44 @@
 
         <x-workflow-stepper class="mb-4" />
 
+        {{--
+            Satu menu, tiga jenis paparan. "Entiti Diterima" ialah pilihan
+            LALAI: kerja aliran kerja bermula pada penerimaan Buku Kerja MPQ,
+            jadi senarai itulah yang paling berguna sebagai paparan pertama.
+
+            Sektor kekal sebagai pilihan di bawahnya untuk melihat KESELURUHAN
+            entiti satu sektor, termasuk yang belum disentuh langsung.
+        --}}
         <form action="{{ route('workflow.index') }}" method="GET" class="row g-2 align-items-end">
             <div class="col-md-6">
-                <label class="form-label" for="sector_code">Pilih Sektor</label>
-                <select id="sector_code" name="sector_code" class="form-select">
-                    <option value="">-- Pilih sektor --</option>
-                    @foreach ($sektor as $kod => $s)
-                        <option value="{{ $kod }}" @selected($sectorCode === $kod)>
-                            {{ $kod }} — {{ $s['name'] }}
+                <label class="form-label" for="skop">Papar</label>
+                <select id="skop" name="skop" class="form-select">
+                    <option value="{{ \App\Http\Controllers\WorkflowController::SKOP_DITERIMA }}"
+                        @selected($skop === \App\Http\Controllers\WorkflowController::SKOP_DITERIMA)>
+                        Entiti Diterima — Buku Kerja MPQ diterima, terbaru dahulu
+                    </option>
+
+                    @if ($bolehLihatDitugaskan)
+                        <option value="{{ \App\Http\Controllers\WorkflowController::SKOP_DITUGASKAN }}"
+                            @selected($skop === \App\Http\Controllers\WorkflowController::SKOP_DITUGASKAN)>
+                            Entiti Ditugaskan Kepada Saya
                         </option>
-                    @endforeach
+                    @endif
+
+                    <optgroup label="Mengikut sektor">
+                        @foreach ($sektor as $kod => $s)
+                            <option value="{{ $kod }}" @selected($sectorCode === $kod)>
+                                {{ $kod }} — {{ $s['name'] }}
+                            </option>
+                        @endforeach
+                    </optgroup>
                 </select>
             </div>
             <div class="col-md-6">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-funnel"></i> Papar Entiti
                 </button>
-                @if ($sectorCode)
+                @if ($skop !== \App\Http\Controllers\WorkflowController::SKOP_DITERIMA)
                     <a href="{{ route('workflow.index') }}" class="btn btn-outline-light">Set Semula</a>
                 @endif
             </div>
@@ -53,16 +74,27 @@
         </p>
 
         {{--
-            Entiti disenaraikan mengikut sektor. Tanpa sektor yang dipilih
-            tiada jadual langsung — bukan jadual kosong — supaya tiada siapa
-            membacanya sebagai "tiada entiti dalam sistem".
+            Nota di bawah tajuk menyatakan APA yang sedang dipaparkan, kerana
+            ketiga-tiga skop menghasilkan senarai yang kelihatan serupa tetapi
+            bermaksud perkara yang berlainan.
         --}}
-        @if (!$sectorCode)
-            <x-empty-state icon="bi-diagram-3" title="Pilih sektor untuk memaparkan entiti">
-                Senarai entiti disusun mengikut sektor. Pilih satu sektor di atas untuk
-                melihat kesemua entiti di bawahnya beserta kedudukan aliran kerjanya.
-            </x-empty-state>
-        @else
+        @php
+            $skopDiterima = \App\Http\Controllers\WorkflowController::SKOP_DITERIMA;
+            $skopDitugaskan = \App\Http\Controllers\WorkflowController::SKOP_DITUGASKAN;
+        @endphp
+
+        <p class="text-secondary">
+            @if ($sectorCode)
+                Memaparkan kesemua entiti sektor {{ $sectorCode }}, termasuk yang belum
+                memasuki aliran kerja.
+            @elseif ($skop === $skopDitugaskan)
+                Memaparkan entiti yang ditugaskan kepada anda, penugasan terbaru dahulu.
+            @else
+                Memaparkan entiti yang Buku Kerja MPQ-nya telah diterima
+                (Tarikh Terima dan Status Borang Penerimaan Data direkod),
+                yang terbaru dikemas kini dahulu.
+            @endif
+        </p>
 
         {{--
             Lajur Tindakan dipaparkan kepada SETIAP peranan yang boleh membuka
@@ -175,17 +207,28 @@
                             </td>
                         </tr>
                     @empty
-                        <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti dalam sektor ini">
-                            Sektor {{ $sectorCode }} tiada entiti yang boleh anda lihat.
-                        </x-empty-state>
+                        @if ($sectorCode)
+                            <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti dalam sektor ini">
+                                Sektor {{ $sectorCode }} tiada entiti yang boleh anda lihat.
+                            </x-empty-state>
+                        @elseif ($skop === $skopDitugaskan)
+                            <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti ditugaskan kepada anda">
+                                Entiti akan muncul di sini setelah Pegawai Penyelaras Analisis
+                                menugaskannya kepada anda pada peringkat Pendaftaran Data.
+                            </x-empty-state>
+                        @else
+                            <x-empty-state colspan="7" icon="bi-diagram-3" title="Tiada entiti diterima lagi">
+                                Entiti muncul di sini setelah Tarikh Terima dan Status Borang
+                                Penerimaan Data direkodkan. Pilih satu sektor di atas untuk
+                                melihat kesemua entiti termasuk yang belum diterima.
+                            </x-empty-state>
+                        @endif
                     @endforelse
                 </tbody>
             </table>
         </div>
 
         <div class="mt-3">{{ $entiti->links() }}</div>
-
-        @endif
 
     </div>
 
