@@ -45,11 +45,18 @@
          `contain` ia memenuhi LEBAR kotak (4.45cm) pada ketinggian
          ~1.44cm/~1.35cm, tanpa herotan dan tanpa sebarang pemotongan.
 
-         AMARAN: kotak-margin header ini kini ~24.8mm (1.95cm logo + 20px
-         margin bawah). Margin atas halaman dalam LaporanController::unduh()
-         mesti kekal lebih besar daripadanya (kini 47mm), jika tidak header
-         akan bertindih dengan kandungan pada muka surat kedua dan
-         seterusnya. --}}
+         AMARAN: diukur pada PDF yang dijana, logo tamat pada 22.2mm dari
+         tepi atas halaman dan kotak-margin header keseluruhannya ~27.5mm
+         (22.2mm + margin bawah 20px = 5.3mm). Margin atas halaman dalam
+         LaporanController::unduh() mesti kekal lebih besar daripadanya
+         (kini 32mm), jika tidak header akan bertindih dengan kandungan pada
+         muka surat kedua dan seterusnya.
+
+         Margin bawah 20px di bawah ialah PENIMBAL kotak header, BUKAN jarak
+         yang kelihatan: Chrome melabuhkan kepala di bahagian ATAS jalur
+         margin, jadi jarak kepala->kandungan ditentukan sepenuhnya oleh
+         margin atas halaman. Mengecilkan 20px ini TIDAK merapatkan
+         kandungan — ia hanya merendahkan margin atas minimum yang selamat. --}}
     <img src="data:image/png;base64,{{ $nacsaLogoBase64 }}"
         style="width:4.45cm; height:1.95cm; object-fit:contain;">
     <span

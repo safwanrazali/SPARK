@@ -4,7 +4,12 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
+import komentarSeksyen from "./komentar-seksyen";
+
 document.addEventListener("DOMContentLoaded", () => {
+    // Panel komentar seksyen laporan: satu terbuka pada satu masa.
+    komentarSeksyen();
+
     const sidebar = document.getElementById("sidebar");
     const toggle = document.getElementById("toggleSidebar");
     const backdrop = document.getElementById("sidebarBackdrop");

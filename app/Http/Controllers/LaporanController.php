@@ -97,11 +97,23 @@ class LaporanController extends Controller
             // dan teks sahaja, tiada latar CSS.
             ->showBackground()
             // Margin atas MESTI lebih besar daripada tinggi kotak-margin
-            // header (kini ~37mm), kerana header dilukis di dalam ruang
-            // margin ini pada SETIAP muka surat. Bakinya (47-37=10mm)
-            // ialah jarak header->kandungan yang sama rata pada semua
-            // muka surat. Jika saiz logo diubah, kira semula nilai ini.
-            ->margins(47, 15, 22, 15)
+            // header, kerana header dilukis di dalam ruang margin ini pada
+            // SETIAP muka surat.
+            //
+            // Diukur pada PDF yang benar-benar dijana: logo kepala tamat pada
+            // 22.2mm dari tepi atas halaman, dan kotak header keseluruhannya
+            // 27.5mm (22.2mm + margin bawah 20px = 5.3mm dalam
+            // laporan.pdf.header).
+            //
+            //   32mm - 22.2mm = 9.5mm  jarak logo -> kandungan (disahkan)
+            //   32mm - 27.5mm = 4.5mm  ruang lebih sebelum bertindih
+            //
+            // Nilai sebelum ini ialah 47mm, yang meninggalkan jurang 24.6mm —
+            // ruang putih yang jauh lebih besar daripada yang diperlukan.
+            //
+            // Jika saiz logo atau margin bawah dalam laporan.pdf.header
+            // diubah, UKUR SEMULA dan kira nilai ini semula.
+            ->margins(32, 15, 22, 15)
             ->waitUntilNetworkIdle()
             ->writeOptionsToFile()   // must come before ->pdf()
             ->pdf();

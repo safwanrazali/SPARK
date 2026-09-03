@@ -29,7 +29,7 @@ app/
 
 resources/
 ├── css/                    hanya titik masuk
-├── js/app.js               satu-satunya bundle JS
+├── js/                     app.js (titik masuk) + modul kecil per ciri
 ├── scss/                   19 partial + app.scss (indeks @import)
 │   └── laporan-print/      partial gaya cetakan laporan
 └── views/
@@ -180,8 +180,16 @@ Request → Authorize → Validate → panggil servis/action → Response
 
 ## 6. Peraturan JavaScript
 
-- `resources/js/app.js` ialah satu-satunya bundle. Pecahkan kepada modul logik
-  hanya apabila ia benar-benar membesar.
+- `resources/js/app.js` ialah satu-satunya titik masuk Vite. Ciri yang
+  berdiri sendiri diletakkan dalam modulnya sendiri (contoh:
+  `komentar-seksyen.js`) dan diimport dari app.js, supaya app.js kekal
+  di bawah 300 baris.
+- Bootstrap diimport sebagai **ESM** (`import "bootstrap"` ->
+  `dist/js/bootstrap.esm.js`), jadi `window.bootstrap` TIDAK wujud.
+  Jangan `import ... from "bootstrap/js/dist/<komponen>"` untuk mengawal
+  elemen yang sudah dipacu oleh data-api: ia menghasilkan salinan kedua
+  kelas itu dengan simpanan instance tersendiri. Pacu data-api sedia ada
+  (contohnya klik butang togolnya) atau dedahkan instance secara sedar.
 - Skrip sebaris dalam Blade (contohnya `analisis/partials/skrip.blade.php`)
   **kekal sebaris**. Memindahkannya ke modul Vite mengubah masa pelaksanaan
   (defer modul) dan memerlukan binaan — itu perubahan tingkah laku.
