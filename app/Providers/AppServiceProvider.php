@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\AnalisisInventori;
+use App\Models\LaporanKomentar;
 use App\Models\User;
 use App\Policies\AnalisisInventoriPolicy;
+use App\Policies\LaporanKomentarPolicy;
 use App\Support\AliranKerja;
 use App\Services\EntityAccessService;
 use Illuminate\Pagination\Paginator;
@@ -263,5 +265,6 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Gate::policy(AnalisisInventori::class, AnalisisInventoriPolicy::class);
+        Gate::policy(LaporanKomentar::class, LaporanKomentarPolicy::class);
     }
 }

@@ -43,6 +43,11 @@ class AuditTrailService
         'data',
         'section_data',
         'borang',
+        // Teks komentar KB/PPA: jejak audit merekod bahawa komentar dicipta,
+        // disunting, dipadam atau ditindak — bukan apa yang tertulis di
+        // dalamnya. Maklum balas asal kekal di dalam modul komentar sahaja.
+        'content',
+        'kandungan',
     ];
 
     /**

@@ -67,6 +67,15 @@ class ActivityLog extends Model
         'report_approved' => 'Laporan Diluluskan',
         'report_rejected' => 'Laporan Ditolak',
         'approval_added' => 'Kelulusan Ditambah',
+
+        // Komentar laporan — maklum balas KB/PPA dan pengakuan PA.
+        // Ia merekod PERALIHAN dan PEMILIKAN sahaja; teks komentar sengaja
+        // tidak pernah masuk ke dalam jejak audit.
+        'comment_created' => 'Komentar Laporan Ditambah',
+        'comment_updated' => 'Komentar Laporan Dikemas kini',
+        'comment_deleted' => 'Komentar Laporan Dipadam',
+        'comment_action_taken' => 'Tindakan Diambil Atas Komentar',
+        'comment_reopened' => 'Tanda Tindakan Diambil Dibatalkan',
     ];
 
     /**

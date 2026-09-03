@@ -64,6 +64,10 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div class="d-flex justify-content-end mt-2">
+                <x-section-comment-widget :section="'maklumat'" :komentar="$komentar" :analisis="$analisis" />
+            </div>
         </div>
 
         {{-- TUJUAN — gaya dalam resources/scss/laporan-print.scss (.laporan-seksyen).
@@ -102,7 +106,7 @@
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
             <div class="d-flex align-items-center justify-content-between gap-2">
                 <h2 class="laporan-seksyen__tajuk mb-0">Status Penerimaan dan Kebolehgunaan Data</h2>
-                <x-section-comment-widget :section="'keadaan_semasa'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'data_status'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             <p class="laporan-seksyen__perenggan">
@@ -182,10 +186,7 @@
              .laporan-jadual-ringkas). Struktur dan teks MESTI kekal sama dengan
              pasangannya dalam resources/views/laporan/{inventori,pdf/body}.blade.php. --}}
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
-            <div class="d-flex align-items-center justify-content-between gap-2">
-                <h2 class="laporan-seksyen__tajuk mb-0">Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
-                <x-section-comment-widget :section="'algoritma_kenal_pasti'" :komentar="$komentar" :analisis="$analisis" />
-            </div>
+            <h2 class="laporan-seksyen__tajuk">Ringkasan Dapatan Analisis Inventori Kriptografi</h2>
 
             <p class="laporan-seksyen__perenggan">
                 Bahagian ini merumuskan dapatan utama hasil analisis inventori kriptografi berdasarkan
@@ -196,7 +197,7 @@
 
             <div class="d-flex align-items-center justify-content-between gap-2">
                 <h3 class="laporan-seksyen__subtajuk mb-0">1. Profil Sistem dan Aset</h3>
-                <x-section-comment-widget :section="'profil_sistem_aset'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'profil'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             <p class="laporan-seksyen__perenggan">
@@ -259,7 +260,7 @@
             <div class="d-flex align-items-center justify-content-between gap-2">
                 <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">2. Algoritma Kriptografi
                 </h3>
-                <x-section-comment-widget :section="'algoritma_kriptografi'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'algoritma'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             {{-- Jadual hanya muncul apabila ada algoritma dikenal pasti, jadi ayat
@@ -350,7 +351,7 @@
             <div class="d-flex align-items-center justify-content-between gap-2">
                 <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">3. Protokol Kriptografi
                 </h3>
-                <x-section-comment-widget :section="'protokol_kriptografi'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'protokol'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
@@ -427,7 +428,7 @@
                 <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">
                     4. Pustaka dan Modul Kriptografi
                 </h3>
-                <x-section-comment-widget :section="'pustaka_modul_kriptografi'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'pustaka'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
@@ -501,7 +502,7 @@
                 <h3 class="laporan-seksyen__subtajuk laporan-seksyen__subtajuk--mula-halaman mb-0">
                     5. Maklumat Vendor
                 </h3>
-                <x-section-comment-widget :section="'maklumat_vendor'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'vendor'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             {{-- Lihat nota pada subseksyen 2: ayat pembuka mengikut kehadiran jadual. --}}
@@ -592,7 +593,7 @@
         <section class="laporan-seksyen laporan-seksyen--mula-halaman">
             <div class="d-flex align-items-center justify-content-between gap-2">
                 <h2 class="laporan-seksyen__tajuk mb-0">Cadangan Tindakan Susulan</h2>
-                <x-section-comment-widget :section="'kesimpulan'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'tindakan'" :komentar="$komentar" :analisis="$analisis" />
             </div>
 
             @if (count($tindakan))

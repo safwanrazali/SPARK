@@ -1,105 +1,166 @@
-# Panduan Penggunaan Komentar Laporan Analisis Inventori Kriptografi
+# Panduan Komentar — Laporan Analisis Inventori Kriptografi
 
-## Untuk Pegawai Penyelaras Analisis (PPA) & Ketua Bahagian (KB)
+Komentar ialah mekanisme **maklum balas + pengakuan**, bukan kitaran kelulusan.
 
-### Cara Menambah Komentar
+```
+KB / PPA menulis komentar pada satu seksyen Borang Input
+        ↓
+PA melihat komentar itu
+        ↓
+PA mengambil tindakan yang perlu
+        ↓
+PA klik ✓ Tindakan Diambil
+        ↓
+KB / PPA melihat bahawa tindakan telah diambil
+```
 
-Apabila anda membuka **Laporan Inventori Kriptografi**, anda akan melihat seksyen **"Tambah Komentar pada Laporan"** di bahagian atas halaman:
-
-1. **Pilih Seksyen** - Dari dropdown, pilih seksyen laporan yang ingin anda komentari:
-    - Pengenalan
-    - Kerangka Kerja Kriptografi
-    - Keadaan Semasa Kriptografi
-    - Algoritma Dikenal Pasti
-    - Kesimpulan & Cadangan
-    - Lampiran
-
-2. **Tulis Komentar** - Dalam medan teks, tulis komentar anda (maksimum 2000 aksara)
-
-3. **Hantar** - Klik butang "Hantar Komentar"
-
-### Penting Diketahui
-
-- ✓ Komentar anda hanya akan dilihat oleh **Pegawai Analisis (PA)** yang membuat laporan
-- ✓ Komentar **TIDAK** akan disertakan dalam laporan PDF yang dimuat turun
-- ✓ Anda boleh menghapus komentar anda sendiri
-- ✓ Pentadbir sistem boleh menghapus komentar mana-mana pengguna
-- ✓ Setiap komentar dicatatkan dengan nama anda, peranan, dan masa hantar
+Tiada penyerahan untuk semakan, tiada kelulusan, tiada penolakan, tiada
+pemulangan, dan **tiada modul notifikasi**. "Tindakan Diambil" ialah satu
+STATUS pada komentar, bukan pemberitahuan.
 
 ---
 
-## Untuk Pegawai Analisis (PA)
+## 1. Siapa boleh buat apa
 
-### Cara Melihat Komentar
+| Peranan | Lihat komentar | Tulis | Sunting sendiri | Padam sendiri | Tanda Tindakan Diambil |
+| ------- | -------------- | ----- | --------------- | ------------- | ---------------------- |
+| PA      | ✓ semua        | ✗     | —               | ✗             | ✓                      |
+| KB      | ✓ semua        | ✓     | ✓               | ✓             | ✗                      |
+| PPA     | ✓ semua        | ✓     | ✓               | ✓             | ✗                      |
+| PS      | ✗              | ✗     | ✗               | ✗             | ✗                      |
+| TPII    | ✗              | ✗     | ✗               | ✗             | ✗                      |
+| PPR     | ✗              | ✗     | ✗               | ✗             | ✗                      |
+| PKD     | ✗              | ✗     | ✗               | ✗             | ✗                      |
 
-Apabila anda membuka **Laporan Inventori Kriptografi** yang anda buat, anda akan melihat seksyen **"Komentar daripada PPA & KB"** di bawah butang-butang aksi.
+**Penglihatan bukan pemilikan.** KB melihat komentar KB lain DAN komentar PPA;
+PPA melihat komentar PPA lain DAN komentar KB; PA melihat kesemuanya. Yang
+terhad kepada pengarang hanyalah **menyunting dan memadam**.
 
-Seksyen ini memaparkan semua komentar yang ditambah oleh:
+Contoh:
 
-- Pegawai Penyelaras Analisis (PPA)
-- Ketua Bahagian (KB)
+```
+KB-1 menulis Komentar A
+  KB-2 boleh LIHAT      PPA boleh LIHAT      PA boleh LIHAT
+  KB-1 boleh PADAM      KB-2 tidak boleh     PPA tidak boleh     PA tidak boleh
+```
 
-### Maklumat yang Dipaparkan
+Kesemua kebenaran ini dikuatkuasakan di **pelayan** (route middleware +
+`LaporanKomentarPolicy`). Menyembunyikan butang bukan kawalan: memanggil
+laluan secara terus dengan id komentar orang lain menerima **403**.
 
-Bagi setiap komentar, anda akan melihat:
-
-- **Nama Pengguna** - Siapa yang menambah komentar
-- **Peranan** - PPA atau KB
-- **Masa Hantar** - Tarikh dan masa komentar ditambah
-- **Kandungan Komentar** - Teks ulasan lengkap
-- **Butang Padam** - Hanya tersedia jika anda pemilik komentar
-
-### Penting Diketahui
-
-- ✓ Hanya anda (PA) yang boleh melihat komentar di halaman Laporan
-- ✓ Komentar **TIDAK** muncul dalam laporan PDF
-- ✓ Komentar boleh digunakan untuk maklum balas lanjut dari KB/PPA
-- ✓ Anda boleh padam komentar anda sendiri jika perlu
-
----
-
-## Alur Kerja
-
-### Senario Biasa
-
-1. **PA** - Memasukkan data dalam Borang Input Analisis Inventori Kriptografi
-2. **PA** - Menyimpan dapatan (tidak memerlukan kelulusan)
-3. **PA** - Melihat Laporan yang terjana secara automatik
-4. **PPA/KB** - Membuka laporan yang sama dan melihat dapatan PA
-5. **PPA/KB** - Menambah komentar pada seksyen tertentu untuk memberikan maklum balas
-6. **PA** - Melihat komentar dari PPA/KB dan membuat penambahbaikan jika diperlukan
-7. **PA** - Muat turun laporan PDF (tanpa komentar) untuk disiarkan
+Setiap operasi juga tertakluk kepada kawalan akses entiti sedia ada. Pegawai
+Analisis hanya boleh menyentuh komentar bagi entiti yang ditugaskan
+kepadanya; menukar `agency_code` atau id komentar dalam permintaan tidak
+membuka entiti lain.
 
 ---
 
-## Bantuan Teknikal
+## 2. Seksyen komentar
 
-### Masalah Umum
+Komentar ditambat pada **sembilan seksyen Borang Input**, supaya PA tahu
+dengan tepat bahagian mana yang perlu diberi perhatian:
 
-**Saya tidak nampak seksyen "Tambah Komentar pada Laporan"**
+| Kunci          | Seksyen                        |
+| -------------- | ------------------------------ |
+| `maklumat`     | 1 · Maklumat Laporan           |
+| `data_status`  | 2 · Status Data Diterima       |
+| `profil`       | 3 · Profil Sistem dan Aset     |
+| `algoritma`    | 4 · Algoritma Kriptografi      |
+| `protokol`     | 5 · Protokol Kriptografi       |
+| `pustaka`      | 6 · Pustaka dan Modul          |
+| `vendor`       | 7 · Maklumat Vendor            |
+| `tindakan`     | 8 · Cadangan Tindakan Susulan  |
+| `kesimpulan`   | 9 · Kesimpulan                 |
 
-- Pastikan anda logged in sebagai PPA atau KB
-- Peranan anda mungkin tidak mempunyai kebenaran. Hubungi Pentadbir Sistem.
-
-**Komentar saya hilang**
-
-- Komentar tidak pernah dihapus secara automatik
-- Jika komentar hilang, kemungkinan ia telah dihapus oleh anda, pembuat, atau Pentadbir Sistem
-
-**Saya tidak boleh melihat komentar**
-
-- Jika anda PA: Komentar akan muncul setelah PPA/KB menambahnya. Reload halaman untuk melihat yang terbaru.
-- Jika anda PPA/KB: Komentar hanya dilihat oleh PA. Anda hanya boleh menambah komentar, bukan melihatnya.
-
----
-
-## Tips
-
-1. **Komentar Ringkas** - Tetapkan komentar tetap teratur dan fokus pada seksyen yang dipilih
-2. **Masa Terbaik** - Tambah komentar selepas melihat laporan yang lengkap untuk maklum balas yang bermakna
-3. **Kolaborasi** - Gunakan komentar untuk berkomunikasi dengan PA tanpa perlu sesi pertemuan formal
-4. **Jejak** - Setiap komentar dicatatkan dengan masa dan pembuat untuk audit trail
+Senarai ini datang terus daripada `App\Support\SeksyenAnalisis` — nama
+seksyen selain daripada sembilan ini ditolak oleh pelayan.
 
 ---
 
-Untuk pertanyaan lanjut, hubungi Pentadbir Sistem.
+## 3. Cara menggunakannya
+
+### KB / PPA
+
+1. Buka **Laporan Inventori Kriptografi** bagi entiti berkenaan.
+2. Setiap tajuk seksyen mempunyai butang 💬. Lencananya menunjukkan bilangan
+   komentar: **kuning** jika ada yang masih terbuka, **hijau** jika semuanya
+   telah ditindak.
+3. Klik butang itu untuk membuka panel komentar seksyen tersebut.
+4. Tulis komentar (maksimum 2000 aksara) dan hantar.
+5. Komentar sendiri boleh disunting (✏) atau dipadam (✕) pada bila-bila masa.
+
+### PA
+
+1. Buka laporan yang sama — komentar muncul pada seksyen yang berkenaan.
+2. Buat pembetulan yang perlu melalui **Borang Input**.
+3. Klik **✓ Tindakan Diambil** pada komentar tersebut.
+
+Selepas itu komentar dipaparkan seperti ini kepada semua pihak:
+
+```
+KB Satu (KB) · 03/09/2026 10:20
+"Sila semak semula maklumat pemilik sistem."
+
+[✓ Tindakan Diambil]  Tindakan oleh: PA Ahmad · 03/09/2026 10:32 AM
+```
+
+Teks asal **tidak diubah** dan komentar **tidak dipadam** — ia kekal dalam
+sejarah bersama identiti PA dan cap masa tindakan.
+
+Jika PA tersilap tanda, **Batal tanda** mengembalikan komentar kepada
+*Terbuka*. Fungsi ini milik PA sahaja dan bukan penolakan maklum balas.
+
+---
+
+## 4. Status komentar vs status peringkat 3.1
+
+Dua perkara yang **berasingan sepenuhnya**:
+
+```
+Komentar        :  Terbuka        →  Tindakan Diambil
+Peringkat 3.1   :  Belum Selesai  →  Selesai
+```
+
+Komentar **tidak menyekat** peringkat 3.1 dan **tidak mengubah** statusnya.
+PA tetap boleh menandakan peringkat 3.1 sebagai *Selesai* walaupun terdapat
+komentar yang masih terbuka. Lencana dan kiraan komentar bersifat maklumat
+semata-mata.
+
+---
+
+## 5. PDF
+
+Komentar **tidak sekali-kali** muncul dalam PDF Laporan Analisis Inventori
+Kriptografi — tidak teks komentar, tidak nama pengarang, tidak status, tidak
+maklumat "Tindakan Diambil". PDF mengandungi kandungan laporan rasmi sahaja.
+
+---
+
+## 6. Jejak audit
+
+Setiap tindakan komentar direkodkan dalam jejak audit sedia ada: komentar
+ditambah, dikemas kini, dipadam, ditanda *Tindakan Diambil* dan tandanya
+dibatalkan.
+
+Mengikut konvensyen jejak audit aplikasi, ia merekod **perubahan, bukan
+kandungan**: seksyen, pemilik, pelaku, peranan, cap masa dan peralihan status
+disimpan — **teks komentar tidak**.
+
+---
+
+## 7. Masalah biasa
+
+**Saya tidak nampak butang 💬 pada laporan.**
+Modul komentar terbuka kepada PA, KB dan PPA sahaja. Peranan lain boleh
+membuka laporan tetapi tidak modul komentarnya.
+
+**Saya tidak nampak butang padam pada komentar seseorang.**
+Betul — hanya pengarang boleh memadam komentarnya sendiri.
+
+**Saya PA, tetapi tidak boleh menyunting komentar.**
+Juga betul. PA hanya menanda *Tindakan Diambil*; maklum balas asal mesti
+kekal seperti yang ditulis oleh pengomen.
+
+**Komentar saya hilang.**
+Ia telah dipadam oleh pengarangnya sendiri. Pemadaman bersifat lembut, jadi
+rekodnya kekal dalam pangkalan data dan jejak audit.

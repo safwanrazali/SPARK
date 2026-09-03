@@ -2,21 +2,53 @@
 
 namespace App\Models;
 
+use App\Support\SeksyenAnalisis;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Komentar KB dan PPA pada Laporan Analisis Inventori Kriptografi.
+ * Komentar Ketua Bahagian dan Pegawai Penyelaras Analisis pada Laporan
+ * Analisis Inventori Kriptografi.
  *
- * Komentar hanya dilihat oleh PA (pembuat laporan), tidak disertakan dalam
- * laporan PDF yang dijana. Ia memungkinkan KB dan PPA untuk memberikan maklum
- * balas pada seksyen-seksyen spesifik laporan tanpa memerlukan kitaran
- * kelulusan formal.
+ * Ia satu mekanisme MAKLUM BALAS + PENGAKUAN, bukan kitaran kelulusan:
+ *
+ *     KB / PPA menulis komentar pada satu seksyen Borang Input
+ *       -> PA melihatnya dan mengambil tindakan yang perlu
+ *       -> PA menanda "Tindakan Diambil"
+ *       -> KB / PPA melihat bahawa tindakan telah diambil
+ *
+ * Tiada penyerahan untuk semakan, kelulusan, penolakan atau pemulangan.
+ * Komentar TIDAK sekali-kali menyekat atau mengubah status peringkat 3.1,
+ * dan TIDAK disertakan dalam PDF laporan rasmi.
+ *
+ * PENAPISAN: KB dan PPA melihat KESEMUA komentar KB dan PPA — pemilikan
+ * hanya menentukan siapa boleh MENYUNTING dan MEMADAM, bukan siapa boleh
+ * MELIHAT. Lihat App\Policies\LaporanKomentarPolicy.
  */
 class LaporanKomentar extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /** Komentar masih menunggu tindakan Pegawai Analisis. */
+    public const STATUS_TERBUKA = 'terbuka';
+
+    /** Pegawai Analisis telah mengambil tindakan atas komentar ini. */
+    public const STATUS_TINDAKAN_DIAMBIL = 'tindakan_diambil';
+
+    /**
+     * Status komentar — SENGAJA berbeza daripada "Belum Selesai / Selesai"
+     * peringkat 3.1 supaya kedua-duanya tidak dikelirukan. Keduanya bebas.
+     */
+    public const STATUS = [
+        self::STATUS_TERBUKA => 'Terbuka',
+        self::STATUS_TINDAKAN_DIAMBIL => 'Tindakan Diambil',
+    ];
+
+    /** Had panjang kandungan komentar — dikuatkuasakan borang dan pelayan. */
+    public const HAD_KANDUNGAN = 2000;
 
     protected $table = 'laporan_komentar';
 
@@ -25,11 +57,26 @@ class LaporanKomentar extends Model
         'agency_name',
         'section',
         'content',
+        'status',
         'user_id',
+        'tindakan_oleh_user_id',
+        'tindakan_pada',
     ];
 
+    protected $attributes = [
+        'status' => self::STATUS_TERBUKA,
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'tindakan_pada' => 'datetime',
+        ];
+    }
+
     /**
-     * Pentadbir yang membuat komentar (KB atau PPA).
+     * Pengarang komentar (KB atau PPA) — pemilik yang boleh menyunting dan
+     * memadamnya.
      */
     public function user(): BelongsTo
     {
@@ -37,50 +84,61 @@ class LaporanKomentar extends Model
     }
 
     /**
-     * Komentar untuk satu agensi, disusun mengikut seksyen dan waktu.
+     * Pegawai Analisis yang menanda "Tindakan Diambil".
      */
-    public function scopeForAgency($query, string $agencyCode)
+    public function tindakanOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'tindakan_oleh_user_id');
+    }
+
+    /**
+     * Komentar untuk satu entiti, disusun mengikut seksyen dan waktu.
+     */
+    public function scopeForAgency(Builder $query, string $agencyCode): Builder
     {
         return $query->where('agency_code', $agencyCode)
             ->orderBy('section')
             ->orderByDesc('created_at');
     }
 
-    /**
-     * Komentar untuk satu seksyen.
-     */
-    public function scopeForSection($query, string $section)
+    public function scopeForSection(Builder $query, string $section): Builder
     {
-        return $query->where('section', $section)
-            ->orderByDesc('created_at');
+        return $query->where('section', $section)->orderByDesc('created_at');
+    }
+
+    public function scopeTerbuka(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_TERBUKA);
+    }
+
+    public function scopeTindakanDiambil(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_TINDAKAN_DIAMBIL);
+    }
+
+    public function sudahDitindak(): bool
+    {
+        return $this->status === self::STATUS_TINDAKAN_DIAMBIL;
+    }
+
+    public function statusLabel(): string
+    {
+        return self::STATUS[$this->status] ?? $this->status;
     }
 
     /**
-     * Hanya komentar daripada pengguna tertentu.
-     */
-    public function scopeByUser($query, User $user)
-    {
-        return $query->where('user_id', $user->id);
-    }
-
-    /**
-     * Seksyen-seksyen laporan yang boleh dikomenkari.
-     * Selaras dengan struktur pandangan laporan.
+     * Seksyen yang boleh dikomentari: SEMBILAN seksyen Borang Input, tidak
+     * lebih dan tidak kurang. Tujuannya memberitahu PA bahagian borang mana
+     * yang perlu diberi perhatian, jadi senarai ini mesti kekal terikat pada
+     * App\Support\SeksyenAnalisis dan bukan disalin di sini.
+     *
+     * @return array<string, string>
      */
     public static function seksyenLaporan(): array
     {
-        return [
-            'pengenalan' => 'Pengenalan',
-            'kerangka_kerja' => 'Kerangka Kerja Kriptografi',
-            'keadaan_semasa' => 'Keadaan Semasa Kriptografi',
-            'algoritma_kenal_pasti' => 'Algoritma Dikenal Pasti',
-            'kesimpulan' => 'Kesimpulan & Cadangan',
-            'lampiran' => 'Lampiran',
-            'profil_sistem_aset' => '1. Profil Sistem dan Aset',
-            'algoritma_kriptografi' => '2. Algoritma Kriptografi',
-            'protokol_kriptografi' => '3. Protokol Kriptografi',
-            'pustaka_modul_kriptografi' => '4. Pustaka dan Modul Kriptografi',
-            'maklumat_vendor' => '5. Maklumat Vendor',
-        ];
+        return array_map(
+            fn (array $takrif): string => $takrif['label'],
+            SeksyenAnalisis::SEKSYEN,
+        );
     }
 }

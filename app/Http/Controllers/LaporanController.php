@@ -11,7 +11,7 @@ use App\Support\BorangAnalisis;
 use App\Support\Halaman;
 use App\Support\TeksBerformat;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 use Spatie\Browsershot\Browsershot;
 
 class LaporanController extends Controller
@@ -35,13 +35,20 @@ class LaporanController extends Controller
      * Templat + business rules + input berstruktur -> kandungan laporan.
      * 
      * Laporan boleh dilihat meskipun Borang Input belum disempurnakan.
-     * Komentar daripada KB dan PPA dipaparkan untuk PA sahaja.
+     *
+     * Komentar KB/PPA dimuatkan hanya untuk peranan yang mengambil bahagian
+     * dalam modul komentar (PA, KB, PPA). Peranan lain — PS, TPII, PPR, PKD —
+     * tetap melihat laporan, tetapi tidak menerima komentar dalam data
+     * paparan langsung, bukan sekadar butangnya disembunyikan.
      */
     public function inventori(AnalisisInventori $analisis)
     {
         $this->authorize('view', $analisis);
 
-        return view('laporan.inventori', $this->siapkanData($analisis, includeComments: true));
+        return view('laporan.inventori', $this->siapkanData(
+            $analisis,
+            includeComments: Gate::allows('viewAny', LaporanKomentar::class),
+        ));
     }
 
     /**
@@ -108,81 +115,6 @@ class LaporanController extends Controller
     }
 
     /**
-     * Simpan komentar daripada KB atau PPA pada seksyen laporan tertentu.
-     * 
-     * Hanya KB dan PPA boleh menambah komentar. Komentar hanya dilihat PA.
-     */
-    public function storeComment(Request $request, AnalisisInventori $analisis)
-    {
-        $this->authorize('view', $analisis);
-
-        // Hanya KB dan PPA boleh menambah komentar
-        if (! ($request->user()->isCoordinator() || $request->user()->isKetuaBahagian())) {
-            abort(403, 'Hanya Pegawai Penyelaras Analisis (PPA) dan Ketua Bahagian (KB) boleh menambah komentar.');
-        }
-
-        $request->validate([
-            'section' => ['required', 'string', Rule::in(array_keys(LaporanKomentar::seksyenLaporan()))],
-            'content' => ['required', 'string', 'max:2000'],
-        ]);
-
-        LaporanKomentar::create([
-            'agency_code' => $analisis->agency_code,
-            'agency_name' => $analisis->agency_name,
-            'section' => $request->input('section'),
-            'content' => $request->input('content'),
-            'user_id' => $request->user()->id,
-        ]);
-
-        return redirect()
-            ->route('laporan.inventori', $analisis)
-            ->with('success', 'Komentar telah disimpan.');
-    }
-
-    /**
-     * Ambil komentar untuk satu agensi (untuk AJAX).
-     * 
-     * Hanya PA pemilik laporan boleh melihat komentar.
-     */
-    public function getComments(Request $request, AnalisisInventori $analisis)
-    {
-        $this->authorize('view', $analisis);
-
-        $komentar = LaporanKomentar::forAgency($analisis->agency_code)
-            ->with('user')
-            ->get()
-            ->groupBy('section')
-            ->map(fn($items) => $items->map(fn($item) => [
-                'id' => $item->id,
-                'user_name' => $item->user->name,
-                'user_role' => implode(', ', $item->user->assignedRoleShortLabels()),
-                'content' => $item->content,
-                'created_at' => $item->created_at->format('d/m/Y H:i'),
-            ])->toArray())
-            ->toArray();
-
-        return response()->json($komentar);
-    }
-
-    /**
-     * Padam komentar (hanya pemilik komentar atau admin boleh).
-     */
-    public function destroyComment(Request $request, LaporanKomentar $komentar)
-    {
-        if ($request->user()->id !== $komentar->user_id && ! $request->user()->isAdministrator()) {
-            abort(403, 'Anda tidak dibenarkan memadam komentar ini.');
-        }
-
-        $agencyCode = $komentar->agency_code;
-
-        $komentar->delete();
-
-        return redirect()
-            ->route('laporan.inventori', AnalisisInventori::where('agency_code', $agencyCode)->first())
-            ->with('success', 'Komentar telah dipadamkan.');
-    }
-
-    /**
      * Baris pengesahan laporan, dengan nama dan tarikh diambil daripada aliran
      * kerja sebenar apabila langkah tersebut telah dilaksanakan.
      *
@@ -241,7 +173,9 @@ class LaporanController extends Controller
      * Sediakan semua data yang diperlukan oleh templat laporan
      * (dikongsi antara pratonton skrin dan muat turun PDF).
      *
-     * @param bool $includeComments Sertakan komentar KB/PPA (hanya untuk skrin, bukan PDF)
+     * @param  bool  $includeComments  Sertakan komentar KB/PPA — hanya untuk
+     *                                  skrin dan hanya untuk peranan yang
+     *                                  dibenarkan; TIDAK PERNAH untuk PDF.
      */
     private function siapkanData(AnalisisInventori $analisis, bool $includeComments = false): array
     {
@@ -372,14 +306,19 @@ class LaporanController extends Controller
             'pengesahan' => $this->pengesahan($analisis),
         ];
 
-        // Komentar KB dan PPA hanya dipaparkan pada layar, BUKAN dalam PDF.
-        // Hanya PA yang melihat komentar — dipaparkan mengikut seksyen.
-        if ($includeComments) {
-            $result['komentar'] = LaporanKomentar::forAgency($analisis->agency_code)
-                ->with('user')
+        // Komentar KB/PPA hanya dipaparkan pada skrin, TIDAK PERNAH dalam
+        // PDF: `unduh()` memanggil kaedah ini dengan includeComments: false,
+        // jadi laporan/pdf/body.blade.php sentiasa menerima koleksi KOSONG.
+        //
+        // Kunci ini sentiasa wujud supaya paparan tidak perlu menyemak
+        // isset() pada setiap seksyen — ia sekadar kosong apabila pengguna
+        // tiada akses kepada modul komentar atau apabila PDF sedang dijana.
+        $result['komentar'] = $includeComments
+            ? LaporanKomentar::forAgency($analisis->agency_code)
+                ->with(['user', 'tindakanOleh'])
                 ->get()
-                ->groupBy('section');
-        }
+                ->groupBy('section')
+            : collect();
 
         return $result;
     }

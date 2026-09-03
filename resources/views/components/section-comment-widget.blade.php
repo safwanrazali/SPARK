@@ -1,76 +1,182 @@
+{{--
+    Komentar KB/PPA pada satu seksyen Borang Input.
+
+    Maklum balas + pengakuan sahaja: KB/PPA menulis, PA menanda "Tindakan
+    Diambil", KB/PPA melihat tandanya. Tiada kelulusan, tiada notifikasi,
+    dan tiada kesan ke atas status peringkat 3.1.
+
+    PENGLIHATAN: PA, KB dan PPA melihat KESEMUA komentar. Pemilikan hanya
+    menentukan siapa boleh menyunting/memadam — TIDAK PERNAH siapa boleh
+    melihat. Setiap butang di bawah mempunyai pasangan semakan di pelayan
+    (LaporanKomentarPolicy); menyembunyikannya bukan kawalan keselamatan.
+
+    d-print-none: widget ini tidak boleh muncul apabila skrin laporan
+    dicetak. PDF rasmi dijana daripada laporan/pdf/body.blade.php, yang
+    tidak memuatkan komponen ini langsung.
+--}}
 @php
-    $sectionKey = str_replace(' ', '_', strtolower($section ?? ''));
-    $hasComments = !empty($komentar[$sectionKey]);
-    $commentCount = $hasComments ? count($komentar[$sectionKey]) : 0;
-    $isCommentator = Auth::user()->isCoordinator() || Auth::user()->isKetuaBahagian();
-    $commentSections = \App\Models\LaporanKomentar::seksyenLaporan();
-    $showCommentForm = $isCommentator && isset($analisis);
+    $sectionKey = $section ?? '';
+    $pengguna = Auth::user();
+    $bolehLihat = $pengguna?->can('viewAny', \App\Models\LaporanKomentar::class) ?? false;
+
+    $senarai = collect($komentar[$sectionKey] ?? []);
+    $jumlah = $senarai->count();
+    $terbuka = $senarai->where('status', \App\Models\LaporanKomentar::STATUS_TERBUKA)->count();
+    $ditindak = $jumlah - $terbuka;
+
+    $bolehTulis = $bolehLihat && $pengguna->can('create', \App\Models\LaporanKomentar::class) && isset($analisis);
+    $label = \App\Support\SeksyenAnalisis::label($sectionKey);
 @endphp
 
-<div class="section-comments-widget">
-    <button class="btn btn-sm btn-outline-secondary section-comments-toggle" type="button" data-bs-toggle="collapse"
-        data-bs-target="#comments-{{ $sectionKey }}" title="Tampilkan/sembunyikan komentar untuk seksyen ini">
-        <i class="bi bi-chat-dots"></i>
-        @if ($hasComments)
-            <span class="badge bg-warning text-dark">{{ $commentCount }}</span>
-        @else
-            <span class="text-muted small">+</span>
-        @endif
-    </button>
-
-    <div class="collapse section-comments-collapse" id="comments-{{ $sectionKey }}">
-        <div class="section-comments-panel mt-2 p-2 border rounded-2 bg-light">
-            {{-- Form untuk menambah komentar (KB/PPA saja) --}}
-            @if ($showCommentForm)
-                <div class="mb-2 pb-2 border-bottom">
-                    <form method="POST" action="{{ route('laporan.komentar.store', $analisis) }}"
-                        class="d-flex gap-2 align-items-end section-comment-form">
-                        @csrf
-                        <input type="hidden" name="section" value="{{ $sectionKey }}">
-                        <textarea name="content" class="form-control form-control-sm flex-grow-1" rows="1"
-                            placeholder="Tambah komentar..." maxlength="500"></textarea>
-                        <button type="submit" class="btn btn-sm btn-primary" title="Hantar komentar">
-                            <i class="bi bi-send"></i>
-                        </button>
-                    </form>
-                    <small class="text-muted d-block mt-1">Komentar hanya dilihat PA dan tidak dalam PDF</small>
-                </div>
-            @endif
-
-            {{-- Tampilkan komentar yang ada --}}
-            @if ($hasComments)
-                <div class="section-comments-list">
-                    @foreach ($komentar[$sectionKey] as $comment)
-                        <div class="comment-item mb-2 pb-2 @if (!$loop->last) border-bottom @endif">
-                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                <div class="flex-grow-1">
-                                    <strong class="d-block small">{{ $comment->user->name }}</strong>
-                                    <small class="text-muted d-block">
-                                        {{ implode(', ', $comment->user->assignedRoleShortLabels()) }}
-                                        • {{ $comment->created_at->format('d/m H:i') }}
-                                    </small>
-                                </div>
-                                @if (Auth::user()->id === $comment->user_id || Auth::user()->isAdministrator())
-                                    <form method="POST" action="{{ route('laporan.komentar.destroy', $comment) }}"
-                                        class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0 m-0"
-                                            title="Padam" onclick="return confirm('Padam?')">
-                                            <i class="bi bi-x-circle"></i>
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                            <p class="mb-0 small mt-1">{{ $comment->content }}</p>
-                        </div>
-                    @endforeach
-                </div>
+@if ($bolehLihat)
+    <div class="section-comments-widget d-print-none">
+        <button class="btn btn-sm btn-outline-secondary section-comments-toggle" type="button" data-bs-toggle="collapse"
+            data-bs-target="#comments-{{ $sectionKey }}"
+            title="Komentar bagi {{ $label }} — {{ $jumlah }} komentar, {{ $terbuka }} terbuka">
+            <i class="bi bi-chat-dots"></i>
+            @if ($jumlah)
+                <span class="badge {{ $terbuka ? 'bg-warning text-dark' : 'bg-success' }}">{{ $jumlah }}</span>
             @else
-                @if ($showCommentForm)
+                <span class="text-muted small">+</span>
+            @endif
+        </button>
+
+        <div class="collapse section-comments-collapse" id="comments-{{ $sectionKey }}">
+            <div class="section-comments-panel mt-2 p-2 border rounded-2 bg-light">
+                {{-- Kiraan bersifat maklumat semata-mata: ia TIDAK menyekat
+                     peringkat 3.1 dan tidak mengubah statusnya. --}}
+                <div class="small text-muted mb-2">
+                    {{ $label }} — {{ $jumlah }} komentar
+                    · {{ $terbuka }} terbuka
+                    · {{ $ditindak }} tindakan diambil
+                </div>
+
+                @if ($bolehTulis)
+                    <div class="mb-2 pb-2 border-bottom">
+                        <form method="POST" action="{{ route('laporan.komentar.store', $analisis) }}"
+                            class="d-flex gap-2 align-items-end section-comment-form">
+                            @csrf
+                            <input type="hidden" name="section" value="{{ $sectionKey }}">
+                            <textarea name="content" class="form-control form-control-sm flex-grow-1" rows="1"
+                                placeholder="Tambah komentar..."
+                                maxlength="{{ \App\Models\LaporanKomentar::HAD_KANDUNGAN }}" required></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary" title="Hantar komentar">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </form>
+                        <small class="text-muted d-block mt-1">
+                            Dilihat oleh PA, KB dan PPA. Tidak disertakan dalam PDF laporan.
+                        </small>
+                    </div>
+                @endif
+
+                @if ($jumlah)
+                    <div class="section-comments-list">
+                        @foreach ($senarai as $comment)
+                            <div class="comment-item mb-2 pb-2 @if (!$loop->last) border-bottom @endif">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div class="flex-grow-1">
+                                        <strong class="d-block small">{{ $comment->user?->name ?? 'Pengguna dipadam' }}</strong>
+                                        <small class="text-muted d-block">
+                                            {{ implode(', ', $comment->user?->assignedRoleShortLabels() ?? []) }}
+                                            · {{ $comment->created_at->format('d/m/Y H:i') }}
+                                        </small>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-1">
+                                        {{-- Pengarang sahaja: sunting + padam. --}}
+                                        @can('update', $comment)
+                                            <button type="button" class="btn btn-sm btn-link text-secondary p-0 m-0"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#komentar-sunting-{{ $comment->id }}" title="Sunting">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        @endcan
+
+                                        @can('delete', $comment)
+                                            <form method="POST"
+                                                action="{{ route('laporan.komentar.destroy', $comment) }}"
+                                                class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-link text-danger p-0 m-0"
+                                                    title="Padam" onclick="return confirm('Padam komentar ini?')">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                        @endcan
+                                    </div>
+                                </div>
+
+                                <p class="mb-0 small mt-1">{{ $comment->content }}</p>
+
+                                @can('update', $comment)
+                                    <div class="collapse mt-2" id="komentar-sunting-{{ $comment->id }}">
+                                        <form method="POST"
+                                            action="{{ route('laporan.komentar.update', $comment) }}"
+                                            class="d-flex gap-2 align-items-end">
+                                            @csrf
+                                            @method('PATCH')
+                                            <textarea name="content" class="form-control form-control-sm flex-grow-1" rows="2"
+                                                maxlength="{{ \App\Models\LaporanKomentar::HAD_KANDUNGAN }}"
+                                                required>{{ $comment->content }}</textarea>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary"
+                                                title="Simpan suntingan">
+                                                <i class="bi bi-check2"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endcan
+
+                                {{-- Status komentar: Terbuka / Tindakan Diambil.
+                                     SENGAJA berbeza daripada "Belum Selesai /
+                                     Selesai" peringkat 3.1 — kedua-duanya bebas. --}}
+                                <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                                    @if ($comment->sudahDitindak())
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check2"></i> Tindakan Diambil
+                                        </span>
+                                        <small class="text-muted">
+                                            Tindakan oleh: {{ $comment->tindakanOleh?->name ?? '—' }}
+                                            · {{ $comment->tindakan_pada?->format('d/m/Y h:i A') }}
+                                        </small>
+                                    @else
+                                        <span class="badge bg-warning text-dark">Terbuka</span>
+                                    @endif
+
+                                    {{-- Pegawai Analisis SAHAJA. --}}
+                                    @can('tandakanTindakan', $comment)
+                                        <form method="POST"
+                                            action="{{ route('laporan.komentar.tindakan', $comment) }}"
+                                            class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-success py-0"
+                                                title="Tanda bahawa tindakan telah diambil">
+                                                <i class="bi bi-check2"></i> Tindakan Diambil
+                                            </button>
+                                        </form>
+                                    @endcan
+
+                                    @can('batalkanTindakan', $comment)
+                                        <form method="POST"
+                                            action="{{ route('laporan.komentar.tindakan.batal', $comment) }}"
+                                            class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-link text-secondary p-0 m-0"
+                                                title="Batalkan tanda ini jika tersilap tanda">
+                                                Batal tanda
+                                            </button>
+                                        </form>
+                                    @endcan
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
                     <p class="text-muted small mb-0">Tiada komentar lagi.</p>
                 @endif
-            @endif
+            </div>
         </div>
     </div>
-</div>
+@endif

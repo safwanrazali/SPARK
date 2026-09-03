@@ -250,11 +250,11 @@
                 Hanya algoritma yang ditanda dipaparkan dalam kandungan laporan.
             </p>
 
-            {{-- Katalog kini bertingkat: kategori => sub-kumpulan => algoritma.
+            {{-- Katalog bertingkat: primitif => sub-kumpulan => algoritma => metadata.
                  Sub-kumpulan '' bermakna kategori itu tiada sub-kumpulan pada
                  laman AKSA MySEAL, jadi tajuk kecilnya dilangkau. Kunci yang
-                 disimpan kekal "Kategori|Algoritma" — sub-kumpulan TIDAK masuk
-                 ke dalam kunci. --}}
+                 disimpan kekal "Kategori|Algoritma" — sub-kumpulan, pengelasan
+                 MySEAL dan parameter TIDAK masuk ke dalam kunci. --}}
             @foreach (config('kriptografi.kategori_algoritma') as $kategori => $subKumpulan)
                 <div class="border rounded p-3 mb-3">
                     <strong class="d-block mb-2">{{ $kategori }}</strong>
@@ -262,14 +262,15 @@
                         @if ($subTajuk !== '')
                             <div class="text-secondary small mt-3 mb-1">{{ $subTajuk }}</div>
                         @endif
-                        @foreach ($senarai as $algo)
+                        @foreach ($senarai as $algo => $meta)
                             @php
                                 $id = $kategori . '|' . $algo;
                                 $k = md5($id);
                                 $sedia = $data['algoritma'][$id] ?? null;
+                                $myseal = config('kriptografi.myseal_kategori.' . $meta['myseal']);
                             @endphp
                             <div class="row align-items-center mb-2">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="form-check">
                                         <input class="form-check-input algo-toggle" type="checkbox"
                                             id="algo-{{ $k }}" name="algoritma[{{ $k }}][dipilih]"
@@ -279,6 +280,14 @@
                                             value="{{ $id }}">
                                         <label class="form-check-label" for="algo-{{ $k }}">
                                             {{ $algo }}
+                                            {{-- Approved ialah lalai dan tidak dilencanakan:
+                                                 melencanakan 104 baris Approved hanya menambah
+                                                 hingar. Neutral dan Monitored ditandakan supaya
+                                                 pegawai nampak status MySEAL algoritma itu. --}}
+                                            @if ($meta['myseal'] !== 'Approved')
+                                                <span class="badge {{ $myseal['kelas'] }} align-middle"
+                                                    title="Pengelasan AKSA MySEAL 2.1">{{ $myseal['label'] }}</span>
+                                            @endif
                                             @if (in_array($algo, config('kriptografi.tidak_disyorkan')))
                                                 <span class="text-danger" title="Tidak lagi disyorkan">▲</span>
                                             @endif
@@ -286,6 +295,14 @@
                                                 <strong title="Berisiko kuantum">Q</strong>
                                             @endif
                                         </label>
+                                        {{-- Panjang kunci / panjang cerna / varian / set
+                                             parameter seperti laman rasmi. RUJUKAN sahaja:
+                                             borang merekod satu kotak semak dan satu bilangan
+                                             bagi setiap algoritma, jadi varian tidak dipilih
+                                             berasingan. --}}
+                                        @if (!empty($meta['parameter']))
+                                            <div class="form-text ms-4 mt-0">{{ $meta['parameter'] }}</div>
+                                        @endif
                                     </div>
                                 </div>
                                 <div @class([
@@ -303,9 +320,10 @@
                 </div>
             @endforeach
 
-            {{-- Katalog di atas mengandungi algoritma AKSA MySEAL (Approved)
-                 sahaja. Algoritma lapuk (3DES, RC4, MD5, SHA-1) dan klasik
-                 (RSA, DSA, ElGamal) direkodkan di sini, dan tetap dikesan oleh
+            {{-- Katalog di atas meliputi KETIGA-TIGA kategori AKSA MySEAL 2.1
+                 (Approved, Neutral, Monitored). Algoritma yang tiada pada
+                 mana-mana daripada tiga laman rasmi itu — cth. MD5, RC4,
+                 Blowfish — direkodkan di sini, dan tetap dikesan oleh
                  AnalisisInventori::algoritmaLapuk()/algoritmaKuantum(). --}}
             @php $algoLain = \App\Support\BorangAnalisis::algoritmaLain($data['algoritma_lain'] ?? null) ?: [['nama' => '', 'bilangan' => '']]; @endphp
             <label class="form-label">Lain-lain (nyatakan, jika berkaitan)</label>

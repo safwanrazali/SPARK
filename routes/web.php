@@ -9,6 +9,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntitiController;
 use App\Http\Controllers\KemajuanAnalisisController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\LaporanKomentarController;
+use App\Models\LaporanKomentar;
 use App\Http\Controllers\MuatNaikController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\StatusLaporanController;
@@ -216,17 +218,39 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         ->middleware('can:generateReport,analisis')
         ->name('laporan.unduh');
 
-    // Komentar pada laporan — hanya KB dan PPA boleh menambah
-    Route::post('/laporan/inventori/{analisis}/komentar', [LaporanController::class, 'storeComment'])
-        ->middleware('can:view,analisis')
+    /*
+    | Komentar KB/PPA pada laporan — maklum balas + pengakuan, bukan kitaran
+    | kelulusan. Kebenaran DIKUATKUASAKAN DUA LAPIS pada setiap laluan:
+    |
+    |   - akses entiti: `can:view,analisis` bagi laluan yang menerima rekod
+    |     analisis, dan EntityAccessService di dalam LaporanKomentarPolicy
+    |     bagi laluan yang menerima komentar sedia ada;
+    |   - peranan/pemilikan: LaporanKomentarPolicy.
+    |
+    | Tiada laluan bergantung pada butang yang disembunyikan di paparan.
+    */
+    Route::post('/laporan/inventori/{analisis}/komentar', [LaporanKomentarController::class, 'store'])
+        ->middleware(['can:view,analisis', 'can:create,'.LaporanKomentar::class])
         ->name('laporan.komentar.store');
 
-    Route::get('/laporan/inventori/{analisis}/komentar', [LaporanController::class, 'getComments'])
-        ->middleware('can:view,analisis')
-        ->name('laporan.komentar.get');
+    // Menyunting dan memadam: pengarang komentar SAHAJA.
+    Route::patch('/laporan/komentar/{komentar}', [LaporanKomentarController::class, 'update'])
+        ->middleware('can:update,komentar')
+        ->name('laporan.komentar.update');
 
-    Route::delete('/laporan/komentar/{komentar}', [LaporanController::class, 'destroyComment'])
+    Route::delete('/laporan/komentar/{komentar}', [LaporanKomentarController::class, 'destroy'])
+        ->middleware('can:delete,komentar')
         ->name('laporan.komentar.destroy');
+
+    // Tindakan Diambil: Pegawai Analisis SAHAJA. Ia tidak menyentuh status
+    // peringkat 3.1 dan tidak mencetuskan sebarang notifikasi.
+    Route::post('/laporan/komentar/{komentar}/tindakan', [LaporanKomentarController::class, 'tandakanTindakan'])
+        ->middleware('can:tandakanTindakan,komentar')
+        ->name('laporan.komentar.tindakan');
+
+    Route::delete('/laporan/komentar/{komentar}/tindakan', [LaporanKomentarController::class, 'batalkanTindakan'])
+        ->middleware('can:batalkanTindakan,komentar')
+        ->name('laporan.komentar.tindakan.batal');
 
     /*
     |----------------------------------------------------------------------

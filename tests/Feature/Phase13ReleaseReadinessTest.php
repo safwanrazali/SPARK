@@ -410,6 +410,14 @@ class Phase13ReleaseReadinessTest extends TestCase
             'kemajuan.tugaskan',
             'laporan.index',
             'laporan.inventori',
+            // Komentar KB/PPA: maklum balas + pengakuan sahaja. Tiada laluan
+            // kelulusan, penolakan atau pemulangan di sini — hanya tulis,
+            // sunting, padam, dan tanda "Tindakan Diambil" oleh PA.
+            'laporan.komentar.destroy',
+            'laporan.komentar.store',
+            'laporan.komentar.tindakan',
+            'laporan.komentar.tindakan.batal',
+            'laporan.komentar.update',
             'laporan.unduh',
             'login',
             'login.attempt',
