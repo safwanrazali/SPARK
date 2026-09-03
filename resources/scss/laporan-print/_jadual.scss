@@ -1,0 +1,156 @@
+/* ==========================================================================
+   Jadual bergaya templat baharu — kepala biru gelap + lajur Bil. biru
+   --------------------------------------------------------------------------
+   Digunakan buat masa ini oleh seksyen Status Penerimaan dan Kebolehgunaan
+   Data sahaja. Jadual seksyen lain kekal menggunakan `.laporan-rasmi table`
+   (grid #333, kepala #eff1f5) sehingga seksyennya ditukar.
+
+   Sama seperti `.laporan-id`, pemilih berkembar `.laporan-jadual` + kelas anak
+   (0,2,0) supaya ia mengatasi `.laporan-rasmi th/td` (0,1,1). */
+.laporan-seksyen .laporan-jadual {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0 0 12px;
+}
+
+/* Kepala jadual DIULANG pada setiap muka surat apabila jadual terbelah.
+   Tanpa ini, sambungan jadual pada muka surat berikut kehilangan tajuk
+   lajurnya dan menjadi tidak terbaca. */
+.laporan-seksyen .laporan-jadual thead {
+    display: table-header-group;
+}
+
+.laporan-seksyen .laporan-jadual tr {
+    /* Baris tidak boleh terbelah: sel status mengandungi senarai penerangan
+       yang akan terpisah daripada nama komponennya. */
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.laporan-seksyen .laporan-jadual__kepala {
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    border: 1px solid #fff;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.laporan-seksyen .laporan-jadual__bil,
+.laporan-seksyen .laporan-jadual__komponen,
+.laporan-seksyen .laporan-jadual__status {
+    border: 1px solid #fff;
+    padding: 8px 10px;
+    font-size: 11px;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+/* Lebar lajur diletakkan pada <col>, BUKAN pada <td>: dengan
+   `table-layout: fixed` hanya baris pertama (iaitu <thead>) yang menentukan
+   lebar, jadi `width` pada sel <tbody> diabaikan sepenuhnya. */
+.laporan-seksyen .laporan-jadual__lajur-bil {
+    width: 6%;
+}
+
+.laporan-seksyen .laporan-jadual__lajur-komponen {
+    width: 36%;
+}
+
+.laporan-seksyen .laporan-jadual__lajur-status {
+    width: 58%;
+}
+
+/* Lajur Bil. mengekalkan latar biru pada setiap baris, seperti templat. */
+.laporan-seksyen .laporan-jadual__bil {
+    /* Hanya memuatkan "1." — padding mendatar dikurangkan supaya nombor
+       tidak terhimpit dalam lajur yang sempit. */
+    padding-left: 4px;
+    padding-right: 4px;
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Jalur baris berselang-seli pada sel kandungan sahaja — lajur Bil.
+   mengekalkan birunya. */
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(odd)
+    .laporan-jadual__komponen,
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(odd)
+    .laporan-jadual__status {
+    background: $laporan-nilai-bg;
+}
+
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(even)
+    .laporan-jadual__komponen,
+.laporan-seksyen
+    .laporan-jadual
+    tbody
+    tr:nth-child(even)
+    .laporan-jadual__status {
+    background: #f6f7f9;
+}
+
+.laporan-seksyen .laporan-jadual__status-nilai {
+    display: block;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+/* Penerangan tunggal dipaparkan tanpa nombor; hanya dua atau lebih menjadi
+   senarai bernombor roman kecil (i, ii, iii) seperti templat. */
+.laporan-seksyen .laporan-jadual__penerangan {
+    margin: 0;
+    padding-left: 20px;
+    list-style-type: lower-roman;
+}
+
+.laporan-seksyen .laporan-jadual__penerangan li {
+    margin-bottom: 2px;
+}
+
+.laporan-seksyen .laporan-jadual__penerangan li:last-child {
+    margin-bottom: 0;
+}
+
+.laporan-seksyen .laporan-jadual__penerangan-tunggal {
+    margin: 0;
+    text-align: left;
+}
+
+/* Nota "Catatan:" selepas jadual. */
+.laporan-seksyen .laporan-seksyen__catatan-tajuk,
+.laporan-seksyen .laporan-seksyen__ulasan-tajuk,
+.laporan-seksyen .laporan-seksyen__penafian-tajuk {
+    margin: 20px 0 4px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-fail {
+    margin: 4px 0 0;
+    padding-left: 22px;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-fail li {
+    margin-bottom: 3px;
+    text-align: left;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}

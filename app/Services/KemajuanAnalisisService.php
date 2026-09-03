@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Models\WorkflowStatus;
 use App\Support\AliranKerja;
+use App\Support\SyaratPeringkat;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,8 @@ class KemajuanAnalisisService
     public function __construct(
         private readonly AuditTrailService $audit,
         private readonly WorkflowTransitionService $workflow,
+        private readonly KemajuanAnalisisGating $gating,
+        private readonly KemajuanAnalisisRingkasan $ringkasan,
     ) {}
 
     public const ACTION_STAGE_STATUS_CHANGED = 'stage_status_changed';
@@ -158,61 +161,37 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Adakah entiti ini berada dalam aliran kerja, dijawab daripada peringkat
-     * yang telah dimuatkan — versi tanpa query bagi penerimaanSelesai().
-     *
-     * Senarai TIDAK boleh menggunakan "ada baris peringkat" sebagai ganti:
-     * setSemula() mengekalkan semua baris dan hanya mengembalikan statusnya
-     * kepada Belum Mula, jadi entiti yang telah ditetapkan semula oleh Ketua
-     * Bahagian tetap mempunyai baris peringkat. Peringkat 1.1 Selesai ialah
-     * satu-satunya ujian yang betul.
+     * Adakah entiti ini berada dalam aliran kerja (peringkat 1.1 Selesai),
+     * dijawab daripada peringkat yang telah dimuatkan.
      *
      * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function dalamAliranKerja(?Collection $peringkat): bool
     {
-        return $peringkat?->get(AliranKerja::PENERIMAAN_DATA)?->isSelesai() ?? false;
+        return $this->ringkasan->dalamAliranKerja($peringkat);
     }
 
     /**
-     * Adakah entiti ini telah MEMASUKI aliran kerja?
+     * Adakah entiti ini telah MEMASUKI aliran kerja (peringkat 1.1 bermula)?
      *
-     * Soalan yang BERBEZA daripada dalamAliranKerja(), dan perbezaannya
-     * timbul daripada peringkat 1.1 yang berderivasi:
-     *
-     *   telahMemasukiAliran()  ada data peringkat 1.1 — kerja telah bermula
-     *   dalamAliranKerja()     peringkat 1.1 SELESAI — ketiga-tiga medannya ada
-     *
-     * Entiti yang baru direkod Tarikh Terima berada di antara kedua-duanya:
-     * ia sedang dikerjakan, dan peringkat 1.2 mungkin sudah terbuka, tetapi
-     * peringkat 1.1 belum Selesai kerana No. Rujukan masih menunggu PPR.
-     *
-     * Baris peringkat sahaja TIDAK memadai sebagai ujian: setSemula()
-     * mengekalkan baris dan hanya mengosongkan datanya, jadi entiti yang
-     * ditetapkan semula tetap mempunyai baris.
+     * Soalan yang BERBEZA daripada dalamAliranKerja(); lihat
+     * KemajuanAnalisisRingkasan bagi sebab perbezaannya.
      *
      * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function telahMemasukiAliran(?Collection $peringkat): bool
     {
-        $satuSatu = $peringkat?->get(AliranKerja::PENERIMAAN_DATA);
-
-        return $satuSatu !== null && ! $satuSatu->isBelumMula();
+        return $this->ringkasan->telahMemasukiAliran($peringkat);
     }
 
     /**
      * Adakah "Status Laporan" berkenaan bagi entiti ini?
      *
-     * Laporan Analisis Inventori Kriptografi baru bermakna setelah peringkat
-     * 3.1 Selesai. Memaparkan statusnya lebih awal membacanya sebagai kerja
-     * yang tertunggak — "Belum Lengkap" pada peringkat 2 menuduh Pegawai
-     * Analisis kerana borang yang gilirannya belum pun tiba.
-     *
      * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function statusLaporanBerkenaan(?Collection $peringkat): bool
     {
-        return $peringkat?->get(AliranKerja::ANALISIS_INVENTORI)?->isSelesai() ?? false;
+        return $this->ringkasan->statusLaporanBerkenaan($peringkat);
     }
 
     /**
@@ -236,58 +215,15 @@ class KemajuanAnalisisService
     /**
      * Bolehkah peringkat ini ditetapkan kepada $status sekarang?
      *
-     * Dua peraturan berbeza, kerana kerja boleh bertindih walaupun penyiapan
-     * tidak boleh:
-     *
-     * - Menandakan SELESAI menuntut pendahulunya telah Selesai. Inilah yang
-     *   menghalang peringkat dilangkau.
-     * - Menandakan DALAM PROSES hanya menuntut pendahulunya telah bermula.
-     *
-     * Peringkat fasa akan datang ditolak terus: modulnya belum dibina, jadi
-     * tiada tindakan padanya yang boleh bermakna.
+     * Peraturannya dikuatkuasakan oleh KemajuanAnalisisGating; peringkat
+     * dimuatkan di sini supaya kelas itu tidak perlu menyoal sendiri.
      */
     public function ralatPeringkat(
         string $agencyCode,
         string $stage,
         string $status = WorkflowStageStatus::SELESAI,
     ): ?string {
-        if (! AliranKerja::wujud($stage)) {
-            return sprintf('Peringkat %s tidak sah.', $stage);
-        }
-
-        if (AliranKerja::adalahAkanDatang($stage)) {
-            return sprintf(
-                'Peringkat %s belum dibina. Ia dikhaskan untuk fasa akan datang.',
-                AliranKerja::labelPenuh($stage),
-            );
-        }
-
-        $peringkat = $this->peringkat($agencyCode);
-
-        if ($peringkat->isEmpty()) {
-            return 'Entiti ini belum didaftarkan dalam Kemajuan Analisis Entiti.';
-        }
-
-        $sebelumKunci = AliranKerja::sebelum($stage);
-
-        if ($sebelumKunci === null) {
-            return null;
-        }
-
-        $sebelum = $peringkat->get($sebelumKunci);
-
-        if ($status === WorkflowStageStatus::SELESAI) {
-            return $this->ralatPendahulu($agencyCode, $sebelum, $sebelumKunci);
-        }
-
-        if ($sebelum === null || $sebelum->isBelumMula()) {
-            return sprintf(
-                'Peringkat %s mesti bermula terlebih dahulu.',
-                AliranKerja::labelPenuh($sebelumKunci),
-            );
-        }
-
-        return null;
+        return $this->gating->ralat($agencyCode, $this->peringkat($agencyCode), $stage, $status);
     }
 
     /**
@@ -299,94 +235,13 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Adakah pendahulu membenarkan peringkat berikutnya dimulakan?
-     *
-     * DUA peraturan, dan perbezaannya disengajakan:
-     *
-     * - Peringkat dengan `syarat_lanjut`: cukup medan tersebut ADA. Peringkat
-     *   itu tidak semestinya Selesai. Peringkat 1.1 memerlukannya kerana No.
-     *   Rujukan miliknya dimasukkan oleh PPR, dan kerja peringkat 1.2 tidak
-     *   sepatutnya tertahan menunggu pegawai lain.
-     * - Peringkat lain: peraturan lalai — mesti benar-benar Selesai.
-     */
-    private function ralatPendahulu(string $agencyCode, ?WorkflowStageStatus $sebelum, string $sebelumKunci): ?string
-    {
-        $syarat = AliranKerja::syaratLanjut($sebelumKunci);
-
-        if ($syarat === []) {
-            if ($sebelum === null || ! $sebelum->isSelesai()) {
-                return sprintf('Peringkat %s mesti Selesai terlebih dahulu.', AliranKerja::labelPenuh($sebelumKunci));
-            }
-
-            return $this->ralatPenugasan($agencyCode, $sebelumKunci);
-        }
-
-        $tiada = $this->medanLanjutBelumDirekod($sebelum, $sebelumKunci);
-
-        if ($tiada !== []) {
-            return sprintf(
-                'Peringkat %s memerlukan %s terlebih dahulu.',
-                AliranKerja::labelPenuh($sebelumKunci),
-                implode(' dan ', array_map(
-                    fn (string $lajur) => AliranKerja::labelMedan($sebelumKunci, $lajur),
-                    $tiada,
-                )),
-            );
-        }
-
-        return $this->ralatPenugasan($agencyCode, $sebelumKunci);
-    }
-
-    /**
-     * Peringkat yang menuntut penugasan tidak boleh membuka peringkat
-     * seterusnya sehingga seorang Pegawai Analisis ditugaskan.
-     *
-     * `entiti_assignment` disoal terus dan bukan melalui EntityAssignmentService
-     * supaya servis ini tidak bergantung kepada servis penugasan hanya untuk
-     * satu soalan ya/tidak.
-     */
-    private function ralatPenugasan(string $agencyCode, string $sebelumKunci): ?string
-    {
-        if (! AliranKerja::perluPenugasanUntukLanjut($sebelumKunci)) {
-            return null;
-        }
-
-        $ada = EntitiAssignment::query()
-            ->forAgency($agencyCode)
-            ->active()
-            ->exists();
-
-        return $ada ? null : sprintf(
-            'Peringkat %s memerlukan Pegawai Analisis ditugaskan terlebih dahulu.',
-            AliranKerja::labelPenuh($sebelumKunci),
-        );
-    }
-
-    /**
-     * Medan dianggap "tiada" apabila null atau rentetan kosong.
-     */
-    private function kosong(mixed $nilai): bool
-    {
-        return $nilai === null || (is_string($nilai) && trim($nilai) === '');
-    }
-
-    /**
      * Medan `syarat_selesai` yang MASIH TIADA pada peringkat ini.
      *
      * @return array<int, string>
      */
     public function medanBelumLengkap(?WorkflowStageStatus $rekod, string $stage): array
     {
-        $syarat = AliranKerja::syaratSelesai($stage);
-
-        if ($syarat === [] || $rekod === null) {
-            return $syarat;
-        }
-
-        return array_values(array_filter(
-            $syarat,
-            fn (string $lajur) => $this->kosong($rekod->{$lajur}),
-        ));
+        return SyaratPeringkat::medanBelumLengkap($rekod, $stage);
     }
 
     /**
@@ -428,62 +283,26 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Medan `syarat_lanjut` peringkat ini yang MASIH TIADA.
+     * Medan `syarat_lanjut` peringkat ini yang MASIH TIADA — medan yang mesti
+     * ADA sebelum peringkat SETERUSNYA boleh dimulakan.
      *
-     * "Syarat lanjut" ialah medan yang mesti ADA sebelum peringkat SETERUSNYA
-     * boleh dimulakan — lebih longgar daripada `syarat_selesai`, kerana No.
-     * Rujukan milik PPR tidak sepatutnya menahan kerja peringkat berikutnya.
-     *
-     * Awam kerana papan pemuka bertanya soalan yang SAMA secara pukal:
-     * "entiti mana yang telah merekodkan medan peringkat ini?". Menyalin
-     * peraturannya ke dalam DashboardStatistikService akan mewujudkan takrifan
-     * kedua yang boleh terpesong daripada yang menguatkuasakan aliran kerja.
+     * Awam kerana papan pemuka bertanya soalan yang SAMA secara pukal.
      *
      * @return array<int, string>
      */
     public function medanLanjutBelumDirekod(?WorkflowStageStatus $rekod, string $stage): array
     {
-        $syarat = AliranKerja::syaratLanjut($stage);
-
-        if ($syarat === [] || $rekod === null) {
-            return $syarat;
-        }
-
-        return array_values(array_filter(
-            $syarat,
-            fn (string $lajur) => $this->kosong($rekod->{$lajur}),
-        ));
+        return SyaratPeringkat::medanLanjutBelumDirekod($rekod, $stage);
     }
 
     /**
      * Medan peringkat yang MASIH TIADA sebelum No. Rujukannya boleh direkod.
      *
-     * Peraturannya seragam merentas peringkat: No. Rujukan sesuatu borang
-     * hanya bermakna setelah borang itu sendiri direkod. PPR merekod nombor
-     * rujukan borang FIZIKAL — dan borang itu belum wujud sehingga pegawai
-     * peringkat berkenaan mengisi medannya.
-     *
-     * Medan yang dikira ialah medan tangkapan peringkat itu; No. Rujukan
-     * sendiri tidak termasuk (ia bukan syarat kepada dirinya).
-     *
      * @return array<int, string>
      */
     public function medanSebelumRujukan(?WorkflowStageStatus $rekod, string $stage): array
     {
-        if (AliranKerja::labelRujukan($stage) === null) {
-            return [];
-        }
-
-        $medan = array_keys(AliranKerja::medan($stage));
-
-        if ($rekod === null) {
-            return $medan;
-        }
-
-        return array_values(array_filter(
-            $medan,
-            fn (string $lajur) => $this->kosong($rekod->{$lajur}),
-        ));
+        return SyaratPeringkat::medanSebelumRujukan($rekod, $stage);
     }
 
     /**
@@ -491,25 +310,15 @@ class KemajuanAnalisisService
      */
     public function rujukanTersedia(?WorkflowStageStatus $rekod, string $stage): bool
     {
-        return AliranKerja::labelRujukan($stage) !== null
-            && $this->medanSebelumRujukan($rekod, $stage) === [];
+        return SyaratPeringkat::rujukanTersedia($rekod, $stage);
     }
 
     /**
      * Adakah penugasan Pegawai Analisis masih tertunggak bagi peringkat ini?
-     *
-     * Hanya bermakna pada peringkat yang menuntutnya (1.2).
      */
     private function penugasanTertunggak(string $agencyCode, string $stage): bool
     {
-        if (! AliranKerja::perluPenugasanUntukSelesai($stage)) {
-            return false;
-        }
-
-        return ! EntitiAssignment::query()
-            ->forAgency($agencyCode)
-            ->active()
-            ->exists();
+        return $this->gating->penugasanTertunggak($agencyCode, $stage);
     }
 
     /**
@@ -1023,29 +832,14 @@ class KemajuanAnalisisService
     }
 
     /**
-     * Versi tanpa query — untuk senarai yang telah memuatkan peringkatnya.
+     * Versi tanpa query bagi keseluruhan() — untuk senarai yang telah
+     * memuatkan peringkatnya.
      *
      * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function keseluruhanDaripada(?Collection $peringkat): string
     {
-        if ($peringkat === null || $peringkat->isEmpty()) {
-            return self::KESELURUHAN_BELUM_MULA;
-        }
-
-        $semasa = $this->fasaSemasaSahaja($peringkat);
-
-        $jumlah = count(AliranKerja::semasa());
-        $selesai = $semasa->where('status', WorkflowStageStatus::SELESAI)->count();
-
-        if ($selesai >= $jumlah) {
-            return self::KESELURUHAN_SIAP;
-        }
-
-        $adaKemajuan = $selesai > 0
-            || $semasa->where('status', WorkflowStageStatus::DALAM_PROSES)->isNotEmpty();
-
-        return $adaKemajuan ? self::KESELURUHAN_DALAM_PROSES : self::KESELURUHAN_BELUM_MULA;
+        return $this->ringkasan->keseluruhanDaripada($peringkat);
     }
 
     /**
@@ -1055,9 +849,7 @@ class KemajuanAnalisisService
      */
     public function bilanganSelesai(?Collection $peringkat): int
     {
-        return $peringkat === null
-            ? 0
-            : $this->fasaSemasaSahaja($peringkat)->where('status', WorkflowStageStatus::SELESAI)->count();
+        return $this->ringkasan->bilanganSelesai($peringkat);
     }
 
     /**
@@ -1066,28 +858,17 @@ class KemajuanAnalisisService
      */
     public function jumlahPeringkatSemasa(): int
     {
-        return count(AliranKerja::semasa());
+        return $this->ringkasan->jumlahPeringkatSemasa();
     }
 
     /**
-     * Peringkat yang sedang dikerjakan — peringkat fasa semasa yang pertama
-     * belum Selesai, atau peringkat terakhir fasa ini jika semuanya selesai.
+     * Peringkat yang sedang dikerjakan.
      *
      * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
     public function peringkatSemasa(?Collection $peringkat): string
     {
-        if ($peringkat === null || $peringkat->isEmpty()) {
-            return AliranKerja::PERTAMA;
-        }
-
-        foreach (AliranKerja::semasa() as $stage) {
-            if (! ($peringkat->get($stage)?->isSelesai() ?? false)) {
-                return $stage;
-            }
-        }
-
-        return AliranKerja::TERAKHIR_SEMASA;
+        return $this->ringkasan->peringkatSemasa($peringkat);
     }
 
     /**
@@ -1095,10 +876,7 @@ class KemajuanAnalisisService
      */
     public function badgeKeseluruhan(string $keseluruhan): string
     {
-        return [
-            self::KESELURUHAN_SIAP => 'status-rendah',
-            self::KESELURUHAN_DALAM_PROSES => 'status-sederhana',
-        ][$keseluruhan] ?? 'status-tinggi';
+        return $this->ringkasan->badgeKeseluruhan($keseluruhan);
     }
 
     /**
@@ -1150,21 +928,6 @@ class KemajuanAnalisisService
                 ['reason' => $reason, 'dikunci' => false],
             );
         });
-    }
-
-    /**
-     * Peringkat fasa semasa sahaja.
-     *
-     * @param  Collection<string, WorkflowStageStatus>  $peringkat
-     * @return Collection<string, WorkflowStageStatus>
-     */
-    private function fasaSemasaSahaja(Collection $peringkat): Collection
-    {
-        $semasa = AliranKerja::semasa();
-
-        return $peringkat->filter(
-            fn (WorkflowStageStatus $p): bool => in_array($p->stage, $semasa, true)
-        );
     }
 
     /**

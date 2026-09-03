@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\EntityAssignmentService;
 use App\Services\KemajuanAnalisisService;
 use App\Support\AliranKerja;
+use App\Support\PeraturanPeringkat;
 use App\Support\SektorDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -60,9 +61,9 @@ class KemajuanAnalisisController extends Controller
         $this->benarkanPeringkat($stage);
 
         $data = $request->validate(
-            $this->peraturanMedan($stage),
+            PeraturanPeringkat::medan($stage),
             [],
-            $this->namaMedan($stage),
+            PeraturanPeringkat::nama($stage),
         );
 
         $this->pastikanDalamAliran($entiti, $stage);
@@ -106,9 +107,9 @@ class KemajuanAnalisisController extends Controller
         ));
 
         $data = $request->validate(
-            $this->peraturanMedan($stage),
+            PeraturanPeringkat::medan($stage),
             [],
-            $this->namaMedan($stage),
+            PeraturanPeringkat::nama($stage),
         );
 
         $this->pastikanDalamAliran($entiti, $stage);
@@ -264,54 +265,6 @@ class KemajuanAnalisisController extends Controller
         abort_if($gate === null, 404);
 
         Gate::authorize($gate);
-    }
-
-    /**
-     * Peraturan pengesahan bagi medan peringkat ini.
-     *
-     * Hanya medan yang ditakrifkan bagi peringkat berkenaan diterima; borang
-     * tidak boleh menulis medan peringkat lain walaupun ia dihantar.
-     *
-     * `status_borang` disahkan terhadap perbendaharaan rasminya
-     * (AliranKerja::STATUS_BORANG), jadi nilai di luar senarai itu ditolak
-     * walaupun borang dihantar terus tanpa melalui antara muka.
-     *
-     * @return array<string, array<int, mixed>>
-     */
-    private function peraturanMedan(string $stage): array
-    {
-        $peraturan = [];
-
-        foreach (array_keys(AliranKerja::medan($stage)) as $medan) {
-            $peraturan[$medan] = match (true) {
-                in_array($medan, AliranKerja::MEDAN_TARIKH, true) => ['nullable', 'date'],
-                $medan === AliranKerja::MEDAN_STATUS_BORANG => [
-                    'nullable',
-                    Rule::in(AliranKerja::statusBorang($stage)),
-                ],
-                default => ['nullable', 'string', 'max:255'],
-            };
-        }
-
-        // Tarikh Tamat tidak boleh mendahului Tarikh Mula — satu-satunya
-        // peraturan silang medan, dan ia datang daripada makna medan itu
-        // sendiri, bukan daripada proses perniagaan yang belum ditetapkan.
-        if (isset($peraturan[AliranKerja::MEDAN_TARIKH_TAMAT], $peraturan[AliranKerja::MEDAN_TARIKH_MULA])) {
-            $peraturan[AliranKerja::MEDAN_TARIKH_TAMAT][] = 'after_or_equal:'.AliranKerja::MEDAN_TARIKH_MULA;
-        }
-
-        return $peraturan;
-    }
-
-    /**
-     * Label medan untuk mesej ralat — diambil daripada takrifan aliran kerja
-     * supaya borang dan mesej ralat menggunakan perkataan yang sama.
-     *
-     * @return array<string, string>
-     */
-    private function namaMedan(string $stage): array
-    {
-        return AliranKerja::medan($stage);
     }
 
     /**

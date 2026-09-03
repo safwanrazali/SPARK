@@ -1,0 +1,96 @@
+/* ==========================================================================
+   Pengenalan laporan — sepanduk tajuk + jadual maklumat laporan
+   --------------------------------------------------------------------------
+   Blok ini mendahului bahagian TUJUAN dan MESTI kekal di dalam kawasan
+   kandungan: ia tidak menyentuh kepala/kaki halaman, yang dilukis di dalam
+   kotak margin @page (lihat .page-header-strip / .page-footer-strip di atas).
+
+   SETIAP pemilih di bawah SENGAJA berkembar `.laporan-id` + kelas anak
+   (kekhususan 0,2,0). `.laporan-rasmi h1/p/table/th/td` di atas berkekhususan
+   0,1,1 dan akan MENGATASI kelas tunggal (0,1,0), jadi menanggalkan awalan
+   `.laporan-id` akan meruntuhkan sepanduk kepada gaya jadual laporan biasa
+   (sempadan #333, latar putih, teks justified) tanpa sebarang ralat binaan.
+
+   Ukuran di sini dalam px untuk kertas A4. Padanan rem untuk skrin ada dalam
+   laporan-pratonton.scss, dan salinan heks mentah untuk PDF ada dalam
+   resources/views/laporan/pdf/body.blade.php. Kekalkan ketiga-tiganya
+   selaras. */
+.laporan-id .laporan-id__banner {
+    background: $laporan-biru;
+    padding: 16px 20px;
+    margin: 0 0 14px;
+    text-align: center;
+
+    /* Sepanduk tiga baris ini tidak bermakna jika terbelah dua muka surat. */
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.laporan-id .laporan-id__tajuk,
+.laporan-id .laporan-id__baris {
+    margin: 0;
+    color: $laporan-biru-teks;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0.03em;
+    line-height: 1.35;
+
+    /* Nama sektor/entiti yang panjang mesti membalut, bukan melimpah keluar
+       daripada sepanduk biru. */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-id .laporan-id__tajuk {
+    font-size: 17px;
+}
+
+.laporan-id .laporan-id__baris {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.laporan-id .laporan-id__jadual {
+    width: 100%;
+
+    /* `fixed` mengunci lebar lajur pada 32%/68% supaya nilai yang panjang
+       (cth. status laporan) membalut dalam sel dan tidak meregangkan jadual
+       melebihi lebar kandungan A4. */
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0 0 18px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.laporan-id .laporan-id__label,
+.laporan-id .laporan-id__nilai {
+    /* Sempadan putih, bukan #333: templat rasmi memisahkan sel dengan jurang
+       putih nipis, bukan grid hitam seperti jadual laporan yang lain. */
+    border: 1px solid #fff;
+    padding: 7px 10px;
+
+    /* Tiada height tetap — sel meninggi mengikut teks supaya nilai panjang
+       tidak terpotong. */
+    vertical-align: middle;
+    font-size: 11px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-id .laporan-id__label {
+    width: 32%;
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.laporan-id .laporan-id__nilai {
+    background: $laporan-nilai-bg;
+    color: $laporan-text;
+    font-weight: 400;
+}

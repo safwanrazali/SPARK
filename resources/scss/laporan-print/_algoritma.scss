@@ -1,0 +1,191 @@
+/* ==========================================================================
+   Jadual algoritma — 4 lajur dengan kategori dikumpulkan melalui rowspan
+   --------------------------------------------------------------------------
+   Digunakan oleh subseksyen "2. Algoritma Kriptografi" sahaja.
+
+   Sel Bil. dan Kategori merentangi semua algoritma dalam kumpulannya
+   (rowspan), jadi kategori tidak berulang pada setiap baris manakala setiap
+   algoritma mengekalkan lajur Bilangan tersendiri — susunan yang tidak boleh
+   dicapai dengan satu baris per kategori tanpa nombor tersasar apabila nama
+   algoritma membalut ke baris kedua. */
+.laporan-seksyen .laporan-jadual-algo,
+.laporan-seksyen .laporan-jadual-protokol,
+.laporan-seksyen .laporan-jadual-pustaka,
+.laporan-seksyen .laporan-jadual-vendor {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0 0 12px;
+}
+
+.laporan-seksyen .laporan-jadual-algo__lajur-bil {
+    width: 7%;
+}
+
+.laporan-seksyen .laporan-jadual-algo__lajur-kategori {
+    width: 30%;
+}
+
+.laporan-seksyen .laporan-jadual-algo__lajur-algoritma {
+    width: 41%;
+}
+
+.laporan-seksyen .laporan-jadual-algo__lajur-bilangan {
+    width: 22%;
+}
+
+/* Kepala diulang pada setiap muka surat apabila jadual terbelah. */
+.laporan-seksyen .laporan-jadual-algo thead,
+.laporan-seksyen .laporan-jadual-protokol thead,
+.laporan-seksyen .laporan-jadual-pustaka thead,
+.laporan-seksyen .laporan-jadual-vendor thead {
+    display: table-header-group;
+}
+
+/* Baris tunggal tidak dibelah; kumpulan rowspan DIBENARKAN terbelah antara
+   muka surat kerana satu kategori boleh mempunyai enam algoritma dan
+   mengunci keseluruhan kumpulan akan meninggalkan ruang kosong besar. */
+.laporan-seksyen .laporan-jadual-algo tr,
+.laporan-seksyen .laporan-jadual-protokol tr,
+.laporan-seksyen .laporan-jadual-pustaka tr,
+.laporan-seksyen .laporan-jadual-vendor tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.laporan-seksyen .laporan-jadual-algo th,
+.laporan-seksyen .laporan-jadual-algo td,
+.laporan-seksyen .laporan-jadual-protokol th,
+.laporan-seksyen .laporan-jadual-protokol td,
+.laporan-seksyen .laporan-jadual-pustaka th,
+.laporan-seksyen .laporan-jadual-pustaka td,
+.laporan-seksyen .laporan-jadual-vendor th,
+.laporan-seksyen .laporan-jadual-vendor td {
+    border: 1px solid #fff;
+    padding: 7px 10px;
+    font-size: 11px;
+
+    /* Tiada height tetap — sel meninggi mengikut teks. */
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen .laporan-jadual-algo th,
+.laporan-seksyen .laporan-jadual-protokol th,
+.laporan-seksyen .laporan-jadual-pustaka th,
+.laporan-seksyen .laporan-jadual-vendor th {
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.laporan-seksyen .laporan-jadual-algo td,
+.laporan-seksyen .laporan-jadual-protokol td,
+.laporan-seksyen .laporan-jadual-pustaka td,
+.laporan-seksyen .laporan-jadual-vendor td {
+    background: $laporan-nilai-bg;
+    color: $laporan-text;
+}
+
+.laporan-seksyen .laporan-jadual-algo__bil,
+.laporan-seksyen .laporan-jadual-algo__bilangan {
+    text-align: center;
+}
+
+.laporan-seksyen .laporan-jadual-algo__bil {
+    font-weight: 700;
+}
+
+/* Angka romawi dipisahkan supaya nama algoritma yang membalut sejajar. */
+.laporan-seksyen .laporan-jadual-algo__label {
+    display: inline-block;
+    min-width: 20px;
+}
+
+/* Jadual protokol berkongsi rupa jadual algoritma (pemilihnya ditambah pada
+   peraturan di atas); hanya lebar lajur dan penjajaran versi berbeza. */
+.laporan-seksyen .laporan-jadual-protokol__lajur-bil {
+    width: 8%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__lajur-nama {
+    width: 34%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__lajur-versi {
+    width: 26%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__lajur-bilangan {
+    width: 32%;
+}
+
+.laporan-seksyen .laporan-jadual-protokol__versi {
+    text-align: center;
+}
+
+/* Jadual pustaka berkongsi rupa dan bentuk lajur jadual protokol; pemilihnya
+   ditambah pada peraturan di atas dan hanya lebarnya diisytiharkan di sini. */
+.laporan-seksyen .laporan-jadual-pustaka__lajur-bil {
+    width: 8%;
+}
+
+.laporan-seksyen .laporan-jadual-pustaka__lajur-nama {
+    width: 34%;
+}
+
+.laporan-seksyen .laporan-jadual-pustaka__lajur-versi {
+    width: 26%;
+}
+
+.laporan-seksyen .laporan-jadual-pustaka__lajur-bilangan {
+    width: 32%;
+}
+
+/* Jadual vendor menggunakan pengumpulan rowspan yang sama seperti jadual
+   algoritma: satu vendor boleh mempunyai beberapa produk. Pemilihnya ditambah
+   pada peraturan di atas; hanya lebar lajur diisytiharkan di sini. */
+.laporan-seksyen .laporan-jadual-vendor__lajur-bil {
+    width: 7%;
+}
+
+.laporan-seksyen .laporan-jadual-vendor__lajur-nama {
+    width: 30%;
+}
+
+.laporan-seksyen .laporan-jadual-vendor__lajur-produk {
+    width: 41%;
+}
+
+.laporan-seksyen .laporan-jadual-vendor__lajur-bilangan {
+    width: 22%;
+}
+
+/* Senarai bernombor "Cadangan Tindakan Susulan".
+   Setiap tindakan boleh menjadi perenggan panjang, jadi item DIBENARKAN
+   terbelah antara muka surat; orphans/widows menghalang baris tunggal
+   tergantung. `break-inside: avoid` akan menolak tindakan panjang secara
+   keseluruhan ke muka surat berikut dan meninggalkan ruang kosong besar. */
+.laporan-seksyen .laporan-seksyen__senarai-tindakan {
+    margin: 0;
+    padding-left: 26px;
+    list-style-type: decimal;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-tindakan li {
+    margin-bottom: 8px;
+    padding-left: 4px;
+    text-align: justify;
+    line-height: 1.55;
+    orphans: 2;
+    widows: 2;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-tindakan li:last-child {
+    margin-bottom: 0;
+}

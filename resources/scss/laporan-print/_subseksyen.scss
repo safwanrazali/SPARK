@@ -1,0 +1,127 @@
+/* ==========================================================================
+   Subseksyen bernombor + jadual ringkas (3 lajur, berpusat)
+   --------------------------------------------------------------------------
+   Digunakan buat masa ini oleh subseksyen "1. Profil Sistem dan Aset" sahaja.
+   Jadual seksyen lain kekal pada `.laporan-rasmi table` sehingga ditukar.
+
+   BERBEZA daripada `.laporan-jadual` (seksyen Status Penerimaan): di sana lajur
+   Bil. berlatar biru pada setiap baris. Templat menunjukkan jadual profil
+   dengan lajur Bil. mengikut jalur baris biasa, jadi ia blok tersendiri dan
+   BUKAN pengubah suai — mengubah `.laporan-jadual__bil` akan mengecat semula
+   jadual seksyen 2. */
+.laporan-seksyen .laporan-seksyen__subtajuk {
+    margin: 20px 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+
+    /* Tajuk subseksyen tidak boleh tertinggal di kaki halaman tanpa jadualnya. */
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+/* Penomboran halaman mengikut templat rujukan 11 muka surat. Pasangan blok ini
+   ada dalam <style> resources/views/laporan/pdf/body.blade.php — kekalkan
+   kedua-duanya selaras.
+
+   Sifat page-break-* hanya berkesan pada media berhalaman (penjanaan PDF oleh
+   Chrome/Browsershot, atau cetakan pelayar). Pada paparan WebView yang
+   berterusan ia diabaikan sepenuhnya, jadi tiada jurang kosong terhasil.
+
+   Seksyen yang bermula pada halaman baharu: Status Penerimaan, Ringkasan
+   (membawa subseksyen 1 bersamanya), 2 Algoritma, 3 Protokol, 4 Pustaka,
+   5 Vendor, Cadangan, Kesimpulan, Pengesahan.
+
+   SENGAJA TIADA pemisah: Tujuan (kekal bersama blok pengenalan pada halaman 1),
+   subseksyen 1 Profil (kekal bersama tajuk Ringkasan) dan Penafian (berada
+   dalam seksyen Pengesahan). Kandungan yang melebihi satu halaman dibiarkan
+   mengalir ke halaman berikutnya secara semula jadi. */
+.laporan-seksyen.laporan-seksyen--mula-halaman,
+.laporan-seksyen .laporan-seksyen__subtajuk--mula-halaman {
+    page-break-before: always;
+    break-before: page;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas {
+    /* Lebih sempit daripada lebar kandungan dan berpusat, seperti templat. */
+    width: 68%;
+    margin: 0 auto 12px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+/* Lebar lajur pada <col>: dengan `table-layout: fixed`, hanya baris pertama
+   yang menentukan lebar, jadi `width` pada <td> tidak memberi kesan. */
+.laporan-seksyen .laporan-jadual-ringkas__lajur-bil {
+    width: 14%;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas__lajur-perkara {
+    width: 56%;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas__lajur-jumlah {
+    width: 30%;
+}
+
+/* Kepala diulang apabila jadual terbelah antara muka surat. */
+.laporan-seksyen .laporan-jadual-ringkas thead {
+    display: table-header-group;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas th,
+.laporan-seksyen .laporan-jadual-ringkas td {
+    border: 1px solid #fff;
+    padding: 7px 10px;
+    font-size: 11px;
+
+    /* Tiada height tetap — baris meninggi mengikut teks supaya nama kategori
+       yang panjang tidak terpotong. */
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas th {
+    background: $laporan-biru;
+    color: $laporan-biru-teks;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas td {
+    background: $laporan-nilai-bg;
+    color: $laporan-text;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas tbody tr:nth-child(even) td {
+    background: #f6f7f9;
+}
+
+.laporan-seksyen .laporan-jadual-ringkas__bil,
+.laporan-seksyen .laporan-jadual-ringkas__jumlah {
+    text-align: center;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-ulasan {
+    margin: 4px 0 0;
+    padding-left: 22px;
+}
+
+.laporan-seksyen .laporan-seksyen__senarai-ulasan li {
+    margin-bottom: 3px;
+    text-align: left;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.laporan-seksyen ul.laporan-seksyen__senarai-ulasan {
+    list-style-type: disc;
+}
