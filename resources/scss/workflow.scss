@@ -46,9 +46,19 @@
 }
 
 .workflow-utama__label {
-    // Tajuk dilekatkan ke BAWAH baris pertama, jadi ia sentiasa duduk
-    // rapat di atas bulatannya walaupun tajuk kumpulan lain lebih panjang.
-    align-self: end;
+    // Tajuk dilekatkan ke ATAS baris pertama supaya lencana nombor 1-5
+    // berkongsi SATU garis.
+    //
+    // Sebelum ini tajuk dilekatkan ke bawah (align-self: end). Bahagian
+    // bawah setiap tajuk memang sejajar, tetapi tajuk mempunyai bilangan
+    // baris berbeza (1 hingga 3), jadi barisan PERTAMA — iaitu baris yang
+    // membawa nombor peringkat — jatuh pada lima paras berlainan dan
+    // membentuk tangga setinggi ~51px merentas stepper.
+    //
+    // Nombor peringkat ialah penanda yang dibaca dahulu, jadi ia yang
+    // mesti sejajar. Baris bulatan di bawah sudah sejajar dengan
+    // sendirinya kerana ia baris grid yang berasingan.
+    align-self: start;
     padding: 0 0.35rem;
     color: $text;
     font-size: 0.82rem;
