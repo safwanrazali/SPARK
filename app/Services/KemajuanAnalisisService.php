@@ -321,9 +321,7 @@ class KemajuanAnalisisService
             return $this->ralatPenugasan($agencyCode, $sebelumKunci);
         }
 
-        $tiada = $sebelum === null
-            ? $syarat
-            : array_values(array_filter($syarat, fn (string $lajur) => $this->kosong($sebelum->{$lajur})));
+        $tiada = $this->medanLanjutBelumDirekod($sebelum, $sebelumKunci);
 
         if ($tiada !== []) {
             return sprintf(
@@ -380,6 +378,34 @@ class KemajuanAnalisisService
     public function medanBelumLengkap(?WorkflowStageStatus $rekod, string $stage): array
     {
         $syarat = AliranKerja::syaratSelesai($stage);
+
+        if ($syarat === [] || $rekod === null) {
+            return $syarat;
+        }
+
+        return array_values(array_filter(
+            $syarat,
+            fn (string $lajur) => $this->kosong($rekod->{$lajur}),
+        ));
+    }
+
+    /**
+     * Medan `syarat_lanjut` peringkat ini yang MASIH TIADA.
+     *
+     * "Syarat lanjut" ialah medan yang mesti ADA sebelum peringkat SETERUSNYA
+     * boleh dimulakan — lebih longgar daripada `syarat_selesai`, kerana No.
+     * Rujukan milik PPR tidak sepatutnya menahan kerja peringkat berikutnya.
+     *
+     * Awam kerana papan pemuka bertanya soalan yang SAMA secara pukal:
+     * "entiti mana yang telah merekodkan medan peringkat ini?". Menyalin
+     * peraturannya ke dalam DashboardStatistikService akan mewujudkan takrifan
+     * kedua yang boleh terpesong daripada yang menguatkuasakan aliran kerja.
+     *
+     * @return array<int, string>
+     */
+    public function medanLanjutBelumDirekod(?WorkflowStageStatus $rekod, string $stage): array
+    {
+        $syarat = AliranKerja::syaratLanjut($stage);
 
         if ($syarat === [] || $rekod === null) {
             return $syarat;

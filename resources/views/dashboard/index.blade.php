@@ -54,16 +54,29 @@
     </div>
 
     {{--
-        Baris metrik 1/2 — liputan dan kemajuan entiti.
+        Baris metrik 1/2 — corong entiti.
+
+            SEMUA ENTITI
+                |
+                v
+            ENTITI DITERIMA          (Buku Kerja MPQ diterima)
+                |
+                +--> ENTITI DALAM PROSES
+                +--> ENTITI SELESAI
 
         Dua penyebut berbeza, dan setiap kad menyatakan miliknya dalam nota
         di bawah nilai:
 
-        - Selesai Pendaftaran  : keseluruhan entiti dalam senarai induk —
+        - Entiti Diterima      : keseluruhan entiti dalam senarai induk —
                                  ini soalan LIPUTAN.
-        - Dalam Proses/Selesai : entiti yang telah selesai pendaftaran —
-                                 ini soalan KEMAJUAN, dan entiti yang belum
-                                 melepasi peringkat 1.1 belum boleh bergerak.
+        - Dalam Proses/Selesai : entiti yang telah DITERIMA — ini soalan
+                                 KEMAJUAN, dan entiti yang Buku Kerja MPQ-nya
+                                 belum diterima belum boleh bergerak.
+
+        Kad "Entiti Selesai" di sini bermaksud peringkat 5 Selesai. Ia BUKAN
+        ukuran yang sama dengan carta "Kemajuan Keseluruhan" di bawah, yang
+        melaporkan Kemajuan Analisis fasa semasa (1.1–3.1); kedua-duanya
+        sengaja dikekalkan kerana ia menjawab soalan yang berlainan.
 
         Penyebut sifar memberi 0%, bukan NaN.
     --}}
@@ -87,21 +100,24 @@
             <div class="metric-card__bar is-cyan"></div>
         </div>
 
-        {{-- Peringkat 1.1 aliran kerja — pintu masuk kepada semua yang lain. --}}
+        {{-- Medan `syarat_lanjut` peringkat 1.1 — Tarikh Terima + Status Borang
+             Penerimaan Data — direkod oleh KB atau PPA. Ini pintu masuk kepada
+             semua yang lain. --}}
         <div class="metric-card">
             <div class="metric-card__label">
                 <span class="metric-card__dot is-cyan"></span>
-                Entiti Selesai Pendaftaran
+                Entiti Diterima
             </div>
             <div class="metric-card__value">
-                {{ \App\Support\Peratus::paparan($pendaftaranSelesai, $peratusPendaftaranSelesai, $jumlahEntiti) }}<span
+                {{ \App\Support\Peratus::kad($peratusEntitiDiterima) }}<span
                     class="metric-card__unit">%</span>
             </div>
             <div class="metric-card__nota">
-                {{ $pendaftaranSelesai }} daripada {{ $jumlahEntiti }} entiti ·
-                {{ \App\Support\AliranKerja::labelPenuh(\App\Support\AliranKerja::PENERIMAAN_DATA) }}
+                {{ $entitiDiterima }} daripada {{ $jumlahEntiti }} entiti · Buku Kerja MPQ Diterima
             </div>
-            <div class="metric-card__bar is-cyan"></div>
+            <div class="metric-card__bar metric-card__bar--kemajuan">
+                <span class="metric-card__bar-isi is-cyan" style="width: {{ $peratusEntitiDiterima }}%"></span>
+            </div>
         </div>
 
         <div class="metric-card">
@@ -110,13 +126,15 @@
                 Entiti Dalam Proses
             </div>
             <div class="metric-card__value">
-                {{ \App\Support\Peratus::paparan($dalamProses, $peratusDalamProses, $pendaftaranSelesai) }}<span
+                {{ \App\Support\Peratus::kad($peratusEntitiDalamProses) }}<span
                     class="metric-card__unit">%</span>
             </div>
             <div class="metric-card__nota">
-                {{ $dalamProses }} daripada {{ $pendaftaranSelesai }} entiti selesai pendaftaran
+                {{ $entitiDalamProses }} daripada {{ $entitiDiterima }} entiti diterima
             </div>
-            <div class="metric-card__bar is-warning"></div>
+            <div class="metric-card__bar metric-card__bar--kemajuan">
+                <span class="metric-card__bar-isi is-warning" style="width: {{ $peratusEntitiDalamProses }}%"></span>
+            </div>
         </div>
 
         <div class="metric-card">
@@ -125,12 +143,15 @@
                 Entiti Selesai
             </div>
             <div class="metric-card__value">
-                {{ \App\Support\Peratus::paparan($selesai, $peratusSelesai, $pendaftaranSelesai) }}<span class="metric-card__unit">%</span>
+                {{ \App\Support\Peratus::kad($peratusEntitiSelesai) }}<span
+                    class="metric-card__unit">%</span>
             </div>
             <div class="metric-card__nota">
-                {{ $selesai }} daripada {{ $pendaftaranSelesai }} entiti selesai pendaftaran
+                {{ $entitiSelesai }} daripada {{ $entitiDiterima }} entiti diterima
             </div>
-            <div class="metric-card__bar is-success"></div>
+            <div class="metric-card__bar metric-card__bar--kemajuan">
+                <span class="metric-card__bar-isi is-success" style="width: {{ $peratusEntitiSelesai }}%"></span>
+            </div>
         </div>
 
     </div>
@@ -177,11 +198,42 @@
 
     </div>
 
-    {{-- Baris carta: entiti selesai mengikut sektor / kemajuan keseluruhan --}}
+    {{--
+        Baris carta: Kemajuan Analisis mengikut sektor / kemajuan keseluruhan.
+
+        UKURAN DI SINI BERBEZA daripada kad "Entiti Selesai" di atas, dan
+        perbezaannya disengajakan:
+
+          Kad  "Entiti Selesai"  peringkat 5 Selesai, atas Entiti Diterima.
+                                 Modul peringkat 5 belum dibina, jadi kad itu
+                                 kekal 0% sepanjang fasa ini.
+          Carta "Siap"           KESEMUA peringkat FASA SEMASA Selesai
+                                 (1.1 sehingga 3.1), atas KESELURUHAN entiti.
+
+        Kedua-duanya dikekalkan kerana ia menjawab soalan yang berlainan:
+        satu melaporkan penyerahan laporan, satu lagi melaporkan kemajuan
+        kerja analisis yang benar-benar boleh dibuat hari ini.
+
+        Perbendaharaan "Siap / Dalam Proses / Belum Mula" diambil terus
+        daripada KemajuanAnalisisService — perkataan "Selesai" SENGAJA tidak
+        digunakan pada carta ini supaya ia tidak dibaca sebagai kad di atas.
+    --}}
+    @php
+        // Dibina daripada AliranKerja, bukan ditulis "3.1" secara tetap:
+        // apabila peringkat 4 dan 5 memasuki fasa semasa, sarikata ini
+        // mengikut tanpa suntingan.
+        $peringkatAkhirSemasa = \App\Support\AliranKerja::labelPenuh(
+            \App\Support\AliranKerja::TERAKHIR_SEMASA,
+        );
+    @endphp
     <div class="dashboard-section chart-row">
 
         <div class="chart-card">
-            <div class="chart-card__title">Entiti Selesai Kemajuan Analisis Mengikut Sektor</div>
+            <div class="chart-card__title">Entiti Siap Kemajuan Analisis Mengikut Sektor</div>
+            <div class="chart-card__subtajuk">
+                Siap = kesemua peringkat fasa semasa Selesai, berakhir pada {{ $peringkatAkhirSemasa }}.
+                Diukur terhadap keseluruhan entiti setiap sektor.
+            </div>
 
             @if ($selesai > 0)
                 @php
@@ -206,11 +258,11 @@
                         ->all();
                 @endphp
 
-                <x-pie-chart unit="entiti selesai" :segmen="$segmenSektor" :papar-kosong="true" :legenda-ringkas="true"
+                <x-pie-chart unit="entiti siap" :segmen="$segmenSektor" :papar-kosong="true" :legenda-ringkas="true"
                     :nilai-tengah="\App\Support\Peratus::paparan($selesai, $peratusSelesaiKeseluruhan, $jumlahEntiti) . '%'"
-                    label-tengah="Entiti Selesai" />
+                    label-tengah="Entiti Siap" />
             @else
-                <x-empty-state icon="bi-pie-chart" title="Tiada entiti selesai">
+                <x-empty-state icon="bi-pie-chart" title="Tiada entiti siap">
                     Carta ini muncul setelah sekurang-kurangnya satu entiti menamatkan kesemua
                     peringkat fasa semasa Kemajuan Analisis dalam skop penapis semasa.
                 </x-empty-state>
@@ -219,6 +271,10 @@
 
         <div class="chart-card">
             <div class="chart-card__title">Kemajuan Keseluruhan</div>
+            <div class="chart-card__subtajuk">
+                Kemajuan Analisis bagi kesemua {{ $jumlahEntiti }} entiti, berakhir pada
+                {{ $peringkatAkhirSemasa }}. Bukan ukuran yang sama dengan kad "Entiti Selesai".
+            </div>
 
             @if ($jumlahEntiti > 0)
                 @php
@@ -232,7 +288,7 @@
 
                 <x-pie-chart unit="entiti" :segmen="$segmenKemajuan"
                     :nilai-tengah="\App\Support\Peratus::paparan($selesai, $peratusSelesaiKeseluruhan, $jumlahEntiti) . '%'"
-                    label-tengah="Selesai" />
+                    label-tengah="Siap" />
             @else
                 <x-empty-state icon="bi-pie-chart" title="Tiada entiti dipantau">
                     Entiti dikira dipantau setelah mempunyai rekod workflow, penugasan,

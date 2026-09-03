@@ -422,7 +422,7 @@ class Phase7DashboardTest extends TestCase
     }
 
     /**
-     * Carta "Entiti Selesai Kemajuan Analisis Mengikut Sektor".
+     * Carta "Entiti Siap Kemajuan Analisis Mengikut Sektor".
      *
      * Gelang membahagikan KESELURUHAN entiti kepada sektornya — `jumlah`
      * ialah saiz hirisan — manakala `selesai` dan `peratus` melaporkan kadar
@@ -685,7 +685,7 @@ class Phase7DashboardTest extends TestCase
         $this->actingAs($this->coordinator)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Tiada entiti selesai')
+            ->assertSee('Tiada entiti siap')
             ->assertSee('0 daripada ' . $this->jumlahSenaraiInduk() . ' entiti ·')
             ->assertDontSee('NaN')
             ->assertDontSee('INF');
@@ -790,7 +790,7 @@ class Phase7DashboardTest extends TestCase
         foreach ([
             'Jumlah Sektor',
             'Jumlah Entiti',
-            'Entiti Selesai Pendaftaran',
+            'Entiti Diterima',
             'Entiti Dalam Proses',
             'Entiti Selesai',
             'Jumlah Laporan Analisis Inventori Kriptografi',
@@ -800,7 +800,7 @@ class Phase7DashboardTest extends TestCase
             $response->assertSee($tajuk);
         }
 
-        $response->assertSee('Entiti Selesai Kemajuan Analisis Mengikut Sektor')
+        $response->assertSee('Entiti Siap Kemajuan Analisis Mengikut Sektor')
             ->assertSee('Kemajuan Keseluruhan')
             ->assertSee('Aktiviti Terkini');
 

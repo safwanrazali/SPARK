@@ -33,4 +33,24 @@ class Peratus
 
         return (string) $peratus;
     }
+
+    /**
+     * Peratusan kad ringkasan entiti — satu tempat perpuluhan, dan hanya
+     * apabila ia bermakna.
+     *
+     * Kad corong entiti diukur terhadap keseluruhan 252 entiti, di mana
+     * pembundaran integer memusnahkan hujung bawah skala:
+     *
+     *     2 daripada 252 = 0.79%  -> "1"    memberi lebih daripada yang ada
+     *
+     * Satu tempat perpuluhan mengekalkan angka itu jujur tanpa menjadikan
+     * setiap nilai bulat kelihatan palsu tepat: ".0" digugurkan, jadi 40.0
+     * kekal "40" dan 100.0 kekal "100".
+     */
+    public static function kad(float $peratus): string
+    {
+        $satuPerpuluhan = round($peratus, 1);
+
+        return rtrim(rtrim(number_format($satuPerpuluhan, 1, '.', ''), '0'), '.') ?: '0';
+    }
 }

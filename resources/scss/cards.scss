@@ -161,6 +161,29 @@
     opacity: 0.85;
 }
 
+// Varian bar aksen yang MEMBAWA peratusan kadnya: trek selebar kad dengan
+// isian pada lebar peratusan itu. Tinggi, jejari dan warna kekal sama seperti
+// bar aksen, jadi baris metrik tidak berubah rupa — hanya bar pada tiga kad
+// peratusan menjadi bermakna. Kad tanpa peratusan (Jumlah Sektor, Jumlah
+// Entiti) mengekalkan aksen 44px.
+.metric-card__bar--kemajuan {
+    width: 100%;
+    opacity: 1;
+    background: rgba(148, 163, 184, 0.22);
+    overflow: hidden;
+}
+
+.metric-card__bar-isi {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    opacity: 0.85;
+
+    // Lebar datang daripada peratusan kad; peratusan sifar memberi bar kosong,
+    // bukan bar penuh.
+    max-width: 100%;
+}
+
 // Dot / bar accent colour variants
 .is-primary {
     background: $primary;

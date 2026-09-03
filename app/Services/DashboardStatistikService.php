@@ -63,6 +63,7 @@ class DashboardStatistikService
 
     public function __construct(
         private readonly EntityAccessService $access,
+        private readonly KemajuanAnalisisService $kemajuan,
     ) {}
 
     /**
@@ -79,7 +80,8 @@ class DashboardStatistikService
         // yang boleh diakses pengguna. Penapis tarikh SENGAJA tidak
         // mengecilkannya — ia menapis pergerakan workflow, bukan kewujudan
         // entiti.
-        $jumlahEntiti = $this->semuaEntiti($pengguna, $sectorCode)->count();
+        $semuaEntiti = $this->semuaEntiti($pengguna, $sectorCode);
+        $jumlahEntiti = $semuaEntiti->count();
 
         // Peringkat 1.1 dibaca SEKALI sahaja: baris yang sama menjawab
         // "siapa telah selesai mendaftar" dan "siapa telah ditetapkan semula".
@@ -113,6 +115,8 @@ class DashboardStatistikService
 
         $analisis = $this->analisisDalamSkop($pengguna, $entiti);
 
+        $kad = $this->kadEntiti($pengguna, $semuaEntiti, $pendaftaran);
+
         return [
             'penapis' => [
                 'sector_code' => $sectorCode,
@@ -126,6 +130,20 @@ class DashboardStatistikService
             'jumlahEntiti' => $jumlahEntiti,
             'jumlahDipantau' => $jumlahDipantau,
 
+            // Tiga kad ringkasan entiti — corong Diterima -> Dalam Proses /
+            // Selesai. Penyebutnya SENGAJA berbeza daripada kunci kemajuan di
+            // bawah; lihat kadEntiti().
+            'entitiDiterima' => $kad['diterima'],
+            'entitiDalamProses' => $kad['dalamProses'],
+            'entitiSelesai' => $kad['selesai'],
+            'peratusEntitiDiterima' => $this->peratusTepat($kad['diterima'], $jumlahEntiti),
+            'peratusEntitiDalamProses' => $this->peratusTepat($kad['dalamProses'], $kad['diterima']),
+            'peratusEntitiSelesai' => $this->peratusTepat($kad['selesai'], $kad['diterima']),
+
+            // Peringkat 1.1 Selesai SEPENUHNYA (termasuk No. Rujukan PPR).
+            // Ukuran yang lebih ketat daripada 'entitiDiterima' dan TIDAK lagi
+            // memacu mana-mana kad; dikekalkan kerana ia menjawab soalan yang
+            // berlainan daripada "Buku Kerja MPQ diterima".
             'pendaftaranSelesai' => $pendaftaranSelesai,
             'dalamProses' => $dalamProses,
             'selesai' => $selesai,
@@ -263,9 +281,126 @@ class DashboardStatistikService
      */
     private function peringkatPendaftaran(): Collection
     {
+        return $this->barisPeringkat(AliranKerja::PENERIMAAN_DATA);
+    }
+
+    /**
+     * Baris satu peringkat bagi setiap entiti yang pernah memasuki aliran
+     * kerja, berserta medan tangkapan peringkat itu.
+     *
+     * Lajur diambil daripada AliranKerja::medan() dan bukan disenaraikan di
+     * sini, supaya menambah medan pada satu peringkat tidak memerlukan
+     * suntingan kedua dalam servis ini.
+     *
+     * @return Collection<int, WorkflowStageStatus>
+     */
+    private function barisPeringkat(string $stage): Collection
+    {
         return WorkflowStageStatus::query()
-            ->atStage(AliranKerja::PENERIMAAN_DATA)
-            ->get(['agency_code', 'status']);
+            ->atStage($stage)
+            ->get(array_merge(['agency_code', 'status'], array_keys(AliranKerja::medan($stage))));
+    }
+
+    /**
+     * Tiga kad ringkasan entiti, sebagai satu corong.
+     *
+     *     SEMUA ENTITI
+     *         |
+     *         v
+     *     ENTITI DITERIMA            (Buku Kerja MPQ diterima)
+     *         |
+     *         +--> ENTITI DALAM PROSES  (didaftar + PA ditugaskan,
+     *         |                          peringkat 5 BELUM Selesai)
+     *         +--> ENTITI SELESAI       (peringkat 5 Selesai)
+     *
+     * DITERIMA ialah medan `syarat_lanjut` peringkat 1.1 — Tarikh Terima dan
+     * Status Borang Penerimaan Data — dan BUKAN status peringkat 1.1. Status
+     * Selesai turut menuntut No. Rujukan, yang dimasukkan oleh PPR; entiti
+     * yang Buku Kerja MPQ-nya sudah diterima tidak sepatutnya hilang daripada
+     * kiraan ini kerana menunggu pegawai lain. "Set Semula" mengosongkan
+     * kedua-dua medan itu, jadi entiti yang ditetapkan semula tercicir
+     * sendiri tanpa penyingkiran tambahan.
+     *
+     * DALAM PROSES menuntut kesemua tiga syarat peringkat 1.2 untuk meneruskan
+     * — Tarikh Daftar, Status Borang Pendaftaran Data dan seorang Pegawai
+     * Analisis yang ditugaskan — TOLAK entiti yang peringkat 5-nya sudah
+     * Selesai, kerana entiti siap bukan lagi entiti yang sedang berjalan.
+     *
+     * SELESAI ialah peringkat 5 berstatus Selesai, dan tiada yang lain.
+     *
+     * Setiap set ialah senarai kod entiti UNIK yang dipotong dengan entiti
+     * yang boleh diakses pengguna, jadi baris berbilang (khususnya sejarah
+     * `entiti_assignment`) tidak boleh menggelembungkan sebarang kiraan.
+     *
+     * @param  Collection<int, string>  $semuaEntiti
+     * @param  Collection<int, WorkflowStageStatus>  $pendaftaran  baris peringkat 1.1
+     * @return array{diterima: int, dalamProses: int, selesai: int}
+     */
+    private function kadEntiti(User $pengguna, Collection $semuaEntiti, Collection $pendaftaran): array
+    {
+        if ($semuaEntiti->isEmpty()) {
+            return ['diterima' => 0, 'dalamProses' => 0, 'selesai' => 0];
+        }
+
+        $diterima = $this->kodMedanLanjutDirekod($pendaftaran, AliranKerja::PENERIMAAN_DATA)
+            ->intersect($semuaEntiti)
+            ->values();
+
+        if ($diterima->isEmpty()) {
+            return ['diterima' => 0, 'dalamProses' => 0, 'selesai' => 0];
+        }
+
+        $berdaftar = $this->kodMedanLanjutDirekod(
+            $this->barisPeringkat(AliranKerja::PENDAFTARAN_DATA),
+            AliranKerja::PENDAFTARAN_DATA,
+        );
+
+        // Skop `active()` yang SAMA digunakan oleh KemajuanAnalisisService
+        // apabila ia memutuskan sama ada peringkat 1.2 boleh diteruskan.
+        // unique(): satu entiti boleh mempunyai beberapa baris penugasan
+        // (sejarah tukar ganti), dan hanya entitinya dikira di sini.
+        $adaPegawaiAnalisis = EntitiAssignment::query()
+            ->accessibleBy($pengguna)
+            ->active()
+            ->pluck('agency_code')
+            ->unique();
+
+        $peringkatLimaSelesai = WorkflowStageStatus::query()
+            ->atStage(AliranKerja::SEMAKAN_KELULUSAN)
+            ->selesai()
+            ->pluck('agency_code')
+            ->unique();
+
+        return [
+            'diterima' => $diterima->count(),
+            'dalamProses' => $diterima
+                ->intersect($berdaftar)
+                ->intersect($adaPegawaiAnalisis)
+                ->diff($peringkatLimaSelesai)
+                ->count(),
+            'selesai' => $diterima->intersect($peringkatLimaSelesai)->count(),
+        ];
+    }
+
+    /**
+     * Kod entiti yang telah merekodkan KESEMUA medan `syarat_lanjut` peringkat
+     * yang diberi.
+     *
+     * Peraturan "medan telah direkod" datang daripada KemajuanAnalisisService
+     * — servis yang sama yang menguatkuasakannya pada aliran kerja — supaya
+     * papan pemuka tidak boleh memberi jawapan yang berbeza daripada skrin
+     * Kemajuan Analisis bagi entiti yang sama.
+     *
+     * @param  Collection<int, WorkflowStageStatus>  $baris
+     * @return Collection<int, string>
+     */
+    private function kodMedanLanjutDirekod(Collection $baris, string $stage): Collection
+    {
+        return $baris
+            ->filter(fn (WorkflowStageStatus $rekod) => $this->kemajuan->medanLanjutBelumDirekod($rekod, $stage) === [])
+            ->pluck('agency_code')
+            ->unique()
+            ->values();
     }
 
     /**
@@ -481,6 +616,26 @@ class DashboardStatistikService
      * Penyebut sifar memberi 0 — papan pemuka tidak boleh memaparkan NaN,
      * Infinity atau peratusan yang mengelirukan.
      */
+    /**
+     * Peratusan kad corong entiti — SATU tempat perpuluhan.
+     *
+     * Peratusan lain pada papan pemuka ialah integer, dan itu memadai kerana
+     * penyebutnya kecil. Kad "Entiti Diterima" pula diukur terhadap
+     * keseluruhan 252 entiti, di mana pembundaran integer melaporkan 2 entiti
+     * (0.79%) sebagai 1% — lebih daripada yang sebenarnya ada. Nilai ini juga
+     * menjadi lebar bar kemajuan kadnya, jadi angka dan bar sentiasa sepadan.
+     *
+     * Penyebut sifar memberi 0.0, bukan NaN atau Infinity.
+     */
+    private function peratusTepat(int $bilangan, int $jumlah): float
+    {
+        if ($jumlah <= 0 || $bilangan <= 0) {
+            return 0.0;
+        }
+
+        return round(($bilangan / $jumlah) * 100, 1);
+    }
+
     private function peratus(int $bilangan, int $jumlah): int
     {
         if ($jumlah <= 0 || $bilangan <= 0) {
