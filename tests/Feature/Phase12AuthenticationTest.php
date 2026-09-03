@@ -31,6 +31,73 @@ class Phase12AuthenticationTest extends TestCase
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Halaman mendarat selepas log masuk
+    |--------------------------------------------------------------------------
+    | Peraturannya ialah gate `view-dashboard`, bukan senarai peranan:
+    | sesiapa yang boleh membuka papan pemuka mendarat di situ, sesiapa yang
+    | tidak mendarat pada Kemajuan Analisis Entiti.
+    */
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function peranan(): array
+    {
+        return [
+            'Pentadbir Sistem' => [User::ROLE_ADMINISTRATOR, 'dashboard'],
+            'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, 'dashboard'],
+            'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, 'dashboard'],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'dashboard'],
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'dashboard'],
+            'Pegawai Penyelaras Analisis' => [User::ROLE_COORDINATOR, 'dashboard'],
+
+            // Satu-satunya peranan tanpa papan pemuka keseluruhan.
+            'Pegawai Analisis' => [User::ROLE_ANALYST, 'workflow.index'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('peranan')]
+    public function test_halaman_mendarat_mengikut_kebenaran_papan_pemuka(string $peranan, string $laluan): void
+    {
+        User::factory()->create([
+            'username' => 'pegawai.mendarat',
+            'password' => 'kata-laluan-benar',
+            'role' => $peranan,
+        ]);
+
+        $this->post(route('login.attempt'), [
+            'username' => 'pegawai.mendarat',
+            'password' => 'kata-laluan-benar',
+        ])->assertRedirect(route($laluan));
+
+        $this->assertAuthenticated();
+    }
+
+    /**
+     * Halaman yang cuba dibuka sebelum log masuk kekal diutamakan — peraturan
+     * halaman mendarat hanya terpakai apabila tiada halaman sedemikian.
+     */
+    public function test_halaman_yang_diminta_sebelum_log_masuk_kekal_diutamakan(): void
+    {
+        $pa = User::factory()->create([
+            'username' => 'pegawai.pa',
+            'password' => 'kata-laluan-benar',
+            'role' => User::ROLE_ANALYST,
+        ]);
+
+        // Percubaan membuka halaman ini menyimpannya sebagai halaman diminta.
+        $this->get(route('analisis.index'))->assertRedirect(route('login'));
+
+        $this->post(route('login.attempt'), [
+            'username' => 'pegawai.pa',
+            'password' => 'kata-laluan-benar',
+        ])->assertRedirect(route('analisis.index'));
+
+        $this->assertAuthenticatedAs($pa);
+    }
+
     public function test_halaman_log_masuk_dipaparkan_kepada_tetamu(): void
     {
         $this->get(route('login'))

@@ -76,7 +76,7 @@ class Phase13ReleaseReadinessTest extends TestCase
         $this->post(route('login.attempt'), [
             'username' => 'pegawai',
             'password' => 'kata-laluan-benar',
-        ])->assertRedirect(route('analisis.index'));
+        ])->assertRedirect(route('workflow.index'));
 
         $this->assertAuthenticated();
 
@@ -96,7 +96,7 @@ class Phase13ReleaseReadinessTest extends TestCase
         $this->post(route('login.attempt'), [
             'username' => 'pegawai.b',
             'password' => 'rahsia-b',
-        ])->assertRedirect(route('analisis.index'));
+        ])->assertRedirect(route('workflow.index'));
 
         $this->assertAuthenticated();
     }
@@ -120,7 +120,7 @@ class Phase13ReleaseReadinessTest extends TestCase
         }
 
         $this->post(route('login.attempt'), ['username' => 'pegawai', 'password' => 'kata-laluan-benar'])
-            ->assertRedirect(route('analisis.index'));
+            ->assertRedirect(route('workflow.index'));
 
         $this->assertAuthenticated();
     }

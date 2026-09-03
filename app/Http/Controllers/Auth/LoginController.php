@@ -68,14 +68,23 @@ class LoginController extends Controller
     /**
      * Halaman pertama selepas log masuk.
      *
-     * Pegawai Analisis tiada papan pemuka keseluruhan; senarai analisis
-     * ialah ruang kerja mereka.
+     * Peraturannya ialah kebenaran itu sendiri, bukan senarai peranan:
+     * sesiapa yang boleh membuka papan pemuka mendarat di situ, dan sesiapa
+     * yang tidak mendarat pada Kemajuan Analisis Entiti.
+     *
+     * Pegawai Analisis ialah satu-satunya peranan tanpa papan pemuka
+     * keseluruhan (gate `view-dashboard`), dan Kemajuan Analisis ialah
+     * ruang kerjanya: senarainya kini bermula dengan entiti yang telah
+     * diterima, dan PA boleh menukar kepada entiti yang ditugaskan
+     * kepadanya. Menambah atau membuang peranan pada gate itu memindahkan
+     * halaman mendarat secara automatik — tiada senarai kedua di sini yang
+     * boleh terpesong daripadanya.
      */
     private function halamanMendarat(): string
     {
         return Gate::allows('view-dashboard')
             ? route('dashboard')
-            : route('analisis.index');
+            : route('workflow.index');
     }
 
     public function logout(Request $request)
