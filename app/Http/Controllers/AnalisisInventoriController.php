@@ -40,7 +40,55 @@ class AnalisisInventoriController extends Controller
         return view('analisis.index', [
             'rekod' => $rekod,
             'sektor' => $this->access->sektorFor($request->user()),
+            'kemajuanEntiti' => $this->kemajuanEntiti($rekod->pluck('agency_code')->unique()->all()),
         ]);
+    }
+
+    /**
+     * "Status Laporan Inventori Kriptografi" bagi setiap entiti dalam senarai.
+     *
+     * Nilainya ialah medan `status_borang` peringkat 3.1 — medan yang SAMA yang
+     * dipilih pegawai pada halaman Kemajuan Analisis Entiti, dan yang labelnya
+     * ditakrifkan oleh AliranKerja::medan(). Perbendaharaannya tujuh nilai
+     * (Belum Mula … Telah Diserah), BUKAN tiga nilai status peringkat.
+     *
+     * Lajur ini TIDAK boleh membaca:
+     *
+     * - `analisis_inventori.selesai` — bermaksud "borang input telah
+     *   dimuktamadkan", iaitu SYARAT sebelum peringkat 3.1 boleh ditutup.
+     * - `workflow_stage_status.status` — status PERINGKAT (tiga nilai), bukan
+     *   status laporan yang direkod pegawai.
+     *
+     * Peringkat dimuatkan SEKALI gus bagi seluruh halaman (satu query untuk
+     * semua baris), bukan satu query bagi setiap baris.
+     *
+     * @param  array<int, string>  $agencyCodes
+     * @return array<string, array{nilai: ?string, kelas: ?string}>
+     */
+    private function kemajuanEntiti(array $agencyCodes): array
+    {
+        if ($agencyCodes === []) {
+            return [];
+        }
+
+        $peringkat = $this->kemajuan->peringkatUntukBanyak($agencyCodes);
+
+        $keluaran = [];
+
+        foreach ($agencyCodes as $kod) {
+            $nilai = $peringkat->get($kod)
+                ?->get(AliranKerja::ANALISIS_INVENTORI)
+                ?->status_borang;
+
+            $keluaran[$kod] = [
+                'nilai' => $nilai,
+                // null bagi "Tidak Berkaitan": ia bukan kedudukan kerja, jadi
+                // ia dipaparkan tanpa pil warna — sama seperti halaman Entiti.
+                'kelas' => AliranKerja::badgeStatusBorang($nilai),
+            ];
+        }
+
+        return $keluaran;
     }
 
     /**

@@ -73,7 +73,10 @@
                         <th scope="col">Sektor</th>
                         <th scope="col">Entiti</th>
                         <th scope="col">Kod Rujukan</th>
-                        <th scope="col">Status Analisis</th>
+                        {{-- Dinamakan tepat seperti medan yang dipaparkannya:
+                             `status_borang` peringkat 3.1, yang labelnya
+                             ditakrifkan oleh AliranKerja::medan(). --}}
+                        <th scope="col">Status Laporan Inventori Kriptografi</th>
                         <th scope="col">Kemas Kini</th>
                         <th scope="col">Tindakan</th>
                     </tr>
@@ -84,10 +87,46 @@
                             <td>{{ $item->sector_code }}</td>
                             <td>{{ $item->agency_code }}</td>
                             <td>{{ $item->kod_rujukan ?? '-' }}</td>
+                            {{--
+                                DUA maklumat berbeza, sengaja dipaparkan
+                                bersama:
+
+                                Lencana  "Status Laporan Inventori Kriptografi"
+                                         — medan `status_borang` peringkat 3.1,
+                                         nilai yang SAMA yang dipilih pegawai
+                                         pada halaman Kemajuan Analisis Entiti.
+                                Borang   keadaan borang input ini sendiri.
+                                         `analisis_inventori.selesai` bermaksud
+                                         "telah dimuktamadkan", iaitu SYARAT
+                                         sebelum peringkat 3.1 boleh ditutup —
+                                         bukan status laporan.
+
+                                Sebelum ini lajur ini memaparkan medan `selesai`
+                                sebagai "Selesai", lalu melaporkan laporan yang
+                                masih "Dalam Semakan" sebagai sudah selesai.
+
+                                Cabang paparan mengikut konvensyen yang SAMA
+                                dengan entiti/partials/status-borang.blade.php.
+                            --}}
                             <td>
-                                <span class="status-badge {{ $item->selesai ? 'status-rendah' : 'status-sederhana' }}">
-                                    {{ $item->selesai ? 'Selesai' : 'Dalam Proses' }}
-                                </span>
+                                @php
+                                    $statusLaporan = $kemajuanEntiti[$item->agency_code] ?? null;
+                                    $nilaiLaporan = $statusLaporan['nilai'] ?? null;
+                                    $kelasLaporan = $statusLaporan['kelas'] ?? null;
+                                @endphp
+
+                                @if ($nilaiLaporan === null || $nilaiLaporan === '')
+                                    <span class="text-secondary">Belum direkod</span>
+                                @elseif ($kelasLaporan)
+                                    <span class="status-badge {{ $kelasLaporan }}">{{ $nilaiLaporan }}</span>
+                                @else
+                                    {{-- "Tidak Berkaitan" bukan kedudukan kerja, jadi tiada pil warna. --}}
+                                    <span class="text-secondary">{{ $nilaiLaporan }}</span>
+                                @endif
+
+                                <small class="d-block text-secondary mt-1">
+                                    Borang: {{ $item->selesai ? 'Dimuktamadkan' : 'Draf' }}
+                                </small>
                             </td>
                             <td>{{ $item->updated_at?->format('d/m/Y H:i') }}</td>
                             <td class="text-nowrap">
