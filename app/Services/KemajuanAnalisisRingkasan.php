@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\WorkflowStageStatus;
 use App\Support\AliranKerja;
+use App\Support\SyaratPeringkat;
 use Illuminate\Support\Collection;
 
 /**
@@ -134,7 +135,17 @@ final class KemajuanAnalisisRingkasan
 
     /**
      * Peringkat yang sedang dikerjakan — peringkat fasa semasa yang pertama
-     * belum Selesai, atau peringkat terakhir fasa ini jika semuanya selesai.
+     * BELUM DILEPASI, atau peringkat terakhir fasa ini jika semuanya lepas.
+     *
+     * "Dilepasi" menggunakan peraturan yang SAMA dengan
+     * KemajuanAnalisisGating, bukan status Selesai semata-mata. Perbezaannya
+     * penting: No. Rujukan ialah syarat SELESAI bagi peringkat 1.1–1.3 dan
+     * 3.1, tetapi ia dimasukkan oleh PPR dan BUKAN syarat lanjut. Dengan
+     * ujian isSelesai() sahaja, entiti yang pegawainya sudah bekerja hingga
+     * peringkat 3.1 kekal dilaporkan "di peringkat 1.1" selagi PPR belum
+     * merekod nombor rujukan — bercanggah dengan prinsip yang dipegang di
+     * seluruh sistem, iaitu No. Rujukan tidak menahan kerja peringkat
+     * berikutnya.
      *
      * @param  Collection<string, WorkflowStageStatus>|null  $peringkat
      */
@@ -145,12 +156,37 @@ final class KemajuanAnalisisRingkasan
         }
 
         foreach (AliranKerja::semasa() as $stage) {
-            if (! ($peringkat->get($stage)?->isSelesai() ?? false)) {
+            if (! $this->dilepasi($peringkat->get($stage), $stage)) {
                 return $stage;
             }
         }
 
         return AliranKerja::TERAKHIR_SEMASA;
+    }
+
+    /**
+     * Adakah peringkat ini sudah tidak lagi menahan peringkat berikutnya?
+     *
+     * Mencerminkan KemajuanAnalisisGating::ralatPendahulu():
+     *
+     * - Peringkat dengan `syarat_lanjut`: cukup medan tersebut ADA.
+     * - Peringkat tanpa `syarat_lanjut` (peringkat 2): mesti benar-benar Selesai.
+     *
+     * Semakan penugasan Pegawai Analisis SENGAJA tidak disertakan: ia
+     * memerlukan query, sedangkan kaedah ini dipanggil sekali bagi SETIAP
+     * baris senarai entiti dan mesti kekal bebas query.
+     */
+    private function dilepasi(?WorkflowStageStatus $rekod, string $stage): bool
+    {
+        if ($rekod === null) {
+            return false;
+        }
+
+        if (AliranKerja::syaratLanjut($stage) === []) {
+            return $rekod->isSelesai();
+        }
+
+        return SyaratPeringkat::medanLanjutBelumDirekod($rekod, $stage) === [];
     }
 
     /**

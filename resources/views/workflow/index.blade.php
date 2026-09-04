@@ -143,11 +143,19 @@
 
                     @forelse ($entiti as $e)
                         @php
-                            // "Berdaftar" bermaksud peringkat 1.1 Selesai —
-                            // bukan sekadar mempunyai baris peringkat, yang
-                            // kekal walaupun selepas Ketua Bahagian menetapkan
-                            // semula entiti.
-                            $didaftar = $kemajuanServis->dalamAliranKerja($e['peringkat']);
+                            // "Berdaftar" bermaksud peringkat 1.1 telah BERMULA,
+                            // bukan Selesai. Peringkat 1.1 hanya Selesai setelah
+                            // No. Rujukan direkod oleh PPR; menuntut Selesai di
+                            // sini melaporkan entiti yang pegawainya sudah bekerja
+                            // hingga peringkat 3.1 sebagai "Belum Didaftarkan".
+                            //
+                            // Ujian yang SAMA digunakan oleh halaman Kemajuan
+                            // (workflow/show) dan halaman Entiti, supaya ketiga-tiga
+                            // skrin tidak memberi jawapan berbeza bagi entiti yang
+                            // sama. Entiti yang ditetapkan semula oleh KB tetap
+                            // dikira belum berdaftar: setSemula() mengembalikan
+                            // peringkat 1.1 kepada Belum Mula.
+                            $didaftar = $kemajuanServis->telahMemasukiAliran($e['peringkat']);
                             $peratus = $didaftar ? round(($e['bilanganSelesai'] / $jumlahPeringkat) * 100) : 0;
                         @endphp
                         <tr>
