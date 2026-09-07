@@ -62,7 +62,7 @@ tests/
 | Aliran kerja | `WorkflowController` | `WorkflowTransitionService`, `EntityAssignmentService` |
 | Analisis inventori | `AnalisisInventoriController` | `AnalisisDraftService`, `AnalisisSimpananService` |
 | Laporan | `LaporanController` | `LaporanPenyediaanService`, `LaporanSemakanService` |
-| Komentar laporan | `LaporanKomentarController` | — (dasar: `LaporanKomentarPolicy`) |
+| Catatan laporan | `LaporanCatatanController` | — (dasar: `LaporanCatatanPolicy`) |
 | Audit | `AuditTrailController` | `AuditTrailService` |
 
 ### Sumber kebenaran tunggal
@@ -139,8 +139,8 @@ Fail yang **SENGAJA** melebihi 300 baris — jangan pecahkan tanpa sebab kukuh:
 `resources/views/laporan/partials/` dikongsi **bait demi bait** oleh pratonton
 skrin (`laporan/inventori.blade.php`) dan badan PDF (`laporan/pdf/body.blade.php`).
 
-- `$widgetKomentar` ditetapkan SEKALI oleh setiap templat induk: benar untuk
-  skrin, **palsu untuk PDF**. Komentar KB/PPA tidak pernah masuk ke dalam PDF.
+- `$widgetCatatan` ditetapkan SEKALI oleh setiap templat induk: benar untuk
+  skrin, **palsu untuk PDF**. Catatan KB/PPA tidak pernah masuk ke dalam PDF.
 - Sebarang perubahan pada partial ini mengubah KEDUA-DUA saluran. Sahkan
   dengan merender kedua-duanya sebelum dan selepas, lalu bandingkan HTML.
 - Jangan mengubah struktur jadual, `<colgroup>`, pemisah halaman atau kepala/
@@ -182,7 +182,7 @@ Request → Authorize → Validate → panggil servis/action → Response
 
 - `resources/js/app.js` ialah satu-satunya titik masuk Vite. Ciri yang
   berdiri sendiri diletakkan dalam modulnya sendiri (contoh:
-  `komentar-seksyen.js`) dan diimport dari app.js, supaya app.js kekal
+  `catatan-seksyen.js`) dan diimport dari app.js, supaya app.js kekal
   di bawah 300 baris.
 - Bootstrap diimport sebagai **ESM** (`import "bootstrap"` ->
   `dist/js/bootstrap.esm.js`), jadi `window.bootstrap` TIDAK wujud.

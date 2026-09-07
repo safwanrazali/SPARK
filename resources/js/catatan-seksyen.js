@@ -1,4 +1,4 @@
-// Panel komentar seksyen laporan — tingkah laku "satu terbuka pada satu masa".
+// Panel catatan seksyen laporan — tingkah laku "satu terbuka pada satu masa".
 //
 // Widget berkenaan ialah resources/views/components/section-comment-widget.blade.php,
 // yang muncul pada setiap seksyen pratonton laporan (laporan/partials/*).
@@ -6,10 +6,10 @@
 // peraturan penutupan di atasnya:
 //
 //   1. Klik di mana-mana di luar widget menutup panel yang terbuka.
-//   2. Membuka komentar seksyen lain menutup panel seksyen sebelumnya.
+//   2. Membuka catatan seksyen lain menutup panel seksyen sebelumnya.
 //
 // Panel DIKEKALKAN terbuka selagi klik berlaku DI DALAM widget yang sama —
-// menaip komentar, menekan Hantar, membuka borang sunting atau menekan
+// menaip catatan, menekan Hantar, membuka borang sunting atau menekan
 // "Tindakan Diambil" semuanya tidak boleh menutupnya.
 //
 // KAEDAH: panel ditutup dengan mengklik butang togolnya sendiri, BUKAN melalui
@@ -25,7 +25,7 @@ const WIDGET = ".section-comments-widget";
 const PANEL = ".section-comments-collapse";
 const TOGGLE = ".section-comments-toggle";
 
-export default function komentarSeksyen() {
+export default function catatanSeksyen() {
     // Klik togol yang dijana di bawah turut melantun ke document dan mencetus
     // pengendali ini semula. Tanpa pengawal ini, penutupan panel pertama akan
     // memasuki semula gelung yang sedang berjalan.

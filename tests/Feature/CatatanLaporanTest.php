@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ActivityLog;
 use App\Models\AnalisisInventori;
-use App\Models\LaporanKomentar;
+use App\Models\LaporanCatatan;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
 use App\Services\EntityAssignmentService;
@@ -20,18 +20,18 @@ use Tests\Concerns\MelaluiAliranKerja;
 use Tests\TestCase;
 
 /**
- * Komentar KB/PPA pada Laporan Analisis Inventori Kriptografi.
+ * Catatan KB/PPA pada Laporan Analisis Inventori Kriptografi.
  *
  * Ia mekanisme MAKLUM BALAS + PENGAKUAN, bukan kitaran kelulusan:
  *
- *     KB / PPA menulis komentar
+ *     KB / PPA menulis catatan
  *       -> PA mengambil tindakan
  *       -> PA menanda "Tindakan Diambil"
  *       -> KB / PPA melihat tanda itu
  *
  * TIGA kebenaran yang mesti kekal berasingan diuji di sini:
  *
- *   PENGLIHATAN — PA, KB dan PPA melihat KESEMUA komentar KB/PPA. Pemilikan
+ *   PENGLIHATAN — PA, KB dan PPA melihat KESEMUA catatan KB/PPA. Pemilikan
  *                 TIDAK PERNAH menjadi ujian penglihatan.
  *   PEMILIKAN   — hanya pengarang boleh menyunting/memadam.
  *   TINDAKAN    — hanya PA boleh menanda "Tindakan Diambil".
@@ -39,7 +39,7 @@ use Tests\TestCase;
  * Setiap kebenaran diuji melalui laluan HTTP sebenar, bukan sekadar dengan
  * memeriksa butang pada paparan.
  */
-class KomentarLaporanTest extends TestCase
+class CatatanLaporanTest extends TestCase
 {
     use MelaluiAliranKerja, RefreshDatabase;
 
@@ -107,14 +107,14 @@ class KomentarLaporanTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    private function komentar(User $penulis, string $teks, string $agencyCode = self::ALPHA, string $seksyen = 'profil'): LaporanKomentar
+    private function catatan(User $penulis, string $teks, string $agencyCode = self::ALPHA, string $seksyen = 'profil'): LaporanCatatan
     {
-        return LaporanKomentar::create([
+        return LaporanCatatan::create([
             'agency_code' => $agencyCode,
             'agency_name' => SektorDirectory::cariEntiti($agencyCode)['agency_name'],
             'section' => $seksyen,
             'content' => $teks,
-            'status' => LaporanKomentar::STATUS_TERBUKA,
+            'status' => LaporanCatatan::STATUS_TERBUKA,
             'user_id' => $penulis->id,
         ]);
     }
@@ -126,16 +126,16 @@ class KomentarLaporanTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | PENGLIHATAN — KB/PPA melihat KESEMUA komentar KB/PPA
+    | PENGLIHATAN — KB/PPA melihat KESEMUA catatan KB/PPA
     |--------------------------------------------------------------------------
-    | Pemilikan BUKAN penapis penglihatan. KB-1 melihat komentar KB-2, KB
-    | melihat komentar PPA, dan sebaliknya.
+    | Pemilikan BUKAN penapis penglihatan. KB-1 melihat catatan KB-2, KB
+    | melihat catatan PPA, dan sebaliknya.
     */
 
-    public function test_pa_melihat_kesemua_komentar_kb_dan_ppa(): void
+    public function test_pa_melihat_kesemua_catatan_kb_dan_ppa(): void
     {
-        $this->komentar($this->kb1, 'Ulasan daripada KB Satu');
-        $this->komentar($this->ppa1, 'Ulasan daripada PPA Satu');
+        $this->catatan($this->kb1, 'Ulasan daripada KB Satu');
+        $this->catatan($this->ppa1, 'Ulasan daripada PPA Satu');
 
         $this->bukaLaporan($this->pa)
             ->assertOk()
@@ -143,11 +143,11 @@ class KomentarLaporanTest extends TestCase
             ->assertSee('Ulasan daripada PPA Satu');
     }
 
-    public function test_kb_melihat_komentar_kb_lain_dan_komentar_ppa(): void
+    public function test_kb_melihat_catatan_kb_lain_dan_catatan_ppa(): void
     {
-        $this->komentar($this->kb1, 'Ulasan KB Satu');
-        $this->komentar($this->kb2, 'Ulasan KB Dua');
-        $this->komentar($this->ppa1, 'Ulasan PPA Satu');
+        $this->catatan($this->kb1, 'Ulasan KB Satu');
+        $this->catatan($this->kb2, 'Ulasan KB Dua');
+        $this->catatan($this->ppa1, 'Ulasan PPA Satu');
 
         $this->bukaLaporan($this->kb1)
             ->assertOk()
@@ -156,11 +156,11 @@ class KomentarLaporanTest extends TestCase
             ->assertSee('Ulasan PPA Satu');
     }
 
-    public function test_ppa_melihat_komentar_ppa_lain_dan_komentar_kb(): void
+    public function test_ppa_melihat_catatan_ppa_lain_dan_catatan_kb(): void
     {
-        $this->komentar($this->ppa1, 'Ulasan PPA Satu');
-        $this->komentar($this->ppa2, 'Ulasan PPA Dua');
-        $this->komentar($this->kb1, 'Ulasan KB Satu');
+        $this->catatan($this->ppa1, 'Ulasan PPA Satu');
+        $this->catatan($this->ppa2, 'Ulasan PPA Dua');
+        $this->catatan($this->kb1, 'Ulasan KB Satu');
 
         $this->bukaLaporan($this->ppa1)
             ->assertOk()
@@ -170,53 +170,53 @@ class KomentarLaporanTest extends TestCase
     }
 
     /**
-     * PS, TPII, PPR dan PKD tiada akses kepada modul komentar walaupun
+     * PS, TPII, PPR dan PKD tiada akses kepada modul catatan walaupun
      * sebahagiannya boleh membuka laporan itu sendiri.
      */
-    public function test_peranan_tanpa_akses_tidak_melihat_komentar(): void
+    public function test_peranan_tanpa_akses_tidak_melihat_catatan(): void
     {
-        $this->komentar($this->kb1, 'Rahsia maklum balas KB');
+        $this->catatan($this->kb1, 'Rahsia maklum balas KB');
 
         foreach ([$this->ps, $this->tpii, $this->ppr, $this->pkd] as $pengguna) {
             $this->bukaLaporan($pengguna)->assertDontSee('Rahsia maklum balas KB');
 
             $this->assertFalse(
-                Gate::forUser($pengguna)->allows('viewAny', LaporanKomentar::class),
-                $pengguna->name.' tidak sepatutnya mempunyai akses modul komentar.',
+                Gate::forUser($pengguna)->allows('viewAny', LaporanCatatan::class),
+                $pengguna->name.' tidak sepatutnya mempunyai akses modul catatan.',
             );
         }
     }
 
-    public function test_peranan_tanpa_akses_tidak_boleh_menulis_komentar(): void
+    public function test_peranan_tanpa_akses_tidak_boleh_menulis_catatan(): void
     {
         foreach ([$this->ps, $this->tpii, $this->ppr, $this->pkd, $this->pa] as $pengguna) {
             $this->actingAs($pengguna)
-                ->post(route('laporan.komentar.store', $this->analisis), [
+                ->post(route('laporan.catatan.store', $this->analisis), [
                     'section' => 'profil',
                     'content' => 'Cubaan menulis',
                 ])
                 ->assertForbidden();
         }
 
-        $this->assertDatabaseCount('laporan_komentar', 0);
+        $this->assertDatabaseCount('laporan_catatan', 0);
     }
 
-    public function test_kb_dan_ppa_boleh_menulis_komentar(): void
+    public function test_kb_dan_ppa_boleh_menulis_catatan(): void
     {
         foreach ([$this->kb1, $this->ppa1] as $pengguna) {
             $this->actingAs($pengguna)
-                ->post(route('laporan.komentar.store', $this->analisis), [
+                ->post(route('laporan.catatan.store', $this->analisis), [
                     'section' => 'algoritma',
                     'content' => 'Sila semak semula maklumat pemilik sistem.',
                 ])
                 ->assertRedirect(route('laporan.inventori', $this->analisis));
         }
 
-        $this->assertDatabaseCount('laporan_komentar', 2);
-        $this->assertDatabaseHas('laporan_komentar', [
+        $this->assertDatabaseCount('laporan_catatan', 2);
+        $this->assertDatabaseHas('laporan_catatan', [
             'agency_code' => self::ALPHA,
             'section' => 'algoritma',
-            'status' => LaporanKomentar::STATUS_TERBUKA,
+            'status' => LaporanCatatan::STATUS_TERBUKA,
             'user_id' => $this->kb1->id,
         ]);
     }
@@ -227,37 +227,37 @@ class KomentarLaporanTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_pengarang_boleh_menyunting_komentarnya_sendiri(): void
+    public function test_pengarang_boleh_menyunting_catatannya_sendiri(): void
     {
         foreach ([$this->kb1, $this->ppa1] as $pengarang) {
-            $komentar = $this->komentar($pengarang, 'Teks asal');
+            $catatan = $this->catatan($pengarang, 'Teks asal');
 
             $this->actingAs($pengarang)
-                ->patch(route('laporan.komentar.update', $komentar), ['content' => 'Teks disunting'])
+                ->patch(route('laporan.catatan.update', $catatan), ['content' => 'Teks disunting'])
                 ->assertRedirect(route('laporan.inventori', $this->analisis));
 
-            $this->assertSame('Teks disunting', $komentar->fresh()->content);
+            $this->assertSame('Teks disunting', $catatan->fresh()->content);
         }
     }
 
-    public function test_komentar_tidak_boleh_disunting_pengguna_lain(): void
+    public function test_catatan_tidak_boleh_disunting_pengguna_lain(): void
     {
-        $milikKb1 = $this->komentar($this->kb1, 'Teks KB Satu');
-        $milikPpa1 = $this->komentar($this->ppa1, 'Teks PPA Satu');
+        $milikKb1 = $this->catatan($this->kb1, 'Teks KB Satu');
+        $milikPpa1 = $this->catatan($this->ppa1, 'Teks PPA Satu');
 
         $percubaan = [
-            // [pengguna, komentar]
+            // [pengguna, catatan]
             [$this->kb2, $milikKb1],   // KB lain
-            [$this->ppa1, $milikKb1],  // PPA menyunting komentar KB
+            [$this->ppa1, $milikKb1],  // PPA menyunting catatan KB
             [$this->ppa2, $milikPpa1], // PPA lain
-            [$this->kb1, $milikPpa1],  // KB menyunting komentar PPA
+            [$this->kb1, $milikPpa1],  // KB menyunting catatan PPA
             [$this->pa, $milikKb1],    // PA tidak boleh menyunting langsung
             [$this->ps, $milikKb1],    // Pentadbir Sistem pun tidak
         ];
 
-        foreach ($percubaan as [$pengguna, $komentar]) {
+        foreach ($percubaan as [$pengguna, $catatan]) {
             $this->actingAs($pengguna)
-                ->patch(route('laporan.komentar.update', $komentar), ['content' => 'Diubah tanpa hak'])
+                ->patch(route('laporan.catatan.update', $catatan), ['content' => 'Diubah tanpa hak'])
                 ->assertForbidden();
         }
 
@@ -271,43 +271,43 @@ class KomentarLaporanTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_pengarang_boleh_memadam_komentarnya_sendiri(): void
+    public function test_pengarang_boleh_memadam_catatannya_sendiri(): void
     {
         foreach ([$this->kb1, $this->ppa1] as $pengarang) {
-            $komentar = $this->komentar($pengarang, 'Untuk dipadam');
+            $catatan = $this->catatan($pengarang, 'Untuk dipadam');
 
             $this->actingAs($pengarang)
-                ->delete(route('laporan.komentar.destroy', $komentar))
+                ->delete(route('laporan.catatan.destroy', $catatan))
                 ->assertRedirect(route('laporan.inventori', $this->analisis));
 
             // Pemadaman lembut: baris kekal untuk jejak audit.
-            $this->assertSoftDeleted('laporan_komentar', ['id' => $komentar->id]);
+            $this->assertSoftDeleted('laporan_catatan', ['id' => $catatan->id]);
         }
     }
 
-    public function test_komentar_tidak_boleh_dipadam_pengguna_lain(): void
+    public function test_catatan_tidak_boleh_dipadam_pengguna_lain(): void
     {
-        $milikKb1 = $this->komentar($this->kb1, 'Teks KB Satu');
-        $milikPpa1 = $this->komentar($this->ppa1, 'Teks PPA Satu');
+        $milikKb1 = $this->catatan($this->kb1, 'Teks KB Satu');
+        $milikPpa1 = $this->catatan($this->ppa1, 'Teks PPA Satu');
 
         $percubaan = [
-            [$this->kb2, $milikKb1],   // KB memadam komentar KB lain
-            [$this->ppa1, $milikKb1],  // PPA memadam komentar KB
-            [$this->ppa2, $milikPpa1], // PPA memadam komentar PPA lain
-            [$this->kb1, $milikPpa1],  // KB memadam komentar PPA
-            [$this->pa, $milikKb1],    // PA memadam komentar KB
-            [$this->pa, $milikPpa1],   // PA memadam komentar PPA
+            [$this->kb2, $milikKb1],   // KB memadam catatan KB lain
+            [$this->ppa1, $milikKb1],  // PPA memadam catatan KB
+            [$this->ppa2, $milikPpa1], // PPA memadam catatan PPA lain
+            [$this->kb1, $milikPpa1],  // KB memadam catatan PPA
+            [$this->pa, $milikKb1],    // PA memadam catatan KB
+            [$this->pa, $milikPpa1],   // PA memadam catatan PPA
             [$this->ps, $milikKb1],    // Pentadbir Sistem
         ];
 
-        foreach ($percubaan as [$pengguna, $komentar]) {
+        foreach ($percubaan as [$pengguna, $catatan]) {
             $this->actingAs($pengguna)
-                ->delete(route('laporan.komentar.destroy', $komentar))
+                ->delete(route('laporan.catatan.destroy', $catatan))
                 ->assertForbidden();
         }
 
-        $this->assertDatabaseHas('laporan_komentar', ['id' => $milikKb1->id, 'deleted_at' => null]);
-        $this->assertDatabaseHas('laporan_komentar', ['id' => $milikPpa1->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('laporan_catatan', ['id' => $milikKb1->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('laporan_catatan', ['id' => $milikPpa1->id, 'deleted_at' => null]);
     }
 
     /*
@@ -318,22 +318,22 @@ class KomentarLaporanTest extends TestCase
 
     public function test_pa_menanda_tindakan_diambil_dan_identitinya_direkod(): void
     {
-        $komentar = $this->komentar($this->kb1, 'Sila semak semula maklumat pemilik sistem.');
+        $catatan = $this->catatan($this->kb1, 'Sila semak semula maklumat pemilik sistem.');
 
         $this->travelTo(now()->setDate(2026, 9, 3)->setTime(10, 32));
 
         $this->actingAs($this->pa)
-            ->post(route('laporan.komentar.tindakan', $komentar))
+            ->post(route('laporan.catatan.tindakan', $catatan))
             ->assertRedirect(route('laporan.inventori', $this->analisis));
 
-        $segar = $komentar->fresh();
+        $segar = $catatan->fresh();
 
-        $this->assertSame(LaporanKomentar::STATUS_TINDAKAN_DIAMBIL, $segar->status);
+        $this->assertSame(LaporanCatatan::STATUS_TINDAKAN_DIAMBIL, $segar->status);
         $this->assertSame($this->pa->id, $segar->tindakan_oleh_user_id);
         $this->assertNotNull($segar->tindakan_pada);
         $this->assertSame('03/09/2026 10:32', $segar->tindakan_pada->format('d/m/Y H:i'));
 
-        // Teks asal kekal seperti yang ditulis pengomen, dan komentar tidak
+        // Teks asal kekal seperti yang ditulis pencatatnya, dan catatan tidak
         // dipadam.
         $this->assertSame('Sila semak semula maklumat pemilik sistem.', $segar->content);
         $this->assertNull($segar->deleted_at);
@@ -341,27 +341,27 @@ class KomentarLaporanTest extends TestCase
 
     public function test_kb_dan_ppa_tidak_boleh_menanda_tindakan_diambil(): void
     {
-        $komentar = $this->komentar($this->kb1, 'Maklum balas');
+        $catatan = $this->catatan($this->kb1, 'Maklum balas');
 
         foreach ([$this->kb1, $this->kb2, $this->ppa1, $this->ppa2, $this->ps, $this->tpii] as $pengguna) {
             $this->actingAs($pengguna)
-                ->post(route('laporan.komentar.tindakan', $komentar))
+                ->post(route('laporan.catatan.tindakan', $catatan))
                 ->assertForbidden();
         }
 
-        $this->assertSame(LaporanKomentar::STATUS_TERBUKA, $komentar->fresh()->status);
+        $this->assertSame(LaporanCatatan::STATUS_TERBUKA, $catatan->fresh()->status);
     }
 
     public function test_kb_dan_ppa_melihat_bahawa_pa_telah_mengambil_tindakan(): void
     {
-        $komentar = $this->komentar($this->kb1, 'Sila semak semula maklumat pemilik sistem.');
+        $catatan = $this->catatan($this->kb1, 'Sila semak semula maklumat pemilik sistem.');
 
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $komentar));
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $catatan));
 
         foreach ([$this->kb1, $this->kb2, $this->ppa1, $this->ppa2, $this->pa] as $pengguna) {
             $this->bukaLaporan($pengguna)
                 ->assertOk()
-                // Komentar asal kekal kelihatan selepas ditindak.
+                // Catatan asal kekal kelihatan selepas ditindak.
                 ->assertSee('Sila semak semula maklumat pemilik sistem.')
                 ->assertSee('Tindakan Diambil')
                 ->assertSee('PA Ahmad');
@@ -370,23 +370,23 @@ class KomentarLaporanTest extends TestCase
 
     public function test_hanya_pa_boleh_membatalkan_tanda_tindakan_diambil(): void
     {
-        $komentar = $this->komentar($this->kb1, 'Maklum balas');
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $komentar));
+        $catatan = $this->catatan($this->kb1, 'Maklum balas');
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $catatan));
 
         foreach ([$this->kb1, $this->ppa1, $this->ps] as $pengguna) {
             $this->actingAs($pengguna)
-                ->delete(route('laporan.komentar.tindakan.batal', $komentar))
+                ->delete(route('laporan.catatan.tindakan.batal', $catatan))
                 ->assertForbidden();
         }
 
-        $this->assertTrue($komentar->fresh()->sudahDitindak());
+        $this->assertTrue($catatan->fresh()->sudahDitindak());
 
         $this->actingAs($this->pa)
-            ->delete(route('laporan.komentar.tindakan.batal', $komentar))
+            ->delete(route('laporan.catatan.tindakan.batal', $catatan))
             ->assertRedirect(route('laporan.inventori', $this->analisis));
 
-        $segar = $komentar->fresh();
-        $this->assertSame(LaporanKomentar::STATUS_TERBUKA, $segar->status);
+        $segar = $catatan->fresh();
+        $this->assertSame(LaporanCatatan::STATUS_TERBUKA, $segar->status);
         $this->assertNull($segar->tindakan_oleh_user_id);
         $this->assertNull($segar->tindakan_pada);
     }
@@ -399,9 +399,9 @@ class KomentarLaporanTest extends TestCase
     {
         Notification::fake();
 
-        $komentar = $this->komentar($this->kb1, 'Maklum balas');
+        $catatan = $this->catatan($this->kb1, 'Maklum balas');
 
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $komentar));
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $catatan));
 
         Notification::assertNothingSent();
         $this->assertFalse(Schema::hasTable('notifications'));
@@ -409,22 +409,22 @@ class KomentarLaporanTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | PERINGKAT 3.1 — komentar tiada kesan langsung ke atasnya
+    | PERINGKAT 3.1 — catatan tiada kesan langsung ke atasnya
     |--------------------------------------------------------------------------
     */
 
-    public function test_komentar_terbuka_tidak_menyekat_peringkat_3_1_daripada_selesai(): void
+    public function test_catatan_terbuka_tidak_menyekat_peringkat_3_1_daripada_selesai(): void
     {
         $this->lengkapkanHingga(self::ALPHA, AliranKerja::ANALISIS_INVENTORI, $this->ppa1);
 
         // Lima terbuka, dua ditindak — peringkat 3.1 tetap boleh disiapkan.
         foreach (range(1, 5) as $i) {
-            $this->komentar($this->kb1, 'Terbuka '.$i);
+            $this->catatan($this->kb1, 'Terbuka '.$i);
         }
 
         foreach (range(1, 2) as $i) {
-            $ditindak = $this->komentar($this->ppa1, 'Ditindak '.$i);
-            $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $ditindak));
+            $ditindak = $this->catatan($this->ppa1, 'Ditindak '.$i);
+            $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $ditindak));
         }
 
         $this->siapkanPeringkat(self::ALPHA, AliranKerja::ANALISIS_INVENTORI, $this->pa);
@@ -432,7 +432,7 @@ class KomentarLaporanTest extends TestCase
         $this->assertSame(
             WorkflowStageStatus::SELESAI,
             $this->status31(),
-            'Komentar yang masih terbuka tidak boleh menyekat peringkat 3.1.',
+            'Catatan yang masih terbuka tidak boleh menyekat peringkat 3.1.',
         );
     }
 
@@ -442,8 +442,8 @@ class KomentarLaporanTest extends TestCase
 
         $sebelum = $this->status31();
 
-        $komentar = $this->komentar($this->kb1, 'Maklum balas');
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $komentar));
+        $catatan = $this->catatan($this->kb1, 'Maklum balas');
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $catatan));
 
         $this->assertSame($sebelum, $this->status31());
     }
@@ -462,24 +462,24 @@ class KomentarLaporanTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_pa_tidak_boleh_membuka_komentar_entiti_yang_tidak_ditugaskan(): void
+    public function test_pa_tidak_boleh_membuka_catatan_entiti_yang_tidak_ditugaskan(): void
     {
-        $this->komentar($this->kb1, 'Maklum balas Beta', self::BETA);
+        $this->catatan($this->kb1, 'Maklum balas Beta', self::BETA);
 
         // $pa hanya ditugaskan ALPHA.
         $this->bukaLaporan($this->pa, $this->analisisBeta)->assertForbidden();
     }
 
-    public function test_menukar_id_komentar_tidak_mendedahkan_komentar_entiti_lain(): void
+    public function test_menukar_id_catatan_tidak_mendedahkan_catatan_entiti_lain(): void
     {
-        $komentarBeta = $this->komentar($this->kb1, 'Maklum balas Beta', self::BETA);
+        $catatanBeta = $this->catatan($this->kb1, 'Maklum balas Beta', self::BETA);
 
         // $pa boleh menanda tindakan — tetapi bukan pada entiti Beta.
         $this->actingAs($this->pa)
-            ->post(route('laporan.komentar.tindakan', $komentarBeta))
+            ->post(route('laporan.catatan.tindakan', $catatanBeta))
             ->assertForbidden();
 
-        $this->assertSame(LaporanKomentar::STATUS_TERBUKA, $komentarBeta->fresh()->status);
+        $this->assertSame(LaporanCatatan::STATUS_TERBUKA, $catatanBeta->fresh()->status);
     }
 
     public function test_agency_code_dalam_permintaan_diabaikan(): void
@@ -487,21 +487,21 @@ class KomentarLaporanTest extends TestCase
         // Kod entiti diambil daripada rekod analisis pada laluan, BUKAN
         // daripada badan permintaan — menghantarnya tidak mengubah apa-apa.
         $this->actingAs($this->kb1)
-            ->post(route('laporan.komentar.store', $this->analisis), [
+            ->post(route('laporan.catatan.store', $this->analisis), [
                 'section' => 'vendor',
                 'content' => 'Cubaan menyuntik entiti lain',
                 'agency_code' => self::BETA,
                 'agency_name' => 'Entiti Beta',
                 'user_id' => $this->ppa1->id,
-                'status' => LaporanKomentar::STATUS_TINDAKAN_DIAMBIL,
+                'status' => LaporanCatatan::STATUS_TINDAKAN_DIAMBIL,
             ])
             ->assertRedirect();
 
-        $komentar = LaporanKomentar::firstOrFail();
+        $catatan = LaporanCatatan::firstOrFail();
 
-        $this->assertSame(self::ALPHA, $komentar->agency_code);
-        $this->assertSame($this->kb1->id, $komentar->user_id);
-        $this->assertSame(LaporanKomentar::STATUS_TERBUKA, $komentar->status);
+        $this->assertSame(self::ALPHA, $catatan->agency_code);
+        $this->assertSame($this->kb1->id, $catatan->user_id);
+        $this->assertSame(LaporanCatatan::STATUS_TERBUKA, $catatan->status);
     }
 
     /*
@@ -514,14 +514,14 @@ class KomentarLaporanTest extends TestCase
     {
         foreach (SeksyenAnalisis::kunci() as $seksyen) {
             $this->actingAs($this->kb1)
-                ->post(route('laporan.komentar.store', $this->analisis), [
+                ->post(route('laporan.catatan.store', $this->analisis), [
                     'section' => $seksyen,
-                    'content' => 'Komentar bagi '.$seksyen,
+                    'content' => 'Catatan bagi '.$seksyen,
                 ])
                 ->assertSessionHasNoErrors();
         }
 
-        $this->assertDatabaseCount('laporan_komentar', count(SeksyenAnalisis::kunci()));
+        $this->assertDatabaseCount('laporan_catatan', count(SeksyenAnalisis::kunci()));
     }
 
     public function test_seksyen_sewenang_wenangnya_ditolak_di_pelayan(): void
@@ -529,14 +529,14 @@ class KomentarLaporanTest extends TestCase
         // Termasuk kunci lama modul asal, yang bukan seksyen Borang Input.
         foreach (['pengenalan', 'kerangka_kerja', 'lampiran', 'seksyen-rekaan', ''] as $seksyen) {
             $this->actingAs($this->kb1)
-                ->post(route('laporan.komentar.store', $this->analisis), [
+                ->post(route('laporan.catatan.store', $this->analisis), [
                     'section' => $seksyen,
-                    'content' => 'Komentar',
+                    'content' => 'Catatan',
                 ])
                 ->assertSessionHasErrors('section');
         }
 
-        $this->assertDatabaseCount('laporan_komentar', 0);
+        $this->assertDatabaseCount('laporan_catatan', 0);
     }
 
     /*
@@ -545,20 +545,20 @@ class KomentarLaporanTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_penunjuk_mengira_kesemua_komentar_kb_dan_ppa(): void
+    public function test_penunjuk_mengira_kesemua_catatan_kb_dan_ppa(): void
     {
-        $this->komentar($this->kb1, 'Satu', self::ALPHA, 'profil');
-        $this->komentar($this->kb2, 'Dua', self::ALPHA, 'profil');
-        $ditindak = $this->komentar($this->ppa1, 'Tiga', self::ALPHA, 'profil');
+        $this->catatan($this->kb1, 'Satu', self::ALPHA, 'profil');
+        $this->catatan($this->kb2, 'Dua', self::ALPHA, 'profil');
+        $ditindak = $this->catatan($this->ppa1, 'Tiga', self::ALPHA, 'profil');
 
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $ditindak));
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $ditindak));
 
         // Kiraan sama bagi PA, KB dan PPA kerana ketiga-tiganya melihat set
-        // komentar yang SAMA.
+        // catatan yang SAMA.
         foreach ([$this->pa, $this->kb1, $this->ppa2] as $pengguna) {
             $this->bukaLaporan($pengguna)
                 ->assertOk()
-                ->assertSee('3 komentar')
+                ->assertSee('3 catatan')
                 ->assertSee('2 terbuka')
                 ->assertSee('1 tindakan diambil');
         }
@@ -566,34 +566,34 @@ class KomentarLaporanTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | PDF — komentar TIDAK PERNAH disertakan
+    | PDF — catatan TIDAK PERNAH disertakan
     |--------------------------------------------------------------------------
     */
 
-    public function test_komentar_tidak_muncul_dalam_kandungan_pdf(): void
+    public function test_catatan_tidak_muncul_dalam_kandungan_pdf(): void
     {
-        $komentar = $this->komentar($this->kb1, 'Maklum balas sulit KB Satu');
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $komentar));
+        $catatan = $this->catatan($this->kb1, 'Maklum balas sulit KB Satu');
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $catatan));
 
         $html = $this->htmlPdf();
 
         foreach ([
-            'Maklum balas sulit KB Satu', // teks komentar
+            'Maklum balas sulit KB Satu', // teks catatan
             'KB Satu',                    // pengarang
             'Tindakan Diambil',           // status
             'PA Ahmad',                   // PA yang mengambil tindakan
-            'section-comments-widget',    // antara muka komentar
+            'section-comments-widget',    // antara muka catatan
         ] as $tidakBoleh) {
             $this->assertStringNotContainsString($tidakBoleh, $html);
         }
     }
 
-    public function test_data_paparan_pdf_tidak_memuatkan_komentar(): void
+    public function test_data_paparan_pdf_tidak_memuatkan_catatan(): void
     {
-        $this->komentar($this->kb1, 'Maklum balas sulit KB Satu');
+        $this->catatan($this->kb1, 'Maklum balas sulit KB Satu');
 
-        $this->assertTrue($this->dataLaporan(includeComments: false)['komentar']->isEmpty());
-        $this->assertTrue($this->dataLaporan(includeComments: true)['komentar']->isNotEmpty());
+        $this->assertTrue($this->dataLaporan(includeComments: false)['catatan']->isEmpty());
+        $this->assertTrue($this->dataLaporan(includeComments: true)['catatan']->isNotEmpty());
     }
 
     /**
@@ -624,21 +624,21 @@ class KomentarLaporanTest extends TestCase
     |--------------------------------------------------------------------------
     */
 
-    public function test_tindakan_komentar_direkod_dalam_jejak_audit_tanpa_teks_komentar(): void
+    public function test_tindakan_catatan_direkod_dalam_jejak_audit_tanpa_teks_catatan(): void
     {
-        $rahsia = 'Teks komentar yang tidak boleh masuk jejak audit';
+        $rahsia = 'Teks catatan yang tidak boleh masuk jejak audit';
 
-        $this->actingAs($this->kb1)->post(route('laporan.komentar.store', $this->analisis), [
+        $this->actingAs($this->kb1)->post(route('laporan.catatan.store', $this->analisis), [
             'section' => 'protokol',
             'content' => $rahsia,
         ]);
 
-        $komentar = LaporanKomentar::firstOrFail();
+        $catatan = LaporanCatatan::firstOrFail();
 
-        $this->actingAs($this->kb1)->patch(route('laporan.komentar.update', $komentar), ['content' => $rahsia.' (disunting)']);
-        $this->actingAs($this->pa)->post(route('laporan.komentar.tindakan', $komentar));
-        $this->actingAs($this->pa)->delete(route('laporan.komentar.tindakan.batal', $komentar));
-        $this->actingAs($this->kb1)->delete(route('laporan.komentar.destroy', $komentar));
+        $this->actingAs($this->kb1)->patch(route('laporan.catatan.update', $catatan), ['content' => $rahsia.' (disunting)']);
+        $this->actingAs($this->pa)->post(route('laporan.catatan.tindakan', $catatan));
+        $this->actingAs($this->pa)->delete(route('laporan.catatan.tindakan.batal', $catatan));
+        $this->actingAs($this->kb1)->delete(route('laporan.catatan.destroy', $catatan));
 
         $log = ActivityLog::where('agency_code', self::ALPHA)->pluck('action')->all();
 
@@ -666,27 +666,27 @@ class KomentarLaporanTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | ISTILAH — status komentar berasingan daripada status peringkat 3.1
+    | ISTILAH — status catatan berasingan daripada status peringkat 3.1
     |--------------------------------------------------------------------------
     */
 
-    public function test_status_komentar_menggunakan_terbuka_dan_tindakan_diambil(): void
+    public function test_status_catatan_menggunakan_terbuka_dan_tindakan_diambil(): void
     {
         $this->assertSame(
             ['terbuka' => 'Terbuka', 'tindakan_diambil' => 'Tindakan Diambil'],
-            LaporanKomentar::STATUS,
+            LaporanCatatan::STATUS,
         );
 
         // "Selesai" ialah istilah peringkat 3.1 dan tidak boleh dipakai
-        // semula sebagai status komentar.
-        $this->assertNotContains(WorkflowStageStatus::SELESAI, LaporanKomentar::STATUS);
+        // semula sebagai status catatan.
+        $this->assertNotContains(WorkflowStageStatus::SELESAI, LaporanCatatan::STATUS);
     }
 
-    public function test_seksyen_komentar_ialah_sembilan_seksyen_borang_input(): void
+    public function test_seksyen_catatan_ialah_sembilan_seksyen_borang_input(): void
     {
         $this->assertSame(
             ['maklumat', 'data_status', 'profil', 'algoritma', 'protokol', 'pustaka', 'vendor', 'tindakan', 'kesimpulan'],
-            array_keys(LaporanKomentar::seksyenLaporan()),
+            array_keys(LaporanCatatan::seksyenLaporan()),
         );
     }
 }

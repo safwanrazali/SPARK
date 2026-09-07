@@ -772,11 +772,11 @@
          (resources/views/laporan/inventori.blade.php): kedua-duanya
          memasukkan partial yang SAMA di bawah.
 
-         $widgetKomentar PALSU di sini — komentar KB/PPA TIDAK PERNAH masuk
+         $widgetCatatan PALSU di sini — catatan KB/PPA TIDAK PERNAH masuk
          ke dalam PDF. Ia lapisan kedua di atas
          LaporanController@unduh yang sudah memanggil
          siapkanData(includeComments: false). --}}
-    @php $widgetKomentar = false; @endphp
+    @php $widgetCatatan = false; @endphp
 
     @include('laporan.partials.pengenalan')
     @include('laporan.partials.tujuan')

@@ -40,10 +40,10 @@
              memasukkan partial yang SAMA di bawah, jadi kandungan laporan
              tidak boleh lagi terpesong antara skrin dan PDF.
 
-             $widgetKomentar menghidupkan widget komentar KB/PPA pada setiap
+             $widgetCatatan menghidupkan widget catatan KB/PPA pada setiap
              tajuk seksyen. Ia BENAR di sini kerana ini paparan skrin; badan
              PDF menetapkannya palsu. --}}
-        @php $widgetKomentar = true; @endphp
+        @php $widgetCatatan = true; @endphp
 
         @include('laporan.partials.pengenalan')
         @include('laporan.partials.tujuan')

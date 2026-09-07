@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\AnalisisInventori;
-use App\Models\LaporanKomentar;
+use App\Models\LaporanCatatan;
 use App\Support\BorangAnalisis;
 use App\Support\TeksBerformat;
 
@@ -81,7 +81,7 @@ class LaporanPenyediaanService
      * Sediakan semua data yang diperlukan oleh templat laporan
      * (dikongsi antara pratonton skrin dan muat turun PDF).
      *
-     * @param  bool  $includeComments  Sertakan komentar KB/PPA — hanya untuk
+     * @param  bool  $includeComments  Sertakan catatan KB/PPA — hanya untuk
      *                                  skrin dan hanya untuk peranan yang
      *                                  dibenarkan; TIDAK PERNAH untuk PDF.
      */
@@ -213,15 +213,15 @@ class LaporanPenyediaanService
             'pengesahan' => $this->pengesahan($analisis),
         ];
 
-        // Komentar KB/PPA hanya dipaparkan pada skrin, TIDAK PERNAH dalam
+        // Catatan KB/PPA hanya dipaparkan pada skrin, TIDAK PERNAH dalam
         // PDF: `unduh()` memanggil kaedah ini dengan includeComments: false,
         // jadi laporan/pdf/body.blade.php sentiasa menerima koleksi KOSONG.
         //
         // Kunci ini sentiasa wujud supaya paparan tidak perlu menyemak
         // isset() pada setiap seksyen — ia sekadar kosong apabila pengguna
-        // tiada akses kepada modul komentar atau apabila PDF sedang dijana.
-        $result['komentar'] = $includeComments
-            ? LaporanKomentar::forAgency($analisis->agency_code)
+        // tiada akses kepada modul catatan atau apabila PDF sedang dijana.
+        $result['catatan'] = $includeComments
+            ? LaporanCatatan::forAgency($analisis->agency_code)
                 ->with(['user', 'tindakanOleh'])
                 ->get()
                 ->groupBy('section')

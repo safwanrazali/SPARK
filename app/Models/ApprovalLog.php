@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * - Siapa yang meluluskan
  * - Status sebelum/sesudah
  * - Masa kelulusan
- * - Komen/catatan semakan
+ * - Ulasan/catatan semakan
  */
 class ApprovalLog extends Model
 {

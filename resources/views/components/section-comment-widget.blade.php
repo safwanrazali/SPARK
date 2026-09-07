@@ -1,14 +1,14 @@
 {{--
-    Komentar KB/PPA pada satu seksyen Borang Input.
+    Catatan KB/PPA pada satu seksyen Borang Input.
 
     Maklum balas + pengakuan sahaja: KB/PPA menulis, PA menanda "Tindakan
     Diambil", KB/PPA melihat tandanya. Tiada kelulusan, tiada notifikasi,
     dan tiada kesan ke atas status peringkat 3.1.
 
-    PENGLIHATAN: PA, KB dan PPA melihat KESEMUA komentar. Pemilikan hanya
+    PENGLIHATAN: PA, KB dan PPA melihat KESEMUA catatan. Pemilikan hanya
     menentukan siapa boleh menyunting/memadam — TIDAK PERNAH siapa boleh
     melihat. Setiap butang di bawah mempunyai pasangan semakan di pelayan
-    (LaporanKomentarPolicy); menyembunyikannya bukan kawalan keselamatan.
+    (LaporanCatatanPolicy); menyembunyikannya bukan kawalan keselamatan.
 
     d-print-none: widget ini tidak boleh muncul apabila skrin laporan
     dicetak. PDF rasmi dijana daripada laporan/pdf/body.blade.php, yang
@@ -17,14 +17,14 @@
 @php
     $sectionKey = $section ?? '';
     $pengguna = Auth::user();
-    $bolehLihat = $pengguna?->can('viewAny', \App\Models\LaporanKomentar::class) ?? false;
+    $bolehLihat = $pengguna?->can('viewAny', \App\Models\LaporanCatatan::class) ?? false;
 
-    $senarai = collect($komentar[$sectionKey] ?? []);
+    $senarai = collect($catatan[$sectionKey] ?? []);
     $jumlah = $senarai->count();
-    $terbuka = $senarai->where('status', \App\Models\LaporanKomentar::STATUS_TERBUKA)->count();
+    $terbuka = $senarai->where('status', \App\Models\LaporanCatatan::STATUS_TERBUKA)->count();
     $ditindak = $jumlah - $terbuka;
 
-    $bolehTulis = $bolehLihat && $pengguna->can('create', \App\Models\LaporanKomentar::class) && isset($analisis);
+    $bolehTulis = $bolehLihat && $pengguna->can('create', \App\Models\LaporanCatatan::class) && isset($analisis);
     $label = \App\Support\SeksyenAnalisis::label($sectionKey);
 @endphp
 
@@ -32,7 +32,7 @@
     <div class="section-comments-widget d-print-none">
         <button class="btn btn-sm btn-outline-secondary section-comments-toggle" type="button" data-bs-toggle="collapse"
             data-bs-target="#comments-{{ $sectionKey }}"
-            title="Komentar bagi {{ $label }} — {{ $jumlah }} komentar, {{ $terbuka }} terbuka">
+            title="Catatan bagi {{ $label }} — {{ $jumlah }} catatan, {{ $terbuka }} terbuka">
             <i class="bi bi-chat-dots"></i>
             @if ($jumlah)
                 <span class="badge {{ $terbuka ? 'bg-warning text-dark' : 'bg-success' }}">{{ $jumlah }}</span>
@@ -46,21 +46,21 @@
                 {{-- Kiraan bersifat maklumat semata-mata: ia TIDAK menyekat
                      peringkat 3.1 dan tidak mengubah statusnya. --}}
                 <div class="small text-muted mb-2">
-                    {{ $label }} — {{ $jumlah }} komentar
+                    {{ $label }} — {{ $jumlah }} catatan
                     · {{ $terbuka }} terbuka
                     · {{ $ditindak }} tindakan diambil
                 </div>
 
                 @if ($bolehTulis)
                     <div class="mb-2 pb-2 border-bottom">
-                        <form method="POST" action="{{ route('laporan.komentar.store', $analisis) }}"
+                        <form method="POST" action="{{ route('laporan.catatan.store', $analisis) }}"
                             class="d-flex gap-2 align-items-end section-comment-form">
                             @csrf
                             <input type="hidden" name="section" value="{{ $sectionKey }}">
                             <textarea name="content" class="form-control form-control-sm flex-grow-1" rows="1"
-                                placeholder="Tambah komentar..."
-                                maxlength="{{ \App\Models\LaporanKomentar::HAD_KANDUNGAN }}" required></textarea>
-                            <button type="submit" class="btn btn-sm btn-primary" title="Hantar komentar">
+                                placeholder="Tambah catatan..."
+                                maxlength="{{ \App\Models\LaporanCatatan::HAD_KANDUNGAN }}" required></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary" title="Hantar catatan">
                                 <i class="bi bi-send"></i>
                             </button>
                         </form>
@@ -88,19 +88,19 @@
                                         @can('update', $comment)
                                             <button type="button" class="btn btn-sm btn-link text-secondary p-0 m-0"
                                                 data-bs-toggle="collapse"
-                                                data-bs-target="#komentar-sunting-{{ $comment->id }}" title="Sunting">
+                                                data-bs-target="#catatan-sunting-{{ $comment->id }}" title="Sunting">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         @endcan
 
                                         @can('delete', $comment)
                                             <form method="POST"
-                                                action="{{ route('laporan.komentar.destroy', $comment) }}"
+                                                action="{{ route('laporan.catatan.destroy', $comment) }}"
                                                 class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-link text-danger p-0 m-0"
-                                                    title="Padam" onclick="return confirm('Padam komentar ini?')">
+                                                    title="Padam" onclick="return confirm('Padam catatan ini?')">
                                                     <i class="bi bi-x-circle"></i>
                                                 </button>
                                             </form>
@@ -111,14 +111,14 @@
                                 <p class="mb-0 small mt-1">{{ $comment->content }}</p>
 
                                 @can('update', $comment)
-                                    <div class="collapse mt-2" id="komentar-sunting-{{ $comment->id }}">
+                                    <div class="collapse mt-2" id="catatan-sunting-{{ $comment->id }}">
                                         <form method="POST"
-                                            action="{{ route('laporan.komentar.update', $comment) }}"
+                                            action="{{ route('laporan.catatan.update', $comment) }}"
                                             class="d-flex gap-2 align-items-end">
                                             @csrf
                                             @method('PATCH')
                                             <textarea name="content" class="form-control form-control-sm flex-grow-1" rows="2"
-                                                maxlength="{{ \App\Models\LaporanKomentar::HAD_KANDUNGAN }}"
+                                                maxlength="{{ \App\Models\LaporanCatatan::HAD_KANDUNGAN }}"
                                                 required>{{ $comment->content }}</textarea>
                                             <button type="submit" class="btn btn-sm btn-outline-primary"
                                                 title="Simpan suntingan">
@@ -128,7 +128,7 @@
                                     </div>
                                 @endcan
 
-                                {{-- Status komentar: Terbuka / Tindakan Diambil.
+                                {{-- Status catatan: Terbuka / Tindakan Diambil.
                                      SENGAJA berbeza daripada "Belum Selesai /
                                      Selesai" peringkat 3.1 — kedua-duanya bebas. --}}
                                 <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
@@ -147,7 +147,7 @@
                                     {{-- Pegawai Analisis SAHAJA. --}}
                                     @can('tandakanTindakan', $comment)
                                         <form method="POST"
-                                            action="{{ route('laporan.komentar.tindakan', $comment) }}"
+                                            action="{{ route('laporan.catatan.tindakan', $comment) }}"
                                             class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-success py-0"
@@ -159,7 +159,7 @@
 
                                     @can('batalkanTindakan', $comment)
                                         <form method="POST"
-                                            action="{{ route('laporan.komentar.tindakan.batal', $comment) }}"
+                                            action="{{ route('laporan.catatan.tindakan.batal', $comment) }}"
                                             class="d-inline">
                                             @csrf
                                             @method('DELETE')
@@ -174,7 +174,7 @@
                         @endforeach
                     </div>
                 @else
-                    <p class="text-muted small mb-0">Tiada komentar lagi.</p>
+                    <p class="text-muted small mb-0">Tiada catatan lagi.</p>
                 @endif
             </div>
         </div>

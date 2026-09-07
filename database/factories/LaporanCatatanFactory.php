@@ -2,17 +2,17 @@
 
 namespace Database\Factories;
 
-use App\Models\LaporanKomentar;
+use App\Models\LaporanCatatan;
 use App\Models\User;
 use App\Support\SeksyenAnalisis;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<LaporanKomentar>
+ * @extends Factory<LaporanCatatan>
  */
-class LaporanKomentarFactory extends Factory
+class LaporanCatatanFactory extends Factory
 {
-    protected $model = LaporanKomentar::class;
+    protected $model = LaporanCatatan::class;
 
     public function definition(): array
     {
@@ -23,18 +23,18 @@ class LaporanKomentarFactory extends Factory
             // tidak boleh mencipta seksyen yang ditolak pengesahan pelayan.
             'section' => fake()->randomElement(SeksyenAnalisis::kunci()),
             'content' => fake()->sentence(),
-            'status' => LaporanKomentar::STATUS_TERBUKA,
+            'status' => LaporanCatatan::STATUS_TERBUKA,
             'user_id' => User::factory()->state(['role' => User::ROLE_KETUA_BAHAGIAN]),
         ];
     }
 
     /**
-     * Komentar yang telah ditanda "Tindakan Diambil" oleh Pegawai Analisis.
+     * Catatan yang telah ditanda "Tindakan Diambil" oleh Pegawai Analisis.
      */
     public function ditindak(?User $pegawaiAnalisis = null): static
     {
         return $this->state(fn () => [
-            'status' => LaporanKomentar::STATUS_TINDAKAN_DIAMBIL,
+            'status' => LaporanCatatan::STATUS_TINDAKAN_DIAMBIL,
             'tindakan_oleh_user_id' => $pegawaiAnalisis?->id
                 ?? User::factory()->state(['role' => User::ROLE_ANALYST]),
             'tindakan_pada' => now(),

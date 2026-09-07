@@ -19,7 +19,7 @@ Run the migration to create the comments table:
 php artisan migrate
 ```
 
-This creates the `laporan_komentar` table with the following structure:
+This creates the `laporan_catatan` table with the following structure:
 
 - `id` - Auto-incrementing primary key
 - `agency_code` - Reference to the entity
@@ -34,7 +34,7 @@ This creates the `laporan_komentar` table with the following structure:
 
 ## Files Modified/Created
 
-### 1. New: `app/Models/LaporanKomentar.php`
+### 1. New: `app/Models/LaporanCatatan.php`
 
 A new Eloquent model for storing comments on report sections.
 
@@ -49,16 +49,16 @@ A new Eloquent model for storing comments on report sections.
 
 - `user()` - Belongs to User (KB or PPA who made the comment)
 
-### 2. New: `database/migrations/2026_09_02_000001_create_laporan_komentar_table.php`
+### 2. New: `database/migrations/2026_09_02_000001_create_laporan_catatan_table.php`
 
-Migration file creating the `laporan_komentar` table.
+Migration file creating the `laporan_catatan` table.
 
 ### 3. Modified: `app/Http/Controllers/LaporanController.php`
 
 **Added Imports:**
 
 ```php
-use App\Models\LaporanKomentar;
+use App\Models\LaporanCatatan;
 use Illuminate\Validation\Rule;
 ```
 
@@ -69,7 +69,7 @@ use Illuminate\Validation\Rule;
     - No longer requires form completion
 
 - `siapkanData(AnalisisInventori $analisis, bool $includeComments = false)` - New parameter
-    - When `$includeComments = true`: includes komentar grouped by section
+    - When `$includeComments = true`: includes catatan grouped by section
     - When `$includeComments = false`: excludes comments (for PDF)
 
 - `unduh(AnalisisInventori $analisis)` - Updated PDF generation
@@ -80,21 +80,21 @@ use Illuminate\Validation\Rule;
 **New Methods:**
 
 - `storeComment(Request $request, AnalisisInventori $analisis)` - POST endpoint
-    - Validates: section (must be in `LaporanKomentar::seksyenLaporan()`), content (max 2000 chars)
+    - Validates: section (must be in `LaporanCatatan::seksyenLaporan()`), content (max 2000 chars)
     - Only KB and PPA can comment: `isCoordinator()` or `isKetuaBahagian()`
     - Creates comment record and redirects back to report view
-    - Route: `POST /laporan/inventori/{analisis}/komentar`
+    - Route: `POST /laporan/inventori/{analisis}/catatan`
 
 - `getComments(Request $request, AnalisisInventori $analisis)` - GET AJAX endpoint
     - Returns JSON with comments grouped by section
     - Includes: id, user_name, user_role, content, created_at
     - For JS-based comment display
-    - Route: `GET /laporan/inventori/{analisis}/komentar`
+    - Route: `GET /laporan/inventori/{analisis}/catatan`
 
-- `destroyComment(Request $request, LaporanKomentar $komentar)` - DELETE endpoint
+- `destroyComment(Request $request, LaporanCatatan $catatan)` - DELETE endpoint
     - Only creator or Administrator can delete
     - Redirects back to report view
-    - Route: `DELETE /laporan/komentar/{komentar}`
+    - Route: `DELETE /laporan/catatan/{catatan}`
 
 ### 4. Modified: `routes/web.php`
 
@@ -102,18 +102,18 @@ use Illuminate\Validation\Rule;
 
 ```php
 // Store comment from KB/PPA
-Route::post('/laporan/inventori/{analisis}/komentar', [LaporanController::class, 'storeComment'])
+Route::post('/laporan/inventori/{analisis}/catatan', [LaporanController::class, 'storeComment'])
     ->middleware('can:view,analisis')
-    ->name('laporan.komentar.store');
+    ->name('laporan.catatan.store');
 
 // Get comments as JSON
-Route::get('/laporan/inventori/{analisis}/komentar', [LaporanController::class, 'getComments'])
+Route::get('/laporan/inventori/{analisis}/catatan', [LaporanController::class, 'getComments'])
     ->middleware('can:view,analisis')
-    ->name('laporan.komentar.get');
+    ->name('laporan.catatan.get');
 
 // Delete comment
-Route::delete('/laporan/komentar/{komentar}', [LaporanController::class, 'destroyComment'])
-    ->name('laporan.komentar.destroy');
+Route::delete('/laporan/catatan/{catatan}', [LaporanController::class, 'destroyComment'])
+    ->name('laporan.catatan.destroy');
 ```
 
 ---
@@ -136,7 +136,7 @@ Route::delete('/laporan/komentar/{komentar}', [LaporanController::class, 'destro
 
 - **PA Only**: Comments visible only to Pegawai Analisis (form owner)
 - **Not in PDF**: Comments explicitly excluded from PDF export
-- Comments visible on Laporan view page via `$komentar` variable
+- Comments visible on Laporan view page via `$catatan` variable
 
 ### Who Can Delete Comments?
 
@@ -168,7 +168,7 @@ Route::delete('/laporan/komentar/{komentar}', [LaporanController::class, 'destro
 ### PDF Generation:
 
 - `unduh()` method passes `includeComments: false`
-- PDF template only receives data WITHOUT komentar array
+- PDF template only receives data WITHOUT catatan array
 - No changes needed to PDF template - comments naturally excluded
 
 ---
@@ -180,11 +180,11 @@ To enable the comment UI, update the Laporan view template:
 ### Display Comments Section:
 
 ```blade
-@if (!empty($komentar))
+@if (!empty($catatan))
     <section class="comments-section">
-        @foreach ($komentar as $section => $comments)
+        @foreach ($catatan as $section => $comments)
             <div class="section-comments" data-section="{{ $section }}">
-                <h4>{{ LaporanKomentar::seksyenLaporan()[$section] ?? $section }}</h4>
+                <h4>{{ LaporanCatatan::seksyenLaporan()[$section] ?? $section }}</h4>
                 @foreach ($comments as $comment)
                     <div class="comment">
                         <div class="comment-header">
@@ -194,7 +194,7 @@ To enable the comment UI, update the Laporan view template:
                         </div>
                         <div class="comment-body">{{ $comment->content }}</div>
                         @if (Auth::user()->id === $comment->user_id || Auth::user()->isAdministrator())
-                            <form method="POST" action="{{ route('laporan.komentar.destroy', $comment) }}" style="display:inline">
+                            <form method="POST" action="{{ route('laporan.catatan.destroy', $comment) }}" style="display:inline">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn-delete">Padam</button>
                             </form>
@@ -211,16 +211,16 @@ To enable the comment UI, update the Laporan view template:
 
 ```blade
 @if (Auth::user()->isCoordinator() || Auth::user()->isKetuaBahagian())
-    <form method="POST" action="{{ route('laporan.komentar.store', $analisis) }}">
+    <form method="POST" action="{{ route('laporan.catatan.store', $analisis) }}">
         @csrf
         <select name="section" required>
             <option value="">Pilih Seksyen...</option>
-            @foreach (LaporanKomentar::seksyenLaporan() as $key => $label)
+            @foreach (LaporanCatatan::seksyenLaporan() as $key => $label)
                 <option value="{{ $key }}">{{ $label }}</option>
             @endforeach
         </select>
-        <textarea name="content" maxlength="2000" required placeholder="Tulis komentar..."></textarea>
-        <button type="submit">Hantar Komentar</button>
+        <textarea name="content" maxlength="2000" required placeholder="Tulis catatan..."></textarea>
+        <button type="submit">Hantar Catatan</button>
     </form>
 @endif
 ```
@@ -233,19 +233,19 @@ To enable the comment UI, update the Laporan view template:
 
 ```bash
 php artisan tinker
->>> DB::table('laporan_komentar')->count()
+>>> DB::table('laporan_catatan')->count()
 ```
 
 ### API Testing:
 
 ```bash
 # Add a comment
-curl -X POST http://localhost:8000/laporan/inventori/{id}/komentar \
+curl -X POST http://localhost:8000/laporan/inventori/{id}/catatan \
   -H "Content-Type: application/json" \
   -d '{"section":"algoritma_kenal_pasti","content":"Good analysis"}'
 
 # Get comments
-curl http://localhost:8000/laporan/inventori/{id}/komentar
+curl http://localhost:8000/laporan/inventori/{id}/catatan
 ```
 
 ---

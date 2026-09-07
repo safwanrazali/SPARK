@@ -10,36 +10,36 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Komentar Ketua Bahagian dan Pegawai Penyelaras Analisis pada Laporan
+ * Catatan Ketua Bahagian dan Pegawai Penyelaras Analisis pada Laporan
  * Analisis Inventori Kriptografi.
  *
  * Ia satu mekanisme MAKLUM BALAS + PENGAKUAN, bukan kitaran kelulusan:
  *
- *     KB / PPA menulis komentar pada satu seksyen Borang Input
+ *     KB / PPA menulis catatan pada satu seksyen Borang Input
  *       -> PA melihatnya dan mengambil tindakan yang perlu
  *       -> PA menanda "Tindakan Diambil"
  *       -> KB / PPA melihat bahawa tindakan telah diambil
  *
  * Tiada penyerahan untuk semakan, kelulusan, penolakan atau pemulangan.
- * Komentar TIDAK sekali-kali menyekat atau mengubah status peringkat 3.1,
+ * Catatan TIDAK sekali-kali menyekat atau mengubah status peringkat 3.1,
  * dan TIDAK disertakan dalam PDF laporan rasmi.
  *
- * PENAPISAN: KB dan PPA melihat KESEMUA komentar KB dan PPA — pemilikan
+ * PENAPISAN: KB dan PPA melihat KESEMUA catatan KB dan PPA — pemilikan
  * hanya menentukan siapa boleh MENYUNTING dan MEMADAM, bukan siapa boleh
- * MELIHAT. Lihat App\Policies\LaporanKomentarPolicy.
+ * MELIHAT. Lihat App\Policies\LaporanCatatanPolicy.
  */
-class LaporanKomentar extends Model
+class LaporanCatatan extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /** Komentar masih menunggu tindakan Pegawai Analisis. */
+    /** Catatan masih menunggu tindakan Pegawai Analisis. */
     public const STATUS_TERBUKA = 'terbuka';
 
-    /** Pegawai Analisis telah mengambil tindakan atas komentar ini. */
+    /** Pegawai Analisis telah mengambil tindakan atas catatan ini. */
     public const STATUS_TINDAKAN_DIAMBIL = 'tindakan_diambil';
 
     /**
-     * Status komentar — SENGAJA berbeza daripada "Belum Selesai / Selesai"
+     * Status catatan — SENGAJA berbeza daripada "Belum Selesai / Selesai"
      * peringkat 3.1 supaya kedua-duanya tidak dikelirukan. Keduanya bebas.
      */
     public const STATUS = [
@@ -47,10 +47,10 @@ class LaporanKomentar extends Model
         self::STATUS_TINDAKAN_DIAMBIL => 'Tindakan Diambil',
     ];
 
-    /** Had panjang kandungan komentar — dikuatkuasakan borang dan pelayan. */
+    /** Had panjang kandungan catatan — dikuatkuasakan borang dan pelayan. */
     public const HAD_KANDUNGAN = 2000;
 
-    protected $table = 'laporan_komentar';
+    protected $table = 'laporan_catatan';
 
     protected $fillable = [
         'agency_code',
@@ -75,7 +75,7 @@ class LaporanKomentar extends Model
     }
 
     /**
-     * Pengarang komentar (KB atau PPA) — pemilik yang boleh menyunting dan
+     * Pengarang catatan (KB atau PPA) — pemilik yang boleh menyunting dan
      * memadamnya.
      */
     public function user(): BelongsTo
@@ -92,7 +92,7 @@ class LaporanKomentar extends Model
     }
 
     /**
-     * Komentar untuk satu entiti, disusun mengikut seksyen dan waktu.
+     * Catatan untuk satu entiti, disusun mengikut seksyen dan waktu.
      */
     public function scopeForAgency(Builder $query, string $agencyCode): Builder
     {
@@ -127,7 +127,7 @@ class LaporanKomentar extends Model
     }
 
     /**
-     * Seksyen yang boleh dikomentari: SEMBILAN seksyen Borang Input, tidak
+     * Seksyen yang boleh diberi catatan: SEMBILAN seksyen Borang Input, tidak
      * lebih dan tidak kurang. Tujuannya memberitahu PA bahagian borang mana
      * yang perlu diberi perhatian, jadi senarai ini mesti kekal terikat pada
      * App\Support\SeksyenAnalisis dan bukan disalin di sini.

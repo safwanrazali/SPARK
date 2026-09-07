@@ -30,9 +30,9 @@
             </tbody>
         </table>
 
-        @if ($widgetKomentar)
+        @if ($widgetCatatan)
             <div class="d-flex justify-content-end mt-2">
-                <x-section-comment-widget :section="'maklumat'" :komentar="$komentar" :analisis="$analisis" />
+                <x-section-comment-widget :section="'maklumat'" :catatan="$catatan" :analisis="$analisis" />
             </div>
         @endif
     </div>

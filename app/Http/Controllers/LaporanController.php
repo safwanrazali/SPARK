@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
-use App\Models\LaporanKomentar;
+use App\Models\LaporanCatatan;
 use App\Services\LaporanPenyediaanService;
 use App\Support\Halaman;
 use Illuminate\Http\Request;
@@ -36,9 +36,9 @@ class LaporanController extends Controller
      * 
      * Laporan boleh dilihat meskipun Borang Input belum disempurnakan.
      *
-     * Komentar KB/PPA dimuatkan hanya untuk peranan yang mengambil bahagian
-     * dalam modul komentar (PA, KB, PPA). Peranan lain — PS, TPII, PPR, PKD —
-     * tetap melihat laporan, tetapi tidak menerima komentar dalam data
+     * Catatan KB/PPA dimuatkan hanya untuk peranan yang mengambil bahagian
+     * dalam modul catatan (PA, KB, PPA). Peranan lain — PS, TPII, PPR, PKD —
+     * tetap melihat laporan, tetapi tidak menerima catatan dalam data
      * paparan langsung, bukan sekadar butangnya disembunyikan.
      */
     public function inventori(AnalisisInventori $analisis)
@@ -47,7 +47,7 @@ class LaporanController extends Controller
 
         return view('laporan.inventori', $this->siapkanData(
             $analisis,
-            includeComments: Gate::allows('viewAny', LaporanKomentar::class),
+            includeComments: Gate::allows('viewAny', LaporanCatatan::class),
         ));
     }
 
@@ -57,7 +57,7 @@ class LaporanController extends Controller
      * nombor muka surat) berulang pada setiap muka surat.
      * 
      * Laporan boleh dimuat turun meskipun Borang Input belum disempurnakan
-     * (tiada fasa kelulusan diperlukan). Komentar KB dan PPA TIDAK disertakan
+     * (tiada fasa kelulusan diperlukan). Catatan KB dan PPA TIDAK disertakan
      * dalam PDF yang dijana.
      */
     public function unduh(AnalisisInventori $analisis)
@@ -145,10 +145,10 @@ class LaporanController extends Controller
      * (dikongsi antara pratonton skrin dan muat turun PDF).
      *
      * Dikekalkan sebagai kaedah controller kerana ia sebahagian daripada
-     * permukaan yang disemak oleh KomentarLaporanTest; logiknya sendiri
+     * permukaan yang disemak oleh CatatanLaporanTest; logiknya sendiri
      * tinggal dalam LaporanPenyediaanService.
      *
-     * @param  bool  $includeComments  Sertakan komentar KB/PPA — hanya untuk
+     * @param  bool  $includeComments  Sertakan catatan KB/PPA — hanya untuk
      *                                  skrin dan hanya untuk peranan yang
      *                                  dibenarkan; TIDAK PERNAH untuk PDF.
      */
