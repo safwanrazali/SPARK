@@ -390,7 +390,6 @@ return [
             'peranan' => 'Diluluskan oleh: Timbalan Pengarah 2, PTPKM',
             'nama' => 'Hazlin Binti Abdul Rani',
         ],
-        ['peranan' => 'Disahkan oleh:', 'nama' => ''],
         ['peranan' => 'Diluluskan oleh:', 'nama' => ''],
     ],
 ];

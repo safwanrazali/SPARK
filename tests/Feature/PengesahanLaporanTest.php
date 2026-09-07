@@ -46,7 +46,6 @@ class PengesahanLaporanTest extends TestCase
         $this->assertSame('', $pengesahan[1]['tarikh']);
         $this->assertNotSame('Pegawai Pengesah Sebenar', $pengesahan[1]['nama']);
         $this->assertSame('', $pengesahan[2]['nama']);
-        $this->assertSame('', $pengesahan[3]['nama']);
     }
 
     public function test_sebelum_disahkan_nama_sandaran_config_digunakan(): void
@@ -62,15 +61,17 @@ class PengesahanLaporanTest extends TestCase
         $this->assertSame('', $pengesahan[0]['tarikh']);
     }
 
-    public function test_empat_baris_mengikut_templat(): void
+    public function test_tiga_baris_mengikut_templat(): void
     {
         $analisis = AnalisisInventori::factory()->create(SektorDirectory::cariEntiti(self::ENTITI));
 
         $pengesahan = $this->pengesahan($analisis);
 
-        $this->assertCount(4, $pengesahan);
+        // Templat membawa TIGA baris: dua baris bernama daripada config, dan
+        // satu baris "Diluluskan oleh:" kosong untuk ditandatangani tangan.
+        $this->assertCount(3, $pengesahan);
         $this->assertSame(
-            ['Disahkan oleh', 'Diluluskan oleh', 'Disahkan oleh', 'Diluluskan oleh'],
+            ['Disahkan oleh', 'Diluluskan oleh', 'Diluluskan oleh'],
             array_map(fn ($b) => explode(':', $b['peranan'])[0], $pengesahan),
         );
     }
