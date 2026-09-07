@@ -58,7 +58,7 @@
                         </tr>
                     @empty
                         <x-empty-state colspan="4" icon="bi-list-check" title="Tiada entiti dipantau">
-                            Entiti muncul di sini setelah mempunyai rekod muat naik atau dapatan analisis.
+                            Entiti muncul di sini setelah mempunyai dapatan analisis.
                         </x-empty-state>
                     @endforelse
                 </tbody>

@@ -39,7 +39,6 @@ class PenomboranHalamanTest extends TestCase
             'jejak audit' => ['audit.index', 'rekod', User::ROLE_COORDINATOR],
             'status tiga laporan' => ['status.index', 'entiti', User::ROLE_COORDINATOR],
             'penjanaan laporan' => ['laporan.index', 'rekod', User::ROLE_COORDINATOR],
-            'sejarah muat naik' => ['muat-naik.history', 'rekod', User::ROLE_COORDINATOR],
         ];
     }
 

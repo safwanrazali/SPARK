@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\AnalisisInventori;
-use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStatus;
@@ -65,13 +64,6 @@ class Phase4AccessControlTest extends TestCase
     private function buatData(string $agencyCode): AnalisisInventori
     {
         $entiti = SektorDirectory::cariEntiti($agencyCode);
-
-        MuatNaik::create([
-            'nama_fail' => 'master-'.$agencyCode.'.xlsx',
-            'lokasi_fail' => 'uploads/'.$agencyCode.'.xlsx',
-            'status' => 'Berjaya',
-            'tarikh_import' => now(),
-        ] + $entiti);
 
         StatusLaporan::create($entiti + [
             'jenis' => 'inventori',
@@ -163,16 +155,13 @@ class Phase4AccessControlTest extends TestCase
         $this->buatData(self::ALPHA);
         $this->buatData(self::BETA);
 
-        $this->assertSame([self::ALPHA], MuatNaik::query()
-            ->accessibleBy($this->analystA)->pluck('agency_code')->all());
-
         $this->assertSame([self::ALPHA], StatusLaporan::query()
             ->accessibleBy($this->analystA)->pluck('agency_code')->all());
 
         $this->assertSame([self::ALPHA], WorkflowStatus::query()
             ->accessibleBy($this->analystA)->pluck('agency_code')->all());
 
-        $this->assertCount(2, MuatNaik::query()->accessibleBy($this->coordinator)->get());
+        $this->assertCount(2, StatusLaporan::query()->accessibleBy($this->coordinator)->get());
     }
 
     public function test_penapisan_query_menolak_semua_baris_tanpa_pengguna(): void
@@ -234,17 +223,6 @@ class Phase4AccessControlTest extends TestCase
             ->assertOk()
             ->assertSee('A010101')
             ->assertDontSee('A010102');
-    }
-
-    public function test_sejarah_muat_naik_tidak_membocorkan_entiti_tidak_ditugaskan(): void
-    {
-        $this->buatData(self::ALPHA);
-        $this->buatData(self::BETA);
-
-        $this->actingAs($this->analystA)
-            ->get(route('muat-naik.history'))
-            ->assertOk()
-            ->assertDontSee('master-'.self::BETA.'.xlsx');
     }
 
     public function test_penapis_sektor_tidak_boleh_digunakan_untuk_mendedahkan_entiti_lain(): void
@@ -465,25 +443,28 @@ class Phase4AccessControlTest extends TestCase
         }
     }
 
-    public function test_fail_muat_naik_persendirian_tidak_boleh_dicapai_tanpa_tandatangan(): void
+    public function test_fail_pada_disk_persendirian_tidak_boleh_dicapai_tanpa_tandatangan(): void
     {
         // Route storage/{path} rangka kerja menyajikan disk 'local'
-        // (storage/app/private) tempat fail muat naik disimpan. Ia mesti
-        // menolak capaian tanpa URL bertandatangan, bagi bacaan dan penulisan.
+        // (storage/app/private), tempat sandaran pangkalan data disimpan. Ia
+        // mesti menolak capaian tanpa URL bertandatangan, bagi bacaan DAN
+        // penulisan — walaupun pengguna telah log masuk.
         Storage::disk('local')
-            ->put('uploads/rahsia-entiti.xlsx', 'DATA RAHSIA');
+            ->put('backups/rahsia-entiti.txt', 'DATA RAHSIA');
 
-        $this->get('/storage/uploads/rahsia-entiti.xlsx')->assertForbidden();
+        $this->get('/storage/backups/rahsia-entiti.txt')->assertForbidden();
 
         $this->actingAs($this->analystA)
-            ->get('/storage/uploads/rahsia-entiti.xlsx')
+            ->get('/storage/backups/rahsia-entiti.txt')
             ->assertForbidden();
 
-        $this->put('/storage/uploads/disuntik.txt', ['x' => 1])->assertForbidden();
+        $this->put('/storage/backups/disuntik.txt', ['x' => 1])->assertForbidden();
 
         $this->assertFalse(
-            Storage::disk('local')->exists('uploads/disuntik.txt')
+            Storage::disk('local')->exists('backups/disuntik.txt')
         );
+
+        Storage::disk('local')->delete('backups/rahsia-entiti.txt');
     }
 
     public function test_tetamu_tidak_boleh_mengakses_mana_mana_route_entiti(): void
@@ -540,12 +521,6 @@ class Phase4AccessControlTest extends TestCase
         // Status Tiga Laporan kini paparan sahaja bagi SEMUA peranan: tiada
         // route kemas kini wujud lagi, jadi tiada siapa boleh menetapkannya.
         $this->assertFalse(app('router')->has('status.kitar'));
-    }
-
-    public function test_modul_muat_naik_dihadkan_kepada_peranan_yang_dibenarkan(): void
-    {
-        $this->actingAs($this->analystA)->get(route('muat-naik.index'))->assertForbidden();
-        $this->actingAs($this->coordinator)->get(route('muat-naik.index'))->assertOk();
     }
 
     /*

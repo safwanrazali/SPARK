@@ -320,7 +320,7 @@ class Phase13ReleaseReadinessTest extends TestCase
     public function test_migrasi_boleh_dipatah_balik_dan_dijalankan_semula(): void
     {
         $jadual = [
-            'users', 'sessions', 'cache', 'jobs', 'muat_naik',
+            'users', 'sessions', 'cache', 'jobs',
             'analisis_inventori', 'status_laporan', 'entiti_assignment',
             'workflow_status', 'activity_log', 'analisis_draft_history', 'approval_logs',
         ];
@@ -336,6 +336,13 @@ class Phase13ReleaseReadinessTest extends TestCase
         foreach ($jadual as $satu) {
             $this->assertTrue(Schema::hasTable($satu), "Jadual [{$satu}] tiada selepas migrasi dijalankan semula.");
         }
+
+        // Jadual modul muat naik dibuang oleh migrasi pembersihan V1.0 dan
+        // TIDAK boleh kembali wujud selepas set migrasi penuh dijalankan.
+        $this->assertFalse(
+            Schema::hasTable('muat_naik'),
+            'Jadual [muat_naik] wujud semula selepas migrasi dijalankan.',
+        );
     }
 
     public function test_lajur_penting_setiap_jadual_pemantauan_wujud(): void
@@ -422,11 +429,6 @@ class Phase13ReleaseReadinessTest extends TestCase
             'login',
             'login.attempt',
             'logout',
-            'muat-naik.destroy',
-            'muat-naik.history',
-            'muat-naik.index',
-            'muat-naik.preview',
-            'muat-naik.store',
             'profil.edit',
             'profil.update',
             'status.index',
@@ -528,33 +530,52 @@ class Phase13ReleaseReadinessTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | 7. Tiada kebergantungan muat naik dokumen (spesifikasi bahagian 3)
+    | 7. Sistem berdiri sendiri — tiada modul muat naik (spesifikasi bahagian 3)
     |--------------------------------------------------------------------------
     */
 
-    public function test_aliran_pelaporan_tidak_merujuk_modul_muat_naik(): void
+    /**
+     * SPARK V1.0 tidak mempunyai modul muat naik/import Excel. Kod aplikasi,
+     * laluan dan paparan tidak boleh merujuknya langsung — bukan sekadar
+     * aliran pelaporan.
+     */
+    public function test_kod_aplikasi_tidak_merujuk_modul_muat_naik(): void
     {
-        $aliranPelaporan = [
-            'app/Http/Controllers/AnalisisInventoriController.php',
-            'app/Http/Controllers/LaporanController.php',
-            'app/Services/AnalisisDraftService.php',
-            'app/Support/BorangAnalisis.php',
-            'app/Support/SeksyenAnalisis.php',
-        ];
+        $direktori = [app_path(), base_path('routes'), resource_path('views'), resource_path('js')];
 
-        foreach ($aliranPelaporan as $fail) {
-            $kandungan = (string) file_get_contents(base_path($fail));
+        $diperiksa = 0;
 
-            $this->assertStringNotContainsString('MuatNaik', $kandungan, $fail.' merujuk modul muat naik.');
-            $this->assertStringNotContainsString('muat-naik', $kandungan, $fail.' merujuk route muat naik.');
+        foreach ($direktori as $akar) {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($akar, \FilesystemIterator::SKIP_DOTS),
+            );
+
+            foreach ($iterator as $fail) {
+                if (! in_array($fail->getExtension(), ['php', 'js'], true)) {
+                    continue;
+                }
+
+                $kandungan = (string) file_get_contents($fail->getPathname());
+                $nama = str_replace(base_path().DIRECTORY_SEPARATOR, '', $fail->getPathname());
+
+                foreach (['MuatNaik', 'muat-naik', 'muat_naik', 'ExcelPreviewService', 'ExcelValidationService'] as $petunjuk) {
+                    $this->assertStringNotContainsString(
+                        $petunjuk,
+                        $kandungan,
+                        $nama.' masih merujuk modul muat naik ['.$petunjuk.'].',
+                    );
+                }
+
+                $diperiksa++;
+            }
         }
+
+        $this->assertGreaterThan(100, $diperiksa, 'Imbasan tidak menemui fail — laluan salah?');
     }
 
     /**
      * Paparan borang dapatan dan templat laporan tidak boleh menawarkan
-     * sebarang tindakan muat naik. (Menu sisi kekal memaparkan modul muat
-     * naik sedia ada kepada peranan yang dibenarkan — ia bukan sebahagian
-     * daripada aliran pelaporan.)
+     * sebarang tindakan muat naik fail.
      */
     public function test_paparan_borang_dan_templat_laporan_tiada_tindakan_muat_naik(): void
     {

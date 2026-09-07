@@ -51,10 +51,10 @@
                 </div>
             @endforeach
 
-            {{-- Fail rujukan yang menjadi sumber analisis. Direkodkan di sini,
-                 BUKAN diambil daripada modul muat naik: spesifikasi bahagian 3
-                 menetapkan aliran pelaporan tidak bergantung pada modul itu,
-                 dan sistem tidak mewajibkan sebarang muat naik dokumen. --}}
+            {{-- Fail rujukan yang menjadi sumber analisis, dinamakan secara
+                 manual di sini: spesifikasi bahagian 3 menetapkan sistem tidak
+                 mewajibkan sebarang dokumen dilampirkan untuk meneruskan
+                 aliran pelaporan. --}}
             @php $failSumber = \App\Support\BorangAnalisis::senaraiTeks($data['fail_sumber'] ?? null) ?: ['']; @endphp
             <div class="mt-3">
                 <label class="form-label">Fail Sumber (dipaparkan di bawah "Catatan:" dalam laporan)</label>

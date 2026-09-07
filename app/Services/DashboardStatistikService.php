@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\ActivityLog;
 use App\Models\AnalisisInventori;
 use App\Models\EntitiAssignment;
-use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Models\User;
 use App\Models\WorkflowStageStatus;
@@ -30,7 +29,7 @@ use Illuminate\Support\Collection;
  *                      peratusan papan pemuka — entiti yang belum disentuh
  *                      langsung tetap sebahagian daripada liputan.
  * - Entiti dipantau  : entiti yang mempunyai sekurang-kurangnya satu rekod
- *                      (workflow, penugasan, analisis, status laporan, muat naik),
+ *                      (workflow, penugasan, analisis, status laporan),
  *                      TOLAK entiti yang telah ditarik keluar daripada aliran
  *                      kerja oleh "Set Semula" Ketua Bahagian. Inilah asas
  *                      kiraan workflow, laporan dan taburan sektor.
@@ -218,7 +217,6 @@ class DashboardStatistikService
             ->merge(EntitiAssignment::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->merge(AnalisisInventori::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->merge(StatusLaporan::query()->accessibleBy($pengguna)->pluck('agency_code'))
-            ->merge(MuatNaik::query()->accessibleBy($pengguna)->pluck('agency_code'))
             ->filter()
             ->unique()
             ->diff($this->kad->kodDitetapkanSemula($pendaftaran))

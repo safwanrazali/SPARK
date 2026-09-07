@@ -239,13 +239,6 @@ class AppServiceProvider extends ServiceProvider
 
         /*
         |------------------------------------------------------------------
-        | Modul muat naik (sedia ada, di luar matriks dan di luar navigasi)
-        |------------------------------------------------------------------
-        */
-        Gate::define('manage-upload', fn (User $user) => $user->hasAnyRole([...$ps, ...$ppa]));
-
-        /*
-        |------------------------------------------------------------------
         | Kawalan akses entiti — lapisan kedua di atas kebenaran peranan
         |------------------------------------------------------------------
         | Pegawai Analisis hanya boleh menyentuh entiti yang ditugaskan

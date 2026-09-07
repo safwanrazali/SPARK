@@ -41,9 +41,9 @@ class BorangAnalisis
             'data_status' => self::dataStatus($request),
 
             // Fail rujukan yang menjadi sumber analisis, dipaparkan di bawah
-            // "Catatan:" dalam laporan. Direkodkan sebagai input borang kerana
-            // aliran pelaporan tidak boleh bergantung pada modul muat naik
-            // (spesifikasi bahagian 3).
+            // "Catatan:" dalam laporan. Ia direkodkan sebagai input borang:
+            // aliran pelaporan menerima dapatan secara manual dan tidak
+            // memerlukan sebarang dokumen dilampirkan (spesifikasi bahagian 3).
             'fail_sumber' => self::senaraiTeks($request->input('fail_sumber')),
             'profil' => self::profil($request),
             'ulasan_profil' => trim((string) $request->input('ulasan_profil', '')),

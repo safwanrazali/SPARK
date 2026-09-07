@@ -42,7 +42,6 @@ class BersihkanDataAplikasiSeeder extends Seeder
         'status_laporan',
         'entiti_assignment',
         'laporan_semakan',
-        'muat_naik',
     ];
 
     /**

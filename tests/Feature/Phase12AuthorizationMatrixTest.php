@@ -128,7 +128,6 @@ class Phase12AuthorizationMatrixTest extends TestCase
             route('workflow.index'),
             route('analisis.index'),
             route('laporan.index'),
-            route('muat-naik.history'),
         ] as $url) {
             $this->semakMatriks('GET', $url, array_fill_keys(User::roles(), self::BENAR));
         }
@@ -154,14 +153,8 @@ class Phase12AuthorizationMatrixTest extends TestCase
         $this->semakMatriks('GET', route('audit.index'), array_fill_keys(User::roles(), self::BENAR));
     }
 
-    public function test_modul_muat_naik_dan_pentadbiran_kekal_terhad(): void
+    public function test_modul_pentadbiran_kekal_terhad(): void
     {
-        $this->semakMatriks('GET', route('muat-naik.index'), [
-            User::ROLE_ADMINISTRATOR => self::BENAR,
-            User::ROLE_COORDINATOR => self::BENAR,
-        ]);
-
-
         $this->semakMatriks('GET', route('administration.users.index'), [
             User::ROLE_ADMINISTRATOR => self::BENAR,
         ]);

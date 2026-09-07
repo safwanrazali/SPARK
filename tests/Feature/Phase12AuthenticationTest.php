@@ -228,7 +228,6 @@ class Phase12AuthenticationTest extends TestCase
             route('laporan.index'),
             route('status.index'),
             route('audit.index'),
-            route('muat-naik.history'),
             route('entiti.show', 'A010101'),
         ] as $url) {
             $this->get($url)->assertRedirect(route('login'));

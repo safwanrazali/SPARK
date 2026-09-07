@@ -92,7 +92,7 @@
             @else
                 <x-empty-state icon="bi-pie-chart" title="Tiada entiti dipantau">
                     Entiti dikira dipantau setelah mempunyai rekod workflow, penugasan,
-                    analisis, status laporan atau muat naik.
+                    analisis atau status laporan.
                 </x-empty-state>
             @endif
         </div>

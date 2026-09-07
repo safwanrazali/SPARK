@@ -189,10 +189,9 @@ class LaporanPenyediaanService
             ->all();
 
         // Fail sumber bagi nota "Catatan:" dalam seksyen Status Penerimaan dan
-        // Kebolehgunaan Data. Diambil daripada input borang, BUKAN daripada
-        // modul muat naik: spesifikasi bahagian 3 menetapkan aliran pelaporan
-        // tidak boleh bergantung pada modul tersebut (dikuatkuasakan oleh
-        // Phase13ReleaseReadinessTest::test_aliran_pelaporan_tidak_merujuk_modul_muat_naik).
+        // Kebolehgunaan Data. Ia direkodkan sebagai input borang: spesifikasi
+        // bahagian 3 menetapkan aliran pelaporan menerima dapatan secara manual
+        // dan tidak memerlukan sebarang dokumen dilampirkan pada sistem.
         $failSumber = BorangAnalisis::senaraiTeks($data['fail_sumber'] ?? null);
 
         $result = [

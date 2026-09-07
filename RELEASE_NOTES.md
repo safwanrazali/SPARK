@@ -116,10 +116,6 @@ ordinary workflow stage driven by the Coordinator.
 - **`config/pentadbir.php`** — installation account settings read through the
   config layer so they keep working with a cached config.
 
-### Fixed
-
-- `MuatNaikSeeder` was missing its model import and crashed if run.
-
 ### Documentation
 
 - `docs/UAT_CHECKLIST.md` — 21 scenarios with steps, expected results, defect
@@ -174,7 +170,6 @@ first, then `migrate --force`.
 | Password policy                     | No complexity or rotation rules                               |
 | Two-factor authentication           | Not implemented                                               |
 | Timezone                            | Records are stored in UTC by default — decide before go-live  |
-| Upload module                       | Retained for the legacy inventory flow; not used by reporting |
 | Automated UI testing                | None; UAT covers the interface manually                       |
 
 ---

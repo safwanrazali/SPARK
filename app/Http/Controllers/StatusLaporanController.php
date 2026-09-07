@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisInventori;
-use App\Models\MuatNaik;
 use App\Models\StatusLaporan;
 use App\Services\StatusTigaLaporanService;
 use App\Support\Halaman;
@@ -33,7 +32,6 @@ class StatusLaporanController extends Controller
         $pengguna = $request->user();
 
         $entiti = collect()
-            ->merge(MuatNaik::query()->accessibleBy($pengguna)->get($lajur))
             ->merge(AnalisisInventori::query()->accessibleBy($pengguna)->get($lajur))
             ->merge(StatusLaporan::query()->accessibleBy($pengguna)->get($lajur))
             ->unique('agency_code')

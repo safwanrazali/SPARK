@@ -117,7 +117,7 @@ class Phase12IntegrationTest extends TestCase
 
     /**
      * Muatan borang analisis yang lengkap — mewakili dapatan yang
-     * dimasukkan secara manual oleh Pegawai Analisis (tiada muat naik).
+     * dimasukkan secara manual oleh Pegawai Analisis melalui borang.
      *
      * @param  array<string, mixed>  $ubah
      * @return array<string, mixed>
@@ -778,11 +778,11 @@ Sistem legasi menghadapi kekangan.',
 
     /*
     |--------------------------------------------------------------------------
-    | Tiada muat naik dokumen dalam aliran pelaporan (spesifikasi bahagian 3)
+    | Aliran pelaporan berasaskan input berstruktur (spesifikasi bahagian 3)
     |--------------------------------------------------------------------------
     */
 
-    public function test_laporan_boleh_disiapkan_tanpa_sebarang_muat_naik(): void
+    public function test_laporan_boleh_disiapkan_daripada_input_borang_sahaja(): void
     {
         app(EntityAssignmentService::class)->assign(
             SektorDirectory::cariEntiti(self::ALPHA),
@@ -800,8 +800,8 @@ Sistem legasi menghadapi kekangan.',
             ->get(route('laporan.inventori', $analisis))
             ->assertOk();
 
-        // Tiada rekod muat naik terlibat dalam keseluruhan aliran.
-        $this->assertDatabaseCount('muat_naik', 0);
+        // Keseluruhan aliran — dapatan, penyimpanan dan laporan — berlaku
+        // tanpa sebarang dokumen dilampirkan pada sistem.
     }
 
     /*

@@ -11,7 +11,6 @@ use App\Http\Controllers\KemajuanAnalisisController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LaporanKomentarController;
 use App\Models\LaporanKomentar;
-use App\Http\Controllers\MuatNaikController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\StatusLaporanController;
 use App\Http\Controllers\WorkflowController;
@@ -54,28 +53,6 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     */
     Route::get('/profil', [ProfilController::class, 'edit'])->name('profil.edit');
     Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
-
-    /*
-    |----------------------------------------------------------------------
-    | Inventori — Muat Naik (modul sedia ada, dikekalkan)
-    |----------------------------------------------------------------------
-    */
-    // Sejarah muat naik ditapis mengikut entiti yang boleh diakses pengguna.
-    Route::get('/sejarah-muat-naik', [MuatNaikController::class, 'history'])
-        ->name('muat-naik.history');
-
-    Route::middleware('can:manage-upload')->group(function () {
-        // Borang muat naik diselaraskan dengan kebenaran tindakan yang
-        // dihoskannya (store/preview/destroy) — Fasa 4.
-        Route::get('/muat-naik', [MuatNaikController::class, 'index'])
-            ->name('muat-naik.index');
-        Route::post('/muat-naik', [MuatNaikController::class, 'store'])
-            ->name('muat-naik.store');
-        Route::post('/muat-naik/preview', [MuatNaikController::class, 'preview'])
-            ->name('muat-naik.preview');
-        Route::delete('/muat-naik/{muatNaik}', [MuatNaikController::class, 'destroy'])
-            ->name('muat-naik.destroy');
-    });
 
     /*
     |----------------------------------------------------------------------

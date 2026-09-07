@@ -455,10 +455,13 @@ monitoring.
 | Risk assessment / readiness modules               | Roadmap (menu items disabled)                       |
 | Email notifications                               | Out of scope                                        |
 | Automatic document extraction / OCR / AI analysis | Explicitly out of scope                             |
+| Excel upload / import of inventory workbooks      | Not part of V1.0 — findings are keyed in manually   |
 | External system integration                       | Out of scope                                        |
 | Password reset by user                            | Not implemented — administrator resets manually     |
 
-The upload module (`Muat Naik MasterTable`) still exists for the legacy
-inventory flow and is available to Pentadbir and Penyelaras. **No part of the
-reporting workflow depends on it** — this is verified automatically by
-`Phase13ReleaseReadinessTest`. It is flagged for deprecation review, not deletion.
+SPARK V1.0 has **no file upload or import path**. Analysis findings reach the
+system only through the nine-section structured form; the Excel upload module
+that existed in earlier development builds has been removed in full — code,
+routes, views, database table and the `maatwebsite/excel` dependency.
+`Phase13ReleaseReadinessTest` verifies automatically that nothing reintroduces
+it.
