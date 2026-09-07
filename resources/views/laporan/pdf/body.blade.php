@@ -477,8 +477,16 @@
             margin: 0 0 12px;
         }
 
+        /* 8% dan bukan 7%: pada 7% kotak kandungan lajur ini tinggal lebih
+           kurang 25px (180mm x 7% tolak padding 20px dan sempadan 2px),
+           sedangkan "BIL." tebal huruf besar pada 1rem Aptos memerlukan
+           kira-kira 29px — jadi kepala membalut menjadi "BIL" + ".".
+           8% ialah lebar yang SAMA seperti jadual protokol dan pustaka di
+           bawah, yang menggunakan fon, padding dan teks kepala yang sama
+           dan memang tidak pernah membalut. 1% diambil daripada lajur
+           algoritma (lajur terluas) supaya jumlahnya kekal 100%. */
         .laporan-seksyen .laporan-jadual-algo__lajur-bil {
-            width: 7%;
+            width: 8%;
         }
 
         .laporan-seksyen .laporan-jadual-algo__lajur-kategori {
@@ -486,7 +494,7 @@
         }
 
         .laporan-seksyen .laporan-jadual-algo__lajur-algoritma {
-            width: 41%;
+            width: 40%;
         }
 
         .laporan-seksyen .laporan-jadual-algo__lajur-bilangan {
@@ -554,8 +562,18 @@
             text-align: center;
         }
 
+        /* Nombor "Bil." ialah DATA, bukan penekanan: ia dipaparkan pada berat
+           biasa seperti setiap sel <td> lain, dan seperti lajur Bil. jadual
+           ringkas "1. Profil Sistem dan Aset". Kepala <th> tidak tersentuh —
+           ia membawa kelas jadualnya sendiri dan kekal tebal.
+
+           Kelas ini dikongsi oleh subseksyen 2, 3, 4 dan 5; ia sengaja
+           dibiarkan dikongsi supaya penomboran seragam merentas keempat-empat
+           jadual. Lajur Bil. jadual "Status Penerimaan dan Kebolehgunaan Data"
+           (.laporan-jadual__bil) TIDAK berkaitan: nombornya putih di atas
+           latar biru dan kekal tebal dengan sengaja. */
         .laporan-seksyen .laporan-jadual-algo__bil {
-            font-weight: 700;
+            font-weight: 400;
         }
 
         /* Angka romawi dipisahkan supaya nama algoritma yang membalut sejajar. */
@@ -610,8 +628,10 @@
         /* Jadual vendor menggunakan pengumpulan rowspan yang sama seperti jadual
            algoritma: satu vendor boleh mempunyai beberapa produk. Pemilihnya ditambah
            pada peraturan di atas; hanya lebar lajur diisytiharkan di sini. */
+        /* 8%/40% atas sebab yang sama seperti jadual algoritma di atas: pada
+           7% kepala "BIL." membalut kepada dua baris. */
         .laporan-seksyen .laporan-jadual-vendor__lajur-bil {
-            width: 7%;
+            width: 8%;
         }
 
         .laporan-seksyen .laporan-jadual-vendor__lajur-nama {
@@ -619,7 +639,7 @@
         }
 
         .laporan-seksyen .laporan-jadual-vendor__lajur-produk {
-            width: 41%;
+            width: 40%;
         }
 
         .laporan-seksyen .laporan-jadual-vendor__lajur-bilangan {
