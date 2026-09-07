@@ -14,7 +14,13 @@
         <span class="peringkat-tindakan__label">
             {{ AliranKerja::labelPenuh($kunci) }}
 
-            @if (! $milikSaya && $bolehTugaskan($kunci))
+            @if ($milikSaya && $rekod?->isSelesai())
+                <small class="peringkat-tindakan__nota">
+                    Peringkat ini telah Selesai. Perubahan di sini ialah
+                    pembetulan pada maklumatnya sahaja — peringkat lain tidak
+                    diundurkan.
+                </small>
+            @elseif (! $milikSaya && $bolehTugaskan($kunci))
                 <small class="peringkat-tindakan__nota">
                     Peringkat ini telah Selesai; penugasan Pegawai
                     Analisis kekal boleh dikemas kini di sini.

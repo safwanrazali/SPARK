@@ -7,11 +7,23 @@
 @section('content')
 
     @php
-        use App\Models\WorkflowStageStatus;
+        use App\Services\KemajuanAnalisisCapaian;
         use App\Services\KemajuanAnalisisService;
         use App\Support\AliranKerja;
 
         $pengguna = auth()->user();
+
+        /*
+        | Soalan "bolehkah pengguna ini melihat / menyunting peringkat ini"
+        | dijawab oleh SATU tempat, dan tempat itu bukan paparan ini.
+        |
+        | KemajuanAnalisisCapaian menggabungkan gate peranan AliranKerja
+        | dengan syarat pendahulu yang sama seperti yang dikuatkuasakan oleh
+        | KemajuanAnalisisController dan KemajuanAnalisisGating — jadi butang
+        | yang dipaparkan di sini tidak boleh terpesong daripada apa yang
+        | benar-benar dibenarkan oleh pelayan.
+        */
+        $capaian = app(KemajuanAnalisisCapaian::class);
 
         /*
         | "Berada dalam aliran kerja" bermakna peringkat 1.1 telah DIMULAKAN —
@@ -27,62 +39,32 @@
         */
         $dalamAliran = app(KemajuanAnalisisService::class)->telahMemasukiAliran($peringkat);
 
-        $status = fn(string $kunci): string => $peringkat->get($kunci)?->status ?? WorkflowStageStatus::BELUM_MULA;
-        $selesai = fn(string $kunci): bool => $status($kunci) === WorkflowStageStatus::SELESAI;
+        /*
+        | Satu peringkat "terbuka" apabila pendahulunya membenarkannya —
+        | peraturannya milik KemajuanAnalisisCapaian::terbuka(), yang
+        | mencerminkan KemajuanAnalisisGating::ralatPendahulu().
+        */
+        $terbuka = fn(string $kunci): bool => $capaian->terbuka($peringkat, $penugasan, $kunci);
 
         /*
-        | Satu peringkat "terbuka" apabila pendahulunya membenarkannya. DUA
-        | peraturan, mencerminkan KemajuanAnalisisService::ralatPendahulu():
+        | Bolehkah pengguna ini melaksanakan peringkat berkenaan? Dua syarat:
+        | peranan dan giliran.
         |
-        | - Pendahulu dengan `syarat_lanjut`: cukup medan tersebut ADA. Ia
-        |   tidak semestinya Selesai — itulah yang membenarkan peringkat 1.2
-        |   bermula sementara No. Rujukan peringkat 1.1 masih menunggu PPR.
-        | - Pendahulu lain: mesti benar-benar Selesai.
+        | Peringkat yang telah SELESAI tidak lagi dikecualikan: pemiliknya
+        | boleh kembali membetulkan maklumat yang tersalah rekod, dan itulah
+        | semakan yang sama yang dikuatkuasakan oleh KemajuanAnalisisController
+        | — jadi menyembunyikan borangnya hanya menyembunyikan tindakan yang
+        | memang dibenarkan oleh pelayan.
+        |
+        | Peranan yang BUKAN pemilik peringkat tidak mendapat borang, sama
+        | seperti sebelum ini.
         */
-        $terbuka = function (string $kunci) use ($peringkat, $selesai, $penugasan): bool {
-            $sebelum = AliranKerja::sebelum($kunci);
-
-            if ($sebelum === null) {
-                return true;
-            }
-
-            // Penugasan Pegawai Analisis boleh menjadi syarat lanjut — ia
-            // BUKAN medan peringkat, jadi ia disemak berasingan.
-            if (AliranKerja::perluPenugasanUntukLanjut($sebelum) && $penugasan === null) {
-                return false;
-            }
-
-            $syarat = AliranKerja::syaratLanjut($sebelum);
-
-            if ($syarat === []) {
-                return $selesai($sebelum);
-            }
-
-            $rekod = $peringkat->get($sebelum);
-
-            if ($rekod === null) {
-                return false;
-            }
-
-            foreach ($syarat as $lajur) {
-                if (blank($rekod->{$lajur})) {
-                    return false;
-                }
-            }
-
-            return true;
-        };
-
-        // Bolehkah pengguna ini melaksanakan peringkat berkenaan SEKARANG?
-        // Tiga syarat: peranan, giliran, dan peringkat belum ditutup.
-        $bolehKendali = function (string $kunci) use ($pengguna, $terbuka, $selesai): bool {
-            $gate = AliranKerja::gate($kunci);
-
-            return $gate !== null
-                && $pengguna->can($gate)
-                && $terbuka($kunci)
-                && ! $selesai($kunci);
-        };
+        $bolehKendali = fn(string $kunci): bool => $capaian->bolehSunting(
+            $pengguna,
+            $peringkat,
+            $penugasan,
+            $kunci,
+        );
 
         /*
         | Bolehkah pengguna ini memasukkan No. Rujukan peringkat berkenaan?
