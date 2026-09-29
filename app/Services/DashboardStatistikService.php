@@ -140,7 +140,7 @@ class DashboardStatistikService
             'peratusEntitiDalamProses' => $this->taburan->peratusTepat($kad['dalamProses'], $kad['diterima']),
             'peratusEntitiSelesai' => $this->taburan->peratusTepat($kad['selesai'], $kad['diterima']),
 
-            // Peringkat 1.1 Selesai SEPENUHNYA (termasuk No. Rujukan PPR).
+            // Peringkat 1.1 Selesai SEPENUHNYA (termasuk No. Rujukan PKD).
             // Ukuran yang lebih ketat daripada 'entitiDiterima' dan TIDAK lagi
             // memacu mana-mana kad; dikekalkan kerana ia menjawab soalan yang
             // berlainan daripada "Buku Kerja MPQ diterima".

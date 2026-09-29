@@ -55,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
         | Peringkat 1.1 Penerimaan Data     | ✗  |  ✗   | ✓  |  ✗  |  ✗  |  ✓  | ✗
         | Peringkat 1.2 Pendaftaran Data    | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✓  | ✗
         | Peringkat 1.3 / 2 / 3.1           | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
-        | No. Rujukan (1.1–1.3, 3.1)        | ✗  |  ✗   | ✗  |  ✓  |  ✗  |  ✗  | ✗
+        | No. Rujukan (1.1–1.3, 3.1)        | ✗  |  ✗   | ✗  |  ✗  |  ✓  |  ✗  | ✗
         | Analisis Inventori Kriptografi — Lihat        | ✓  |  ✓   | ✓  |  ✓  |  ✓  |  ✓  | ✓
         | Analisis Inventori Kriptografi — Input/Sunting| ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
         | Analisis Inventori Kriptografi — Jana Laporan | ✗  |  ✗   | ✗  |  ✗  |  ✗  |  ✗  | ✓
@@ -157,9 +157,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('advance-analysis-stage', fn (User $user) => $user->hasAnyRole($pa));
 
         /*
-        | SETIAP No. Rujukan — Pegawai Penyelaras Rekod SAHAJA.
+        | SETIAP No. Rujukan — Pegawai Kawalan Dokumen SAHAJA.
         |
-        | Ini keseluruhan tanggungjawab PPR, dan satu-satunya kuasa menulis
+        | Ini keseluruhan tanggungjawab PKD, dan satu-satunya kuasa menulis
         | yang dimilikinya. Ia meliputi kesemua empat nombor rujukan:
         |
         |   No. Rujukan Borang Penerimaan Data      (peringkat 1.1)
@@ -169,11 +169,14 @@ class AppServiceProvider extends ServiceProvider
         |
         | Sengaja berasingan daripada gate peringkat di atas: keempat-empat
         | peringkat itu dilaksanakan oleh KB, PPA dan PA. Menyatukannya akan
-        | memberi PPR kuasa menggerakkan peringkat, atau memberi pemilik
+        | memberi PKD kuasa menggerakkan peringkat, atau memberi pemilik
         | peringkat kuasa menetapkan nombor rujukan — kedua-duanya bukan
         | tanggungjawab mereka.
+        |
+        | Pegawai Penyelaras Rekod (PPR) tiada tugas khusus dalam fasa ini:
+        | ia tidak memegang gate menulis langsung.
         */
-        Gate::define(AliranKerja::GATE_RUJUKAN, fn (User $user) => $user->hasAnyRole($ppr));
+        Gate::define(AliranKerja::GATE_RUJUKAN, fn (User $user) => $user->hasAnyRole($pkd));
 
         /*
         |------------------------------------------------------------------

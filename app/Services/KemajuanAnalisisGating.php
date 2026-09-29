@@ -105,7 +105,7 @@ final class KemajuanAnalisisGating
      *
      * - Peringkat dengan `syarat_lanjut`: cukup medan tersebut ADA. Peringkat
      *   itu tidak semestinya Selesai. Peringkat 1.1 memerlukannya kerana No.
-     *   Rujukan miliknya dimasukkan oleh PPR, dan kerja peringkat 1.2 tidak
+     *   Rujukan miliknya dimasukkan oleh PKD, dan kerja peringkat 1.2 tidak
      *   sepatutnya tertahan menunggu pegawai lain.
      * - Peringkat lain: peraturan lalai — mesti benar-benar Selesai.
      */

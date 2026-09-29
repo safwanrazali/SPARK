@@ -76,6 +76,10 @@ Jangan menduakan perkara ini — baca daripada tempatnya:
 - **Syarat pendahulu peringkat** → `App\Services\KemajuanAnalisisGating`.
 - **Capaian entiti mengikut peranan** → `App\Services\EntityAccessService`.
 - **Gate kebenaran** → `AppServiceProvider::boot()`.
+- **Pemasuk No. Rujukan** → Pegawai Kawalan Dokumen (PKD):
+  `AliranKerja::PERANAN_RUJUKAN` + gate `record-stage-reference`. Pegawai
+  Penyelaras Rekod (PPR) **tiada tugas khusus** dalam fasa ini (baca sahaja) —
+  jangan kelirukan kedua-duanya.
 - **Katalog algoritma / sektor** → `config/kriptografi.php`, `config/sektor.php`.
 - **Kandungan laporan** → `resources/views/laporan/partials/` (dikongsi oleh
   pratonton skrin DAN PDF).
@@ -113,7 +117,7 @@ Fail yang **SENGAJA** melebihi 300 baris — jangan pecahkan tanpa sebab kukuh:
 | `app/Services/KemajuanAnalisisService.php` | ~1030 | Terasnya ialah SATU unit transaksi — "satu-satunya tempat status peringkat boleh berubah". Memecahkan aliran transaksi/audit merentas fail menjadikan invarian itu lebih sukar disemak. |
 | `config/kriptografi.php`, `config/sektor.php` | 396 / 311 | Katalog data rata. |
 | `database/migrations/*` | — | **Migrasi tidak pernah dipecahkan.** |
-| `tests/Feature/*Test.php` (20 fail) | 300–1765 | Suite senario yang padu; memecahkannya menyerakkan persediaan kongsi dan menyukarkan pengesanan kegagalan. |
+| `tests/Feature/*Test.php` (20 fail) | 300–1795 | Suite senario yang padu; memecahkannya menyerakkan persediaan kongsi dan menyukarkan pengesanan kegagalan. |
 
 ---
 
@@ -238,14 +242,14 @@ Request → Authorize → Validate → panggil servis/action → Response
 
 ```
 php artisan test
-→ 742 ujian, 735 lulus, 6 gagal, 1 ralat
+→ 754 ujian, 747 lulus, 6 gagal, 1 ralat
 ```
 
 Tujuh masalah SEDIA ADA (bukan regresi — jangan andaikan kod anda puncanya):
 
 | Ujian | Isu |
 |---|---|
-| `KemajuanAnalisisAliranTest::test_muat_turun_ditolak_sebelum_peringkat_analisis_selesai:1397` | jangkaan 403, dapat 200 |
+| `KemajuanAnalisisAliranTest::test_muat_turun_ditolak_sebelum_peringkat_analisis_selesai:1427` | jangkaan 403, dapat 200 |
 | `RbacMatriksTest::test_muat_turun_ditolak_sebelum_peringkat_analisis_selesai:356` | jangkaan 403, dapat 200 |
 | `Phase12IntegrationTest::test_pusat_maklumat_entiti_memaparkan_hasil_semua_modul:572` | penegasan HTML |
 | `Phase5EntityDetailTest::test_halaman_memaparkan_kesemua_seksyen_yang_ditetapkan:108` | penegasan HTML |

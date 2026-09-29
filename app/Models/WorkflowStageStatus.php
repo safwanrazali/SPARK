@@ -89,7 +89,7 @@ class WorkflowStageStatus extends Model
 
     /**
      * Pegawai yang memasukkan No. Rujukan — pada peringkat 1.1 hingga 1.3
-     * ini ialah PPR, bukan pegawai yang melaksanakan peringkat itu.
+     * ini ialah PKD, bukan pegawai yang melaksanakan peringkat itu.
      */
     public function noRujukanOleh(): BelongsTo
     {

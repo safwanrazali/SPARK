@@ -271,10 +271,10 @@ class User extends Authenticatable
      *
      * Keterlihatan ini ialah kebenaran MELIHAT sahaja. Setiap tindakan
      * menulis mempunyai gate tersendiri (lihat AppServiceProvider), jadi
-     * peranan baca-sahaja seperti TPII dan PKD boleh membuka halaman tanpa
+     * peranan baca-sahaja seperti TPII dan PPR boleh membuka halaman tanpa
      * boleh mengubah apa-apa padanya.
      *
-     * PPR TIDAK disenaraikan di sini: keterlihatannya terhad kepada entiti
+     * PKD TIDAK disenaraikan di sini: keterlihatannya terhad kepada entiti
      * yang telah memulakan Penerimaan Data (lihat kiraEntitiBolehDiakses).
      */
     public function hasFullEntityVisibility(): bool
@@ -284,7 +284,7 @@ class User extends Authenticatable
             self::ROLE_COORDINATOR,
             self::ROLE_KETUA_BAHAGIAN,
             self::ROLE_TIMBALAN_PENGARAH_II,
-            self::ROLE_PEGAWAI_KAWALAN_DOKUMEN,
+            self::ROLE_PENYELARAS_REKOD,
         ]);
     }
 
@@ -406,7 +406,7 @@ class User extends Authenticatable
         }
 
         /*
-         * Pegawai Penyelaras Rekod melihat entiti yang telah MEMULAKAN
+         * Pegawai Kawalan Dokumen melihat entiti yang telah MEMULAKAN
          * Penerimaan Data sahaja, dan seterusnya.
          *
          * Kerjanya ialah merekod No. Rujukan borang FIZIKAL. Borang itu belum
@@ -419,7 +419,7 @@ class User extends Authenticatable
          * direkod, dan kembali kepada Belum Mula apabila entiti ditetapkan
          * semula.
          */
-        if ($this->isPegawaiPenyelarasRekod()) {
+        if ($this->isPegawaiKawalanDokumen()) {
             return WorkflowStageStatus::query()
                 ->atStage(AliranKerja::PENERIMAAN_DATA)
                 ->where('status', '!=', WorkflowStageStatus::BELUM_MULA)

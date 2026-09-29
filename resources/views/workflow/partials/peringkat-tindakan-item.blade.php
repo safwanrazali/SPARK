@@ -195,7 +195,7 @@
         {{--
             No. Rujukan — borang BERASINGAN kerana pemiliknya
             BUKAN pemilik peringkat: setiap No. Rujukan
-            dimasukkan oleh Pegawai Penyelaras Rekod, walaupun
+            dimasukkan oleh Pegawai Kawalan Dokumen, walaupun
             peringkatnya milik KB, PPA atau PA.
         --}}
         @if ($bolehRujukan($kunci))
@@ -206,7 +206,7 @@
                 <label class="form-label" for="{{ $kunci }}-no-rujukan">
                     {{ $labelRujukan }}
                     <small class="peringkat-tindakan__nota">
-                        Dimasukkan oleh Pegawai Penyelaras Rekod.
+                        Dimasukkan oleh Pegawai Kawalan Dokumen.
                     </small>
                 </label>
 

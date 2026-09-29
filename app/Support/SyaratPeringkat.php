@@ -42,7 +42,7 @@ final class SyaratPeringkat
      *
      * "Syarat lanjut" ialah medan yang mesti ADA sebelum peringkat SETERUSNYA
      * boleh dimulakan — lebih longgar daripada `syarat_selesai`, kerana No.
-     * Rujukan milik PPR tidak sepatutnya menahan kerja peringkat berikutnya.
+     * Rujukan milik PKD tidak sepatutnya menahan kerja peringkat berikutnya.
      *
      * Papan pemuka bertanya soalan yang SAMA secara pukal: "entiti mana yang
      * telah merekodkan medan peringkat ini?". Menyalin peraturannya ke dalam
@@ -60,7 +60,7 @@ final class SyaratPeringkat
      * Medan peringkat yang MASIH TIADA sebelum No. Rujukannya boleh direkod.
      *
      * Peraturannya seragam merentas peringkat: No. Rujukan sesuatu borang
-     * hanya bermakna setelah borang itu sendiri direkod. PPR merekod nombor
+     * hanya bermakna setelah borang itu sendiri direkod. PKD merekod nombor
      * rujukan borang FIZIKAL — dan borang itu belum wujud sehingga pegawai
      * peringkat berkenaan mengisi medannya.
      *

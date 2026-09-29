@@ -19,8 +19,8 @@
 > | 5         | Semakan, Kelulusan & Penyerahan Laporan    | —        | Akan datang  |
 >
 > **SETIAP No. Rujukan** — keempat-empatnya — dimasukkan oleh **Pegawai
-> Penyelaras Rekod (PPR)**, walaupun peringkatnya dilaksanakan oleh KB, PPA
-> dan PA. Itulah keseluruhan tanggungjawab PPR, dan satu-satunya kuasa
+> Kawalan Dokumen (PKD)**, walaupun peringkatnya dilaksanakan oleh KB, PPA
+> dan PA. Itulah keseluruhan tanggungjawab PKD, dan satu-satunya kuasa
 > menulis yang dimilikinya:
 >
 > | No. Rujukan                          | Peringkat |
@@ -29,6 +29,9 @@
 > | No. Rujukan Borang Pendaftaran Data  | 1.2       |
 > | No. Rujukan Borang Semakan Awal Data | 1.3       |
 > | No. Rujukan Laporan                  | 3.1       |
+>
+> **Pegawai Penyelaras Rekod (PPR)** tiada tugas khusus dalam fasa ini — ia
+> boleh melihat, tetapi tidak memasukkan No. Rujukan.
 >
 > **Fasa semasa berakhir pada peringkat 3.1.** Peringkat 3.2, 4 dan 5 telah
 > ditakrifkan dalam struktur tetapi prosesnya belum ditentukan; ia tidak
@@ -89,16 +92,19 @@ penjanaan laporan** hasil analisis tersebut.
 | Pentadbir Sistem            |      ✓       |             ✓             |        ✓        |      ✓      |      ✓       |      ✓      |
 | Pegawai Analisis            |      ✗       | **hanya yang ditugaskan** |        ✗        |      ✓      |      ✓       |      ✗      |
 | Pegawai Penyelaras Analisis |      ✓       |             ✓             |        ✓        |      ✗      |      ✗       |      ✓      |
-| Pegawai Penyelaras Rekod    |      ✗       |             ✗             |        ✗        |      ✗      |      ✗       |      ✗      |
-| Pegawai Kawalan Dokumen     |      ✗       |             ✗             |        ✗        |      ✗      |      ✗       |      ✗      |
+| Pegawai Penyelaras Rekod    |      ✓       |             ✓             |        ✗        |      ✗      |      ✗       |      ✓      |
+| Pegawai Kawalan Dokumen     |      ✓       |  **telah bermula sahaja** |        ✗        |      ✗      |      ✗       |      ✓      |
 | Ketua Bahagian              |      ✓       |             ✓             |        ✗        |      ✗      |      ✗       |      ✓      |
 | Timbalan Pengarah II        |      ✓       |             ✓             |        ✗        |      ✗      |      ✗       |      ✗      |
 
-> Pegawai Kawalan Dokumen dan Pegawai Penyelaras Rekod telah didaftarkan sebagai
-> peranan, tetapi kebenaran sebenar mereka **belum ditetapkan** sebagai
-> peraturan perniagaan. Buat masa ini mereka tiada akses entiti.
+> **Pegawai Kawalan Dokumen (PKD)** memasukkan SETIAP No. Rujukan (peringkat
+> 1.1, 1.2, 1.3 dan 3.1) — itulah satu-satunya kuasa menulisnya. PKD hanya
+> melihat entiti yang telah memulakan Penerimaan Data.
 >
-> Timbalan Pengarah II juga belum dimuktamadkan; buat sementara ia diberi
+> **Pegawai Penyelaras Rekod (PPR)** tiada tugas khusus dalam fasa ini: ia
+> melihat semua entiti secara **baca sahaja**.
+>
+> Timbalan Pengarah II belum dimuktamadkan; buat sementara ia diberi
 > akses **baca sahaja** kepada papan pemuka dan semua entiti.
 
 **Peraturan akses paling penting**: Pegawai Analisis hanya boleh melihat dan
@@ -168,11 +174,11 @@ memilikinya.
 
 | Peringkat | Medan                                                                         |
 | --------- | ----------------------------------------------------------------------------- |
-| 1.1       | Tarikh Terima · Status Borang Penerimaan Data · No. Rujukan Borang (PPR)       |
-| 1.2       | Tarikh Terima · Status Borang Pendaftaran Data · No. Rujukan Borang (PPR)      |
-| 1.3       | Tarikh Semakan · Status Borang Semakan Awal Data · No. Rujukan Borang (PPR)    |
+| 1.1       | Tarikh Terima · Status Borang Penerimaan Data · No. Rujukan Borang (PKD)       |
+| 1.2       | Tarikh Terima · Status Borang Pendaftaran Data · No. Rujukan Borang (PKD)      |
+| 1.3       | Tarikh Semakan · Status Borang Semakan Awal Data · No. Rujukan Borang (PKD)    |
 | 2         | Tarikh Mula · Tarikh Tamat · Status Mastertable · Nama Fail                    |
-| 3.1       | Tarikh Mula · Tarikh Tamat · Status Laporan Inventori · No. Rujukan Laporan (PPR) |
+| 3.1       | Tarikh Mula · Tarikh Tamat · Status Laporan Inventori · No. Rujukan Laporan (PKD) |
 
 **Nilai Status Borang**
 
@@ -198,7 +204,7 @@ menjejaki keadaan borangnya.
 - Peringkat mesti dilalui **berturutan**, termasuk sub-peringkat: 1.1 → 1.2 →
   1.3 → 2 → 3.1. Melangkau mana-mana satu ditolak.
 - Peringkat hanya boleh ditandakan **Selesai** oleh peranan yang memilikinya.
-- **Setiap No. Rujukan** dimasukkan oleh **PPR sahaja** — termasuk No. Rujukan
+- **Setiap No. Rujukan** dimasukkan oleh **PKD sahaja** — termasuk No. Rujukan
   Laporan peringkat 3.1, yang peringkatnya milik PA. Ia tidak menunggu giliran
   peringkat: nombor rujukan boleh direkodkan bila-bila masa sepanjang peringkat
   itu berjalan.

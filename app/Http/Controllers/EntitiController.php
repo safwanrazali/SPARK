@@ -73,7 +73,7 @@ class EntitiController extends Controller
 
             'peringkatSemasa' => $this->kemajuan->peringkatSemasa($peringkat),
             // telahMemasukiAliran(), bukan dalamAliranKerja(): peringkat 1.1
-            // hanya Selesai setelah PPR merekod No. Rujukan, dan menuntutnya
+            // hanya Selesai setelah PKD merekod No. Rujukan, dan menuntutnya
             // di sini memaparkan "Belum Didaftarkan" bagi entiti yang sudah
             // bergerak jauh ke dalam aliran kerja. Selaras dengan senarai
             // Kemajuan Analisis dan halaman Kemajuan Entiti.

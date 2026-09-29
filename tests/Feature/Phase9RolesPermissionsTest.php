@@ -174,17 +174,15 @@ class Phase9RolesPermissionsTest extends TestCase
             ]],
             'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, [
                 'view-dashboard' => true,
-                // PPR tidak melaksanakan sebarang peringkat. Keseluruhan
-                // tanggungjawabnya — dan satu-satunya kuasa menulisnya —
-                // ialah memasukkan SETIAP No. Rujukan. Keterlihatannya pun
-                // terhad kepada entiti yang telah memulakan Penerimaan Data.
-                'view-all-entities' => false,
+                // PPR tiada tugas khusus dalam fasa ini: baca sahaja, tanpa
+                // sebarang kuasa menulis.
+                'view-all-entities' => true,
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
                 'manage-stage-penerimaan' => false,
                 'manage-stage-pendaftaran' => false,
-                'record-stage-reference' => true,
+                'record-stage-reference' => false,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => false,
@@ -196,13 +194,17 @@ class Phase9RolesPermissionsTest extends TestCase
             ]],
             'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, [
                 'view-dashboard' => true,
-                'view-all-entities' => true,
+                // PKD tidak melaksanakan sebarang peringkat. Keseluruhan
+                // tanggungjawabnya — dan satu-satunya kuasa menulisnya —
+                // ialah memasukkan SETIAP No. Rujukan. Keterlihatannya pun
+                // terhad kepada entiti yang telah memulakan Penerimaan Data.
+                'view-all-entities' => false,
                 'register-entity-data' => false,
                 'reset-entity-registration' => false,
                 'manage-assignment' => false,
                 'manage-stage-penerimaan' => false,
                 'manage-stage-pendaftaran' => false,
-                'record-stage-reference' => false,
+                'record-stage-reference' => true,
                 'advance-analysis-stage' => false,
                 'manage-analysis' => false,
                 'review-report' => false,
@@ -320,19 +322,19 @@ class Phase9RolesPermissionsTest extends TestCase
             'Penyelaras' => [User::ROLE_COORDINATOR, 'semua'],
             'Ketua Bahagian' => [User::ROLE_KETUA_BAHAGIAN, 'semua'],
             'Pegawai Analisis' => [User::ROLE_ANALYST, 'ditugaskan'],
+            // PKD melihat entiti yang telah MEMULAKAN Penerimaan Data sahaja:
+            // kerjanya ialah nombor rujukan borang yang sudah wujud.
+            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'bermula'],
             // Peranan baca-sahaja melihat semua entiti tetapi tidak boleh
             // mengubah apa-apa padanya (lihat matriksPeranan()).
-            'Pegawai Kawalan Dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'semua'],
-            // PPR melihat entiti yang telah MEMULAKAN Penerimaan Data sahaja:
-            // kerjanya ialah nombor rujukan borang yang sudah wujud.
-            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'bermula'],
+            'Pegawai Penyelaras Rekod' => [User::ROLE_PENYELARAS_REKOD, 'semua'],
             'Timbalan Pengarah II' => [User::ROLE_TIMBALAN_PENGARAH_II, 'semua'],
         ];
     }
 
     /**
      * Mulakan peringkat 1.1 bagi satu entiti — itulah yang menjadikannya
-     * kelihatan kepada Pegawai Penyelaras Rekod.
+     * kelihatan kepada Pegawai Kawalan Dokumen.
      */
     private function mulakanPenerimaan(string $agencyCode = self::ALPHA): void
     {
@@ -395,7 +397,7 @@ class Phase9RolesPermissionsTest extends TestCase
             ? $response->assertForbidden()
             : $response->assertOk();
 
-        // Entiti yang BELUM memulakan Penerimaan Data kekal terlarang bagi PPR.
+        // Entiti yang BELUM memulakan Penerimaan Data kekal terlarang bagi PKD.
         if ($skop === 'bermula') {
             $this->actingAs($pengguna->fresh())
                 ->get(route('entiti.show', self::BETA))
@@ -447,9 +449,8 @@ class Phase9RolesPermissionsTest extends TestCase
      *
      * Skrin ini memegang tiga tindakan: KB/PPA menanda peringkat 1.1,
      * KB menetapkan semula, PPA menugaskan. Peranan yang tidak memiliki
-     * satu pun daripadanya ditolak — termasuk Pentadbir Sistem dan, sejak
-     * restruktur, PPR: tanggungjawabnya kini ialah No. Rujukan Borang, yang
-     * dimasukkan pada halaman Kemajuan Analisis Entiti.
+     * satu pun daripadanya ditolak — termasuk Pentadbir Sistem dan PPR, yang
+     * tiada tugas khusus dalam fasa ini.
      *
      * @return array<string, array{0: string, 1: bool}>
      */

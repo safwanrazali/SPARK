@@ -41,7 +41,7 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     private const BETA = 'A010102';
 
-    private User $ppr;
+    private User $pkd;
 
     private User $ppa;
 
@@ -53,7 +53,7 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         parent::setUp();
 
-        $this->ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD, 'name' => 'Rekod Satu']);
+        $this->pkd = User::factory()->create(['role' => User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'name' => 'Dokumen Satu']);
         $this->ppa = User::factory()->create(['role' => User::ROLE_COORDINATOR, 'name' => 'Penyelaras Satu']);
         $this->pa = User::factory()->create(['role' => User::ROLE_ANALYST, 'name' => 'Pegawai A']);
         $this->kb = User::factory()->create(['role' => User::ROLE_KETUA_BAHAGIAN, 'name' => 'Ketua Satu']);
@@ -144,10 +144,10 @@ class KemajuanAnalisisAliranTest extends TestCase
             );
         }
 
-        // No. Rujukan milik PPR, dan ia salah satu syarat Selesai bagi
+        // No. Rujukan milik PKD, dan ia salah satu syarat Selesai bagi
         // kebanyakan peringkat.
         if (in_array(AliranKerja::MEDAN_NO_RUJUKAN, AliranKerja::syaratSelesai($kunci), true)) {
-            $this->actingAs($this->ppr)
+            $this->actingAs($this->pkd)
                 ->post(route('kemajuan.rujukan', [$agencyCode, $kunci]), [
                     'no_rujukan' => 'FIKSTUR/'.$kunci,
                 ]);
@@ -232,7 +232,7 @@ class KemajuanAnalisisAliranTest extends TestCase
      * Itu MEMASUKKAN entiti ke dalam aliran kerja — inilah yang menggantikan
      * penandaan pukal skrin Penetapan Entiti yang telah dibuang — dan
      * membuka peringkat 1.2 Pendaftaran Data, WALAUPUN peringkat 1.1 sendiri
-     * belum Selesai kerana No. Rujukan (milik PPR) masih tiada.
+     * belum Selesai kerana No. Rujukan (milik PKD) masih tiada.
      */
     public function test_merekod_peringkat_satu_memasukkan_entiti_dan_membuka_peringkat_seterusnya(): void
     {
@@ -260,7 +260,7 @@ class KemajuanAnalisisAliranTest extends TestCase
         $satuSatu = $peringkat->get(AliranKerja::PENERIMAAN_DATA);
 
         // Dua daripada tiga syarat ada, jadi peringkat 1.1 Dalam Proses —
-        // BUKAN Selesai: No. Rujukan masih menunggu PPR.
+        // BUKAN Selesai: No. Rujukan masih menunggu PKD.
         $this->assertSame(WorkflowStageStatus::DALAM_PROSES, $satuSatu->status);
         $this->assertSame('2026-08-14', $satuSatu->tarikh_terima->format('Y-m-d'));
         $this->assertSame('Selesai', $satuSatu->status_borang);
@@ -299,7 +299,7 @@ class KemajuanAnalisisAliranTest extends TestCase
      */
     public function test_peranan_lain_tidak_boleh_memasukkan_entiti(): void
     {
-        foreach ([$this->pa, $this->ppr] as $bukanPemilik) {
+        foreach ([$this->pa, $this->pkd] as $bukanPemilik) {
             $this->actingAs($bukanPemilik)
                 ->post(route('kemajuan.simpan', [self::BETA, AliranKerja::PENERIMAAN_DATA]), [
                     'tarikh_terima' => '2026-08-14',
@@ -335,19 +335,19 @@ class KemajuanAnalisisAliranTest extends TestCase
     /**
      * No. Rujukan direkod PADA baris peringkat, jadi ia belum berkenaan
      * sebelum entiti memasuki aliran kerja — memasukkannya ialah tindakan
-     * peringkat 1.1, bukan tindakan PPR.
+     * peringkat 1.1, bukan tindakan PKD.
      */
     /**
      * Entiti yang belum memulakan Penerimaan Data langsung tidak kelihatan
-     * kepada PPR — capaian ditolak sebelum sampai ke borang No. Rujukan.
+     * kepada PKD — capaian ditolak sebelum sampai ke borang No. Rujukan.
      */
-    public function test_ppr_tidak_melihat_entiti_yang_belum_bermula(): void
+    public function test_pkd_tidak_melihat_entiti_yang_belum_bermula(): void
     {
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->get(route('workflow.show', self::BETA))
             ->assertForbidden();
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::BETA, AliranKerja::PENERIMAAN_DATA]), [
                 'no_rujukan' => 'BPD/2026/001',
             ])
@@ -358,7 +358,7 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     /**
      * Peringkat 1.1 menjadi Selesai apabila KETIGA-TIGA medannya ada —
-     * termasuk No. Rujukan, yang dimasukkan oleh PPR selepas KB/PPA.
+     * termasuk No. Rujukan, yang dimasukkan oleh PKD selepas KB/PPA.
      */
     public function test_peringkat_satu_selesai_apabila_ketiga_tiga_medan_ada(): void
     {
@@ -377,8 +377,8 @@ class KemajuanAnalisisAliranTest extends TestCase
         );
         $this->assertFalse($kemajuan->penerimaanSelesai($kod));
 
-        // PPR melengkapkan medan terakhir — dan itulah yang menyiapkannya.
-        $this->actingAs($this->ppr)
+        // PKD melengkapkan medan terakhir — dan itulah yang menyiapkannya.
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [$kod, AliranKerja::PENERIMAAN_DATA]), [
                 'no_rujukan' => 'BPD/2026/001',
             ])
@@ -438,7 +438,7 @@ class KemajuanAnalisisAliranTest extends TestCase
 
         $this->assertTrue($kemajuan->penerimaanSelesai(self::ALPHA));
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
                 'no_rujukan' => '',
             ]);
@@ -566,7 +566,7 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->lalui(AliranKerja::PENDAFTARAN_DATA);
 
-        foreach ([$this->pa, $this->ppr, $this->kb] as $bukanPemilik) {
+        foreach ([$this->pa, $this->pkd, $this->kb] as $bukanPemilik) {
             $this->actingAs($bukanPemilik)
                 ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
                     'tarikh_daftar' => '2026-08-20',
@@ -607,7 +607,7 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->lalui(AliranKerja::SEMAKAN_AWAL_DATA);
 
-        foreach ([$this->ppa, $this->ppr, $this->kb] as $bukanPemilik) {
+        foreach ([$this->ppa, $this->pkd, $this->kb] as $bukanPemilik) {
             $this->actingAs($bukanPemilik)
                 ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]))
                 ->assertForbidden();
@@ -840,7 +840,7 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->lalui(AliranKerja::PENDAFTARAN_DATA, self::BETA, tugaskan: false);
 
-        foreach ([$this->kb, $this->pa, $this->ppr] as $bukanPpa) {
+        foreach ([$this->kb, $this->pa, $this->pkd] as $bukanPpa) {
             $this->actingAs($bukanPpa)
                 ->post(route('kemajuan.tugaskan', self::BETA), [
                     'assigned_to_user_id' => $this->pa->id,
@@ -916,7 +916,7 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     /**
      * Peringkat 1.3 terbuka apabila PPA telah menetapkan Tarikh Daftar, Status
-     * Borang Pendaftaran Data DAN memilih Pegawai Analisis — walaupun PPR
+     * Borang Pendaftaran Data DAN memilih Pegawai Analisis — walaupun PKD
      * belum merekod No. Rujukan Borang Pendaftaran Data.
      */
     public function test_peringkat_semakan_awal_terbuka_tanpa_no_rujukan_pendaftaran(): void
@@ -1000,11 +1000,11 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
-    | No. Rujukan Borang — milik PPR, bukan pemilik peringkat
+    | No. Rujukan Borang — milik PKD, bukan pemilik peringkat
     |--------------------------------------------------------------------------
     */
 
-    public function test_ppr_memasukkan_setiap_no_rujukan(): void
+    public function test_pkd_memasukkan_setiap_no_rujukan(): void
     {
         // Sehingga peringkat 3.1: setiap peringkat sebelumnya telah merekod
         // medannya, jadi borang fizikalnya wujud.
@@ -1029,7 +1029,7 @@ class KemajuanAnalisisAliranTest extends TestCase
             AliranKerja::SEMAKAN_AWAL_DATA => 'BSAD/2026/003',
             AliranKerja::ANALISIS_INVENTORI => 'LAP/2026/004',
         ] as $kunci => $rujukan) {
-            $this->actingAs($this->ppr)
+            $this->actingAs($this->pkd)
                 ->post(route('kemajuan.rujukan', [self::ALPHA, $kunci]), ['no_rujukan' => $rujukan])
                 ->assertRedirect()
                 ->assertSessionHas('success');
@@ -1037,7 +1037,7 @@ class KemajuanAnalisisAliranTest extends TestCase
             $rekod = app(KemajuanAnalisisService::class)->peringkat(self::ALPHA)->get($kunci);
 
             $this->assertSame($rujukan, $rekod->no_rujukan);
-            $this->assertSame($this->ppr->id, $rekod->no_rujukan_oleh_user_id);
+            $this->assertSame($this->pkd->id, $rekod->no_rujukan_oleh_user_id);
             $this->assertNotNull($rekod->no_rujukan_pada);
         }
     }
@@ -1050,8 +1050,8 @@ class KemajuanAnalisisAliranTest extends TestCase
     {
         $this->sediakanEntiti();
 
-        foreach ([$this->ppa, $this->pa, $this->kb] as $bukanPpr) {
-            $this->actingAs($bukanPpr)
+        foreach ([$this->ppa, $this->pa, $this->kb] as $bukanPkd) {
+            $this->actingAs($bukanPkd)
                 ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
                     'no_rujukan' => 'CUBAAN/2026/001',
                 ])
@@ -1067,15 +1067,15 @@ class KemajuanAnalisisAliranTest extends TestCase
         );
     }
 
-    public function test_ppr_tidak_boleh_menggerakkan_peringkat(): void
+    public function test_pkd_tidak_boleh_menggerakkan_peringkat(): void
     {
         $this->lalui(AliranKerja::PENDAFTARAN_DATA);
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.selesai', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]))
             ->assertForbidden();
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.simpan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
                 'tarikh_terima' => '2026-08-14',
             ])
@@ -1101,7 +1101,7 @@ class KemajuanAnalisisAliranTest extends TestCase
             ])
             ->assertSessionHasNoErrors();
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]), [
                 'no_rujukan' => 'BSAD/2026/009',
             ])
@@ -1121,14 +1121,14 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     /**
      * Sebelum pegawai peringkat merekod medannya, borang fizikal itu belum
-     * wujud — jadi tiada nombor rujukan untuk direkod, dan PPR tidak melihat
+     * wujud — jadi tiada nombor rujukan untuk direkod, dan PKD tidak melihat
      * entiti itu bagi peringkat berkenaan.
      */
     public function test_no_rujukan_ditolak_sebelum_data_peringkat_direkod(): void
     {
         $this->lalui(AliranKerja::PENDAFTARAN_DATA);
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
                 'no_rujukan' => 'BPFD/2026/002',
             ])
@@ -1140,8 +1140,8 @@ class KemajuanAnalisisAliranTest extends TestCase
                 ->get(AliranKerja::PENDAFTARAN_DATA)->no_rujukan,
         );
 
-        // Borangnya pun tidak dipaparkan kepada PPR.
-        $this->actingAs($this->ppr)
+        // Borangnya pun tidak dipaparkan kepada PKD.
+        $this->actingAs($this->pkd)
             ->get(route('workflow.show', self::ALPHA))
             ->assertOk()
             ->assertDontSee(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), false);
@@ -1149,9 +1149,9 @@ class KemajuanAnalisisAliranTest extends TestCase
 
     /**
      * Sebaik PPA merekod Tarikh Daftar dan Status Borang Pendaftaran Data,
-     * entiti itu muncul kepada PPR untuk nombor rujukannya.
+     * entiti itu muncul kepada PKD untuk nombor rujukannya.
      */
-    public function test_entiti_muncul_kepada_ppr_sebaik_data_peringkat_direkod(): void
+    public function test_entiti_muncul_kepada_pkd_sebaik_data_peringkat_direkod(): void
     {
         $this->lalui(AliranKerja::PENDAFTARAN_DATA);
 
@@ -1162,13 +1162,13 @@ class KemajuanAnalisisAliranTest extends TestCase
             ])
             ->assertSessionHasNoErrors();
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->get(route('workflow.show', self::ALPHA))
             ->assertOk()
             ->assertSee(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), false)
             ->assertSee('No. Rujukan Borang Pendaftaran Data');
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
                 'no_rujukan' => 'BPFD/2026/002',
             ])
@@ -1183,10 +1183,10 @@ class KemajuanAnalisisAliranTest extends TestCase
     }
 
     /**
-     * No. Rujukan Laporan peringkat 3.1 dimasukkan oleh PPR juga — Pegawai
+     * No. Rujukan Laporan peringkat 3.1 dimasukkan oleh PKD juga — Pegawai
      * Analisis memiliki peringkat itu tetapi bukan nombor rujukannya.
      */
-    public function test_no_rujukan_laporan_dimasukkan_oleh_ppr_bukan_pa(): void
+    public function test_no_rujukan_laporan_dimasukkan_oleh_pkd_bukan_pa(): void
     {
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
@@ -1208,7 +1208,7 @@ class KemajuanAnalisisAliranTest extends TestCase
             ])
             ->assertForbidden();
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::ANALISIS_INVENTORI]), [
                 'no_rujukan' => 'LAP/2026/004',
             ])
@@ -1224,20 +1224,20 @@ class KemajuanAnalisisAliranTest extends TestCase
     }
 
     /**
-     * Borangnya mesti benar-benar dipaparkan kepada PPR pada SETIAP peringkat
+     * Borangnya mesti benar-benar dipaparkan kepada PKD pada SETIAP peringkat
      * berujukan — tanpa ini medan itu wujud dalam pangkalan data tetapi tiada
      * jalan mengisinya.
      */
     /**
-     * PPR melihat borang No. Rujukan bagi peringkat yang DATANYA telah
+     * PKD melihat borang No. Rujukan bagi peringkat yang DATANYA telah
      * direkod — dan bukan yang lain.
      */
-    public function test_ppr_melihat_borang_peringkat_yang_datanya_sudah_direkod(): void
+    public function test_pkd_melihat_borang_peringkat_yang_datanya_sudah_direkod(): void
     {
         // Peringkat 1.1, 1.2 dan 1.3 telah merekod medannya; 3.1 belum.
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
-        $paparan = $this->actingAs($this->ppr)
+        $paparan = $this->actingAs($this->pkd)
             ->get(route('workflow.show', self::ALPHA))
             ->assertOk();
 
@@ -1254,29 +1254,59 @@ class KemajuanAnalisisAliranTest extends TestCase
     }
 
     /**
-     * PPR TIDAK memperoleh apa-apa kuasa lain daripada peringkat berujukan:
+     * PKD TIDAK memperoleh apa-apa kuasa lain daripada peringkat berujukan:
      * merekod nombor rujukan ialah keseluruhan tanggungjawabnya.
      */
-    public function test_ppr_tiada_kuasa_selain_no_rujukan(): void
+    public function test_pkd_tiada_kuasa_selain_no_rujukan(): void
     {
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
         foreach (AliranKerja::semasa() as $kunci) {
-            $this->actingAs($this->ppr)
+            $this->actingAs($this->pkd)
                 ->post(route('kemajuan.selesai', [self::ALPHA, $kunci]))
                 ->assertForbidden();
 
-            $this->actingAs($this->ppr)
+            $this->actingAs($this->pkd)
                 ->post(route('kemajuan.simpan', [self::ALPHA, $kunci]))
                 ->assertForbidden();
         }
+    }
+
+    /**
+     * Pegawai Penyelaras Rekod TIADA tugas khusus dalam fasa ini — No.
+     * Rujukan milik PKD. PPR boleh membuka halaman Kemajuan, tetapi borang
+     * No. Rujukan tidak dipaparkan kepadanya dan laluannya menolaknya.
+     */
+    public function test_ppr_tiada_tugas_no_rujukan(): void
+    {
+        $this->sediakanEntiti();
+
+        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+
+        $this->actingAs($ppr)
+            ->get(route('workflow.show', self::ALPHA))
+            ->assertOk()
+            ->assertDontSee(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), false);
+
+        $this->actingAs($ppr)
+            ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
+                'no_rujukan' => 'CUBAAN/2026/001',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame(
+            'FIKSTUR/1.1',
+            app(KemajuanAnalisisService::class)
+                ->peringkat(self::ALPHA)
+                ->get(AliranKerja::PENERIMAAN_DATA)->no_rujukan,
+        );
     }
 
     public function test_peringkat_tanpa_no_rujukan_menolak_laluan_rujukan(): void
     {
         $this->sediakanEntiti();
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENYEDIAAN_DATA]), [
                 'no_rujukan' => 'X/2026/001',
             ])
@@ -1294,7 +1324,7 @@ class KemajuanAnalisisAliranTest extends TestCase
         $this->lalui(AliranKerja::ANALISIS_INVENTORI);
 
         foreach (AliranKerja::akanDatang() as $kunci) {
-            foreach ([$this->pa, $this->ppa, $this->kb, $this->ppr] as $pengguna) {
+            foreach ([$this->pa, $this->ppa, $this->kb, $this->pkd] as $pengguna) {
                 $this->actingAs($pengguna)
                     ->post(route('kemajuan.selesai', [self::ALPHA, $kunci]))
                     ->assertNotFound();
@@ -1454,11 +1484,11 @@ class KemajuanAnalisisAliranTest extends TestCase
             ->assertDontSee(route('kemajuan.selesai', [self::ALPHA, AliranKerja::SEMAKAN_AWAL_DATA]), false);
     }
 
-    public function test_ppr_melihat_borang_no_rujukan_sahaja(): void
+    public function test_pkd_melihat_borang_no_rujukan_sahaja(): void
     {
         $this->sediakanEntiti();
 
-        $paparan = $this->actingAs($this->ppr)
+        $paparan = $this->actingAs($this->pkd)
             ->get(route('workflow.show', self::ALPHA))
             ->assertOk()
             ->assertSee(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), false);
@@ -1501,7 +1531,7 @@ class KemajuanAnalisisAliranTest extends TestCase
                 'tarikh_terima' => '2026-08-14',
             ]);
 
-        $this->actingAs($this->ppr)
+        $this->actingAs($this->pkd)
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENDAFTARAN_DATA]), [
                 'no_rujukan' => 'BPFD/2026/002',
             ]);

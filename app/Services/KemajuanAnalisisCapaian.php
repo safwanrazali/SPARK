@@ -63,7 +63,7 @@ final class KemajuanAnalisisCapaian
      *
      * - Pendahulu dengan `syarat_lanjut`: cukup medan tersebut ADA. Ia tidak
      *   semestinya Selesai — itulah yang membenarkan peringkat 1.2 bermula
-     *   sementara No. Rujukan peringkat 1.1 masih menunggu PPR.
+     *   sementara No. Rujukan peringkat 1.1 masih menunggu PKD.
      * - Pendahulu lain: mesti benar-benar Selesai.
      *
      * Penugasan Pegawai Analisis BUKAN medan peringkat, jadi ia disemak

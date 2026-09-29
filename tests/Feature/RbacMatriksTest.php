@@ -178,15 +178,15 @@ class RbacMatriksTest extends TestCase
     }
 
     /**
-     * No. Rujukan Borang ialah milik PPR SAHAJA, walaupun peringkatnya bukan
+     * No. Rujukan Borang ialah milik PKD SAHAJA, walaupun peringkatnya bukan
      * miliknya. Inilah pemisahan yang paling mudah hilang.
      */
-    public function test_no_rujukan_borang_hanya_ppr(): void
+    public function test_no_rujukan_borang_hanya_pkd(): void
     {
         $this->sediakanEntiti();
 
         foreach (User::roles() as $role) {
-            if ($role === User::ROLE_PENYELARAS_REKOD) {
+            if ($role === User::ROLE_PEGAWAI_KAWALAN_DOKUMEN) {
                 continue;
             }
 
@@ -197,7 +197,7 @@ class RbacMatriksTest extends TestCase
                 ->assertForbidden();
         }
 
-        $this->actingAs($this->sebagai(User::ROLE_PENYELARAS_REKOD))
+        $this->actingAs($this->sebagai(User::ROLE_PEGAWAI_KAWALAN_DOKUMEN))
             ->post(route('kemajuan.rujukan', [self::ALPHA, AliranKerja::PENERIMAAN_DATA]), [
                 'no_rujukan' => 'BPD/2026/001',
             ])

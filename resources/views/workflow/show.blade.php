@@ -30,7 +30,7 @@
         | bukan Selesai.
         |
         | Peringkat 1.1 berderivasi: ia hanya Selesai setelah No. Rujukan
-        | (milik PPR) direkod. Menuntut Selesai di sini akan menyembunyikan
+        | (milik PKD) direkod. Menuntut Selesai di sini akan menyembunyikan
         | keseluruhan halaman daripada PPA yang baru sahaja merekod Tarikh
         | Terima — sedangkan peringkat 1.2 mereka sudah pun terbuka.
         |
@@ -69,7 +69,7 @@
         /*
         | Bolehkah pengguna ini memasukkan No. Rujukan peringkat berkenaan?
         |
-        | Setiap No. Rujukan milik PPR, tanpa mengira siapa memiliki
+        | Setiap No. Rujukan milik PKD, tanpa mengira siapa memiliki
         | peringkatnya — jadi gate diambil daripada takrifan aliran kerja dan
         | bukan daripada gate peringkat.
         |
@@ -84,7 +84,7 @@
             }
 
             // Borang fizikal mesti direkod dahulu oleh pegawai peringkat itu:
-            // PPR merekod nombor rujukan borang yang SUDAH wujud. Sebelum itu
+            // PKD merekod nombor rujukan borang yang SUDAH wujud. Sebelum itu
             // entiti ini langsung tidak muncul kepadanya bagi peringkat ini.
             return app(KemajuanAnalisisService::class)
                 ->rujukanTersedia($peringkat->get($kunci), $kunci);

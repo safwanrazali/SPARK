@@ -34,7 +34,7 @@ final class AliranKerjaDefinisi
      * Kedua-duanya SENGAJA berasingan, dan senarai kedua boleh lebih pendek
      * daripada yang pertama. Pada peringkat 1.1, No. Rujukan diperlukan untuk
      * Selesai tetapi TIDAK untuk meneruskan kerja — kerana nombor itu
-     * dimasukkan oleh PPR, dan kerja peringkat 1.2 tidak sepatutnya tertahan
+     * dimasukkan oleh PKD, dan kerja peringkat 1.2 tidak sepatutnya tertahan
      * menunggu pegawai lain.
      *
      * Peringkat dengan `syarat_selesai` kosong kekal ditandakan Selesai secara
@@ -42,7 +42,7 @@ final class AliranKerjaDefinisi
      * hanya terbuka setelah ia benar-benar Selesai.
      *
      * SIAPA memasukkan No. Rujukan tidak ditakrifkan di sini: setiap No.
-     * Rujukan dimasukkan oleh PPR tanpa mengira siapa memiliki peringkatnya
+     * Rujukan dimasukkan oleh PKD tanpa mengira siapa memiliki peringkatnya
      * (lihat AliranKerja::PERANAN_RUJUKAN).
      *
      * @return array<string, array<string, mixed>>
@@ -63,7 +63,7 @@ final class AliranKerjaDefinisi
                 'rujukan' => 'No. Rujukan Borang Penerimaan Data',
 
                 // Selesai menuntut ketiga-tiganya; meneruskan ke peringkat 1.2
-                // menuntut dua sahaja — No. Rujukan milik PPR dan tidak
+                // menuntut dua sahaja — No. Rujukan milik PKD dan tidak
                 // sepatutnya menahan kerja peringkat berikutnya.
                 'syarat_selesai' => [
                     AliranKerja::MEDAN_TARIKH_TERIMA,
@@ -90,7 +90,7 @@ final class AliranKerjaDefinisi
 
                 // Tiada butang "Selesai": peringkat ini Selesai apabila
                 // kedua-dua medannya direkod. No. Rujukan TIDAK disenaraikan —
-                // ia milik PPR, dan menuntutnya akan menahan peringkat 1.3
+                // ia milik PKD, dan menuntutnya akan menahan peringkat 1.3
                 // menunggu pegawai lain.
                 'syarat_selesai' => [
                     AliranKerja::MEDAN_TARIKH_DAFTAR,
@@ -128,7 +128,7 @@ final class AliranKerjaDefinisi
                     AliranKerja::MEDAN_NO_RUJUKAN,
                 ],
 
-                // No. Rujukan milik PPR — ia tidak menahan peringkat 2.
+                // No. Rujukan milik PKD — ia tidak menahan peringkat 2.
                 'syarat_lanjut' => [
                     AliranKerja::MEDAN_TARIKH_SEMAKAN,
                     AliranKerja::MEDAN_STATUS_BORANG,

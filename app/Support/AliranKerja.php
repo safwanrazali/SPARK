@@ -115,18 +115,21 @@ final class AliranKerja
 
     /**
      * Peranan yang memasukkan SETIAP No. Rujukan dalam sistem — Pegawai
-     * Penyelaras Rekod.
+     * Kawalan Dokumen.
      *
      * Ini BUKAN peranan peringkat. Peringkat 1.1, 1.2, 1.3 dan 3.1 dimiliki
      * oleh KB, PPA dan PA, tetapi tiada seorang pun daripada mereka
      * memasukkan nombor rujukannya sendiri: merekod No. Rujukan ialah
-     * keseluruhan tanggungjawab PPR, dan satu-satunya kuasa menulis yang
+     * keseluruhan tanggungjawab PKD, dan satu-satunya kuasa menulis yang
      * dimilikinya.
      *
      * Kerana itu ia ditakrifkan sekali di sini dan bukan sebagai medan pada
      * setiap peringkat — peraturannya global, bukan per peringkat.
+     *
+     * Jangan kelirukan PKD dengan Pegawai Penyelaras Rekod (PPR): PPR tiada
+     * tugas khusus dalam fasa ini.
      */
-    public const PERANAN_RUJUKAN = User::ROLE_PENYELARAS_REKOD;
+    public const PERANAN_RUJUKAN = User::ROLE_PEGAWAI_KAWALAN_DOKUMEN;
 
     /**
      * Gate yang melindungi kemasukan No. Rujukan. Sengaja BERASINGAN daripada
@@ -508,7 +511,7 @@ final class AliranKerja
      * Peranan yang memasukkan No. Rujukan peringkat ini, atau null jika
      * peringkat itu langsung tiada No. Rujukan.
      *
-     * Sentiasa PPR — termasuk No. Rujukan Laporan peringkat 3.1, yang TIDAK
+     * Sentiasa PKD — termasuk No. Rujukan Laporan peringkat 3.1, yang TIDAK
      * dimasukkan oleh Pegawai Analisis walaupun laporan itu kerjanya.
      */
     public static function perananRujukan(mixed $key): ?string

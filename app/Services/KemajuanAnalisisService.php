@@ -251,7 +251,7 @@ class KemajuanAnalisisService
      *
      * Ini takrifan yang SAMA dengan kad "Entiti Diterima" pada papan pemuka:
      * medan `syarat_lanjut` peringkat 1.1, bukan status peringkat 1.1.
-     * Status Selesai turut menuntut No. Rujukan, yang dimasukkan oleh PPR —
+     * Status Selesai turut menuntut No. Rujukan, yang dimasukkan oleh PKD —
      * entiti yang bukunya sudah diterima tidak sepatutnya hilang daripada
      * senarai kerana menunggu pegawai lain.
      *
@@ -525,7 +525,7 @@ class KemajuanAnalisisService
      * Hanya medan yang ditakrifkan bagi peringkat itu dalam AliranKerja
      * diterima — borang tidak boleh menulis lajur peringkat lain. No. Rujukan
      * TIDAK disimpan di sini: ia mempunyai laluannya sendiri kerana pada
-     * peringkat 1.1–1.3 ia dimasukkan oleh PPR dan bukan oleh pegawai
+     * peringkat 1.1–1.3 ia dimasukkan oleh PKD dan bukan oleh pegawai
      * peringkat berkenaan (@see simpanRujukan).
      *
      * @param  array<string, mixed>  $data  lajur => nilai
@@ -655,7 +655,7 @@ class KemajuanAnalisisService
      *
      * Diasingkan daripada simpanData() kerana pemiliknya berbeza: No. Rujukan
      * Borang Penerimaan / Pendaftaran / Semakan Awal Data dimasukkan oleh
-     * Pegawai Penyelaras Rekod, walaupun peringkatnya milik KB, PPA atau PA.
+     * Pegawai Kawalan Dokumen, walaupun peringkatnya milik KB, PPA atau PA.
      * Siapa memasukkannya direkodkan pada baris itu sendiri.
      *
      * @throws InvalidWorkflowTransitionException

@@ -145,7 +145,7 @@
                         @php
                             // "Berdaftar" bermaksud peringkat 1.1 telah BERMULA,
                             // bukan Selesai. Peringkat 1.1 hanya Selesai setelah
-                            // No. Rujukan direkod oleh PPR; menuntut Selesai di
+                            // No. Rujukan direkod oleh PKD; menuntut Selesai di
                             // sini melaporkan entiti yang pegawainya sudah bekerja
                             // hingga peringkat 3.1 sebagai "Belum Didaftarkan".
                             //

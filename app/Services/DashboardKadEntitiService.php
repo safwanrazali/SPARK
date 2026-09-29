@@ -42,7 +42,7 @@ class DashboardKadEntitiService
      *
      * DITERIMA ialah medan `syarat_lanjut` peringkat 1.1 — Tarikh Terima dan
      * Status Borang Penerimaan Data — dan BUKAN status peringkat 1.1. Status
-     * Selesai turut menuntut No. Rujukan, yang dimasukkan oleh PPR; entiti
+     * Selesai turut menuntut No. Rujukan, yang dimasukkan oleh PKD; entiti
      * yang Buku Kerja MPQ-nya sudah diterima tidak sepatutnya hilang daripada
      * kiraan ini kerana menunggu pegawai lain. "Set Semula" mengosongkan
      * kedua-dua medan itu, jadi entiti yang ditetapkan semula tercicir

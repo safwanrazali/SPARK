@@ -144,7 +144,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 ->where('stage', '[0-9]+(\.[0-9]+)?')
                 ->name('selesai');
 
-            // No. Rujukan Borang — milik PPR, bukan pemilik peringkat.
+            // No. Rujukan Borang — milik PKD, bukan pemilik peringkat.
             Route::post('/peringkat/{stage}/rujukan', [KemajuanAnalisisController::class, 'rujukan'])
                 ->where('stage', '[0-9]+(\.[0-9]+)?')
                 ->name('rujukan');

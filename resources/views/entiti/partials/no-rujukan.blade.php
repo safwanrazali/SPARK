@@ -7,15 +7,15 @@
     {{--
         ── No. Rujukan ──────────────────────────────────────────────────
         Diasingkan daripada jadual di atas kerana pemiliknya berbeza: setiap
-        No. Rujukan dimasukkan oleh Pegawai Penyelaras Rekod, bukan oleh
+        No. Rujukan dimasukkan oleh Pegawai Kawalan Dokumen, bukan oleh
         pegawai yang melaksanakan peringkatnya. Lajur "Direkod Oleh" di sini
-        merujuk PPR, bukan pemilik peringkat.
+        merujuk PKD, bukan pemilik peringkat.
     --}}
     <div class="report-card mb-4">
 
         <h4 class="section-title">No. Rujukan</h4>
         <p class="text-secondary">
-            Setiap nombor rujukan direkodkan oleh Pegawai Penyelaras Rekod.
+            Setiap nombor rujukan direkodkan oleh Pegawai Kawalan Dokumen.
         </p>
 
         <div class="table-responsive-custom">

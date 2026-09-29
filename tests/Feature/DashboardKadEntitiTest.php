@@ -227,12 +227,12 @@ class DashboardKadEntitiTest extends TestCase
     }
 
     /**
-     * No. Rujukan milik PPR TIDAK diperlukan: entiti yang Buku Kerja MPQ-nya
+     * No. Rujukan milik PKD TIDAK diperlukan: entiti yang Buku Kerja MPQ-nya
      * telah diterima tidak boleh tercicir daripada kad kerana menunggu
      * pegawai lain. Kad ini SENGAJA lebih longgar daripada status peringkat
      * 1.1 "Selesai".
      */
-    public function test_diterima_tidak_menunggu_no_rujukan_ppr(): void
+    public function test_diterima_tidak_menunggu_no_rujukan_pkd(): void
     {
         $this->terima(self::ALPHA);
 

@@ -182,8 +182,8 @@ Log in as the administrator and open **Pentadbiran → Pengguna**.
 | PS    | Pentadbir Sistem            | `administrator`            | Everything, including user management                                             |
 | PA    | Pegawai Analisis            | `analyst`                  | Assigned entities only: analysis input, drafts, report generation                 |
 | PPA   | Pegawai Penyelaras Analisis | `coordinator`              | Dashboard, all entities, assignment, workflow control, report status, audit trail |
-| PPR   | Pegawai Penyelaras Rekod    | `analysis_records_officer` | No entity access (permissions not yet defined)                                    |
-| PKD   | Pegawai Kawalan Dokumen     | `document_controller`      | No entity access (permissions not yet defined)                                    |
+| PPR   | Pegawai Penyelaras Rekod    | `analysis_records_officer` | Dashboard, all entities, report status, audit trail (read-only; no task yet)      |
+| PKD   | Pegawai Kawalan Dokumen     | `document_controller`      | Records every No. Rujukan (1.1–1.3, 3.1); sees entities once 1.1 has begun        |
 | KB    | Ketua Bahagian              | `head_of_division`         | Dashboard, all entities, audit trail (read-only)                                  |
 | TPII  | Timbalan Pengarah II        | `deputy_director_ii`       | Dashboard and all entities, read-only (permissions not yet finalised)             |
 

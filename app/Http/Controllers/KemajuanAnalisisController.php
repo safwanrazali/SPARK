@@ -22,13 +22,13 @@ use Illuminate\Validation\Rule;
  *
  *   simpan()   rekod data tangkapan peringkat        pemilik peringkat
  *   selesai()  tandakan peringkat Selesai            pemilik peringkat
- *   rujukan()  masukkan No. Rujukan Borang           PPR
+ *   rujukan()  masukkan No. Rujukan Borang           PKD
  *
  * Siapa "pemilik peringkat" ditentukan oleh AliranKerja, bukan oleh senarai
  * berasingan di sini — jadi menukar tanggungjawab satu peringkat ialah satu
  * perubahan pada takrifan, bukan pada setiap tempat yang menyemaknya.
  *
- * `rujukan()` diasingkan kerana pemiliknya memang berbeza: PPR memasukkan
+ * `rujukan()` diasingkan kerana pemiliknya memang berbeza: PKD memasukkan
  * No. Rujukan Borang bagi peringkat 1.1–1.3 walaupun peringkat itu miliknya
  * KB, PPA dan PA.
  *
@@ -135,7 +135,7 @@ class KemajuanAnalisisController extends Controller
      * Masukkan No. Rujukan peringkat.
      *
      * Setiap No. Rujukan — keempat-empatnya — dimasukkan oleh Pegawai
-     * Penyelaras Rekod, tanpa mengira siapa memiliki peringkatnya. Gate
+     * Kawalan Dokumen, tanpa mengira siapa memiliki peringkatnya. Gate
      * diambil daripada takrifan aliran kerja dan bukan ditulis tetap di sini.
      *
      * Tiada semakan status peringkat di sini dengan sengaja: nombor rujukan
@@ -160,7 +160,7 @@ class KemajuanAnalisisController extends Controller
 
         // No. Rujukan direkodkan PADA baris peringkat, jadi entiti mesti
         // sudah berada dalam aliran kerja. Memasukkannya ke dalam aliran
-        // ialah tindakan peringkat 1.1 — bukan tindakan PPR.
+        // ialah tindakan peringkat 1.1 — bukan tindakan PKD.
         if ($this->kemajuan->peringkat($agencyCode)->isEmpty()) {
             return back()->withErrors([
                 'no_rujukan' => sprintf(

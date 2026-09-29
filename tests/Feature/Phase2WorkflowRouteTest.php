@@ -77,18 +77,18 @@ class Phase2WorkflowRouteTest extends TestCase
     /**
      * Pautan "Entiti" dan "Kemajuan" ialah navigasi, bukan tindakan: SETIAP
      * peranan yang boleh membuka skrin ini mendapatnya, termasuk Pegawai
-     * Penyelaras Rekod.
+     * Kawalan Dokumen.
      *
      * Kebenaran sebenar tetap dikuatkuasakan pada halaman yang dituju —
-     * PPR hanya melihat entiti yang telah memulakan Penerimaan Data.
+     * PKD hanya melihat entiti yang telah memulakan Penerimaan Data.
      */
     public function test_setiap_peranan_melihat_pautan_entiti_dan_kemajuan(): void
     {
         $this->workflowPada(AliranKerja::PENYEDIAAN_DATA);
 
-        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+        $pkd = User::factory()->create(['role' => User::ROLE_PEGAWAI_KAWALAN_DOKUMEN]);
 
-        foreach ([$ppr, $this->coordinator()] as $pengguna) {
+        foreach ([$pkd, $this->coordinator()] as $pengguna) {
             $this->actingAs($pengguna->fresh())
                 ->get(route('workflow.index', ['sector_code' => '001']))
                 ->assertOk()
@@ -179,14 +179,14 @@ class Phase2WorkflowRouteTest extends TestCase
     }
 
     /**
-     * PPR tidak melihat entiti yang belum memulakan Penerimaan Data langsung —
+     * PKD tidak melihat entiti yang belum memulakan Penerimaan Data langsung —
      * bukan sekadar tanpa borang.
      */
-    public function test_ppr_tidak_melihat_entiti_yang_belum_bermula(): void
+    public function test_pkd_tidak_melihat_entiti_yang_belum_bermula(): void
     {
-        $ppr = User::factory()->create(['role' => User::ROLE_PENYELARAS_REKOD]);
+        $pkd = User::factory()->create(['role' => User::ROLE_PEGAWAI_KAWALAN_DOKUMEN]);
 
-        $this->actingAs($ppr)
+        $this->actingAs($pkd)
             ->get(route('workflow.show', self::ENTITI))
             ->assertForbidden();
     }

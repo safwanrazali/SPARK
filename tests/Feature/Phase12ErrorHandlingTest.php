@@ -272,7 +272,7 @@ class Phase12ErrorHandlingTest extends TestCase
      * Daftarkan entiti dalam workflow melalui servis.
      *
      * Tiada route pendaftaran manual lagi — entiti memasuki workflow apabila
-     * Pegawai Penyelaras Rekod melengkapkan peringkat 1.
+     * KB atau PPA merekod peringkat 1.1 Penerimaan Data.
      */
     private function daftarkanWorkflow(): WorkflowStatus
     {

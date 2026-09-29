@@ -19,8 +19,8 @@
 > | 5         | Semakan, Kelulusan & Penyerahan Laporan    | —        | Akan datang  |
 >
 > **SETIAP No. Rujukan** — keempat-empatnya — dimasukkan oleh **Pegawai
-> Penyelaras Rekod (PPR)**, walaupun peringkatnya dilaksanakan oleh KB, PPA
-> dan PA. Itulah keseluruhan tanggungjawab PPR, dan satu-satunya kuasa
+> Kawalan Dokumen (PKD)**, walaupun peringkatnya dilaksanakan oleh KB, PPA
+> dan PA. Itulah keseluruhan tanggungjawab PKD, dan satu-satunya kuasa
 > menulis yang dimilikinya:
 >
 > | No. Rujukan                          | Peringkat |
@@ -29,6 +29,9 @@
 > | No. Rujukan Borang Pendaftaran Data  | 1.2       |
 > | No. Rujukan Borang Semakan Awal Data | 1.3       |
 > | No. Rujukan Laporan                  | 3.1       |
+>
+> **Pegawai Penyelaras Rekod (PPR)** tiada tugas khusus dalam fasa ini — ia
+> boleh melihat, tetapi tidak memasukkan No. Rujukan.
 >
 > **Fasa semasa berakhir pada peringkat 3.1.** Peringkat 3.2, 4 dan 5 telah
 > ditakrifkan dalam struktur tetapi prosesnya belum ditentukan; ia tidak
@@ -647,7 +650,7 @@ pada laporan, dan status laporan "Perlu Pembetulan" / "Diluluskan".
 | #   | Semakan                 | Cara                                                               | Keputusan |
 | --- | ----------------------- | ------------------------------------------------------------------ | :-------: |
 | C1  | Had percubaan log masuk | Masukkan kata laluan salah 5 kali; percubaan ke-6 disekat ~60 saat |     ☐     |
-| C2  | Peranan tanpa kebenaran | Log masuk sebagai Pegawai Kawalan Dokumen — tiada akses entiti     |     ☐     |
+| C2  | Peranan tanpa kebenaran | Log masuk sebagai Pegawai Penyelaras Rekod — baca sahaja           |     ☐     |
 | C3  | Halaman ralat           | Buka URL yang tidak wujud — 404 kemas, tiada surih tindanan        |     ☐     |
 | C4  | Sesi tamat tempoh       | Biarkan 2 jam tanpa aktiviti, cuba simpan — dialihkan ke log masuk |     ☐     |
 | C5  | Sandaran                | `php scripts/backup-database.php` — SANDARAN BERJAYA               |     ☐     |

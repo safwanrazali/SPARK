@@ -189,7 +189,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
 
     /**
      * Mulakan peringkat 1.1 bagi satu entiti — itulah yang menjadikannya
-     * kelihatan kepada Pegawai Penyelaras Rekod.
+     * kelihatan kepada Pegawai Kawalan Dokumen.
      */
     private function mulakanPenerimaan(string $agencyCode): void
     {
@@ -203,7 +203,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
     public function test_entiti_ditugaskan_boleh_dilihat_oleh_pegawai_yang_berkenaan(): void
     {
         // Semua peranan boleh MELIHAT; Pegawai Analisis hanya bagi entiti
-        // yang ditugaskan kepadanya (ALPHA ialah entiti tugasannya), dan PPR
+        // yang ditugaskan kepadanya (ALPHA ialah entiti tugasannya), dan PKD
         // hanya bagi entiti yang telah memulakan Penerimaan Data.
         $this->mulakanPenerimaan(self::ALPHA);
 
@@ -216,7 +216,7 @@ class Phase12AuthorizationMatrixTest extends TestCase
     public function test_entiti_pegawai_lain_tidak_boleh_dilihat_oleh_pegawai_analisis(): void
     {
         // BETA bukan tugasan pegawai analisis dalam ujian ini — hanya dia
-        // yang ditolak; peranan lain melihat semua entiti. PPR pula melihatnya
+        // yang ditolak; peranan lain melihat semua entiti. PKD pula melihatnya
         // hanya setelah Penerimaan Data bermula.
         $this->mulakanPenerimaan(self::BETA);
 
@@ -228,10 +228,11 @@ class Phase12AuthorizationMatrixTest extends TestCase
     }
 
     /**
-     * Peranan baca-sahaja (PKD dan PPR) boleh MELIHAT entiti tanpa satu pun
-     * tindakan menulis terbuka kepada mereka.
+     * PKD dan PPR boleh MELIHAT entiti tanpa kuasa menggerakkan peringkat,
+     * menyemak atau meluluskan. Satu-satunya kuasa menulis PKD ialah No.
+     * Rujukan; PPR tiada tugas khusus dalam fasa ini.
      *
-     * Skop penglihatan mereka berbeza: PKD melihat semua entiti, PPR hanya
+     * Skop penglihatan mereka berbeza: PPR melihat semua entiti, PKD hanya
      * yang telah memulakan Penerimaan Data. Melihat dan bertindak ialah dua
      * kebenaran berasingan; ujian ini menegaskan kedua-duanya sekali gus.
      */

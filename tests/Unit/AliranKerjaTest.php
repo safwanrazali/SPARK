@@ -115,16 +115,16 @@ class AliranKerjaTest extends TestCase
     }
 
     /**
-     * SETIAP No. Rujukan dimasukkan oleh PPR — itulah keseluruhan
+     * SETIAP No. Rujukan dimasukkan oleh PKD — itulah keseluruhan
      * tanggungjawabnya. Empat nombor, empat peringkat, satu peranan.
      */
-    public function test_setiap_no_rujukan_dimasukkan_oleh_ppr(): void
+    public function test_setiap_no_rujukan_dimasukkan_oleh_pkd(): void
     {
         $berujukan = ['1.1', '1.2', '1.3', '3.1'];
 
         foreach ($berujukan as $kunci) {
             $this->assertNotNull(AliranKerja::labelRujukan($kunci));
-            $this->assertSame(User::ROLE_PENYELARAS_REKOD, AliranKerja::perananRujukan($kunci));
+            $this->assertSame(User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, AliranKerja::perananRujukan($kunci));
         }
 
         $this->assertSame('No. Rujukan Borang Penerimaan Data', AliranKerja::labelRujukan('1.1'));

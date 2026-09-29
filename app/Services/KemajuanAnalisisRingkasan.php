@@ -52,7 +52,7 @@ final class KemajuanAnalisisRingkasan
      *
      * Entiti yang baru direkod Tarikh Terima berada di antara kedua-duanya:
      * ia sedang dikerjakan, dan peringkat 1.2 mungkin sudah terbuka, tetapi
-     * peringkat 1.1 belum Selesai kerana No. Rujukan masih menunggu PPR.
+     * peringkat 1.1 belum Selesai kerana No. Rujukan masih menunggu PKD.
      *
      * Baris peringkat sahaja TIDAK memadai sebagai ujian: setSemula()
      * mengekalkan baris dan hanya mengosongkan datanya, jadi entiti yang
@@ -140,9 +140,9 @@ final class KemajuanAnalisisRingkasan
      * "Dilepasi" menggunakan peraturan yang SAMA dengan
      * KemajuanAnalisisGating, bukan status Selesai semata-mata. Perbezaannya
      * penting: No. Rujukan ialah syarat SELESAI bagi peringkat 1.1–1.3 dan
-     * 3.1, tetapi ia dimasukkan oleh PPR dan BUKAN syarat lanjut. Dengan
+     * 3.1, tetapi ia dimasukkan oleh PKD dan BUKAN syarat lanjut. Dengan
      * ujian isSelesai() sahaja, entiti yang pegawainya sudah bekerja hingga
-     * peringkat 3.1 kekal dilaporkan "di peringkat 1.1" selagi PPR belum
+     * peringkat 3.1 kekal dilaporkan "di peringkat 1.1" selagi PKD belum
      * merekod nombor rujukan — bercanggah dengan prinsip yang dipegang di
      * seluruh sistem, iaitu No. Rujukan tidak menahan kerja peringkat
      * berikutnya.
