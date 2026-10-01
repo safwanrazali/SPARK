@@ -14,7 +14,6 @@
                 Jumlah Laporan Analisis Inventori Kriptografi
             </div>
             <div class="metric-card__value">{{ $jumlahLaporan['inventori'] }}</div>
-            <div class="metric-card__nota">Diserahkan kepada NACSA</div>
             <div class="metric-card__bar is-primary"></div>
         </div>
 
@@ -24,7 +23,6 @@
                 Jumlah Laporan Penilaian Risiko Migrasi PQC
             </div>
             <div class="metric-card__value">{{ $jumlahLaporan['risiko'] }}</div>
-            <div class="metric-card__nota">Diserahkan kepada NACSA</div>
             <div class="metric-card__bar is-cyan"></div>
         </div>
 

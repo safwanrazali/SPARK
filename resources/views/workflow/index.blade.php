@@ -34,7 +34,7 @@
                 <select id="skop" name="skop" class="form-select">
                     <option value="{{ \App\Http\Controllers\WorkflowController::SKOP_DITERIMA }}"
                         @selected($skop === \App\Http\Controllers\WorkflowController::SKOP_DITERIMA)>
-                        Entiti Diterima — Buku Kerja MPQ diterima, terbaru dahulu
+                        Entiti Diterima — Buku Kerja MPQ diterima
                     </option>
 
                     @if ($bolehLihatDitugaskan)
@@ -91,8 +91,7 @@
                 Memaparkan entiti yang ditugaskan kepada anda, penugasan terbaru dahulu.
             @else
                 Memaparkan entiti yang Buku Kerja MPQ-nya telah diterima
-                (Tarikh Terima dan Status Borang Penerimaan Data direkod),
-                yang terbaru dikemas kini dahulu.
+                (Tarikh Terima dan Status Borang Penerimaan Data direkod).
             @endif
         </p>
 
@@ -131,8 +130,9 @@
                         // yang tertunggak.
                         $jumlahPeringkat = $kemajuanServis->jumlahPeringkatSemasa();
 
-                        $laporanBerkenaan = fn(?\Illuminate\Support\Collection $peringkat): bool
-                            => $kemajuanServis->statusLaporanBerkenaan($peringkat);
+                        $laporanBerkenaan = fn(
+                            ?\Illuminate\Support\Collection $peringkat,
+                        ): bool => $kemajuanServis->statusLaporanBerkenaan($peringkat);
 
                         $badgeKeseluruhan = fn(string $nilai): string => match ($nilai) {
                             \App\Services\KemajuanAnalisisService::KESELURUHAN_SIAP => 'status-rendah',
@@ -165,7 +165,8 @@
                             </td>
                             <td>
                                 @if ($e['penugasan'])
-                                    <span class="status-badge status-rendah">{{ $e['penugasan']->assignedTo?->name }}</span>
+                                    <span
+                                        class="status-badge status-rendah">{{ $e['penugasan']->assignedTo?->name }}</span>
                                 @else
                                     <span class="status-badge status-tinggi">Belum Ditugaskan</span>
                                 @endif

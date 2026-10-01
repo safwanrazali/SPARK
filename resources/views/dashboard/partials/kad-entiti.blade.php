@@ -54,11 +54,10 @@
                 Entiti Diterima
             </div>
             <div class="metric-card__value">
-                {{ \App\Support\Peratus::kad($peratusEntitiDiterima) }}<span
-                    class="metric-card__unit">%</span>
+                {{ \App\Support\Peratus::kad($peratusEntitiDiterima) }}<span class="metric-card__unit">%</span>
             </div>
             <div class="metric-card__nota">
-                {{ $entitiDiterima }} daripada {{ $jumlahEntiti }} entiti · Buku Kerja MPQ Diterima
+                {{ $entitiDiterima }} daripada {{ $jumlahEntiti }} entiti
             </div>
             <div class="metric-card__bar metric-card__bar--kemajuan">
                 <span class="metric-card__bar-isi is-cyan" style="width: {{ $peratusEntitiDiterima }}%"></span>
@@ -71,11 +70,10 @@
                 Entiti Dalam Proses
             </div>
             <div class="metric-card__value">
-                {{ \App\Support\Peratus::kad($peratusEntitiDalamProses) }}<span
-                    class="metric-card__unit">%</span>
+                {{ \App\Support\Peratus::kad($peratusEntitiDalamProses) }}<span class="metric-card__unit">%</span>
             </div>
             <div class="metric-card__nota">
-                {{ $entitiDalamProses }} daripada {{ $entitiDiterima }} entiti diterima
+                {{ $entitiDalamProses }} daripada {{ $entitiDiterima }} entiti yang diterima
             </div>
             <div class="metric-card__bar metric-card__bar--kemajuan">
                 <span class="metric-card__bar-isi is-warning" style="width: {{ $peratusEntitiDalamProses }}%"></span>
@@ -88,11 +86,10 @@
                 Entiti Selesai
             </div>
             <div class="metric-card__value">
-                {{ \App\Support\Peratus::kad($peratusEntitiSelesai) }}<span
-                    class="metric-card__unit">%</span>
+                {{ \App\Support\Peratus::kad($peratusEntitiSelesai) }}<span class="metric-card__unit">%</span>
             </div>
             <div class="metric-card__nota">
-                {{ $entitiSelesai }} daripada {{ $entitiDiterima }} entiti diterima
+                {{ $entitiSelesai }} daripada {{ $entitiDiterima }} entiti yang diterima
             </div>
             <div class="metric-card__bar metric-card__bar--kemajuan">
                 <span class="metric-card__bar-isi is-success" style="width: {{ $peratusEntitiSelesai }}%"></span>

@@ -83,10 +83,7 @@
                         <th scope="col">Tarikh &amp; Masa</th>
                         <th scope="col">Entiti</th>
                         <th scope="col">Tindakan</th>
-                        <th scope="col">Nilai Lama</th>
-                        <th scope="col">Nilai Baharu</th>
                         <th scope="col">Oleh</th>
-                        <th scope="col">Maklumat Tambahan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,31 +95,12 @@
                                 <span class="text-secondary">{{ $log->agency_code }}</span>
                             </td>
                             <td>{{ $log->getActionLabel() }}</td>
-                            <td>{{ $log->old_value ?? '-' }}</td>
-                            <td>{{ $log->new_value ?? '-' }}</td>
                             <td>{{ $log->changedBy?->name ?? '-' }}</td>
-                            <td>
-                                @php
-                                    $meta = collect($log->metadata ?? [])
-                                        ->filter(fn($v) => $v !== null && $v !== '' && !is_array($v));
-                                @endphp
-                                @if ($meta->isEmpty())
-                                    <span class="text-secondary">-</span>
-                                @else
-                                    <ul class="audit-meta">
-                                        @foreach ($meta as $kunci => $nilai)
-                                            <li>
-                                                <span class="audit-meta__kunci">{{ str_replace('_', ' ', $kunci) }}:</span>
-                                                {{ is_bool($nilai) ? ($nilai ? 'ya' : 'tidak') : $nilai }}
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </td>
                         </tr>
                     @empty
                         <x-empty-state colspan="7" icon="bi-shield-check" title="Tiada rekod jejak audit">
-                            Tiada perubahan sepadan dengan penapis semasa. Longgarkan penapis untuk melihat lebih banyak rekod.
+                            Tiada perubahan sepadan dengan penapis semasa. Longgarkan penapis untuk melihat lebih banyak
+                            rekod.
                         </x-empty-state>
                     @endforelse
                 </tbody>
