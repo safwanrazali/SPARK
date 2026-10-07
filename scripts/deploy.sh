@@ -56,6 +56,15 @@ if [[ -n "$(git status --porcelain)" ]]; then
     echo "       buang atau commit perubahan tersebut sebelum menempatkan."
     echo
     git status --short
+    echo
+    echo "       Fail yang SELAMAT dibuang pada pelayan (dijana semula, bukan"
+    echo "       diselenggara di sini):"
+    echo
+    echo "         git checkout -- package-lock.json composer.lock"
+    echo
+    echo "       Jika fail SUMBER yang berubah, seseorang telah menyunting terus"
+    echo "       pada pelayan. Pindahkan perubahan itu ke repositori; jangan"
+    echo "       commit daripada pelayan."
     exit 1
 fi
 
@@ -96,9 +105,18 @@ fi
 
 if berubah '^package(-lock)?\.json$'; then
     tajuk "Kebergantungan JavaScript berubah"
-    # BUKAN --omit=dev: puppeteer ialah devDependency tetapi diperlukan pada
+    # `npm ci`, BUKAN `npm install`:
+    #   - `npm install` boleh MENULIS SEMULA package-lock.json. Pada pelayan itu
+    #     mengotorkan pokok kerja dan menyekat penempatan BERIKUTNYA.
+    #   - `npm ci` memasang tepat seperti dalam fail kunci dan tidak pernah
+    #     mengubahnya.
+    #
+    # Tiada --omit=dev: puppeteer ialah devDependency tetapi DIPERLUKAN pada
     # masa runtime oleh Browsershot untuk menjana PDF.
-    jalan npm install
+    #
+    # `npm ci` memadam node_modules, tetapi binari Chrome berada dalam
+    # .cache/puppeteer (di luar node_modules) jadi ia tidak dimuat turun semula.
+    jalan npm ci
 fi
 
 if berubah '^(resources/|package(-lock)?\.json$|vite\.config\.js$)'; then
