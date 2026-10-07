@@ -141,15 +141,31 @@ jalan php artisan view:cache
 # bootstrap/cache serta database.
 KUMPULAN_WEB="${SPARK_WEB_GROUP:-www-data}"
 
-if [[ $KERING -eq 0 ]] && command -v sudo >/dev/null && sudo -n true 2>/dev/null; then
-    tajuk "Menyelaraskan keizinan fail (kumpulan: ${KUMPULAN_WEB})"
-    sudo chgrp -R "$KUMPULAN_WEB" .
-    sudo chmod -R g+rX .
-    sudo chmod -R g+w storage bootstrap/cache database
+# Laluan MUTLAK digunakan di sini, bukan '.', supaya baris sudoers boleh
+# memadankan arahan ini dengan tepat (lihat docs/ADMIN_GUIDE.md §9.5).
+KEIZINAN_BERJAYA=0
+
+if [[ $KERING -eq 1 ]]; then
+    tajuk "Keizinan fail"
+    echo "       [dry-run] chgrp/chmod pada ${ASAS}"
+    KEIZINAN_BERJAYA=1
 else
-    tajuk "Keizinan fail — LANGKAU"
-    echo "    sudo tanpa kata laluan tidak tersedia. Jalankan secara manual jika"
-    echo "    fail baharu ditambah oleh penempatan ini:"
+    tajuk "Menyelaraskan keizinan fail (kumpulan: ${KUMPULAN_WEB})"
+
+    # `sudo -n` = jangan sekali-kali meminta kata laluan. Jika tiada kebenaran,
+    # arahan gagal serta-merta dan kita beralih kepada arahan manual, supaya
+    # penempatan tanpa pengawasan tidak tergantung menunggu input.
+    if sudo -n chgrp -R "$KUMPULAN_WEB" "$ASAS" 2>/dev/null \
+        && sudo -n chmod -R g+rX "$ASAS" 2>/dev/null \
+        && sudo -n chmod -R g+w "$ASAS/storage" "$ASAS/bootstrap/cache" "$ASAS/database" 2>/dev/null; then
+        echo "    Selesai."
+        KEIZINAN_BERJAYA=1
+    fi
+fi
+
+if [[ $KEIZINAN_BERJAYA -eq 0 ]]; then
+    echo "    LANGKAU — sudo tanpa kata laluan tidak tersedia."
+    echo "    Jalankan secara manual JIKA penempatan ini menambah fail baharu:"
     echo
     echo "      sudo chgrp -R ${KUMPULAN_WEB} ${ASAS}"
     echo "      sudo chmod -R g+rX ${ASAS}"

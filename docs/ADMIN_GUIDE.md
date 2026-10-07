@@ -495,6 +495,63 @@ php-fpm; the CLI checks bypass both.
 `GET /up` returns HTTP 200 when the application boots. Use it for uptime
 monitoring.
 
+### 9.5 Deploying
+
+```bash
+cd /srv/projecta/spark
+bash scripts/deploy.sh --dry-run    # show the plan, change nothing
+bash scripts/deploy.sh
+```
+
+The script pulls the checked-out branch, runs only the steps the changed files
+require (Composer, migrations, npm, asset build), and **always** rebuilds the
+config/route/view caches. That last part is not optional: with caches active,
+pulled code has no effect until they are rebuilt, and it fails silently.
+
+It refuses to run against a dirty working tree. `package-lock.json` and
+`composer.lock` are the usual culprits — both are generated, so discarding the
+server's copy is safe. A modified *source* file means someone edited the server
+directly; move that change into the repository instead.
+
+**Unattended permission fixes (optional)**
+
+After a pull, new files must stay readable by the web user. The script attempts
+this with `sudo -n` (never prompts) and otherwise prints the commands for you to
+run manually — so an unattended deploy never hangs on a password prompt.
+
+To let it finish unaided, grant those three commands — and nothing else —
+without a password. First confirm the binary paths, because sudoers matches
+absolute paths:
+
+```bash
+command -v chgrp chmod
+```
+
+Then create a dedicated file. **Never edit `/etc/sudoers` with a normal editor**
+— `visudo` validates syntax before saving, and a malformed sudoers file locks
+you out of `sudo` completely:
+
+```bash
+sudo visudo -f /etc/sudoers.d/spark-deploy
+```
+
+Paste the following, adjusting the user, binary paths and project root:
+
+```
+safwan ALL=(root) NOPASSWD: /usr/bin/chgrp -R www-data /srv/projecta/spark, \
+                            /usr/bin/chmod -R g+rX /srv/projecta/spark, \
+                            /usr/bin/chmod -R g+w /srv/projecta/spark/storage /srv/projecta/spark/bootstrap/cache /srv/projecta/spark/database
+```
+
+Verify:
+
+```bash
+sudo -n chgrp -R www-data /srv/projecta/spark && echo "NOPASSWD active"
+```
+
+This grants no general root access — it matches those exact command lines only.
+`deploy.sh` uses absolute paths deliberately so the invocation matches the rule.
+
 ---
 
 ## 10. TROUBLESHOOTING
