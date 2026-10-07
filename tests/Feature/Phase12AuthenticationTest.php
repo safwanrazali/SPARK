@@ -76,6 +76,42 @@ class Phase12AuthenticationTest extends TestCase
     }
 
     /**
+     * Akar tapak ialah PENGALIH, bukan modul: ia menghantar setiap peranan ke
+     * halaman mendarat yang boleh dibukanya, dan tidak pernah menolak dengan
+     * 403.
+     *
+     * Regresi yang dilindungi: '/' dahulunya ialah papan pemuka itu sendiri,
+     * jadi Pegawai Analisis — satu-satunya peranan tanpa gate `view-dashboard`
+     * — menerima 403 apabila membuka alamat tapak. Itu perkara PERTAMA yang
+     * dilakukan setiap pengguna.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('peranan')]
+    public function test_akar_tapak_mengalihkan_setiap_peranan_ke_halaman_yang_boleh_dibuka(
+        string $peranan,
+        string $laluan,
+    ): void {
+        $pengguna = User::factory()->create(['role' => $peranan]);
+
+        $this->actingAs($pengguna)
+            ->get('/')
+            ->assertRedirect(route($laluan));
+
+        // Penegasan pengalihan hanya menyemak pengepala Location. Destinasi
+        // mesti turut dibuktikan boleh dibuka, jika tidak 403 tidak terkesan.
+        $this->actingAs($pengguna)
+            ->get(route($laluan))
+            ->assertOk();
+    }
+
+    /**
+     * Tetamu di akar tapak dibawa ke log masuk, bukan ke mana-mana modul.
+     */
+    public function test_akar_tapak_membawa_tetamu_ke_log_masuk(): void
+    {
+        $this->get('/')->assertRedirect(route('login'));
+    }
+
+    /**
      * Halaman yang cuba dibuka sebelum log masuk kekal diutamakan — peraturan
      * halaman mendarat hanya terpakai apabila tiada halaman sedemikian.
      */
@@ -111,7 +147,7 @@ class Phase12AuthenticationTest extends TestCase
         $this->post(route('login.attempt'), [
             'username' => 'pegawai.analisis',
             'password' => 'kata-laluan-benar',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('dashboard'));
 
         $this->assertAuthenticatedAs($this->pengguna);
     }
@@ -186,7 +222,7 @@ class Phase12AuthenticationTest extends TestCase
     {
         $this->actingAs($this->pengguna)
             ->get(route('login'))
-            ->assertRedirect('/');
+            ->assertRedirect(route('dashboard'));
     }
 
     public function test_log_keluar_menamatkan_sesi(): void

@@ -8,6 +8,7 @@ use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntitiController;
 use App\Http\Controllers\KemajuanAnalisisController;
+use App\Http\Controllers\LamanUtamaController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LaporanCatatanController;
 use App\Models\LaporanCatatan;
@@ -37,10 +38,28 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::put('/tukar-kata-laluan', [TukarKataLaluanController::class, 'update'])
         ->name('kata-laluan.simpan');
 
-    // Dashboard Pemantauan — kiraan automatik daripada rekod sebenar.
+    /*
+    |----------------------------------------------------------------------
+    | Laman utama — pengalih, BUKAN modul
+    |----------------------------------------------------------------------
+    | Akar tapak mesti sentiasa membawa pengguna ke suatu tempat yang boleh
+    | dibukanya. Ia TIDAK memaparkan apa-apa sendiri.
+    |
+    | Dahulunya '/' ialah papan pemuka itu sendiri, jadi Pegawai Analisis —
+    | satu-satunya peranan tanpa gate `view-dashboard` — menerima 403 apabila
+    | membuka alamat tapak. Itu betul dari segi kebenaran tetapi teruk sebagai
+    | pengalaman: alamat akar ialah perkara PERTAMA yang dibuka pengguna.
+    |
+    | Memisahkan keduanya menyelesaikannya tanpa melonggarkan kebenaran:
+    | papan pemuka kekal bergate dan kekal menolak PA dengan 403 pada
+    | URL-nya sendiri.
+    */
+    Route::get('/', LamanUtamaController::class)->name('laman.utama');
+
+    // Papan Pemuka Pemantauan — kiraan automatik daripada rekod sebenar.
     // Pegawai Analisis tiada papan pemuka keseluruhan; capaian terus ditolak
     // pada lapisan route, bukan sekadar disembunyikan daripada navigasi.
-    Route::get('/', [DashboardController::class, 'index'])
+    Route::get('/papan-pemuka', [DashboardController::class, 'index'])
         ->middleware('can:view-dashboard')
         ->name('dashboard');
 

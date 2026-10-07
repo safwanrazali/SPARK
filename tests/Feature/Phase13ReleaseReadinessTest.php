@@ -415,6 +415,9 @@ class Phase13ReleaseReadinessTest extends TestCase
             'kemajuan.selesai',
             'kemajuan.simpan',
             'kemajuan.tugaskan',
+            // Akar tapak ialah pengalih, bukan modul: ia menghantar setiap
+            // peranan ke halaman mendarat yang boleh dibukanya.
+            'laman.utama',
             // Catatan KB/PPA: maklum balas + pengakuan sahaja. Tiada laluan
             // kelulusan, penolakan atau pemulangan di sini — hanya tulis,
             // sunting, padam, dan tanda "Tindakan Diambil" oleh PA.

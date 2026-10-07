@@ -178,7 +178,7 @@ class Phase12IntegrationTest extends TestCase
         $this->post(route('login.attempt'), [
             'username' => 'penyelaras',
             'password' => 'rahsia-penyelaras',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('dashboard'));
 
         $this->get(route('dashboard'))->assertOk();
 

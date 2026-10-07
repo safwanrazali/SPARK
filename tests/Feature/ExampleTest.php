@@ -21,11 +21,16 @@ class ExampleTest extends TestCase
         $this->get('/')->assertRedirect(route('login'));
     }
 
-    public function test_halaman_utama_dipaparkan_kepada_peranan_pemantauan(): void
+    /**
+     * Akar tapak ialah pengalih: peranan pemantauan dibawa ke papan pemuka,
+     * yang kini berada pada URL tersendiri.
+     */
+    public function test_halaman_utama_mengalihkan_peranan_pemantauan_ke_papan_pemuka(): void
     {
         $penyelaras = User::factory()->create(['role' => User::ROLE_COORDINATOR]);
 
-        $this->actingAs($penyelaras)->get('/')->assertOk();
+        $this->actingAs($penyelaras)->get('/')->assertRedirect(route('dashboard'));
+        $this->actingAs($penyelaras)->get(route('dashboard'))->assertOk();
     }
 
     public function test_titik_semakan_kesihatan_aplikasi_tersedia(): void
