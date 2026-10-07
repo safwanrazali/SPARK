@@ -527,27 +527,32 @@ absolute paths:
 command -v chgrp chmod
 ```
 
-Then create a dedicated file. **Never edit `/etc/sudoers` with a normal editor**
-— `visudo` validates syntax before saving, and a malformed sudoers file locks
-you out of `sudo` completely:
+A malformed file under `/etc/sudoers.d/` can lock you out of `sudo` entirely,
+so **write it to a temporary file, validate it, and only then install it**. Run
+this whole block in the shell, adjusting the user, binary paths and project
+root:
 
 ```bash
-sudo visudo -f /etc/sudoers.d/spark-deploy
+cat > /tmp/spark-deploy <<'EOF'
+safwan ALL=(root) NOPASSWD: /usr/bin/chgrp -R www-data /srv/projecta/spark, /usr/bin/chmod -R g+rX /srv/projecta/spark, /usr/bin/chmod -R g+w /srv/projecta/spark/storage /srv/projecta/spark/bootstrap/cache /srv/projecta/spark/database
+EOF
+
+sudo visudo -c -f /tmp/spark-deploy
+sudo install -m 0440 -o root -g root /tmp/spark-deploy /etc/sudoers.d/spark-deploy
+rm /tmp/spark-deploy
 ```
 
-Paste the following, adjusting the user, binary paths and project root:
-
-```
-safwan ALL=(root) NOPASSWD: /usr/bin/chgrp -R www-data /srv/projecta/spark, \
-                            /usr/bin/chmod -R g+rX /srv/projecta/spark, \
-                            /usr/bin/chmod -R g+w /srv/projecta/spark/storage /srv/projecta/spark/bootstrap/cache /srv/projecta/spark/database
-```
+`visudo -c` parses the file and refuses invalid syntax; the `install` step only
+runs if it passes. Keep the rule on **one line** — sudoers accepts backslash
+continuations, but a stray line break is a common way to produce a broken file.
 
 Verify:
 
 ```bash
 sudo -n chgrp -R www-data /srv/projecta/spark && echo "NOPASSWD active"
 ```
+
+To undo, simply `sudo rm /etc/sudoers.d/spark-deploy`.
 
 This grants no general root access — it matches those exact command lines only.
 `deploy.sh` uses absolute paths deliberately so the invocation matches the rule.
