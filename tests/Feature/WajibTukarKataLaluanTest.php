@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -166,6 +167,81 @@ class WajibTukarKataLaluanTest extends TestCase
 
     /*
     |--------------------------------------------------------------------------
+    | Halaman mendarat selepas penukaran
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function perananDanHalamanMendarat(): array
+    {
+        // Pegawai Analisis ialah satu-satunya peranan tanpa gate
+        // `view-dashboard` — lihat AppServiceProvider.
+        return [
+            'pegawai analisis' => [User::ROLE_ANALYST, 'workflow.index'],
+            'pentadbir sistem' => [User::ROLE_ADMINISTRATOR, 'dashboard'],
+            'pegawai penyelaras analisis' => [User::ROLE_COORDINATOR, 'dashboard'],
+            'ketua bahagian' => [User::ROLE_KETUA_BAHAGIAN, 'dashboard'],
+            'pegawai kawalan dokumen' => [User::ROLE_PEGAWAI_KAWALAN_DOKUMEN, 'dashboard'],
+        ];
+    }
+
+    /**
+     * Menukar kata laluan mesti mendaratkan pengguna pada halaman yang
+     * BENAR-BENAR boleh dibukanya.
+     *
+     * Regresi yang dilindungi: controller dahulunya mengalihkan SETIAP peranan
+     * ke `dashboard`. Pegawai Analisis tiada gate `view-dashboard`, jadi setiap
+     * PA menerima 403 sebaik kata laluan sementaranya ditukar — pada log masuk
+     * PERTAMA mereka.
+     */
+    #[DataProvider('perananDanHalamanMendarat')]
+    public function test_penukaran_mendarat_pada_halaman_yang_boleh_dibuka(
+        string $peranan,
+        string $tujuan,
+    ): void {
+        $pengguna = User::factory()->create([
+            'roles' => [$peranan],
+            'password' => Hash::make(self::SEMENTARA),
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($pengguna)
+            ->put(route('kata-laluan.simpan'), [
+                'password' => self::PILIHAN_SENDIRI,
+                'password_confirmation' => self::PILIHAN_SENDIRI,
+            ])
+            ->assertRedirect(route($tujuan));
+
+        // Penegasan pengalihan hanya menyemak pengepala Location. Destinasi
+        // mesti turut dibuktikan boleh dibuka, jika tidak 403 tidak terkesan.
+        $this->actingAs($pengguna->fresh())
+            ->get(route($tujuan))
+            ->assertOk();
+    }
+
+    /**
+     * Skrin tukar kata laluan juga mengalihkan pengguna yang tidak dipaksa
+     * menukar — pengalihan itu tertakluk kepada peraturan yang sama.
+     */
+    #[DataProvider('perananDanHalamanMendarat')]
+    public function test_skrin_tukar_mengalihkan_ke_halaman_yang_boleh_dibuka(
+        string $peranan,
+        string $tujuan,
+    ): void {
+        $pengguna = User::factory()->create([
+            'roles' => [$peranan],
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($pengguna)
+            ->get(route('kata-laluan.tukar'))
+            ->assertRedirect(route($tujuan));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Penukaran
     |--------------------------------------------------------------------------
     */
@@ -174,13 +250,23 @@ class WajibTukarKataLaluanTest extends TestCase
     {
         $pengguna = $this->penggunaSementara();
 
+        // Kilang menjana Pegawai Analisis secara lalai — peranan TANPA papan
+        // pemuka keseluruhan. Pengalihan mesti menuju ke Kemajuan Analisis
+        // Entiti, bukan `dashboard`, yang akan menolaknya dengan 403.
         $this->actingAs($pengguna)
             ->put(route('kata-laluan.simpan'), [
                 'password' => self::PILIHAN_SENDIRI,
                 'password_confirmation' => self::PILIHAN_SENDIRI,
             ])
-            ->assertRedirect(route('dashboard'))
+            ->assertRedirect(route('workflow.index'))
             ->assertSessionHas('success');
+
+        // Penegasan pengalihan sahaja TIDAK mencukupi: ia hanya menyemak
+        // pengepala Location. Ikut pengalihan itu untuk membuktikan destinasi
+        // benar-benar boleh dibuka oleh pengguna berkenaan.
+        $this->actingAs($pengguna->fresh())
+            ->get(route('workflow.index'))
+            ->assertOk();
 
         $pengguna->refresh();
 

@@ -260,7 +260,7 @@ Request → Authorize → Validate → panggil servis/action → Response
 
 ```
 php artisan test
-→ 754 ujian, 745 lulus, 8 gagal, 1 ralat
+→ 764 ujian, 755 lulus, 8 gagal, 1 ralat
 ```
 
 Sembilan masalah SEDIA ADA (bukan regresi — jangan andaikan kod anda puncanya):

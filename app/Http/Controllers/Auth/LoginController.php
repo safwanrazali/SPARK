@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\HalamanMendarat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -82,9 +82,7 @@ class LoginController extends Controller
      */
     private function halamanMendarat(): string
     {
-        return Gate::allows('view-dashboard')
-            ? route('dashboard')
-            : route('workflow.index');
+        return HalamanMendarat::url();
     }
 
     public function logout(Request $request)
