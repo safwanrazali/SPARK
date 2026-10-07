@@ -2,7 +2,7 @@
 
 @section('title', 'Papan Pemuka')
 
-@section('page-title', 'Papan Pemuka Pemantauan Edited')
+@section('page-title', 'Papan Pemuka Pemantauan')
 
 @section('content')
 
