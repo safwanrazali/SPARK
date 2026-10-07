@@ -30,7 +30,7 @@ app/
 resources/
 ├── css/                    hanya titik masuk
 ├── js/                     app.js (titik masuk) + modul kecil per ciri
-├── scss/                   19 partial + app.scss (indeks @import)
+├── scss/                   17 partial + app.scss (indeks @import)
 │   └── laporan-print/      partial gaya cetakan laporan
 └── views/
     ├── layouts/            app, header, sidebar
@@ -44,14 +44,32 @@ resources/
     ├── laporan/            + partials/ (DIKONGSI skrin+PDF), pdf/
     ├── profil/
     ├── status/
-    ├── uploads/
     └── workflow/           + partials/
+
+scripts/                    operasi pelayan (bukan kod aplikasi)
+├── deploy.sh               tarik + bina semula cache; SATU-SATUNYA cara menempatkan
+├── backup-database.php     sandaran panas SQLite
+├── restore-database.php    pemulihan dengan pengesahan
+└── lib/
 
 tests/
 ├── Concerns/               trait perkongsian senario (MelaluiAliranKerja)
-├── Feature/                ujian HTTP + integrasi
-└── Unit/
+├── Feature/                ujian HTTP + integrasi (32 fail)
+└── Unit/                   (8 fail)
 ```
+
+### Fail penempatan (deployment)
+
+| Fail | Peranan |
+|---|---|
+| `.puppeteerrc.cjs` | Menetapkan cache Chrome ke `<projek>/.cache` supaya `www-data` DAN pengguna penyelenggara menyelesaikan laluan yang sama. Tanpanya, penjanaan PDF lulus pada CLI tetapi gagal dalam pelayar. |
+| `scripts/deploy.sh` | Satu-satunya cara menempatkan. `git push` TIDAK mengemas kini pelayan. |
+| `.env.production.example` | Templat pelayan; disalin kepada `.env`, bukan disunting terus. |
+
+> **Cache aplikasi bersifat senyap.** Dengan `config:cache`, `route:cache` dan
+> `view:cache` aktif, kod yang ditarik TIDAK berkuat kuasa sehingga cache dibina
+> semula — tanpa sebarang ralat. `scripts/deploy.sh` sentiasa membinanya semula;
+> jangan gantikan dengan `git pull` sahaja.
 
 ### Modul utama
 
@@ -113,11 +131,11 @@ Fail yang **SENGAJA** melebihi 300 baris — jangan pecahkan tanpa sebab kukuh:
 
 | Fail | Baris | Sebab |
 |---|---|---|
-| `resources/views/laporan/pdf/body.blade.php` | ~770 | ~713 baris ialah `<style>` sebaris. Browsershot merender tanpa pelayan HTTP: tiada `@vite`, tiada manifes. Memindahkannya ke SCSS menghasilkan PDF tanpa gaya. |
-| `app/Services/KemajuanAnalisisService.php` | ~1030 | Terasnya ialah SATU unit transaksi — "satu-satunya tempat status peringkat boleh berubah". Memecahkan aliran transaksi/audit merentas fail menjadikan invarian itu lebih sukar disemak. |
-| `config/kriptografi.php`, `config/sektor.php` | 396 / 311 | Katalog data rata. |
+| `resources/views/laporan/pdf/body.blade.php` | ~790 | Sebahagian besarnya `<style>` sebaris. Browsershot merender tanpa pelayan HTTP: tiada `@vite`, tiada manifes. Memindahkannya ke SCSS menghasilkan PDF tanpa gaya. |
+| `app/Services/KemajuanAnalisisService.php` | ~1040 | Terasnya ialah SATU unit transaksi — "satu-satunya tempat status peringkat boleh berubah". Memecahkan aliran transaksi/audit merentas fail menjadikan invarian itu lebih sukar disemak. |
+| `config/kriptografi.php`, `config/sektor.php` | 395 / 311 | Katalog data rata. |
 | `database/migrations/*` | — | **Migrasi tidak pernah dipecahkan.** |
-| `tests/Feature/*Test.php` (20 fail) | 300–1795 | Suite senario yang padu; memecahkannya menyerakkan persediaan kongsi dan menyukarkan pengesanan kegagalan. |
+| `tests/Feature/*Test.php` (32 fail) | 300–1795 | Suite senario yang padu; memecahkannya menyerakkan persediaan kongsi dan menyukarkan pengesanan kegagalan. |
 
 ---
 
@@ -242,10 +260,10 @@ Request → Authorize → Validate → panggil servis/action → Response
 
 ```
 php artisan test
-→ 754 ujian, 747 lulus, 6 gagal, 1 ralat
+→ 754 ujian, 745 lulus, 8 gagal, 1 ralat
 ```
 
-Tujuh masalah SEDIA ADA (bukan regresi — jangan andaikan kod anda puncanya):
+Sembilan masalah SEDIA ADA (bukan regresi — jangan andaikan kod anda puncanya):
 
 | Ujian | Isu |
 |---|---|
@@ -255,7 +273,23 @@ Tujuh masalah SEDIA ADA (bukan regresi — jangan andaikan kod anda puncanya):
 | `Phase5EntityDetailTest::test_halaman_memaparkan_kesemua_seksyen_yang_ditetapkan:108` | penegasan HTML |
 | `Phase5EntityDetailTest::test_halaman_memaparkan_stepper_lima_peringkat_utama:147` | penegasan HTML |
 | `Phase5EntityDetailTest::test_halaman_memaparkan_sejarah_workflow_dan_penugasan:199` | penegasan HTML |
+| `DashboardKadEntitiTest::test_papan_pemuka_memaparkan_tajuk_dan_nota_kad_yang_dikemas_kini:472` | penegasan HTML — teks kad diubah tanpa ujian dikemas kini |
+| `Phase7DashboardTest::test_papan_pemuka_kosong_memaparkan_keadaan_kosong:683` | penegasan HTML — teks keadaan kosong diubah tanpa ujian dikemas kini |
 | `PenomboranHalamanTest::test_jadual_sejarah_dinomborkan_sepuluh_baris` (set "pusat maklumat entiti"):81 | ralat: `Undefined array key "sejarah"` |
+
+**Dua kegagalan papan pemuka terakhir** berpunca daripada commit `53d451c`
+(*"improve text clarity in … dashboard views"*): teks kad diubah, ujiannya tidak.
+Contohnya ujian menjangkakan `Buku Kerja MPQ Diterima` sedangkan paparan hanya
+mengandungi teks itu di dalam KOMEN Blade (huruf kecil), jadi penegasan itu
+tidak mungkin lulus. Ia bukan kecacatan produk — ujian perlu diselaraskan
+dengan teks semasa, atau teks dikembalikan. Putuskan secara sedar; jangan
+sekadar menukar ujian supaya hijau.
+
+> **Ujian PDF boleh MELANGKAU secara senyap.**
+> `Phase12IntegrationTest::test_penjanaan_laporan_menghasilkan_fail_pdf` melangkau
+> apabila Chrome tiada, dan PHPUnit tetap melaporkan `passed`. Langkauan di sini
+> bermakna muat turun PDF GAGAL untuk pengguna. Pasang pelayar dahulu:
+> `npx puppeteer browsers install chrome-headless-shell` (lihat `.puppeteerrc.cjs`).
 
 **Ujian goyah (flaky) yang diketahui:**
 `TetapSemulaKataLaluanTest::test_kata_laluan_sementara_cukup_kuat` gagal kira-kira

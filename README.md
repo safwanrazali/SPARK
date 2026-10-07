@@ -1,58 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SPARK
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Sistem Pemantauan & Pelaporan Analisis Data Migrasi PQC**
 
-## About Laravel
+Bahagian Migrasi PQC · Pusat Teknologi dan Pengurusan Kriptologi Malaysia (PTPKM)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Internal monitoring and reporting platform for post-quantum cryptography
+migration analysis across CNII entities: sector → entity → assignment →
+workflow → analysis → signed PDF report.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Classification: RAHSIA.** Reports carry the marking on every page.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| | |
+|---|---|
+| PHP | 8.3+ (staging runs 8.5) |
+| Framework | Laravel 13 |
+| Database | SQLite |
+| Front-end | Blade + Bootstrap 5 + SCSS, built with Vite. No JS framework. |
+| PDF | Spatie Browsershot → Puppeteer → headless Chrome |
+| Tests | PHPUnit |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Entities and sectors live in `config/sektor.php` (11 sectors, 252 entities) —
+**not** in the database.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Local setup
 
 ```bash
-composer require laravel/boost --dev
+composer install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate
+php artisan db:seed                 # creates the initial administrator
 
-php artisan boost:install
+npm install
+npm run build
+
+# required for PDF generation — see .puppeteerrc.cjs
+npx puppeteer browsers install chrome-headless-shell
+
+composer dev                        # serve + queue + logs + vite
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Verify PDF works before trusting the suite:
 
-## Contributing
+```bash
+php artisan test --filter=test_penjanaan_laporan_menghasilkan_fail_pdf
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+It must report **passed**, not skipped. The test skips when Chrome is missing
+and PHPUnit still reports success — a skip means PDF download is broken.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Tests
 
-## Security Vulnerabilities
+```bash
+php artisan test
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Current baseline and the list of known pre-existing failures are recorded in
+[`CLAUDE.md`](CLAUDE.md) §9. Compare against it before assuming your change
+caused a failure.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Deployment
+
+**`git push` does not deploy.** The server holds an independent working copy:
+
+```bash
+# on the server
+cd /srv/projecta/spark
+bash scripts/deploy.sh
+```
+
+`deploy.sh` pulls, runs only the steps the changed files require (Composer,
+migrations, npm, asset build), and **always** rebuilds the config/route/view
+caches — without which pulled code has no effect and produces no error.
+
+Full server procedure, including the PDF prerequisites that are **not** carried
+by git (Chrome binary, system libraries, AppArmor sysctl), is in
+[`docs/ADMIN_GUIDE.md`](docs/ADMIN_GUIDE.md) §9.3 and §9.5.
+
+---
+
+## Documentation
+
+| Document | Audience |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Developers — architecture, conventions, single sources of truth, test baseline |
+| [`docs/ADMIN_GUIDE.md`](docs/ADMIN_GUIDE.md) | Installation, environment, web server, backup/restore, security checklist, troubleshooting |
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | End users, role by role (Bahasa Melayu) |
+| [`docs/UAT_CHECKLIST.md`](docs/UAT_CHECKLIST.md) | Acceptance testing scenarios |
+| [`PANDUAN_CATATAN_LAPORAN.md`](PANDUAN_CATATAN_LAPORAN.md) | Report comments module |
+| [`RELEASE_NOTES.md`](RELEASE_NOTES.md) | Release history |
+
+---
+
+## Operations
+
+```bash
+php scripts/backup-database.php     # hot backup, integrity-checked
+php scripts/restore-database.php    # verifies before writing; requires confirmation
+```
+
+`GET /up` is the health endpoint.
+
+---
+
+## Scope
+
+Workflow stages **1.1 – 3.1** are implemented. Stages **3.2, 4 and 5** exist in
+the structure but are reserved for a later phase and reject all actions.
+
+The system does **not** accept file uploads, send notifications, or integrate
+with external systems. Analysis findings are keyed in through the nine-section
+structured form.
