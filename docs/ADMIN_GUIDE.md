@@ -412,16 +412,83 @@ php artisan view:cache
 php artisan optimize:clear # clear everything (troubleshooting)
 ```
 
-### 9.3 Verifying PDF generation on the server
+### 9.3 PDF generation — server setup and verification
+
+PDF download spawns headless Chrome through Browsershot on **every request**, so
+Chrome must work for the **web server user** (`www-data`), not just your shell.
+Four things have to be right. Verify in order.
+
+**a. Chrome cache location — already handled**
+
+`.puppeteerrc.cjs` (committed) pins the Chrome cache to `<project>/.cache`
+instead of `~/.cache/puppeteer`. Without it, Chrome installed by your shell user
+is invisible to `www-data`, and PDF succeeds on the CLI but fails in the browser.
+Nothing to do — just don't delete that file.
+
+**b. Install the browser binary**
 
 ```bash
-node -v                                     # Node must be on PATH
-npx puppeteer browsers install chrome       # if Chrome is missing
-php artisan test --filter=test_penjanaan_laporan_menghasilkan_fail_pdf
+cd <project root>
+npx puppeteer browsers install chrome-headless-shell
 ```
 
-The test is skipped automatically when Chrome is unavailable — a skip here means
-**PDF download will fail for users**, so treat it as a blocker.
+Use **`chrome-headless-shell`**, not `chrome`. Browsershot launches with
+`headless: 'shell'` (`vendor/spatie/browsershot/bin/browser.cjs`), so the plain
+`chrome` build is not what it looks for.
+
+**c. System libraries**
+
+The binary links against GTK/ATK libraries that a minimal server image lacks.
+Check what is missing:
+
+```bash
+ldd .cache/puppeteer/chrome-headless-shell/linux-*/chrome-headless-shell-linux64/chrome-headless-shell   | grep "not found"
+```
+
+On Ubuntu 24.04 and newer (note the `t64` suffixes):
+
+```bash
+sudo apt-get update
+sudo apt-get install -y   libnss3 libnspr4 libdrm2 libgbm1 libxkbcommon0 libxcomposite1   libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 libcairo2   libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libasound2t64 libatspi2.0-0t64
+```
+
+On older releases, drop the `t64` suffixes. Re-run the `ldd` check — it should
+print nothing.
+
+**d. Chrome sandbox (Ubuntu 23.10+)**
+
+These releases restrict unprivileged user namespaces via AppArmor, which Chrome's
+sandbox needs. Symptom: `No usable sandbox!`.
+
+```bash
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+echo 'kernel.apparmor_restrict_unprivileged_userns=0' | sudo tee /etc/sysctl.d/99-puppeteer.conf
+```
+
+This keeps Chrome's sandbox working. The alternative — running Chrome with
+`--no-sandbox` — requires an application change and weakens process isolation;
+prefer the sysctl.
+
+**e. Verify as BOTH users**
+
+```bash
+# as the maintenance user
+php artisan tinker --execute='$p=Spatie\Browsershot\Browsershot::html("<h1>x</h1>")->format("A4")->writeOptionsToFile()->pdf(); echo "OK ".strlen($p)." ".substr($p,0,5), PHP_EOL;'
+
+# as the web user — this is the one that predicts browser behaviour
+sudo -u www-data env HOME=/tmp php artisan tinker --execute='$p=Spatie\Browsershot\Browsershot::html("<h1>x</h1>")->format("A4")->writeOptionsToFile()->pdf(); echo "OK ".strlen($p)." ".substr($p,0,5), PHP_EOL;'
+```
+
+Both must print `OK <bytes> %PDF-`. **The first passing alone proves nothing** —
+the cache-location and permission faults only show up under `www-data`.
+`HOME=/tmp` just gives Tinker a writable config directory.
+
+Finally, download a report through the browser. Only that exercises nginx and
+php-fpm; the CLI checks bypass both.
+
+> If dev dependencies are installed, `php artisan test --filter=test_penjanaan_laporan_menghasilkan_fail_pdf`
+> also covers this. It **skips** rather than fails when Chrome is unavailable, so
+> a skip must be treated as a blocker, not a pass.
 
 ### 9.4 Health check
 
@@ -444,6 +511,25 @@ monitoring.
 | Everyone sees "no entities"               | Users have roles without entity access                 | Check roles in **Pentadbiran → Pengguna**      |
 | Login always fails after correct password | Rate limit still active                                | Wait 60 seconds                                |
 | Dashboard numbers look stale              | Browser cache                                          | Hard refresh; numbers are computed per request |
+
+### 10.1 Faults seen during real deployments
+
+| Symptom                                                   | Likely cause                                                                                   | Fix                                                                     |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 500 on every page; log ends at `parseDatabasePath()`      | `DB_DATABASE` points **through a directory the web user cannot traverse** — typically `/home/<user>/…`, which is `drwxr-x---` | Host the application somewhere `www-data` can traverse (e.g. `/srv/…`), set `DB_DATABASE` to that path, then `config:cache` |
+| Pulled new code but the site is unchanged                 | `config`/`route`/`view` caches still hold the previous build — fails **silently**              | `php artisan optimize:clear`, then re-cache. Use `bash scripts/deploy.sh` |
+| PDF works on the CLI but fails in the browser             | Chrome cache not visible to `www-data`                                                          | §9.3a; always verify under `sudo -u www-data`                            |
+| PDF: `Could not find chrome-headless-shell`               | Browser binary not installed into the project cache                                             | §9.3b                                                                     |
+| PDF: `libatk-1.0.so.0: cannot open shared object file`    | Chrome's system libraries missing                                                               | §9.3c                                                                     |
+| PDF: `No usable sandbox!`                                 | Ubuntu 23.10+ AppArmor restriction on unprivileged user namespaces                              | §9.3d                                                                     |
+| PDF test reports success but never ran                    | It **skips** when Chrome is unavailable, and PHPUnit still reports `passed`                     | Treat a skip as a blocker; verify with §9.3e instead                      |
+| Hostname unreachable from client machines                 | The server's hostname only resolves where a `hosts` entry exists                                 | Add an internal DNS A record; `hosts` edits are per-machine               |
+
+> **Traversal, not permissions.** The first row catches people out because the
+> database file itself is readable and writable — it is an intermediate
+> *directory* that blocks `realpath()`. `sudo -u www-data test -w database/database.sqlite`
+> passes from inside the project (relative path) while the absolute path in
+> `.env` still fails.
 
 ---
 
